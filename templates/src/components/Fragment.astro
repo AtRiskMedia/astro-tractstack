@@ -1,0 +1,70 @@
+---
+// TractStack Fragment Component
+// A wrapper for content that can be dynamically updated via HTMX
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  id?: string;
+  hxGet?: string;
+  hxPost?: string;
+  hxTarget?: string;
+  hxSwap?: string;
+  hxTrigger?: string;
+}
+
+const { 
+  id, 
+  hxGet, 
+  hxPost, 
+  hxTarget, 
+  hxSwap = 'outerHTML', 
+  hxTrigger,
+  class: className,
+  style,
+  ...rest 
+} = Astro.props;
+
+// Build HTMX attributes
+const htmxAttrs: Record<string, string> = {};
+if (hxGet) htmxAttrs['hx-get'] = hxGet;
+if (hxPost) htmxAttrs['hx-post'] = hxPost;
+if (hxTarget) htmxAttrs['hx-target'] = hxTarget;
+if (hxSwap) htmxAttrs['hx-swap'] = hxSwap;
+if (hxTrigger) htmxAttrs['hx-trigger'] = hxTrigger;
+---
+
+<div 
+  id={id}
+  class={`tractstack-fragment ${className || ''}`}
+  style={style}
+  {...htmxAttrs}
+  {...rest}
+>
+  <slot />
+</div>
+
+<style>
+  .tractstack-fragment {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    background: #fafafa;
+    transition: all 0.2s ease;
+  }
+  
+  .tractstack-fragment:hover {
+    border-color: #0066cc;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+  }
+  
+  .tractstack-fragment.htmx-request {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  
+  .tractstack-fragment.htmx-swapping {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+</style>

@@ -1,0 +1,177 @@
+---
+// TractStack Home Page
+import Layout from '../layouts/TractStackLayout.astro';
+import Counter from '../components/tractstack/Counter.tsx';
+
+// Read environment variables directly
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
+const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+---
+
+<style>
+  :root {
+    --brand-1: #10120d;
+    --brand-2: #fcfcfc;
+    --brand-3: #f58333;
+    --brand-4: #c8df8c;
+    --brand-5: #293f58;
+    --brand-6: #a7b1b7;
+    --brand-7: #393d34;
+    --brand-8: #e3e3e3;
+  }
+  
+  .hero-section {
+    background: linear-gradient(135deg, var(--brand-5) 0%, var(--brand-7) 100%);
+    color: var(--brand-2);
+    padding: 3rem 0;
+    text-align: center;
+  }
+  
+  .ascii-art {
+    font-size: 0.8rem;
+    color: var(--brand-3);
+    font-weight: bold;
+    margin: 2rem 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+  
+  .content-section {
+    background: var(--brand-2);
+    color: var(--brand-1);
+    min-height: 60vh;
+    padding: 2rem 0;
+  }
+  
+  .card {
+    border: 1px solid var(--brand-8);
+    background: var(--brand-2);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 8px rgba(16, 18, 13, 0.1);
+  }
+  
+  .card h3 {
+    color: var(--brand-5);
+    margin-top: 0;
+    border-bottom: 2px solid var(--brand-4);
+    padding-bottom: 0.5rem;
+  }
+  
+  .fragment-container {
+    min-height: 50px;
+    background: var(--brand-8);
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 4px solid var(--brand-3);
+  }
+  
+  .config-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .config-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--brand-8);
+  }
+  
+  .config-list strong {
+    color: var(--brand-5);
+  }
+  
+  .footer-links {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--brand-8);
+    text-align: center;
+  }
+  
+  .footer-links a {
+    color: var(--brand-3);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .footer-links a:hover {
+    color: var(--brand-5);
+  }
+</style>
+
+<Layout title="TractStack Home">
+  <main>
+    <div class="hero-section">
+      <pre class="ascii-art">
+    ███        ▄████████    ▄████████  ▄████████     ███    
+▀█████████▄   ███    ███   ███    ███ ███    ███ ▀█████████▄
+   ▀███▀▀██   ███    ███   ███    ███ ███    █▀     ▀███▀▀██
+    ███   ▀  ▄███▄▄▄▄██▀   ███    ███ ███            ███   ▀
+    ███     ▀▀███▀▀▀▀▀   ▀███████████ ███            ███    
+    ███     ▀███████████   ███    ███ ███    █▄      ███    
+    ███       ███    ███   ███    ███ ███    ███     ███    
+   ▄████▀     ███    ███   ███    █▀  ████████▀     ▄████▀  
+              ███    ███                                    
+
+   ▄████████     ███        ▄████████  ▄████████    ▄█   ▄█▄
+  ███    ███ ▀█████████▄   ███    ███ ███    ███   ███ ▄███▀
+  ███    █▀     ▀███▀▀██   ███    ███ ███    █▀    ███▐██▀  
+  ███            ███   ▀   ███    ███ ███         ▄█████▀   
+▀███████████     ███     ▀███████████ ███        ▀▀█████▄   
+         ███     ███       ███    ███ ███    █▄    ███▐██▄  
+   ▄█    ███     ███       ███    ███ ███    ███   ███ ▀███▄
+ ▄████████▀     ▄████▀     ███    █▀  ████████▀    ███   ▀█▀
+                                                   ▀        
+      </pre>
+      
+      <h1 style="color: var(--brand-4); font-size: 2.5rem; margin: 1rem 0;">Welcome to TractStack!</h1>
+      <p style="color: var(--brand-6); font-size: 1.2rem;">Build dynamic websites with HTMX and Go</p>
+      <p style="color: var(--brand-6); font-size: 0.9rem;">by At Risk Media</p>
+    </div>
+
+    <div class="content-section">
+      <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
+        
+        <!-- React Counter Component -->
+        <div class="card">
+          <h3>React Component</h3>
+          <p>This is a React component with client-side interactivity:</p>
+          <Counter client:load />
+        </div>
+
+        <!-- HTMX Fragment from Go Backend -->
+        <div class="card">
+          <h3>Go Backend Fragment</h3>
+          <p>This content is loaded from the Go backend:</p>
+          <div 
+            id="backend-fragment"
+            class="fragment-container"
+            hx-get={`${goBackend}/api/v1/fragments/panes/01JVEB1GM20ZPVMQK3PZ0C2BXP`}
+            hx-trigger="load"
+            hx-swap="innerHTML"
+          >
+            Loading fragment from Go backend...
+          </div>
+        </div>
+
+        <!-- Configuration Info -->
+        <div class="card">
+          <h3>Configuration</h3>
+          <ul class="config-list">
+            <li><strong>Go Backend:</strong> {goBackend}</li>
+            <li><strong>Tenant ID:</strong> {tenantId}</li>
+            <li><strong>HTMX Version:</strong> 2.0.4</li>
+            <li><strong>Theme:</strong> auto</li>
+          </ul>
+        </div>
+
+        <div class="footer-links">
+          <p style="color: var(--brand-6);">
+            📚 <a href="https://tractstack.org/docs" target="_blank">Documentation</a> |
+            🔧 <a href="https://github.com/AtRiskMedia/tractstack-go" target="_blank">Go Backend</a> |
+            ⚡ <a href="https://htmx.org" target="_blank">HTMX</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

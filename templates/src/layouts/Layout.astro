@@ -1,0 +1,86 @@
+---
+// TractStack Layout - Main layout with HTMX integration
+
+export interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'TractStack dynamic website' } = Astro.props;
+
+// Read environment variables directly
+const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    
+    <!-- HTMX -->
+    <script 
+      src="https://unpkg.com/htmx.org@2.0.4"
+      crossorigin="anonymous"
+    ></script>
+    
+    <!-- TractStack Styles -->
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: var(--bg-color, #fcfcfc);
+        color: var(--text-color, #10120d);
+      }
+      
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-color: #10120d;
+          --text-color: #fcfcfc;
+        }
+      }
+      
+      [data-theme="dark"] {
+        --bg-color: #10120d;
+        --text-color: #fcfcfc;
+      }
+      
+      [data-theme="light"] {
+        --bg-color: #fcfcfc;
+        --text-color: #10120d;
+      }
+    </style>
+  </head>
+  <body>
+    <slot />
+    
+    <!-- HTMX Configuration -->
+    <script define:vars={{ tenantId }}>
+      // Configure HTMX
+      htmx.config.selfRequestsOnly = false;
+      htmx.config.defaultSwapStyle = 'outerHTML';
+      htmx.config.historyCacheSize = 10;
+      
+      // Set up default headers for TractStack
+      document.body.addEventListener('htmx:configRequest', function(evt) {
+        evt.detail.headers['X-TractStack-Tenant'] = tenantId;
+      });
+      
+      // Handle API responses
+      document.body.addEventListener('htmx:responseError', function(evt) {
+        console.error('TractStack API Error:', evt.detail);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "name": "astro-tractstack",
+  "version": "2.0.0-alpha.1",
+  "description": "Astro integration for TractStack - build dynamic websites with HTMX and Go",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./config": "./config.ts"
+  },
+  "files": [
+    "index.ts",
+    "config.ts",
+    "types.ts",
+    "templates/",
+    "utils/",
+    "bin/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "tractstack",
+    "htmx",
+    "go"
+  ],
+  "author": "AtRiskMedia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AtRiskMedia/astro-tractstack.git"
+  },
+  "peerDependencies": {
+    "astro": "^5.0.0"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.0.0",
+    "kleur": "^4.1.5",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.9",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18.14.1"
+  },
+  "bin": {
+    "create-tractstack": "./bin/create-tractstack.js"
+  },
+  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+}
