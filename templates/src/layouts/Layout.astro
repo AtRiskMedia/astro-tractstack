@@ -1,10 +1,15 @@
 ---
 // TractStack Layout - Main layout with proper session handling
 
+import { SessionManager } from '../utils/auth/sessionManager';
+import SessionInit from '../components/auth/SessionInit.astro';
+
 export interface Props {
   title: string;
   description?: string;
 }
+
+const sessionId = SessionManager.getOrCreateSessionID();
 
 const { title, description = 'TractStack dynamic website' } = Astro.props;
 
@@ -16,14 +21,11 @@ const tenant = Astro.locals.tenant || {
   isLocalhost: true
 };
 
-const session = Astro.locals.session || { isReady: false };
+const session = { isReady: false };
 
 // Read environment variables
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
 const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
-
-console.log('Layout: Tenant:', tenant);
-console.log('Layout: Session:', session);
 ---
 
 <!doctype html>
@@ -77,23 +79,24 @@ console.log('Layout: Session:', session);
     </style>
   </head>
   <body>
-    <!-- Session Init - only if no existing session -->
-    {!session.isReady && (
-      <div 
-        id="session-init"
-        hx-post="/api/auth/visit"
-        hx-trigger="load"
-        hx-vals="js:{fingerprint: localStorage.getItem('fp_id') || (function() { const cookies = document.cookie.split(';').map(c => c.trim().split('=')); const fpCookie = cookies.find(c => c[0] === 'fp_id'); return fpCookie ? fpCookie[1] : 'fp_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9); })(), visit_id: localStorage.getItem('visit_id') || (function() { const cookies = document.cookie.split(';').map(c => c.trim().split('=')); const visitCookie = cookies.find(c => c[0] === 'visit_id'); return visitCookie ? visitCookie[1] : null; })()}"
-        style="display: none;"
-      >
-      </div>
-    )}
-
+    <SessionInit />
     <slot />
-    
+
+    <!-- TractStack Configuration - Set BEFORE SessionInit runs -->
+    <script define:vars={{ goBackend, tenantId }}>
+      // Set up configuration that SessionInit expects
+      window.TRACTSTACK_CONFIG = {
+        configured: true,
+        backendUrl: goBackend,
+        tenantId: tenantId
+      };
+      
+      console.log('TractStack: Configuration set', window.TRACTSTACK_CONFIG);
+    </script>
+
     <!-- TractStack Session State -->
     <script define:vars={{ goBackend, tenantId, session }}>
-      // Make session data available globally
+      // Also keep the old TractStack object for compatibility
       window.TractStack = {
         session: session,
         config: {
@@ -114,40 +117,13 @@ console.log('Layout: Session:', session);
         evt.detail.headers['X-TractStack-Tenant'] = tenantId;
       });
       
-      // Handle session handshake completion - REMOVED RELOAD
-      document.body.addEventListener('htmx:afterRequest', function(evt) {
-        if (evt.target && evt.target.id === 'session-init' && evt.detail.xhr.status === 200) {
-          console.log('TractStack: Session handshake completed');
-          console.log('TractStack: All cookies after handshake:', document.cookie);
-          
-          // Sync cookies to localStorage
-          const fpCookie = document.cookie.split(';').find(c => c.trim().startsWith('fp_id='));
-          const visitCookie = document.cookie.split(';').find(c => c.trim().startsWith('visit_id='));
-          
-          console.log('TractStack: Found fp_id cookie:', fpCookie);
-          console.log('TractStack: Found visit_id cookie:', visitCookie);
-          
-          if (fpCookie) {
-            localStorage.setItem('fp_id', fpCookie.split('=')[1]);
-          }
-          if (visitCookie) {
-            localStorage.setItem('visit_id', visitCookie.split('=')[1]);
-          }
-        }
-      });
-      
       // Handle API errors
       document.body.addEventListener('htmx:responseError', function(evt) {
         console.error('TractStack API Error:', evt.detail);
       });
-      
-      // Dispatch session ready event for other components
-      if (session.isReady) {
-        window.dispatchEvent(new CustomEvent('tractstack:session-ready', {
-          detail: session
-        }));
-        console.log('TractStack: Session ready event dispatched');
-      }
+    </script>
+    <script define:vars={{ sessionId }}>
+      window.tractStackSessionId = sessionId;
     </script>
   </body>
 </html>

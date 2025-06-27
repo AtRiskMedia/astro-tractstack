@@ -1,0 +1,116 @@
+---
+// Auto-trigger visit handshake on page load using fetch
+---
+
+<script>
+  // Initialize session when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeSession();
+  });
+
+  async function initializeSession() {
+    // Wait for configuration to be available
+    if (!window.TRACTSTACK_CONFIG?.configured) {
+      setTimeout(initializeSession, 100);
+      return;
+    }
+
+    console.log('TractStack: Starting session initialization...');
+
+    try {
+      // Prepare session data
+      const fingerprint = localStorage.getItem('fp_id') || generateFingerprint();
+      if (!localStorage.getItem('fp_id')) {
+        localStorage.setItem('fp_id', fingerprint);
+      }
+
+      const sessionData = {
+        fingerprint: fingerprint,
+        visitId: localStorage.getItem('visit_id') || '',
+        encryptedEmail: localStorage.getItem('encrypted_email') || '',
+        encryptedCode: localStorage.getItem('encrypted_code') || '',
+        consent: localStorage.getItem('consent') || '',
+        sessionId: window.tractStackSessionId || ''
+      };
+
+      console.log('TractStack: Session data:', sessionData);
+
+      // Make fetch request to your CORS wrapper
+      const response = await fetch('/api/auth/visit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-TractStack-Tenant': window.TRACTSTACK_CONFIG.tenantId
+        },
+        body: new URLSearchParams(sessionData)
+      });
+
+      console.log('TractStack: Response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('TractStack: Response data:', data);
+
+        // Store JWT if provided
+        if (data.token) {
+          localStorage.setItem('tractstack_jwt', data.token);
+          console.log('TractStack: JWT stored');
+        }
+
+        // Store session data
+        if (data.fingerprint) {
+          localStorage.setItem('fp_id', data.fingerprint);
+        }
+        if (data.visitId) {
+          localStorage.setItem('visit_id', data.visitId);
+        }
+
+        // Update global session state to isReady: true
+        if (window.TractStack) {
+          window.TractStack.session = {
+            isReady: true,
+            fingerprint: data.fingerprint,
+            visitId: data.visitId,
+            hasProfile: data.hasProfile,
+            consent: data.consent
+          };
+          console.log('TractStack: Session updated to ready:', window.TractStack.session);
+        }
+
+        // Also update TRACTSTACK_CONFIG if it exists
+        if (window.TRACTSTACK_CONFIG) {
+          window.TRACTSTACK_CONFIG.session = {
+            isReady: true,
+            fingerprint: data.fingerprint,
+            visitId: data.visitId,
+            hasProfile: data.hasProfile,
+            consent: data.consent
+          };
+        }
+
+        // Dispatch session ready event
+        window.dispatchEvent(new CustomEvent('tractstack:session-ready', {
+          detail: data
+        }));
+
+        console.log('TractStack: Session initialization complete');
+
+      } else if (response.status === 429) {
+        console.log('TractStack: Session lock busy, retrying in 500ms...');
+        setTimeout(initializeSession, 500);
+      } else {
+        console.error('TractStack: Session handshake failed:', response.status, await response.text());
+      }
+
+    } catch (error) {
+      console.error('TractStack: Session initialization error:', error);
+    }
+  }
+
+  // Generate a simple fingerprint ID
+  function generateFingerprint() {
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substr(2, 9);
+    return `fp_${timestamp}_${random}`;
+  }
+</script>
