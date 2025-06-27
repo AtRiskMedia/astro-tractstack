@@ -29,7 +29,6 @@ export interface TractStackConfigWithAuth extends TractStackConfig {
   auth?: AuthConfig;
 }
 
-// Update the defineConfig return type to ensure auth is always populated
 export interface TractStackConfigComplete extends TractStackConfig {
   auth: Required<AuthConfig>;
 }
@@ -165,7 +164,7 @@ export function getClientConfig(config: TractStackConfigWithAuth): {
   return {
     backendUrl: env.backendUrl,
     tenantId: env.tenantId,
-    auth: mergedConfig.auth, // Now properly typed as Required<AuthConfig>
+    auth: mergedConfig.auth,
     version: '2.0.0',
   };
 }
