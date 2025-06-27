@@ -90,8 +90,6 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
         backendUrl: goBackend,
         tenantId: tenantId
       };
-      
-      console.log('TractStack: Configuration set', window.TRACTSTACK_CONFIG);
     </script>
 
     <!-- TractStack Session State -->
@@ -104,8 +102,6 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
           tenantId: tenantId
         }
       };
-      
-      console.log('TractStack: Initialized with session:', session);
       
       // Configure HTMX
       htmx.config.selfRequestsOnly = false;

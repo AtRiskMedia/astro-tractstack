@@ -15,8 +15,6 @@
       return;
     }
 
-    console.log('TractStack: Starting session initialization...');
-
     try {
       // Prepare session data
       const fingerprint = localStorage.getItem('fp_id') || generateFingerprint();
@@ -33,8 +31,6 @@
         sessionId: window.tractStackSessionId || ''
       };
 
-      console.log('TractStack: Session data:', sessionData);
-
       // Make fetch request to your CORS wrapper
       const response = await fetch('/api/auth/visit', {
         method: 'POST',
@@ -45,16 +41,11 @@
         body: new URLSearchParams(sessionData)
       });
 
-      console.log('TractStack: Response status:', response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('TractStack: Response data:', data);
-
         // Store JWT if provided
         if (data.token) {
           localStorage.setItem('tractstack_jwt', data.token);
-          console.log('TractStack: JWT stored');
         }
 
         // Store session data
@@ -74,7 +65,6 @@
             hasProfile: data.hasProfile,
             consent: data.consent
           };
-          console.log('TractStack: Session updated to ready:', window.TractStack.session);
         }
 
         // Also update TRACTSTACK_CONFIG if it exists
@@ -93,10 +83,7 @@
           detail: data
         }));
 
-        console.log('TractStack: Session initialization complete');
-
       } else if (response.status === 429) {
-        console.log('TractStack: Session lock busy, retrying in 500ms...');
         setTimeout(initializeSession, 500);
       } else {
         console.error('TractStack: Session handshake failed:', response.status, await response.text());
