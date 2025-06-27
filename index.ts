@@ -1,4 +1,5 @@
 import type { AstroIntegration } from 'astro';
+import node from '@astrojs/node';
 import type { TractStackConfig } from './types.js';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
@@ -22,9 +23,13 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
         await injectTemplateFiles(resolve, logger);
 
         logger.info('TractStack: File injection complete.');
-        logger.info('TractStack: Middleware file should be auto-detected by Astro');
+
+        // FORCE SSR mode - override any existing configuration
+        logger.info('TractStack: Configuring SSR mode...');
 
         updateConfig({
+          output: 'server',
+          adapter: node({ mode: 'standalone' }),
           vite: {
             define: {
               __TRACTSTACK_VERSION__: JSON.stringify('2.0.0')
@@ -32,10 +37,26 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
           }
         });
 
+        logger.info('TractStack: SSR configuration applied');
         logger.info('TractStack integration configured successfully!');
       },
 
       'astro:config:done': ({ config, logger }) => {
+        // VALIDATE that SSR mode was actually applied
+        if (config.output !== 'server') {
+          logger.error(`TractStack requires SSR mode but output is: ${config.output}`);
+          logger.error('TractStack integration must be loaded BEFORE other integrations that set output mode');
+          throw new Error('TractStack integration failed: SSR mode not applied. Ensure tractstack() is first in your integrations array.');
+        }
+
+        if (!config.adapter) {
+          logger.error('TractStack requires Node.js adapter but no adapter is configured');
+          throw new Error('TractStack integration failed: Node.js adapter not applied');
+        }
+
+        logger.info('✅ TractStack SSR configuration verified');
+
+        // Environment variable validation
         const requiredEnvVars = ['PUBLIC_GO_BACKEND', 'PUBLIC_TENANTID'];
         const missing = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
