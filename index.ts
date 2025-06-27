@@ -1,40 +1,31 @@
 import type { AstroIntegration } from 'astro';
 import type { TractStackConfig } from './types.js';
-import path from 'node:path';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
 import { injectTemplateFiles } from './utils/inject-files.js';
 
 export default function tractstack(userConfig: TractStackConfig = {}): AstroIntegration {
   const { resolve } = createResolver(import.meta.url);
-
   return {
     name: 'astro-tractstack',
     hooks: {
       'astro:config:setup': async ({
+        config,
         updateConfig,
         logger
       }) => {
-        // Validate and merge user config with defaults
         const tractStackConfig = validateConfig(userConfig, logger);
 
         logger.info('TractStack: Starting file injection...');
 
-        // Inject template files into the project
         await injectTemplateFiles(resolve, logger);
 
         logger.info('TractStack: File injection complete.');
 
-        // Astro config update with Vite configuration
         updateConfig({
           vite: {
             define: {
               __TRACTSTACK_VERSION__: JSON.stringify('2.0.0')
-            },
-            resolve: {
-              alias: {
-                '@': path.resolve('./src')
-              }
             }
           }
         });
@@ -43,22 +34,22 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
       },
 
       'astro:config:done': ({ config, logger }) => {
-        // Validate environment variables
         const requiredEnvVars = ['PUBLIC_GO_BACKEND', 'PUBLIC_TENANTID'];
         const missing = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
         if (missing.length > 0) {
           logger.warn(`Missing environment variables: ${missing.join(', ')}`);
           logger.info('Run setup: npx create-tractstack');
+        } else {
+          logger.info(`TractStack configured for tenant: ${process.env.PUBLIC_TENANTID}`);
+          logger.info(`Backend URL: ${process.env.PUBLIC_GO_BACKEND}`);
         }
       }
     }
   };
 }
 
-// Named export for the integration
 export { tractstack };
 
-// Export types and utilities
 export type { TractStackConfig } from './types.js';
 export { defineConfig } from './config.js';

@@ -9,24 +9,35 @@ export async function injectTemplateFiles(
   logger.info('TractStack: injectTemplateFiles called');
 
   const templateFiles = [
+    // Middleware
+    {
+      src: resolve('templates/src/middleware.ts'),
+      dest: 'src/middleware.ts'
+    },
     // Basic layout and pages
     {
       src: resolve('templates/src/layouts/Layout.astro'),
-      dest: 'src/layouts/TractStackLayout.astro'
+      dest: 'src/layouts/Layout.astro'
     },
     {
       src: resolve('templates/src/pages/index.astro'),
       dest: 'src/pages/index.astro'
     },
 
+    // API endpoints
+    {
+      src: resolve('templates/src/pages/api/auth/visit.ts'),
+      dest: 'src/pages/api/auth/visit.ts'
+    },
+
     // Components
     {
       src: resolve('templates/src/components/Fragment.astro'),
-      dest: 'src/components/tractstack/Fragment.astro'
+      dest: 'src/components/Fragment.astro'
     },
     {
       src: resolve('templates/src/components/Counter.tsx'),
-      dest: 'src/components/tractstack/Counter.tsx'
+      dest: 'src/components/Counter.tsx'
     },
 
     // Types and utilities
@@ -36,7 +47,7 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve('templates/src/utils/api.ts'),
-      dest: 'src/utils/tractstack-api.ts'
+      dest: 'src/utils/api.ts'
     },
 
     // Project files
@@ -51,7 +62,8 @@ export async function injectTemplateFiles(
       // Always create the file (overwrite if exists for essential files)
       const isEssentialFile = file.dest.includes('index.astro') ||
         file.dest.includes('Layout.astro') ||
-        file.dest.includes('[...slug].astro');
+        file.dest.includes('visit.ts') ||
+        file.dest.includes('middleware.ts');
 
       if (existsSync(file.dest) && !isEssentialFile) {
         logger.info(`Skipping ${file.dest} (already exists)`);

@@ -1,10 +1,10 @@
 ---
 // TractStack Home Page
-import Layout from '../layouts/TractStackLayout.astro';
-import Counter from '../components/tractstack/Counter.tsx';
+import Layout from '../layouts/Layout.astro';
+import Counter from '../components/Counter';
 
 // Read environment variables directly
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 ---
 
@@ -159,8 +159,6 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
           <ul class="config-list">
             <li><strong>Go Backend:</strong> {goBackend}</li>
             <li><strong>Tenant ID:</strong> {tenantId}</li>
-            <li><strong>HTMX Version:</strong> 2.0.4</li>
-            <li><strong>Theme:</strong> auto</li>
           </ul>
         </div>
 

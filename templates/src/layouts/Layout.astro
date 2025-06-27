@@ -1,5 +1,5 @@
 ---
-// TractStack Layout - Main layout with HTMX integration
+// TractStack Layout - Main layout with proper session handling
 
 export interface Props {
   title: string;
@@ -8,8 +8,22 @@ export interface Props {
 
 const { title, description = 'TractStack dynamic website' } = Astro.props;
 
-// Read environment variables directly
+// Get context from middleware
+const tenant = Astro.locals.tenant || {
+  id: import.meta.env.PUBLIC_TENANTID || 'default',
+  domain: Astro.url.hostname,
+  isMultiTenant: false,
+  isLocalhost: true
+};
+
+const session = Astro.locals.session || { isReady: false };
+
+// Read environment variables
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
 const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+console.log('Layout: Tenant:', tenant);
+console.log('Layout: Session:', session);
 ---
 
 <!doctype html>
@@ -63,10 +77,33 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     </style>
   </head>
   <body>
+    <!-- Session Init - only if no existing session, hits Astro API proxy -->
+    {!session.isReady && (
+      <div 
+        id="session-init"
+        hx-post="/api/auth/visit"
+        hx-trigger="load"
+        hx-vals="js:{fingerprint: localStorage.getItem('fp_id') || 'fp_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9)}"
+        style="display: none;"
+      >
+      </div>
+    )}
+
     <slot />
     
-    <!-- HTMX Configuration -->
-    <script define:vars={{ tenantId }}>
+    <!-- TractStack Session State -->
+    <script define:vars={{ goBackend, tenantId, session }}>
+      // Make session data available globally
+      window.TractStack = {
+        session: session,
+        config: {
+          backend: goBackend,
+          tenantId: tenantId
+        }
+      };
+      
+      console.log('TractStack: Initialized with session:', session);
+      
       // Configure HTMX
       htmx.config.selfRequestsOnly = false;
       htmx.config.defaultSwapStyle = 'outerHTML';
@@ -77,10 +114,26 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
         evt.detail.headers['X-TractStack-Tenant'] = tenantId;
       });
       
-      // Handle API responses
+      // Handle session handshake completion
+      document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.target && evt.target.id === 'session-init' && evt.detail.xhr.status === 200) {
+          console.log('TractStack: Session handshake completed, refreshing page');
+          window.location.reload();
+        }
+      });
+      
+      // Handle API errors
       document.body.addEventListener('htmx:responseError', function(evt) {
         console.error('TractStack API Error:', evt.detail);
       });
+      
+      // Dispatch session ready event for other components
+      if (session.isReady) {
+        window.dispatchEvent(new CustomEvent('tractstack:session-ready', {
+          detail: session
+        }));
+        console.log('TractStack: Session ready event dispatched');
+      }
     </script>
   </body>
 </html>
