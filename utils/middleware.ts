@@ -1,4 +1,3 @@
-// templates/src/middleware.ts
 export interface TenantContext {
   id: string;
   domain: string;
@@ -16,8 +15,6 @@ export interface SessionContext {
 }
 
 function extractTenantFromHostname(hostname: string): TenantContext {
-  const isMultiTenantEnabled = (globalThis as any).import?.meta?.env?.PUBLIC_ENABLE_MULTI_TENANT === "true";
-
   const isLocalhost = hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.startsWith('localhost:') ||
@@ -25,80 +22,86 @@ function extractTenantFromHostname(hostname: string): TenantContext {
 
   if (isLocalhost) {
     return {
-      id: (globalThis as any).import?.meta?.env?.DEV ? 'localhost' : 'default',
+      id: 'default',
       domain: hostname,
-      isMultiTenant: isMultiTenantEnabled,
+      isMultiTenant: false,
       isLocalhost: true
     };
   }
 
-  if (isMultiTenantEnabled) {
-    const parts = hostname.split('.');
-
-    if (parts.length >= 4 &&
-      parts[1] === 'sandbox' &&
-      ['tractstack', 'freewebpress'].includes(parts[2]) &&
-      parts[3] === 'com') {
-
-      return {
-        id: parts[0],
-        domain: hostname,
-        subdomain: parts[0],
-        isMultiTenant: true,
-        isLocalhost: false
-      };
-    }
-  }
-
   return {
-    id: (globalThis as any).import?.meta?.env?.PUBLIC_TENANTID || 'default',
+    id: 'default',
     domain: hostname,
     isMultiTenant: false,
     isLocalhost: false
   };
 }
 
-export function createMiddleware() {
-  return async function middleware(context: any, next: any) {
-    const hostname = context.request.headers.get("x-forwarded-host") ||
-      context.request.headers.get("host") ||
-      context.url.hostname;
+function parseCookies(cookieHeader: string): Record<string, string> {
+  const cookies: Record<string, string> = {};
 
-    if (!hostname) {
-      return new Response("Missing hostname", { status: 400 });
-    }
+  if (!cookieHeader) return cookies;
 
-    const tenant = extractTenantFromHostname(hostname);
-    context.locals.tenant = tenant;
+  cookieHeader.split(';').forEach((cookie: string) => {
+    const trimmed = cookie.trim();
+    const equalIndex = trimmed.indexOf('=');
 
-    // For page requests, check existing session from cookies
-    let session: SessionContext = { isReady: false };
-
-    const cookieHeader = context.request.headers.get('cookie') || '';
-    const existingCookies: Record<string, string> = {};
-
-    cookieHeader.split(';').forEach((cookie: string) => {
-      const [name, value] = cookie.trim().split('=');
+    if (equalIndex > 0) {
+      const name = trimmed.substring(0, equalIndex);
+      const value = trimmed.substring(equalIndex + 1);
       if (name && value) {
-        existingCookies[name] = value;
+        cookies[name] = value;
       }
-    });
-
-    if (existingCookies.fp_id || existingCookies.visit_id) {
-      session = {
-        fingerprint: existingCookies.fp_id,
-        visitId: existingCookies.visit_id,
-        consent: existingCookies.consent,
-        hasProfile: !!existingCookies.profile_token,
-        isReady: true
-      };
     }
+  });
 
-    // Make session available to all components
-    context.locals.session = session;
-
-    return next();
-  };
+  return cookies;
 }
 
-export const onRequest = createMiddleware();
+// This export will be transformed during injection
+export const onRequest = async (context: any, next: any) => {
+  console.log('MIDDLEWARE RUNNING - URL:', context.url.pathname);
+
+  const hostname = context.request.headers.get("x-forwarded-host") ||
+    context.request.headers.get("host") ||
+    context.url.hostname;
+
+  if (!hostname) {
+    return new Response("Missing hostname", { status: 400 });
+  }
+
+  const tenant = extractTenantFromHostname(hostname);
+
+  // Parse cookies from request headers (can read HttpOnly cookies)
+  const cookieHeader = context.request.headers.get('cookie') || '';
+  const cookies = parseCookies(cookieHeader);
+
+  console.log('Middleware cookies:', cookies);
+
+  // Session ready if we have fingerprint OR visit_id
+  const hasFingerprint = !!(cookies.fp_id && cookies.fp_id.trim());
+  const hasVisitId = !!(cookies.visit_id && cookies.visit_id.trim());
+  const hasProfile = !!cookies.profile_token; // HttpOnly cookie only visible here
+  const isSessionReady = hasFingerprint || hasVisitId;
+
+  const session: SessionContext = {
+    fingerprint: cookies.fp_id || undefined,
+    visitId: cookies.visit_id || undefined,
+    consent: cookies.consent || undefined,
+    hasProfile: hasProfile,
+    isReady: isSessionReady
+  };
+
+  console.log('Middleware - Session State:', {
+    hasFingerprint,
+    hasVisitId,
+    hasProfile,
+    isReady: isSessionReady,
+    cookieCount: Object.keys(cookies).length
+  });
+
+  context.locals.tenant = tenant;
+  context.locals.session = session;
+
+  return next();
+};

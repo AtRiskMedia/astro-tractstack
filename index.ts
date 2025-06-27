@@ -18,9 +18,11 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
 
         logger.info('TractStack: Starting file injection...');
 
+        // Inject files FIRST
         await injectTemplateFiles(resolve, logger);
 
         logger.info('TractStack: File injection complete.');
+        logger.info('TractStack: Middleware file should be auto-detected by Astro');
 
         updateConfig({
           vite: {

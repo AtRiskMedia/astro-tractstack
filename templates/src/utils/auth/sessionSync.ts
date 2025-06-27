@@ -1,76 +1,17 @@
-// templates/src/utils/auth/sessionSync.ts
-// localStorage/cookie synchronization utilities
-
 export interface SessionData {
-  fingerprint: string | null;
-  visitId: string | null;
-  consent: string | null;
-  encryptedEmail: string | null;
-  encryptedCode: string | null;
+  fingerprint?: string;
+  visitId?: string;
+  consent?: string;
+  encryptedEmail?: string;
+  encryptedCode?: string;
   hasProfile: boolean;
 }
 
-export interface CookieOptions {
-  expires?: Date;
-  path?: string;
-  domain?: string;
-  secure?: boolean;
-  httpOnly?: boolean;
-  sameSite?: 'strict' | 'lax' | 'none';
-}
-
-/**
- * Cookie utilities
- */
-export class CookieManager {
-  static get(name: string): string | null {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-      const part = parts.pop();
-      return part ? decodeURIComponent(part.split(';').shift() || '') : null;
-    }
-    return null;
-  }
-
-  static set(name: string, value: string, options: CookieOptions = {}): void {
-    let cookieString = `${name}=${encodeURIComponent(value)}`;
-
-    if (options.expires) {
-      cookieString += `; expires=${options.expires.toUTCString()}`;
-    }
-
-    cookieString += `; path=${options.path || '/'}`;
-
-    if (options.domain) {
-      cookieString += `; domain=${options.domain}`;
-    }
-
-    if (options.secure) {
-      cookieString += `; secure`;
-    }
-
-    if (options.sameSite) {
-      cookieString += `; samesite=${options.sameSite}`;
-    }
-
-    document.cookie = cookieString;
-  }
-
-  static remove(name: string, path: string = '/'): void {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
-  }
-}
-
-/**
- * LocalStorage utilities with error handling
- */
-export class StorageManager {
+class StorageManager {
   static get(key: string): string | null {
     try {
       return localStorage.getItem(key);
-    } catch (error) {
-      console.warn(`TractStack: Failed to read from localStorage: ${key}`, error);
+    } catch {
       return null;
     }
   }
@@ -79,36 +20,37 @@ export class StorageManager {
     try {
       localStorage.setItem(key, value);
       return true;
-    } catch (error) {
-      console.warn(`TractStack: Failed to write to localStorage: ${key}`, error);
+    } catch {
       return false;
     }
   }
 
-  static remove(key: string): boolean {
+  static remove(key: string): void {
     try {
       localStorage.removeItem(key);
-      return true;
-    } catch (error) {
-      console.warn(`TractStack: Failed to remove from localStorage: ${key}`, error);
-      return false;
-    }
-  }
-
-  static clear(): boolean {
-    try {
-      localStorage.clear();
-      return true;
-    } catch (error) {
-      console.warn('TractStack: Failed to clear localStorage', error);
-      return false;
+    } catch {
+      // Silently fail
     }
   }
 }
 
-/**
- * Session synchronization between localStorage and cookies
- */
+class CookieManager {
+  static get(name: string): string | null {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.trim().split('=');
+      if (cookieName === name && cookieValue) {
+        return decodeURIComponent(cookieValue);
+      }
+    }
+    return null;
+  }
+
+  static remove(name: string): void {
+    document.cookie = `${name}=; Path=/; Max-Age=0`;
+  }
+}
+
 export class SessionSync {
   private static readonly STORAGE_KEYS = {
     fingerprint: 'fp_id',
@@ -126,23 +68,47 @@ export class SessionSync {
   } as const;
 
   /**
-   * Get current session data from localStorage and cookies
+   * Get current session data (cookies take precedence over localStorage)
    */
   static getCurrentSession(): SessionData {
+    // Prefer cookies over localStorage for authoritative state
+    const fingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint) ||
+      StorageManager.get(this.STORAGE_KEYS.fingerprint);
+
+    const visitId = CookieManager.get(this.COOKIE_KEYS.visitId) ||
+      StorageManager.get(this.STORAGE_KEYS.visitId);
+
+    const consent = CookieManager.get(this.COOKIE_KEYS.consent) ||
+      StorageManager.get(this.STORAGE_KEYS.consent);
+
     return {
-      fingerprint: StorageManager.get(this.STORAGE_KEYS.fingerprint),
-      visitId: StorageManager.get(this.STORAGE_KEYS.visitId),
-      consent: StorageManager.get(this.STORAGE_KEYS.consent),
-      encryptedEmail: StorageManager.get(this.STORAGE_KEYS.encryptedEmail),
-      encryptedCode: StorageManager.get(this.STORAGE_KEYS.encryptedCode),
-      hasProfile: !!CookieManager.get(this.COOKIE_KEYS.profileToken),
+      fingerprint: fingerprint || undefined,
+      visitId: visitId || undefined,
+      consent: consent || undefined,
+      encryptedEmail: StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
+      encryptedCode: StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
+      hasProfile: !CookieManager.get(this.COOKIE_KEYS.profileToken),
     };
   }
 
   /**
-   * Sync localStorage with cookies (cookies take precedence)
+   * Prepare data for session handshake request
    */
-  static syncFromCookies(): SessionData {
+  static prepareHandshakeData(): { fingerprint: string; visit_id?: string } {
+    let fingerprint = this.ensureFingerprint();
+    const visitId = CookieManager.get(this.COOKIE_KEYS.visitId) ||
+      StorageManager.get(this.STORAGE_KEYS.visitId);
+
+    return {
+      fingerprint,
+      visit_id: visitId || undefined
+    };
+  }
+
+  /**
+   * Sync localStorage with cookies after successful handshake
+   */
+  static syncAfterHandshake(): SessionData {
     const cookieFingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint);
     const cookieVisitId = CookieManager.get(this.COOKIE_KEYS.visitId);
     const cookieConsent = CookieManager.get(this.COOKIE_KEYS.consent);
@@ -200,7 +166,8 @@ export class SessionSync {
    * Generate a fingerprint ID if none exists
    */
   static ensureFingerprint(): string {
-    let fingerprint = StorageManager.get(this.STORAGE_KEYS.fingerprint);
+    let fingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint) ||
+      StorageManager.get(this.STORAGE_KEYS.fingerprint);
 
     if (!fingerprint) {
       fingerprint = this.generateFingerprint();
@@ -289,6 +256,7 @@ if (typeof window !== 'undefined') {
   (window as any).tractStackDebug = {
     session: () => SessionSync.debugSession(),
     clear: () => SessionSync.clearSession(),
-    sync: () => SessionSync.syncFromCookies(),
+    sync: () => SessionSync.syncAfterHandshake(),
+    prepare: () => SessionSync.prepareHandshakeData(),
   };
 }
