@@ -6,12 +6,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
 
   try {
-    console.log('API Proxy: Forwarding session handshake to Go backend');
-
     // Forward the request to Go backend
     const body = await request.text();
-    console.log('API Proxy: Request body:', body);
-
     const goResponse = await fetch(`${goBackend}/api/v1/auth/visit`, {
       method: 'POST',
       headers: {
@@ -31,11 +27,9 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const responseData = await goResponse.json();
-    console.log('API Proxy: Go response:', responseData);
 
     // Extract cookies from Go response
     const setCookieHeaders = goResponse.headers.getSetCookie ? goResponse.headers.getSetCookie() : [];
-    console.log('API Proxy: Received cookies from Go:', setCookieHeaders);
 
     // Parse and set cookies in Astro
     const sessionData: any = { isReady: false };
@@ -46,8 +40,6 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       if (name && value) {
         const cookieName = name.trim();
         const cookieValue = value.trim();
-
-        console.log('API Proxy: Setting cookie:', cookieName, '=', cookieValue);
 
         // Set non-sensitive cookies accessible to JS
         if (['fp_id', 'visit_id', 'consent'].includes(cookieName)) {
@@ -79,7 +71,6 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     if (sessionData.fingerprint || sessionData.visitId) {
       sessionData.isReady = true;
-      console.log('API Proxy: Session established:', sessionData);
       locals.session = sessionData;
     }
 

@@ -21,9 +21,6 @@ const session = Astro.locals.session || { isReady: false };
 // Read environment variables
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
 const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
-
-console.log('Layout: Tenant:', tenant);
-console.log('Layout: Session:', session);
 ---
 
 <!doctype html>
@@ -102,8 +99,6 @@ console.log('Layout: Session:', session);
         }
       };
       
-      console.log('TractStack: Initialized with session:', session);
-      
       // Configure HTMX
       htmx.config.selfRequestsOnly = false;
       htmx.config.defaultSwapStyle = 'outerHTML';
@@ -117,7 +112,6 @@ console.log('Layout: Session:', session);
       // Handle session handshake completion
       document.body.addEventListener('htmx:afterRequest', function(evt) {
         if (evt.target && evt.target.id === 'session-init' && evt.detail.xhr.status === 200) {
-          console.log('TractStack: Session handshake completed, refreshing page');
           window.location.reload();
         }
       });
@@ -132,7 +126,6 @@ console.log('Layout: Session:', session);
         window.dispatchEvent(new CustomEvent('tractstack:session-ready', {
           detail: session
         }));
-        console.log('TractStack: Session ready event dispatched');
       }
     </script>
   </body>

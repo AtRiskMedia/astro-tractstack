@@ -60,8 +60,6 @@ function extractTenantFromHostname(hostname: string): TenantContext {
 
 export function createMiddleware() {
   return async function middleware(context: any, next: any) {
-    console.log('Middleware: Processing request:', context.request.method, context.url.pathname);
-
     const hostname = context.request.headers.get("x-forwarded-host") ||
       context.request.headers.get("host") ||
       context.url.hostname;
@@ -94,7 +92,6 @@ export function createMiddleware() {
         hasProfile: !!existingCookies.profile_token,
         isReady: true
       };
-      console.log('Middleware: Found existing session:', session);
     }
 
     // Make session available to all components
