@@ -1,5 +1,6 @@
 import type { AstroIntegration } from 'astro';
 import type { TractStackConfig } from './types.js';
+import path from 'node:path';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
 import { injectTemplateFiles } from './utils/inject-files.js';
@@ -11,7 +12,6 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
     name: 'astro-tractstack',
     hooks: {
       'astro:config:setup': async ({
-        config,
         updateConfig,
         logger
       }) => {
@@ -25,11 +25,16 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
 
         logger.info('TractStack: File injection complete.');
 
-        // Simple Astro config update - no virtual modules
+        // Astro config update with Vite configuration
         updateConfig({
           vite: {
             define: {
               __TRACTSTACK_VERSION__: JSON.stringify('2.0.0')
+            },
+            resolve: {
+              alias: {
+                '@': path.resolve('./src')
+              }
             }
           }
         });
