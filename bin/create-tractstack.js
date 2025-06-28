@@ -113,13 +113,19 @@ PUBLIC_TENANTID="${responses.tenantId}"
   try {
     // Install React and Node adapter
     execSync(
-      `${addCommand} react react-dom @astrojs/react@4.3.0 @astrojs/node`,
+      `${addCommand} react@18.3.1 react-dom@18.3.1 @types/react@18.3.11 @types/react-dom@18.3.1`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ React and Node adapter installed'));
 
     // Install UI components
     execSync(`${addCommand} @ark-ui/react`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ UI components installed'));
+
+    // Install hero icons
+    execSync(`${addCommand} @ark-ui/react @heroicons/react`, {
+      stdio: 'inherit',
+    });
     console.log(kleur.green('✅ UI components installed'));
 
     // Install additional dependencies
@@ -136,8 +142,8 @@ PUBLIC_TENANTID="${responses.tenantId}"
     console.log(kleur.red('❌ Failed to install dependencies'));
     console.log(
       'Please run manually:',
-      kolor.cyan(
-        `${addCommand} react react-dom @astrojs/react@4.3.0 @astrojs/node @ark-ui/react path-to-regexp`
+      kleur.cyan(
+        `${addCommand} react react-dom @astrojs/react@4.3.0 @astrojs/node @ark-ui/react @heroicons/react path-to-regexp`
       )
     );
     console.log(

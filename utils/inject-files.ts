@@ -49,8 +49,12 @@ export async function injectTemplateFiles(
       dest: 'src/pages/profile.astro',
     },
     {
-      src: resolve('templates/src/pages/api/profile.ts'),
-      dest: 'src/pages/api/profile.ts',
+      src: resolve('templates/src/pages/api/auth/profile.ts'),
+      dest: 'src/pages/api/auth/profile.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/decode.ts'),
+      dest: 'src/pages/api/auth/decode.ts',
     },
     {
       src: resolve('templates/src/components/profile/ProfileSwitch.tsx'),

@@ -1,8 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Select } from '@ark-ui/react/select';
+import { Portal } from '@ark-ui/react/portal';
+import { createListCollection } from '@ark-ui/react/collection';
+import ChevronRightIcon from '@heroicons/react/20/solid/ChevronRightIcon';
+import ChevronDownIcon from '@heroicons/react/20/solid/ChevronDownIcon';
+import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
+import BellSlashIcon from '@heroicons/react/24/outline/BellSlashIcon';
+import BoltIcon from '@heroicons/react/24/outline/BoltIcon';
+import ChatBubbleBottomCenterIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterIcon';
+import { ProfileStorage } from '../../utils/profileStorage';
 import type { FormEvent } from 'react';
-import { ProfileStorage, type ProfileData } from '../../utils/profileStorage';
 
-// Contact persona options - matches v1.0 structure
+// Contact persona options - matches Go backend expectations
 const contactPersona = [
   {
     id: 'major',
@@ -32,7 +41,7 @@ interface ProfileEditProps {
   onError?: (error: string) => void;
 }
 
-export async function updateProfile(payload: {
+async function updateProfile(payload: {
   firstname: string;
   email: string;
   codeword: string;
@@ -42,7 +51,7 @@ export async function updateProfile(payload: {
   try {
     const sessionData = ProfileStorage.prepareHandshakeData();
 
-    const response = await fetch('/api/profile', {
+    const response = await fetch('/api/auth/profile', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,10 +76,10 @@ export async function updateProfile(payload: {
     // Store updated profile data and tokens
     if (result.profile) {
       ProfileStorage.setProfileData({
-        firstname: result.profile.firstname,
-        contactPersona: result.profile.contactPersona,
-        email: result.profile.email,
-        shortBio: result.profile.shortBio,
+        firstname: result.profile.Firstname, // Capital F
+        contactPersona: result.profile.ContactPersona, // Capital C
+        email: result.profile.Email, // Capital E
+        shortBio: result.profile.ShortBio, // Capital S
       });
     }
 
@@ -92,6 +101,10 @@ export async function updateProfile(payload: {
   }
 }
 
+const classNames = (...classes: (string | undefined | false)[]): string => {
+  return classes.filter(Boolean).join(' ');
+};
+
 export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
   const [submitted, setSubmitted] = useState<boolean | undefined>(undefined);
   const [email, setEmail] = useState('');
@@ -101,6 +114,51 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
   const [saved, setSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [personaSelected, setPersonaSelected] = useState(contactPersona[0]);
+
+  // Create collection for Ark UI Select
+  const personaCollection = useMemo(() => {
+    return createListCollection({
+      items: contactPersona,
+      itemToValue: (item) => item.id,
+      itemToString: (item) => item.title,
+    });
+  }, []);
+
+  const Icon =
+    personaSelected.title === `DMs open`
+      ? ChatBubbleBottomCenterIcon
+      : personaSelected.title === `Major Updates Only`
+        ? ArrowPathRoundedSquareIcon
+        : personaSelected.title === `All Updates`
+          ? BoltIcon
+          : BellSlashIcon;
+
+  const iconClass =
+    personaSelected.title === `DMs open`
+      ? `text-black`
+      : personaSelected.title === `Major Updates Only`
+        ? `text-gray-600`
+        : personaSelected.title === `All Updates`
+          ? `text-orange-500`
+          : `text-gray-600`;
+
+  const barClass =
+    personaSelected.title === `DMs open`
+      ? `bg-green-400/80`
+      : personaSelected.title === `All Updates`
+        ? `bg-orange-400/80`
+        : personaSelected.title === `Major Updates Only`
+          ? `bg-orange-400/50`
+          : `bg-gray-100/5`;
+
+  const barWidth =
+    personaSelected.title === `DMs open`
+      ? `100%`
+      : personaSelected.title === `All Updates`
+        ? `100%`
+        : personaSelected.title === `Major Updates Only`
+          ? `50%`
+          : `2%`;
 
   // Initialize form with current profile data
   useEffect(() => {
@@ -143,6 +201,16 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
     setIsLoading(false);
   };
 
+  const handlePersonaChange = (details: { value: string[] }) => {
+    const selectedId = details.value[0];
+    if (selectedId) {
+      const selected = contactPersona.find((item) => item.id === selectedId);
+      if (selected) {
+        setPersonaSelected(selected);
+      }
+    }
+  };
+
   useEffect(() => {
     if (saved) {
       const timeout = setTimeout(() => setSaved(false), 7000);
@@ -150,69 +218,41 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
     }
   }, [saved]);
 
-  const classNames = (...classes: (string | undefined | false)[]): string => {
-    return classes.filter(Boolean).join(' ');
-  };
-
-  // Icon and styling logic for persona selection
-  const getPersonaIcon = (title: string) => {
-    switch (title) {
-      case 'DMs open':
-        return '💬';
-      case 'Major Updates Only':
-        return '🔄';
-      case 'All Updates':
-        return '⚡';
-      default:
-        return '🔕';
+  // CSS to properly style the select items with hover and selection
+  const selectItemStyles = `
+    .persona-item[data-highlighted] {
+      background-color: #0891b2; /* bg-cyan-600 */
+      color: white;
     }
-  };
-
-  const getPersonaStyles = (title: string) => {
-    switch (title) {
-      case 'DMs open':
-        return {
-          iconClass: 'text-black',
-          barClass: 'bg-green-400',
-          barWidth: '100%',
-        };
-      case 'All Updates':
-        return {
-          iconClass: 'text-orange-500',
-          barClass: 'bg-orange-400',
-          barWidth: '100%',
-        };
-      case 'Major Updates Only':
-        return {
-          iconClass: 'text-gray-600',
-          barClass: 'bg-orange-300',
-          barWidth: '50%',
-        };
-      default:
-        return {
-          iconClass: 'text-gray-600',
-          barClass: 'bg-gray-100',
-          barWidth: '2%',
-        };
+    .persona-item[data-highlighted] .persona-indicator {
+      color: white;
     }
-  };
-
-  const styles = getPersonaStyles(personaSelected.title);
+    .persona-item[data-state="checked"] .persona-indicator {
+      display: flex;
+    }
+    .persona-item .persona-indicator {
+      display: none;
+    }
+    .persona-item[data-state="checked"] {
+      font-weight: bold;
+    }
+  `;
 
   return (
     <>
-      <h3 className="py-6 text-xl font-bold text-blue-600">
+      <style>{selectItemStyles}</style>
+      <h3 className="font-action py-6 text-xl text-blue-600">
         Welcome to Tract Stack
       </h3>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-3 gap-4">
-          {!personaSelected?.disabled && (
+          {!personaSelected?.disabled ? (
             <>
               <div className="col-span-3 px-4 pt-6 md:col-span-1">
                 <label
                   htmlFor="firstname"
-                  className="block text-sm text-gray-700"
+                  className="block text-sm text-gray-600"
                 >
                   First name
                 </label>
@@ -223,14 +263,15 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   autoComplete="given-name"
                   value={firstname}
                   onChange={(e) => setFirstname(e.target.value)}
+                  disabled={isLoading}
                   className={classNames(
-                    'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
-                    submitted && firstname === ''
-                      ? 'border-red-500'
-                      : 'border-gray-300'
+                    `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
+                    submitted && firstname === ``
+                      ? `border-red-500`
+                      : `border-gray-300`
                   )}
                 />
-                {submitted && firstname === '' && (
+                {submitted && firstname === `` && (
                   <span className="px-4 text-xs text-red-500">
                     Required field.
                   </span>
@@ -238,7 +279,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
               </div>
 
               <div className="col-span-3 px-4 pt-6 md:col-span-2">
-                <label htmlFor="email" className="block text-sm text-gray-700">
+                <label htmlFor="email" className="block text-sm text-gray-600">
                   Email address
                 </label>
                 <input
@@ -248,73 +289,95 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                   className={classNames(
-                    'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
-                    submitted && email === ''
-                      ? 'border-red-500'
-                      : 'border-gray-300'
+                    `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
+                    submitted && email === ``
+                      ? `border-red-500`
+                      : `border-gray-300`
                   )}
                 />
-                {submitted && email === '' && (
+                {submitted && email === `` && (
                   <span className="px-4 text-xs text-red-500">
                     Required field.
                   </span>
                 )}
               </div>
             </>
-          )}
+          ) : null}
 
           <div className="col-span-3 px-4 pt-6">
             <div className="flex items-center text-sm">
               <div className="pr-8 text-sm text-black">
-                <label className="mb-2 block text-sm text-gray-700">
-                  Choose your level of consent:
-                </label>
+                <Select.Root
+                  collection={personaCollection}
+                  defaultValue={[personaSelected.id]}
+                  onValueChange={handlePersonaChange}
+                  disabled={isLoading}
+                >
+                  <Select.Label className="mb-2 block text-sm text-gray-600">
+                    Choose your level of consent:
+                  </Select.Label>
 
-                <div className="relative mt-2">
-                  <select
-                    value={personaSelected.id}
-                    onChange={(e) => {
-                      const selected = contactPersona.find(
-                        (item) => item.id === e.target.value
-                      );
-                      if (selected) setPersonaSelected(selected);
-                    }}
-                    className="text-md relative w-full cursor-default rounded-md bg-white py-3 pl-3 pr-10 text-left text-black shadow-sm ring-1 ring-inset ring-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600"
-                  >
-                    {contactPersona.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <Select.Control className="relative mt-2">
+                    <Select.Trigger className="text-md relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left leading-6 text-black shadow-sm ring-1 ring-inset ring-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600">
+                      <Select.ValueText className="block truncate p-2">
+                        {personaSelected.title}
+                      </Select.ValueText>
+                      <Select.Indicator className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <ChevronDownIcon
+                          className="h-5 w-5 text-gray-600"
+                          aria-hidden="true"
+                        />
+                      </Select.Indicator>
+                    </Select.Trigger>
+                  </Select.Control>
+
+                  <Portal>
+                    <Select.Positioner>
+                      <Select.Content className="z-10 mt-2 w-full overflow-auto rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        {personaCollection.items.map((option) => (
+                          <Select.Item
+                            key={option.id}
+                            item={option}
+                            className="persona-item cursor-default select-none p-2 text-sm text-black hover:bg-slate-100"
+                          >
+                            <Select.ItemText className="block truncate">
+                              {option.title}
+                            </Select.ItemText>
+                            <Select.ItemIndicator className="persona-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                              {/* CheckIcon would go here if needed */}
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Portal>
+                </Select.Root>
               </div>
-
               <div className="flex flex-1 items-center">
-                <div className="ml-1 flex flex-1 items-center">
-                  <span
-                    className={classNames(
-                      'flex-shrink-0 text-lg',
-                      styles.iconClass
-                    )}
-                  >
-                    {getPersonaIcon(personaSelected.title)}
-                  </span>
+                <div
+                  aria-hidden="true"
+                  className="ml-1 flex flex-1 items-center"
+                >
+                  <Icon
+                    className={classNames(iconClass, `h-5 w-5 flex-shrink-0`)}
+                    aria-hidden="true"
+                  />
                   <div className="relative ml-3 flex-1">
-                    <div className="h-7 rounded-full border border-gray-200" />
+                    <div className="h-7 rounded-full border border-gray-300/20" />
                     <div
                       className={classNames(
-                        'absolute inset-y-0 rounded-full',
-                        styles.barClass
+                        `absolute inset-y-0 rounded-full border-gray-300/20`,
+                        barClass
                       )}
-                      style={{ width: styles.barWidth }}
+                      style={{ width: barWidth }}
                     />
                   </div>
                 </div>
               </div>
             </div>
-            <p className="mt-2 text-right text-sm text-gray-600">
+            <p className="text-right text-sm text-gray-600">
               {personaSelected.description}
             </p>
           </div>
@@ -322,7 +385,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-3 px-4 pt-6">
-            <label htmlFor="bio" className="block text-sm text-gray-700">
+            <label htmlFor="bio" className="block text-sm text-gray-600">
               Hello {firstname}. Is there anything else you would like to share?
             </label>
             <div className="mt-2">
@@ -335,12 +398,13 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                 placeholder="Your one-liner bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
+                disabled={isLoading}
               />
             </div>
           </div>
 
           <div className="col-span-1 px-4 pt-6">
-            <label htmlFor="codeword" className="block text-sm text-gray-700">
+            <label htmlFor="codeword" className="block text-sm text-gray-600">
               Re-Enter your secret code word to save any changes:
             </label>
             <input
@@ -350,58 +414,46 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
               autoComplete="current-password"
               value={codeword}
               onChange={(e) => setCodeword(e.target.value)}
+              disabled={isLoading}
               className={classNames(
-                'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
-                submitted && codeword === ''
-                  ? 'border-red-500'
-                  : 'border-gray-300'
+                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
+                submitted && codeword === ``
+                  ? `border-red-500`
+                  : `border-gray-300`
               )}
             />
-            {submitted && codeword === '' && (
+            {submitted && codeword === `` && (
               <span className="px-4 text-xs text-red-500">Required field.</span>
             )}
           </div>
 
-          {saved && (
-            <div className="align-center col-span-3 flex justify-center py-12 font-bold text-green-500">
+          {saved ? (
+            <div className="align-center font-action col-span-3 flex justify-center py-12 text-green-500">
               Profile Saved
             </div>
-          )}
+          ) : null}
 
-          {codeword !== '' && (
+          {codeword !== `` ? (
             <div className="align-center col-span-3 flex justify-center py-12">
               {!personaSelected?.disabled ? (
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex rounded-md bg-cyan-100 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:opacity-50"
+                  className="inline-flex rounded-md bg-cyan-600/10 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="pr-4">
                     {isLoading ? 'Saving...' : 'Save Profile'}
                   </span>
-                  {!isLoading && (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  )}
+                  <ChevronRightIcon
+                    className="mr-3 h-5 w-5"
+                    aria-hidden="true"
+                  />
                 </button>
               ) : (
-                <span className="text-gray-600">
-                  Profile disabled. (Privacy mode enabled)
-                </span>
+                `Profile disabled. (Privacy mode enabled)`
               )}
             </div>
-          )}
+          ) : null}
         </div>
       </form>
     </>

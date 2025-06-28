@@ -3,21 +3,30 @@
 ---
 
 <script>
+  //console.log('SessionInit script loaded!');
+
   // Initialize session when DOM is ready
   document.addEventListener('DOMContentLoaded', function () {
+    //console.log('DOMContentLoaded fired, calling initializeSession');
     initializeSession();
   });
 
   async function initializeSession() {
+    //console.log('initializeSession started');
+
     // Wait for configuration to be available
     if (!window.TRACTSTACK_CONFIG?.configured) {
+      //console.log('TRACTSTACK_CONFIG not ready, retrying...');
       setTimeout(initializeSession, 100);
       return;
     }
 
+    //console.log('TRACTSTACK_CONFIG ready:', window.TRACTSTACK_CONFIG);
+
     try {
       // Get or create persistent sessionId
       const sessionId = getOrCreateSessionId();
+      //console.log('Generated sessionId:', sessionId);
 
       // Prepare session data (session-only, no client-generated IDs)
       const sessionData = {
@@ -108,7 +117,10 @@
 
       // Store it for future page loads
       localStorage.setItem(SESSION_KEY, sessionId);
+      window.tractStackSessionId = sessionId;
     }
+    // Make sessionId available globally for ProfileStorage
+    window.tractStackSessionId = sessionId;
 
     return sessionId;
   }

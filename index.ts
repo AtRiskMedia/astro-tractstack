@@ -45,6 +45,12 @@ export default function tractstack(
             ssr: {
               noExternal: ['path-to-regexp', '@ark-ui/react'],
             },
+            optimizeDeps: {
+              include: [
+                '@heroicons/react/24/outline',
+                '@heroicons/react/20/solid',
+              ],
+            },
           },
         });
 
