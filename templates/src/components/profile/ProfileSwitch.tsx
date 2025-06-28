@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { ProfileStorage } from "../../utils/profileStorage";
-import { ProfileCreate } from "./ProfileCreate";
-import { ProfileEdit } from "./ProfileEdit";
-import { ProfileUnlock } from "./ProfileUnlock";
+import { useEffect, useState } from 'react';
+import { ProfileStorage } from '../../utils/profileStorage';
+import { ProfileCreate } from './ProfileCreate';
+import { ProfileEdit } from './ProfileEdit';
+import { ProfileUnlock } from './ProfileUnlock';
 
-type ProfileMode = "unset" | "create" | "edit" | "unlock";
+type ProfileMode = 'unset' | 'create' | 'edit' | 'unlock';
 
 async function restoreProfile() {
   const session = ProfileStorage.getCurrentSession();
 
   if (session.encryptedEmail && session.encryptedCode) {
     try {
-      const response = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: session.sessionId,
           encryptedEmail: session.encryptedEmail,
@@ -39,14 +39,14 @@ async function restoreProfile() {
         return true;
       }
     } catch (e) {
-      console.error("Failed to restore profile:", e);
+      console.error('Failed to restore profile:', e);
     }
   }
   return false;
 }
 
 export const ProfileSwitch = () => {
-  const [mode, setMode] = useState<ProfileMode>("unset");
+  const [mode, setMode] = useState<ProfileMode>('unset');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export const ProfileSwitch = () => {
 
       // Check if we've been directed to show the unlock form
       if (ProfileStorage.shouldShowUnlock()) {
-        setMode("unlock");
+        setMode('unlock');
         ProfileStorage.setShowUnlock(false); // Clear the flag after using it
         setIsLoading(false);
         return;
@@ -68,25 +68,31 @@ export const ProfileSwitch = () => {
       const consent = ProfileStorage.getConsent();
 
       // If we have encrypted credentials but no profile data, try to restore
-      if (session.encryptedCode && session.encryptedEmail && !profileData.firstname) {
+      if (
+        session.encryptedCode &&
+        session.encryptedEmail &&
+        !profileData.firstname
+      ) {
         const restored = await restoreProfile();
         if (restored) {
-          setMode("edit");
+          setMode('edit');
           setIsLoading(false);
           return;
         }
       }
 
       // Determine which mode to show based on current state
-      if ((session.encryptedCode && session.encryptedEmail && !isUnlocked) ||
-        (hasProfile && !isUnlocked)) {
-        setMode("unlock");
-      } else if (consent === "1" && !hasProfile) {
-        setMode("create");
+      if (
+        (session.encryptedCode && session.encryptedEmail && !isUnlocked) ||
+        (hasProfile && !isUnlocked)
+      ) {
+        setMode('unlock');
+      } else if (consent === '1' && !hasProfile) {
+        setMode('create');
       } else if (isUnlocked && profileData.firstname) {
-        setMode("edit");
+        setMode('edit');
       } else {
-        setMode("unset");
+        setMode('unset');
       }
 
       setIsLoading(false);
@@ -99,21 +105,21 @@ export const ProfileSwitch = () => {
     // Refresh the mode after successful operation
     const profileData = ProfileStorage.getProfileData();
     if (profileData.firstname) {
-      setMode("edit");
+      setMode('edit');
     }
   };
 
   const handleProfileError = (error: string) => {
-    console.error("Profile operation error:", error);
+    console.error('Profile operation error:', error);
     // Could show a toast or other error UI here
   };
 
   if (isLoading) {
     return (
       <div className="py-12">
-        <div className="bg-white border border-dashed border-blue-100">
+        <div className="border border-dashed border-blue-100 bg-white">
           <div className="p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <p className="mt-2 text-gray-600">Loading profile...</p>
           </div>
         </div>
@@ -121,11 +127,11 @@ export const ProfileSwitch = () => {
     );
   }
 
-  if (mode === "unset") {
+  if (mode === 'unset') {
     return <div />;
   }
 
-  if (mode === "edit" && !ProfileStorage.getProfileData().firstname) {
+  if (mode === 'edit' && !ProfileStorage.getProfileData().firstname) {
     return <div />;
   }
 
@@ -133,16 +139,16 @@ export const ProfileSwitch = () => {
 
   return (
     <div className="py-12">
-      <div className="bg-white border border-dashed border-blue-100">
+      <div className="border border-dashed border-blue-100 bg-white">
         <div className="p-6">
-          {mode === "create" && (
+          {mode === 'create' && (
             <ProfileCreate
               onSuccess={handleProfileSuccess}
               onError={handleProfileError}
             />
           )}
 
-          {mode === "unlock" && (
+          {mode === 'unlock' && (
             <ProfileUnlock
               initialEmail={lastEmail || undefined}
               onSuccess={handleProfileSuccess}
@@ -150,7 +156,7 @@ export const ProfileSwitch = () => {
             />
           )}
 
-          {mode === "edit" && (
+          {mode === 'edit' && (
             <ProfileEdit
               onSuccess={handleProfileSuccess}
               onError={handleProfileError}

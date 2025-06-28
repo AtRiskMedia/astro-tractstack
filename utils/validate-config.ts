@@ -1,6 +1,9 @@
 // utils/validate-config.ts
 import type { AstroIntegrationLogger } from 'astro';
-import type { TractStackConfigWithAuth, TractStackConfigComplete } from '../config.js';
+import type {
+  TractStackConfigWithAuth,
+  TractStackConfigComplete,
+} from '../config.js';
 import { defineConfig } from '../config.js';
 
 export function validateConfig(
@@ -14,7 +17,9 @@ export function validateConfig(
   logger.info('TractStack auth configuration applied');
 
   if (config.auth.enableDebugMode) {
-    logger.info('Debug mode enabled - detailed logs will be available in browser console');
+    logger.info(
+      'Debug mode enabled - detailed logs will be available in browser console'
+    );
   }
 
   if (config.auth.requireConsent) {
@@ -22,7 +27,9 @@ export function validateConfig(
   }
 
   if (!config.auth.enableAutoSession) {
-    logger.warn('Auto-session disabled - you must manually trigger session initialization');
+    logger.warn(
+      'Auto-session disabled - you must manually trigger session initialization'
+    );
   }
 
   // Validate environment at build time (non-blocking warnings)

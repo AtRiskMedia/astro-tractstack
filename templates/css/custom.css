@@ -1,6 +1,6 @@
 :root {
-  --font-main: "Font-Main";
-  --font-action: "Font-Action";
+  --font-main: 'Font-Main';
+  --font-action: 'Font-Action';
   --scale: 1;
   --brand-1: #10120d;
   --brand-2: #fcfcfc;
@@ -13,21 +13,21 @@
 }
 
 @font-face {
-  font-family: "Font-Main";
-  src: url("../fonts/Inter-Regular.woff2");
+  font-family: 'Font-Main';
+  src: url('../fonts/Inter-Regular.woff2');
   font-display: fallback;
 }
 
 @font-face {
-  font-family: "Font-Main";
-  src: url("../fonts/Inter-Bold.woff2");
+  font-family: 'Font-Main';
+  src: url('../fonts/Inter-Bold.woff2');
   font-weight: bold;
   font-display: fallback;
 }
 
 @font-face {
-  font-family: "Font-Action";
-  src: url("../fonts/Inter-Black.woff2");
+  font-family: 'Font-Action';
+  src: url('../fonts/Inter-Black.woff2');
   font-display: fallback;
 }
 
@@ -36,7 +36,7 @@ html {
 }
 
 body {
-  font-family: "Font-Main", Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-family: 'Font-Main', Arial, 'Helvetica Neue', Helvetica, sans-serif;
   background: white;
 }
 

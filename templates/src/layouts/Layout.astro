@@ -1,7 +1,7 @@
 ---
 // TractStack V2.0 Layout - Clean foundation with basic essentials
 
-import { ClientRouter } from "astro:transitions";
+import { ClientRouter } from 'astro:transitions';
 import SessionInit from '../components/auth/SessionInit.astro';
 
 export interface Props {
@@ -10,10 +10,10 @@ export interface Props {
   storykeep?: boolean;
 }
 
-const { 
-  title, 
+const {
+  title,
   description = 'TractStack dynamic website',
-  storykeep = false 
+  storykeep = false,
 } = Astro.props;
 
 // Get context from middleware
@@ -21,18 +21,18 @@ const tenant = Astro.locals.tenant || {
   id: import.meta.env.PUBLIC_TENANTID || 'default',
   domain: Astro.url.hostname,
   isMultiTenant: false,
-  isLocalhost: true
+  isLocalhost: true,
 };
 
 // Determine CSS and font paths based on environment
 const isDev = import.meta.env.DEV;
-const cssBasePath = isDev ? "/styles" : "/media/css";
-const fontBasePath = isDev ? "/fonts" : "/media/fonts";
+const cssBasePath = isDev ? '/styles' : '/media/css';
+const fontBasePath = isDev ? '/fonts' : '/media/fonts';
 
-const mainStylesUrl = storykeep 
+const mainStylesUrl = storykeep
   ? `${cssBasePath}/storykeep.css`
-  : isDev 
-    ? `${cssBasePath}/storykeep.css` 
+  : isDev
+    ? `${cssBasePath}/storykeep.css`
     : `${cssBasePath}/frontend.css`;
 
 // Read environment variables
@@ -44,39 +44,40 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 <html lang="en" class="motion-safe:scroll-smooth">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <title>{title}</title>
-    
+
     <!-- TractStack Styles -->
     <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
     <link rel="stylesheet" href={mainStylesUrl} />
-    
+
     <!-- HTMX -->
-    <script 
-      src="https://unpkg.com/htmx.org@2.0.4"
-      crossorigin="anonymous"
+    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"
     ></script>
-    
+
     <!-- Bunny player.js -->
     <script
       is:inline
       type="text/javascript"
-      src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"
-    ></script>
+      src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
 
     <ClientRouter />
   </head>
-  
-  <body class="w-full font-main">
+
+  <body class="font-main w-full">
     <!-- Loading indicator -->
     <div
       id="loading-indicator"
-      class="fixed top-0 left-0 w-full h-1 bg-myorange transform scale-x-0 transition-transform duration-300 ease-out z-50"
-    ></div>
-    
+      class="bg-myorange fixed left-0 top-0 z-50 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
+    >
+    </div>
+
     <!-- Main content wrapper -->
     <div id="content" class="transition-opacity duration-300">
       <SessionInit />
@@ -90,44 +91,44 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
         configured: true,
         backendUrl: goBackend,
         tenantId: tenantId,
-        fontBasePath: fontBasePath
+        fontBasePath: fontBasePath,
       };
 
       // Also keep the old TractStack object for compatibility
       window.TractStack = {
         config: {
           backend: goBackend,
-          tenantId: tenantId
-        }
+          tenantId: tenantId,
+        },
       };
-      
+
       // Configure HTMX
       htmx.config.selfRequestsOnly = false;
       htmx.config.defaultSwapStyle = 'innerHTML';
       htmx.config.historyCacheSize = 10;
-      
+
       // Set up default headers for TractStack
-      document.body.addEventListener('htmx:configRequest', function(evt) {
+      document.body.addEventListener('htmx:configRequest', function (evt) {
         evt.detail.headers['X-TractStack-Tenant'] = tenantId;
       });
-      
+
       // Handle API errors
-      document.body.addEventListener('htmx:responseError', function(evt) {
+      document.body.addEventListener('htmx:responseError', function (evt) {
         console.error('TractStack API Error:', evt.detail);
       });
 
       // Basic loading animations for page transitions
-      document.addEventListener("astro:before-preparation", () => {
-        const indicator = document.getElementById("loading-indicator");
+      document.addEventListener('astro:before-preparation', () => {
+        const indicator = document.getElementById('loading-indicator');
         if (indicator) {
-          indicator.style.transform = "scale-x-1";
+          indicator.style.transform = 'scale-x-1';
         }
       });
 
-      document.addEventListener("astro:after-swap", () => {
-        const indicator = document.getElementById("loading-indicator");
+      document.addEventListener('astro:after-swap', () => {
+        const indicator = document.getElementById('loading-indicator');
         if (indicator) {
-          indicator.style.transform = "scale-x-0";
+          indicator.style.transform = 'scale-x-0';
         }
       });
     </script>

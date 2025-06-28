@@ -1,5 +1,4 @@
 // Template file - will be injected into user projects
-// Do not use relative imports here as this gets copied
 
 export interface APIResponse<T = any> {
   success: boolean;
@@ -19,8 +18,8 @@ export interface TractStackEvent {
 
 function getConfig() {
   return {
-    goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
-    tenantId: import.meta.env.PUBLIC_TENANTID || 'default'
+    goBackend: process.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
+    tenantId: process.env.PUBLIC_TENANTID || 'default',
   };
 }
 
@@ -34,10 +33,12 @@ function getTenantFromDomain(): string {
   }
 
   const parts = hostname.split('.');
-  if (parts.length >= 4 &&
+  if (
+    parts.length >= 4 &&
     parts[1] === 'sandbox' &&
     ['tractstack', 'freewebpress'].includes(parts[2]) &&
-    parts[3] === 'com') {
+    parts[3] === 'com'
+  ) {
     return parts[0];
   }
 
@@ -178,14 +179,6 @@ export function setupHTMXDefaults(): void {
 declare global {
   interface Window {
     htmx: any;
-  }
-
-  namespace ImportMeta {
-    interface Env {
-      PUBLIC_GO_BACKEND?: string;
-      PUBLIC_TENANTID?: string;
-      DEV?: boolean;
-    }
   }
 }
 

@@ -80,7 +80,9 @@ export interface TractStackEvent {
 }
 
 // Fragment component props
-export interface FragmentProps extends BaseComponentProps, Partial<HTMXAttributes> {
+export interface FragmentProps
+  extends BaseComponentProps,
+    Partial<HTMXAttributes> {
   /** Fragment ID */
   fragmentId?: string;
 
@@ -92,4 +94,6 @@ export interface FragmentProps extends BaseComponentProps, Partial<HTMXAttribute
 }
 
 // Utility type for extracting props from Astro components
-export type AstroComponentProps<T> = T extends (props: infer P) => any ? P : never;
+export type AstroComponentProps<T> = T extends (props: infer P) => any
+  ? P
+  : never;

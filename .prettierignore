@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.astro/
+templates/css/
+templates/fonts/

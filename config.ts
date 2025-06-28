@@ -48,7 +48,9 @@ const defaultAuthConfig: Required<AuthConfig> = {
   logLevel: 'warn',
 };
 
-export function defineConfig(config: TractStackConfigWithAuth = {}): TractStackConfigComplete {
+export function defineConfig(
+  config: TractStackConfigWithAuth = {}
+): TractStackConfigComplete {
   const isProduction = process.env.NODE_ENV === 'production';
 
   const authConfig: Required<AuthConfig> = {
@@ -78,7 +80,8 @@ export function validateAuthConfig(config: AuthConfig): {
     if (config.sessionTimeout < 1) {
       errors.push('sessionTimeout must be at least 1 minute');
     }
-    if (config.sessionTimeout > 1440) { // 24 hours
+    if (config.sessionTimeout > 1440) {
+      // 24 hours
       warnings.push('sessionTimeout > 24 hours may cause memory issues');
     }
   }
@@ -89,7 +92,9 @@ export function validateAuthConfig(config: AuthConfig): {
       errors.push('consentTimeout must be at least 1 day');
     }
     if (config.consentTimeout > 365) {
-      warnings.push('consentTimeout > 365 days may not comply with privacy regulations');
+      warnings.push(
+        'consentTimeout > 365 days may not comply with privacy regulations'
+      );
     }
   }
 
@@ -135,7 +140,9 @@ export function getEnvironmentConfig(): {
   if (!tenantId) {
     errors.push('PUBLIC_TENANTID environment variable is required');
   } else if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) {
-    errors.push('PUBLIC_TENANTID must contain only alphanumeric characters, hyphens, and underscores');
+    errors.push(
+      'PUBLIC_TENANTID must contain only alphanumeric characters, hyphens, and underscores'
+    );
   }
 
   return {
@@ -156,7 +163,9 @@ export function getClientConfig(config: TractStackConfigWithAuth): {
   const env = getEnvironmentConfig();
 
   if (!env.isValid) {
-    throw new Error(`Invalid environment configuration: ${env.errors.join(', ')}`);
+    throw new Error(
+      `Invalid environment configuration: ${env.errors.join(', ')}`
+    );
   }
 
   const mergedConfig = defineConfig(config);
@@ -170,4 +179,7 @@ export function getClientConfig(config: TractStackConfigWithAuth): {
 }
 
 // Type exports
-export type { TractStackConfigWithAuth as TractStackConfigExport, AuthConfig as AuthConfigExport };
+export type {
+  TractStackConfigWithAuth as TractStackConfigExport,
+  AuthConfig as AuthConfigExport,
+};

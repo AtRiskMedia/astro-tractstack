@@ -50,8 +50,10 @@ export class SessionSync {
     return {
       sessionId: (window as any).tractStackSessionId || undefined,
       consent: StorageManager.get(this.STORAGE_KEYS.consent) || undefined,
-      encryptedEmail: StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
-      encryptedCode: StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
+      encryptedEmail:
+        StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
+      encryptedCode:
+        StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
       hasProfile: !!StorageManager.get(this.STORAGE_KEYS.profileToken),
     };
   }
@@ -67,7 +69,9 @@ export class SessionSync {
   } {
     const sessionId = (window as any).tractStackSessionId;
     if (!sessionId) {
-      throw new Error('Session ID not available - ensure SSR session generation is working');
+      throw new Error(
+        'Session ID not available - ensure SSR session generation is working'
+      );
     }
 
     const data: any = { sessionId };
@@ -87,8 +91,14 @@ export class SessionSync {
    * Store encrypted credentials for profile fast-pass
    */
   static storeEncryptedCredentials(email: string, code: string): boolean {
-    const emailStored = StorageManager.set(this.STORAGE_KEYS.encryptedEmail, email);
-    const codeStored = StorageManager.set(this.STORAGE_KEYS.encryptedCode, code);
+    const emailStored = StorageManager.set(
+      this.STORAGE_KEYS.encryptedEmail,
+      email
+    );
+    const codeStored = StorageManager.set(
+      this.STORAGE_KEYS.encryptedCode,
+      code
+    );
     return emailStored && codeStored;
   }
 
@@ -105,7 +115,7 @@ export class SessionSync {
    */
   static clearSession(): void {
     // Clear localStorage
-    Object.values(this.STORAGE_KEYS).forEach(key => {
+    Object.values(this.STORAGE_KEYS).forEach((key) => {
       StorageManager.remove(key);
     });
 

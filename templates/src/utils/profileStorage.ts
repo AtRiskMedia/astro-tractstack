@@ -67,8 +67,10 @@ export class ProfileStorage {
     return {
       sessionId: (window as any).tractStackSessionId || undefined,
       consent: StorageManager.get(this.STORAGE_KEYS.consent) || undefined,
-      encryptedEmail: StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
-      encryptedCode: StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
+      encryptedEmail:
+        StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
+      encryptedCode:
+        StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
       hasProfile: !!StorageManager.get(this.STORAGE_KEYS.profileToken),
     };
   }
@@ -79,7 +81,8 @@ export class ProfileStorage {
   static getProfileData(): ProfileData {
     return {
       firstname: StorageManager.get(this.STORAGE_KEYS.firstname) || undefined,
-      contactPersona: StorageManager.get(this.STORAGE_KEYS.contactPersona) || undefined,
+      contactPersona:
+        StorageManager.get(this.STORAGE_KEYS.contactPersona) || undefined,
       email: StorageManager.get(this.STORAGE_KEYS.email) || undefined,
       shortBio: StorageManager.get(this.STORAGE_KEYS.shortBio) || undefined,
     };
@@ -89,10 +92,17 @@ export class ProfileStorage {
    * Store profile data
    */
   static setProfileData(profile: ProfileData): void {
-    if (profile.firstname) StorageManager.set(this.STORAGE_KEYS.firstname, profile.firstname);
-    if (profile.contactPersona) StorageManager.set(this.STORAGE_KEYS.contactPersona, profile.contactPersona);
-    if (profile.email) StorageManager.set(this.STORAGE_KEYS.email, profile.email);
-    if (profile.shortBio) StorageManager.set(this.STORAGE_KEYS.shortBio, profile.shortBio);
+    if (profile.firstname)
+      StorageManager.set(this.STORAGE_KEYS.firstname, profile.firstname);
+    if (profile.contactPersona)
+      StorageManager.set(
+        this.STORAGE_KEYS.contactPersona,
+        profile.contactPersona
+      );
+    if (profile.email)
+      StorageManager.set(this.STORAGE_KEYS.email, profile.email);
+    if (profile.shortBio)
+      StorageManager.set(this.STORAGE_KEYS.shortBio, profile.shortBio);
   }
 
   /**
@@ -106,7 +116,9 @@ export class ProfileStorage {
   } {
     const sessionId = (window as any).tractStackSessionId;
     if (!sessionId) {
-      throw new Error('Session ID not available - ensure SSR session generation is working');
+      throw new Error(
+        'Session ID not available - ensure SSR session generation is working'
+      );
     }
 
     const data: any = { sessionId };
@@ -126,8 +138,14 @@ export class ProfileStorage {
    * Store encrypted credentials for profile fast-pass
    */
   static storeEncryptedCredentials(email: string, code: string): boolean {
-    const emailStored = StorageManager.set(this.STORAGE_KEYS.encryptedEmail, email);
-    const codeStored = StorageManager.set(this.STORAGE_KEYS.encryptedCode, code);
+    const emailStored = StorageManager.set(
+      this.STORAGE_KEYS.encryptedEmail,
+      email
+    );
+    const codeStored = StorageManager.set(
+      this.STORAGE_KEYS.encryptedCode,
+      code
+    );
     return emailStored && codeStored;
   }
 
@@ -222,7 +240,7 @@ export class ProfileStorage {
    */
   static clearSession(): void {
     // Clear all localStorage keys
-    Object.values(this.STORAGE_KEYS).forEach(key => {
+    Object.values(this.STORAGE_KEYS).forEach((key) => {
       StorageManager.remove(key);
     });
 

@@ -12,16 +12,16 @@ interface Props extends HTMLAttributes<'div'> {
   hxTrigger?: string;
 }
 
-const { 
-  id, 
-  hxGet, 
-  hxPost, 
-  hxTarget, 
-  hxSwap = 'outerHTML', 
+const {
+  id,
+  hxGet,
+  hxPost,
+  hxTarget,
+  hxSwap = 'outerHTML',
   hxTrigger,
   class: className,
   style,
-  ...rest 
+  ...rest
 } = Astro.props;
 
 // Build HTMX attributes
@@ -33,7 +33,7 @@ if (hxSwap) htmxAttrs['hx-swap'] = hxSwap;
 if (hxTrigger) htmxAttrs['hx-trigger'] = hxTrigger;
 ---
 
-<div 
+<div
   id={id}
   class={`tractstack-fragment ${className || ''}`}
   style={style}
@@ -52,17 +52,17 @@ if (hxTrigger) htmxAttrs['hx-trigger'] = hxTrigger;
     background: #fafafa;
     transition: all 0.2s ease;
   }
-  
+
   .tractstack-fragment:hover {
     border-color: #0066cc;
     box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
   }
-  
+
   .tractstack-fragment.htmx-request {
     opacity: 0.7;
     pointer-events: none;
   }
-  
+
   .tractstack-fragment.htmx-swapping {
     opacity: 0;
     transform: scale(0.95);

@@ -5,6 +5,6 @@ export function createResolver(importMetaUrl: string) {
   const __dirname = dirname(fileURLToPath(importMetaUrl));
 
   return {
-    resolve: (...paths: string[]) => resolve(__dirname, ...paths)
+    resolve: (...paths: string[]) => resolve(__dirname, ...paths),
   };
 }

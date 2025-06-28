@@ -1,30 +1,30 @@
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
-import { ProfileStorage, type ProfileData } from "../../utils/profileStorage";
+import { useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { ProfileStorage, type ProfileData } from '../../utils/profileStorage';
 
 // Contact persona options - matches v1.0 structure
 const contactPersona = [
   {
-    id: "major",
-    title: "Major Updates Only",
-    description: "Will only send major updates and do so infrequently."
+    id: 'major',
+    title: 'Major Updates Only',
+    description: 'Will only send major updates and do so infrequently.',
   },
   {
-    id: "all",
-    title: "All Updates",
-    description: "Be fully in the know!"
+    id: 'all',
+    title: 'All Updates',
+    description: 'Be fully in the know!',
   },
   {
-    id: "open",
-    title: "DMs open",
-    description: "Leave your contact details and we'll get in touch!"
+    id: 'open',
+    title: 'DMs open',
+    description: "Leave your contact details and we'll get in touch!",
   },
   {
-    id: "none",
-    title: "None",
-    description: "Disables all communications from us.",
-    disabled: true
-  }
+    id: 'none',
+    title: 'None',
+    description: 'Disables all communications from us.',
+    disabled: true,
+  },
 ];
 
 interface ProfileEditProps {
@@ -41,11 +41,11 @@ export async function updateProfile(payload: {
 }) {
   try {
     const sessionData = ProfileStorage.prepareHandshakeData();
-    
-    const response = await fetch("/api/profile", {
-      method: "POST",
+
+    const response = await fetch('/api/profile', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         firstname: payload.firstname,
@@ -59,7 +59,7 @@ export async function updateProfile(payload: {
     });
 
     const result = await response.json();
-    
+
     if (!result.success) {
       return { success: false, error: result.error || 'Profile update failed' };
     }
@@ -79,7 +79,10 @@ export async function updateProfile(payload: {
     }
 
     if (result.encryptedEmail && result.encryptedCode) {
-      ProfileStorage.storeEncryptedCredentials(result.encryptedEmail, result.encryptedCode);
+      ProfileStorage.storeEncryptedCredentials(
+        result.encryptedEmail,
+        result.encryptedCode
+      );
     }
 
     return { success: true, data: result };
@@ -91,10 +94,10 @@ export async function updateProfile(payload: {
 
 export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
   const [submitted, setSubmitted] = useState<boolean | undefined>(undefined);
-  const [email, setEmail] = useState("");
-  const [firstname, setFirstname] = useState("");
-  const [bio, setBio] = useState("");
-  const [codeword, setCodeword] = useState("");
+  const [email, setEmail] = useState('');
+  const [firstname, setFirstname] = useState('');
+  const [bio, setBio] = useState('');
+  const [codeword, setCodeword] = useState('');
   const [saved, setSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [personaSelected, setPersonaSelected] = useState(contactPersona[0]);
@@ -102,12 +105,14 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
   // Initialize form with current profile data
   useEffect(() => {
     const profileData = ProfileStorage.getProfileData();
-    
+
     if (profileData.firstname) setFirstname(profileData.firstname);
     if (profileData.email) setEmail(profileData.email);
     if (profileData.shortBio) setBio(profileData.shortBio);
     if (profileData.contactPersona) {
-      const pref = contactPersona.find((p) => p.id === profileData.contactPersona);
+      const pref = contactPersona.find(
+        (p) => p.id === profileData.contactPersona
+      );
       if (pref) setPersonaSelected(pref);
     }
   }, []);
@@ -134,7 +139,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
         onError?.(result.error || 'Profile update failed');
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -152,27 +157,43 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
   // Icon and styling logic for persona selection
   const getPersonaIcon = (title: string) => {
     switch (title) {
-      case "DMs open":
-        return "💬";
-      case "Major Updates Only":
-        return "🔄";
-      case "All Updates":
-        return "⚡";
+      case 'DMs open':
+        return '💬';
+      case 'Major Updates Only':
+        return '🔄';
+      case 'All Updates':
+        return '⚡';
       default:
-        return "🔕";
+        return '🔕';
     }
   };
 
   const getPersonaStyles = (title: string) => {
     switch (title) {
-      case "DMs open":
-        return { iconClass: "text-black", barClass: "bg-green-400", barWidth: "100%" };
-      case "All Updates":
-        return { iconClass: "text-orange-500", barClass: "bg-orange-400", barWidth: "100%" };
-      case "Major Updates Only":
-        return { iconClass: "text-gray-600", barClass: "bg-orange-300", barWidth: "50%" };
+      case 'DMs open':
+        return {
+          iconClass: 'text-black',
+          barClass: 'bg-green-400',
+          barWidth: '100%',
+        };
+      case 'All Updates':
+        return {
+          iconClass: 'text-orange-500',
+          barClass: 'bg-orange-400',
+          barWidth: '100%',
+        };
+      case 'Major Updates Only':
+        return {
+          iconClass: 'text-gray-600',
+          barClass: 'bg-orange-300',
+          barWidth: '50%',
+        };
       default:
-        return { iconClass: "text-gray-600", barClass: "bg-gray-100", barWidth: "2%" };
+        return {
+          iconClass: 'text-gray-600',
+          barClass: 'bg-gray-100',
+          barWidth: '2%',
+        };
     }
   };
 
@@ -180,14 +201,19 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
   return (
     <>
-      <h3 className="font-bold text-xl py-6 text-blue-600">Welcome to Tract Stack</h3>
+      <h3 className="py-6 text-xl font-bold text-blue-600">
+        Welcome to Tract Stack
+      </h3>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-3 gap-4">
           {!personaSelected?.disabled && (
             <>
-              <div className="col-span-3 md:col-span-1 pt-6 px-4">
-                <label htmlFor="firstname" className="block text-sm text-gray-700">
+              <div className="col-span-3 px-4 pt-6 md:col-span-1">
+                <label
+                  htmlFor="firstname"
+                  className="block text-sm text-gray-700"
+                >
                   First name
                 </label>
                 <input
@@ -198,16 +224,20 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   value={firstname}
                   onChange={(e) => setFirstname(e.target.value)}
                   className={classNames(
-                    "text-md bg-white p-3 mt-2 block w-full rounded-md shadow-sm focus:border-cyan-600 focus:ring-cyan-600",
-                    submitted && firstname === "" ? "border-red-500" : "border-gray-300"
+                    'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
+                    submitted && firstname === ''
+                      ? 'border-red-500'
+                      : 'border-gray-300'
                   )}
                 />
-                {submitted && firstname === "" && (
-                  <span className="text-xs px-4 text-red-500">Required field.</span>
+                {submitted && firstname === '' && (
+                  <span className="px-4 text-xs text-red-500">
+                    Required field.
+                  </span>
                 )}
               </div>
 
-              <div className="col-span-3 md:col-span-2 pt-6 px-4">
+              <div className="col-span-3 px-4 pt-6 md:col-span-2">
                 <label htmlFor="email" className="block text-sm text-gray-700">
                   Email address
                 </label>
@@ -219,21 +249,25 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={classNames(
-                    "text-md bg-white p-3 mt-2 block w-full rounded-md shadow-sm focus:border-cyan-600 focus:ring-cyan-600",
-                    submitted && email === "" ? "border-red-500" : "border-gray-300"
+                    'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
+                    submitted && email === ''
+                      ? 'border-red-500'
+                      : 'border-gray-300'
                   )}
                 />
-                {submitted && email === "" && (
-                  <span className="text-xs px-4 text-red-500">Required field.</span>
+                {submitted && email === '' && (
+                  <span className="px-4 text-xs text-red-500">
+                    Required field.
+                  </span>
                 )}
               </div>
             </>
           )}
 
-          <div className="col-span-3 pt-6 px-4">
+          <div className="col-span-3 px-4 pt-6">
             <div className="flex items-center text-sm">
               <div className="pr-8 text-sm text-black">
-                <label className="block text-sm text-gray-700 mb-2">
+                <label className="mb-2 block text-sm text-gray-700">
                   Choose your level of consent:
                 </label>
 
@@ -241,7 +275,9 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   <select
                     value={personaSelected.id}
                     onChange={(e) => {
-                      const selected = contactPersona.find(item => item.id === e.target.value);
+                      const selected = contactPersona.find(
+                        (item) => item.id === e.target.value
+                      );
                       if (selected) setPersonaSelected(selected);
                     }}
                     className="text-md relative w-full cursor-default rounded-md bg-white py-3 pl-3 pr-10 text-left text-black shadow-sm ring-1 ring-inset ring-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600"
@@ -254,28 +290,38 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   </select>
                 </div>
               </div>
-              
+
               <div className="flex flex-1 items-center">
                 <div className="ml-1 flex flex-1 items-center">
-                  <span className={classNames("flex-shrink-0 text-lg", styles.iconClass)}>
+                  <span
+                    className={classNames(
+                      'flex-shrink-0 text-lg',
+                      styles.iconClass
+                    )}
+                  >
                     {getPersonaIcon(personaSelected.title)}
                   </span>
                   <div className="relative ml-3 flex-1">
                     <div className="h-7 rounded-full border border-gray-200" />
                     <div
-                      className={classNames("absolute inset-y-0 rounded-full", styles.barClass)}
+                      className={classNames(
+                        'absolute inset-y-0 rounded-full',
+                        styles.barClass
+                      )}
                       style={{ width: styles.barWidth }}
                     />
                   </div>
                 </div>
               </div>
             </div>
-            <p className="text-sm text-right text-gray-600 mt-2">{personaSelected.description}</p>
+            <p className="mt-2 text-right text-sm text-gray-600">
+              {personaSelected.description}
+            </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-3 pt-6 px-4">
+          <div className="col-span-3 px-4 pt-6">
             <label htmlFor="bio" className="block text-sm text-gray-700">
               Hello {firstname}. Is there anything else you would like to share?
             </label>
@@ -285,7 +331,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                 name="bio"
                 rows={3}
                 maxLength={280}
-                className="text-md bg-white p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
+                className="text-md block w-full rounded-md border-gray-300 bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
                 placeholder="Your one-liner bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
@@ -293,7 +339,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
             </div>
           </div>
 
-          <div className="col-span-1 pt-6 px-4">
+          <div className="col-span-1 px-4 pt-6">
             <label htmlFor="codeword" className="block text-sm text-gray-700">
               Re-Enter your secret code word to save any changes:
             </label>
@@ -305,38 +351,54 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
               value={codeword}
               onChange={(e) => setCodeword(e.target.value)}
               className={classNames(
-                "text-md bg-white p-3 mt-2 block w-full rounded-md shadow-sm focus:border-cyan-600 focus:ring-cyan-600",
-                submitted && codeword === "" ? "border-red-500" : "border-gray-300"
+                'text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600',
+                submitted && codeword === ''
+                  ? 'border-red-500'
+                  : 'border-gray-300'
               )}
             />
-            {submitted && codeword === "" && (
-              <span className="text-xs px-4 text-red-500">Required field.</span>
+            {submitted && codeword === '' && (
+              <span className="px-4 text-xs text-red-500">Required field.</span>
             )}
           </div>
 
           {saved && (
-            <div className="col-span-3 flex justify-center align-center py-12 font-bold text-green-500">
+            <div className="align-center col-span-3 flex justify-center py-12 font-bold text-green-500">
               Profile Saved
             </div>
           )}
 
-          {codeword !== "" && (
-            <div className="col-span-3 flex justify-center align-center py-12">
+          {codeword !== '' && (
+            <div className="align-center col-span-3 flex justify-center py-12">
               {!personaSelected?.disabled ? (
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex rounded-md bg-cyan-100 hover:bg-black hover:text-white px-3.5 py-1.5 text-base leading-7 text-black shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:opacity-50"
+                  className="inline-flex rounded-md bg-cyan-100 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:opacity-50"
                 >
-                  <span className="pr-4">{isLoading ? 'Saving...' : 'Save Profile'}</span>
+                  <span className="pr-4">
+                    {isLoading ? 'Saving...' : 'Save Profile'}
+                  </span>
                   {!isLoading && (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   )}
                 </button>
               ) : (
-                <span className="text-gray-600">Profile disabled. (Privacy mode enabled)</span>
+                <span className="text-gray-600">
+                  Profile disabled. (Privacy mode enabled)
+                </span>
               )}
             </div>
           )}

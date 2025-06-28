@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -15,9 +15,14 @@
     "checkJs": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "types": [
-      "node"
+      "node",
+      "astro",
+      "@astrojs/react",
+      "@types/react",
+      "@types/react-dom"
     ]
   },
   "include": [
@@ -26,11 +31,9 @@
     "types.ts",
     "virtual.d.ts",
     "utils/**/*.ts",
-    "bin/**/*.js"
+    "bin/**/*.js",
+    "templates/**/*",
+    "templates/src/types/astro.d.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "templates"
-  ]
+  "exclude": ["node_modules", "dist"]
 }

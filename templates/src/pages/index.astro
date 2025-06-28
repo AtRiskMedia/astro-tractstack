@@ -19,29 +19,29 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     --brand-7: #393d34;
     --brand-8: #e3e3e3;
   }
-  
+
   .hero-section {
     background: linear-gradient(135deg, var(--brand-5) 0%, var(--brand-7) 100%);
     color: var(--brand-2);
     padding: 3rem 0;
     text-align: center;
   }
-  
+
   .ascii-art {
     font-size: 0.8rem;
     color: var(--brand-3);
     font-weight: bold;
     margin: 2rem 0;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
-  
+
   .content-section {
     background: var(--brand-2);
     color: var(--brand-1);
     min-height: 60vh;
     padding: 2rem 0;
   }
-  
+
   .card {
     border: 1px solid var(--brand-8);
     background: var(--brand-2);
@@ -50,14 +50,14 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     margin: 1.5rem 0;
     box-shadow: 0 2px 8px rgba(16, 18, 13, 0.1);
   }
-  
+
   .card h3 {
     color: var(--brand-5);
     margin-top: 0;
     border-bottom: 2px solid var(--brand-4);
     padding-bottom: 0.5rem;
   }
-  
+
   .fragment-container {
     min-height: 50px;
     background: var(--brand-8);
@@ -65,34 +65,34 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     border-radius: 4px;
     border-left: 4px solid var(--brand-3);
   }
-  
+
   .config-list {
     list-style: none;
     padding: 0;
   }
-  
+
   .config-list li {
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--brand-8);
   }
-  
+
   .config-list strong {
     color: var(--brand-5);
   }
-  
+
   .footer-links {
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid var(--brand-8);
     text-align: center;
   }
-  
+
   .footer-links a {
     color: var(--brand-3);
     text-decoration: none;
     transition: color 0.2s ease;
   }
-  
+
   .footer-links a:hover {
     color: var(--brand-5);
   }
@@ -101,7 +101,8 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 <Layout title="TractStack Home">
   <main>
     <div class="hero-section">
-      <pre class="ascii-art">
+      <pre
+        class="ascii-art">
     ███        ▄████████    ▄████████  ▄████████     ███    
 ▀█████████▄   ███    ███   ███    ███ ███    ███ ▀█████████▄
    ▀███▀▀██   ███    ███   ███    ███ ███    █▀     ▀███▀▀██
@@ -122,15 +123,18 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
  ▄████████▀     ▄████▀     ███    █▀  ████████▀    ███   ▀█▀
                                                    ▀        
       </pre>
-      
-      <h1 style="color: var(--brand-4); font-size: 2.5rem; margin: 1rem 0;">Welcome to TractStack!</h1>
-      <p style="color: var(--brand-6); font-size: 1.2rem;">Build dynamic websites with HTMX and Go</p>
+
+      <h1 style="color: var(--brand-4); font-size: 2.5rem; margin: 1rem 0;">
+        Welcome to TractStack!
+      </h1>
+      <p style="color: var(--brand-6); font-size: 1.2rem;">
+        Build dynamic websites with HTMX and Go
+      </p>
       <p style="color: var(--brand-6); font-size: 0.9rem;">by At Risk Media</p>
     </div>
 
     <div class="content-section">
       <div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
-        
         <!-- React Counter Component -->
         <div class="card">
           <h3>React Component</h3>
@@ -142,7 +146,7 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
         <div class="card">
           <h3>Go Backend Fragment</h3>
           <p>This content is loaded from the Go backend:</p>
-          <div 
+          <div
             id="backend-fragment"
             class="fragment-container"
             hx-get={`${goBackend}/api/v1/fragments/panes/01JVEB1GM20ZPVMQK3PZ0C2BXP`}
@@ -164,9 +168,12 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
         <div class="footer-links">
           <p style="color: var(--brand-6);">
-            📚 <a href="https://tractstack.org/docs" target="_blank">Documentation</a> |
-            🔧 <a href="https://github.com/AtRiskMedia/tractstack-go" target="_blank">Go Backend</a> |
-            ⚡ <a href="https://htmx.org" target="_blank">HTMX</a>
+            📚 <a href="https://tractstack.org/docs" target="_blank"
+              >Documentation</a
+            > | 🔧 <a
+              href="https://github.com/AtRiskMedia/tractstack-go"
+              target="_blank">Go Backend</a
+            > | ⚡ <a href="https://htmx.org" target="_blank">HTMX</a>
           </p>
         </div>
       </div>

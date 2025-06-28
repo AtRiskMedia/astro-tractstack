@@ -17,7 +17,11 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "tsc": "tsc --noEmit --pretty",
+    "prepublishOnly": "pnpm format && pnpm tsc"
   },
   "keywords": [
     "astro",
@@ -42,9 +46,15 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
+    "@astrojs/react": "^3.0.0",
     "@types/node": "^22.0.0",
     "@types/prompts": "^2.4.9",
-    "typescript": "^5.6.0"
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.6.0",
+    "prettier": "3.3.3",
+    "prettier-plugin-astro": "0.14.1",
+    "prettier-plugin-tailwindcss": "0.6.8"
   },
   "engines": {
     "node": ">=18.14.1"
