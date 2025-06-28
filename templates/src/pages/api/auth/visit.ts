@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://127.0.0.1:8080';
+  const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
   try {
     // Forward the request to Go backend

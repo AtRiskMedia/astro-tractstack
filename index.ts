@@ -1,5 +1,4 @@
 import type { AstroIntegration } from 'astro';
-import node from '@astrojs/node';
 import type { TractStackConfig } from './types.js';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
@@ -7,6 +6,7 @@ import { injectTemplateFiles } from './utils/inject-files.js';
 
 export default function tractstack(userConfig: TractStackConfig = {}): AstroIntegration {
   const { resolve } = createResolver(import.meta.url);
+
   return {
     name: 'astro-tractstack',
     hooks: {
@@ -24,34 +24,42 @@ export default function tractstack(userConfig: TractStackConfig = {}): AstroInte
 
         logger.info('TractStack: File injection complete.');
 
-        // FORCE SSR mode - override any existing configuration
-        logger.info('TractStack: Configuring SSR mode...');
+        // Check SSR configuration
+        if (config.output !== 'server') {
+          logger.error('TractStack requires SSR mode. Please set output: "server" in your astro.config.mjs');
+          throw new Error('TractStack requires SSR mode. Please set output: "server" in your astro.config.mjs');
+        }
 
+        if (!config.adapter) {
+          logger.error('TractStack requires an SSR adapter. Please add @astrojs/node adapter to your astro.config.mjs');
+          throw new Error('TractStack requires an SSR adapter. Please add @astrojs/node adapter to your astro.config.mjs');
+        }
+
+        // Update vite config for compatibility
         updateConfig({
-          output: 'server',
-          adapter: node({ mode: 'standalone' }),
           vite: {
             define: {
               __TRACTSTACK_VERSION__: JSON.stringify('2.0.0')
+            },
+            ssr: {
+              noExternal: ['path-to-regexp']
             }
           }
         });
 
-        logger.info('TractStack: SSR configuration applied');
         logger.info('TractStack integration configured successfully!');
       },
 
       'astro:config:done': ({ config, logger }) => {
-        // VALIDATE that SSR mode was actually applied
+        // Verify configuration
         if (config.output !== 'server') {
           logger.error(`TractStack requires SSR mode but output is: ${config.output}`);
-          logger.error('TractStack integration must be loaded BEFORE other integrations that set output mode');
-          throw new Error('TractStack integration failed: SSR mode not applied. Ensure tractstack() is first in your integrations array.');
+          throw new Error('TractStack integration failed: SSR mode not configured');
         }
 
         if (!config.adapter) {
-          logger.error('TractStack requires Node.js adapter but no adapter is configured');
-          throw new Error('TractStack integration failed: Node.js adapter not applied');
+          logger.error('TractStack requires an adapter but none is configured');
+          throw new Error('TractStack integration failed: No adapter configured');
         }
 
         logger.info('✅ TractStack SSR configuration verified');

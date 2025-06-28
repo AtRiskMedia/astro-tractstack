@@ -59,6 +59,55 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/.gitignore'),
       dest: '.gitignore'
+    },
+
+    // Profile page
+    { src: resolve('templates/src/pages/profile.astro'), dest: 'src/pages/profile.astro' },
+
+    // Profile API
+    { src: resolve('templates/src/pages/api/profile.ts'), dest: 'src/pages/api/profile.ts' },
+
+    // Profile components  
+    { src: resolve('templates/src/components/profile/ProfileSwitch.tsx'), dest: 'src/components/profile/ProfileSwitch.tsx' },
+    { src: resolve('templates/src/components/profile/ProfileCreate.tsx'), dest: 'src/components/profile/ProfileCreate.tsx' },
+    { src: resolve('templates/src/components/profile/ProfileEdit.tsx'), dest: 'src/components/profile/ProfileEdit.tsx' },
+    { src: resolve('templates/src/components/profile/ProfileUnlock.tsx'), dest: 'src/components/profile/ProfileUnlock.tsx' },
+
+    // Profile utilities
+    { src: resolve('templates/src/utils/profileStorage.ts'), dest: 'src/utils/profileStorage.ts' },
+
+    // initial CSS files
+    {
+      src: resolve('templates/css/custom.css'),
+      dest: 'public/styles/custom.css'
+    },
+    {
+      src: resolve('templates/css/frontend.css'),
+      dest: 'public/styles/frontend.css'
+    },
+    {
+      src: resolve('templates/css/storykeep.css'),
+      dest: 'public/styles/storykeep.css'
+    },
+
+    // Font files
+    {
+      src: resolve('templates/fonts/Inter-Black.woff2'),
+      dest: 'public/fonts/Inter-Black.woff2'
+    },
+    {
+      src: resolve('templates/fonts/Inter-Bold.woff2'),
+      dest: 'public/fonts/Inter-Bold.woff2'
+    },
+    {
+      src: resolve('templates/fonts/Inter-Regular.woff2'),
+      dest: 'public/fonts/Inter-Regular.woff2'
+    },
+
+    // Tailwind configuration
+    {
+      src: resolve('templates/tailwind.config.cjs'),
+      dest: 'tailwind.config.cjs'
     }
   ];
 
@@ -70,15 +119,23 @@ export async function injectTemplateFiles(
         mkdirSync(destDir, { recursive: true });
       }
 
-      // Always overwrite all template files (they are all essential)
-      if (existsSync(file.src)) {
-        copyFileSync(file.src, file.dest);
-        logger.info(`Updated ${file.dest}`);
+      // Check if file should be overwritten
+      const shouldOverwrite = file.dest === 'tailwind.config.cjs' ||
+        file.dest.startsWith('src/') ||
+        file.dest === '.gitignore';
+
+      if (!existsSync(file.dest) || shouldOverwrite) {
+        if (existsSync(file.src)) {
+          copyFileSync(file.src, file.dest);
+          logger.info(`Updated ${file.dest}`);
+        } else {
+          // Create basic placeholder for missing templates
+          const placeholder = createPlaceholder(file.dest);
+          writeFileSync(file.dest, placeholder);
+          logger.info(`Created placeholder ${file.dest}`);
+        }
       } else {
-        // Create basic placeholder for missing templates
-        const placeholder = createPlaceholder(file.dest);
-        writeFileSync(file.dest, placeholder);
-        logger.info(`Created placeholder ${file.dest}`);
+        logger.info(`Skipped existing ${file.dest}`);
       }
     } catch (error) {
       logger.error(`Failed to create ${file.dest}: ${error}`);
@@ -104,6 +161,17 @@ export default function Placeholder() {
   if (filePath.endsWith('.ts')) {
     return `// TractStack placeholder utility
 export const placeholder = "${filePath}";`;
+  }
+
+  if (filePath.endsWith('.cjs')) {
+    return `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};`;
   }
 
   return `# TractStack placeholder: ${filePath}`;

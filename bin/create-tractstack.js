@@ -54,7 +54,7 @@ async function main() {
     console.log('To create a new Astro project with TractStack:');
     console.log(kleur.cyan('pnpm create astro@latest my-tractstack-site'));
     console.log(kleur.cyan('cd my-tractstack-site'));
-    console.log(kleur.cyan('npx astro add astro-tractstack'));
+    console.log(kleur.cyan('npx create-tractstack'));
     process.exit(1);
   }
 
@@ -64,7 +64,7 @@ async function main() {
       type: 'text',
       name: 'goBackend',
       message: 'TractStack Go backend URL:',
-      initial: 'http://127.0.0.1:8080',
+      initial: 'http://localhost:8080',
       validate: (value) => {
         try {
           new URL(value);
@@ -102,17 +102,26 @@ PUBLIC_TENANTID="${responses.tenantId}"
     process.exit(1);
   }
 
-  // Install React dependencies
+  // Install dependencies
   const packageManager = detectPackageManager();
   const addCommand = packageManager === 'npm' ? 'npm install' : `${packageManager} add`;
 
-  console.log(kleur.cyan('\nInstalling React dependencies...'));
+  console.log(kleur.cyan('\nInstalling dependencies...'));
   try {
-    execSync(`${addCommand} react react-dom @astrojs/react`, { stdio: 'inherit' });
-    console.log(kleur.green('✅ React dependencies installed'));
+    // Install React and Node adapter with compatible versions
+    execSync(`${addCommand} react react-dom @astrojs/react @astrojs/node`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ React and Node adapter installed'));
+
+    // Install UI components
+    execSync(`${addCommand} @ark-ui/react`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ UI components installed'));
+
+    // Install additional dependencies that might be needed
+    execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ Additional dependencies installed'));
   } catch (error) {
-    console.log(kleur.red('❌ Failed to install React dependencies'));
-    console.log('Please run manually:', kleur.cyan(`${addCommand} react react-dom @astrojs/react`));
+    console.log(kleur.red('❌ Failed to install dependencies'));
+    console.log('Please run manually:', kleur.cyan(`${addCommand} react react-dom @astrojs/react @astrojs/node @ark-ui/react path-to-regexp`));
     process.exit(1);
   }
 
@@ -145,9 +154,11 @@ async function updateAstroConfig() {
   try {
     let content = readFileSync(configFile, 'utf-8');
 
-    // Add imports if not present
+    // Add tractstack import if not present
     if (!content.includes('astro-tractstack')) {
       const tractStackImport = "import tractstack from 'astro-tractstack';\n";
+
+      // Find the last import statement
       const lines = content.split('\n');
       let insertIndex = 0;
 
@@ -163,6 +174,7 @@ async function updateAstroConfig() {
       content = lines.join('\n');
     }
 
+    // Add react import if not present
     if (!content.includes('@astrojs/react')) {
       content = content.replace(
         "import tractstack from 'astro-tractstack';",
@@ -170,34 +182,34 @@ async function updateAstroConfig() {
       );
     }
 
-    // Add integrations
-    if (!content.includes('tractstack()')) {
+    // Add node import if not present
+    if (!content.includes('@astrojs/node')) {
       content = content.replace(
-        /export default defineConfig\(\{([^}]*)\}\);/,
-        (match, configContent) => {
-          if (configContent.includes('integrations:')) {
-            return match.replace(
-              /integrations:\s*\[([\s\S]*?)\]/,
-              (integrationsMatch, integrationsList) => {
-                const hasIntegrations = integrationsList.trim().length > 0;
-                const separator = hasIntegrations ? ',\n    ' : '\n    ';
-                return `integrations: [${integrationsList}${separator}react(),\n    tractstack()\n  ]`;
-              }
-            );
-          } else {
-            const hasOtherConfig = configContent.trim().length > 0;
-            const separator = hasOtherConfig ? ',\n  ' : '\n  ';
-            return `export default defineConfig({${configContent}${separator}integrations: [\n    react(),\n    tractstack()\n  ]\n});`;
-          }
-        }
+        "import react from '@astrojs/react';",
+        "import react from '@astrojs/react';\nimport node from '@astrojs/node';"
       );
     }
+
+    // Update the export default defineConfig section
+    content = content.replace(
+      /export default defineConfig\(\{[\s\S]*?\}\);/,
+      `export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+  integrations: [
+    tractstack(),
+    react()
+  ]
+});`
+    );
 
     writeFileSync(configFile, content);
     console.log(kleur.green(`✅ Updated ${configFile}`));
   } catch (error) {
     console.log(kleur.yellow(`⚠️ Could not automatically update ${configFile}`));
-    console.log(kleur.cyan('Please manually add the tractstack integration'));
+    console.log(kleur.cyan('Please manually add tractstack() and react() to your integrations array'));
+    console.log(kleur.cyan('Example: integrations: [tractstack(), react()]'));
+    console.log(kleur.cyan('Make sure tractstack() is FIRST in the array!'));
   }
 }
 
