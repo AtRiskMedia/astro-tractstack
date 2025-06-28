@@ -41,10 +41,6 @@ export async function injectTemplateFiles(
 
     // Auth utilities
     {
-      src: resolve('templates/src/utils/auth/sessionManager.ts'),
-      dest: 'src/utils/auth/sessionManager.ts'
-    },
-    {
       src: resolve('templates/src/utils/sessionSync.ts'),
       dest: 'src/utils/sessionSync.ts'
     },

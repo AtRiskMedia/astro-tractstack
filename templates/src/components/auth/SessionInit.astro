@@ -1,5 +1,5 @@
 ---
-// Auto-trigger visit handshake on page load using fetch
+// Auto-trigger visit handshake on page load - client-side session persistence
 ---
 
 <script>
@@ -16,22 +16,18 @@
     }
 
     try {
-      // Prepare session data
-      const fingerprint = localStorage.getItem('fp_id') || generateFingerprint();
-      if (!localStorage.getItem('fp_id')) {
-        localStorage.setItem('fp_id', fingerprint);
-      }
+      // Get or create persistent sessionId
+      const sessionId = getOrCreateSessionId();
 
+      // Prepare session data (session-only, no client-generated IDs)
       const sessionData = {
-        fingerprint: fingerprint,
-        visitId: localStorage.getItem('visit_id') || '',
+        sessionId: sessionId,
         encryptedEmail: localStorage.getItem('encrypted_email') || '',
         encryptedCode: localStorage.getItem('encrypted_code') || '',
-        consent: localStorage.getItem('consent') || '',
-        sessionId: window.tractStackSessionId || ''
+        consent: localStorage.getItem('consent') || ''
       };
 
-      // Make fetch request to your CORS wrapper
+      // Make fetch request to CORS proxy
       const response = await fetch('/api/auth/visit', {
         method: 'POST',
         headers: {
@@ -43,22 +39,20 @@
 
       if (response.ok) {
         const data = await response.json();
-        // Store JWT if provided
+        
+        // Store backend-generated session data
+        localStorage.setItem('fp_id', data.fingerprint);
+        localStorage.setItem('visit_id', data.visitId);
+        localStorage.setItem('consent', data.consent);
+
+        // Store JWT token if provided
         if (data.token) {
-          localStorage.setItem('tractstack_jwt', data.token);
+          localStorage.setItem('profile_token', data.token);
         }
 
-        // Store session data
-        if (data.fingerprint) {
-          localStorage.setItem('fp_id', data.fingerprint);
-        }
-        if (data.visitId) {
-          localStorage.setItem('visit_id', data.visitId);
-        }
-
-        // Update global session state to isReady: true
-        if (window.TractStack) {
-          window.TractStack.session = {
+        // Update global TRACTSTACK_CONFIG if it exists
+        if (window.TRACTSTACK_CONFIG) {
+          window.TRACTSTACK_CONFIG.session = {
             isReady: true,
             fingerprint: data.fingerprint,
             visitId: data.visitId,
@@ -67,9 +61,9 @@
           };
         }
 
-        // Also update TRACTSTACK_CONFIG if it exists
-        if (window.TRACTSTACK_CONFIG) {
-          window.TRACTSTACK_CONFIG.session = {
+        // Also update TractStack object for compatibility
+        if (window.TractStack) {
+          window.TractStack.session = {
             isReady: true,
             fingerprint: data.fingerprint,
             visitId: data.visitId,
@@ -84,6 +78,7 @@
         }));
 
       } else if (response.status === 429) {
+        // Rate limited - retry after delay
         setTimeout(initializeSession, 500);
       } else {
         console.error('TractStack: Session handshake failed:', response.status, await response.text());
@@ -94,10 +89,23 @@
     }
   }
 
-  // Generate a simple fingerprint ID
-  function generateFingerprint() {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substr(2, 9);
-    return `fp_${timestamp}_${random}`;
+  // Get existing sessionId from localStorage or generate new one
+  function getOrCreateSessionId() {
+    const SESSION_KEY = 'tractstack_session_id';
+    
+    // Try to get existing sessionId
+    let sessionId = localStorage.getItem(SESSION_KEY);
+    
+    if (!sessionId) {
+      // Generate new sessionId
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 11);
+      sessionId = `sess_${timestamp}_${random}`;
+      
+      // Store it for future page loads
+      localStorage.setItem(SESSION_KEY, sessionId);
+    }
+    
+    return sessionId;
   }
 </script>

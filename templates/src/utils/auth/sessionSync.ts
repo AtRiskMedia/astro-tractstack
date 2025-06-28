@@ -1,6 +1,5 @@
 export interface SessionData {
-  fingerprint?: string;
-  visitId?: string;
+  sessionId?: string;
   consent?: string;
   encryptedEmail?: string;
   encryptedCode?: string;
@@ -34,98 +33,54 @@ class StorageManager {
   }
 }
 
-class CookieManager {
-  static get(name: string): string | null {
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      const [cookieName, cookieValue] = cookie.trim().split('=');
-      if (cookieName === name && cookieValue) {
-        return decodeURIComponent(cookieValue);
-      }
-    }
-    return null;
-  }
-
-  static remove(name: string): void {
-    document.cookie = `${name}=; Path=/; Max-Age=0`;
-  }
-}
-
 export class SessionSync {
   private static readonly STORAGE_KEYS = {
-    fingerprint: 'fp_id',
-    visitId: 'visit_id',
     consent: 'consent',
     encryptedEmail: 'encrypted_email',
     encryptedCode: 'encrypted_code',
-  } as const;
-
-  private static readonly COOKIE_KEYS = {
-    fingerprint: 'fp_id',
-    visitId: 'visit_id',
-    consent: 'consent',
     profileToken: 'profile_token',
+    fpId: 'fp_id',
+    visitId: 'visit_id',
   } as const;
 
   /**
-   * Get current session data (cookies take precedence over localStorage)
+   * Get current session data (backend controls fingerprint/visit IDs)
    */
   static getCurrentSession(): SessionData {
-    // Prefer cookies over localStorage for authoritative state
-    const fingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint) ||
-      StorageManager.get(this.STORAGE_KEYS.fingerprint);
-
-    const visitId = CookieManager.get(this.COOKIE_KEYS.visitId) ||
-      StorageManager.get(this.STORAGE_KEYS.visitId);
-
-    const consent = CookieManager.get(this.COOKIE_KEYS.consent) ||
-      StorageManager.get(this.STORAGE_KEYS.consent);
-
     return {
-      fingerprint: fingerprint || undefined,
-      visitId: visitId || undefined,
-      consent: consent || undefined,
+      sessionId: (window as any).tractStackSessionId || undefined,
+      consent: StorageManager.get(this.STORAGE_KEYS.consent) || undefined,
       encryptedEmail: StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
       encryptedCode: StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
-      hasProfile: !CookieManager.get(this.COOKIE_KEYS.profileToken),
+      hasProfile: !!StorageManager.get(this.STORAGE_KEYS.profileToken),
     };
   }
 
   /**
-   * Prepare data for session handshake request
+   * Prepare minimal session data for backend (session-first approach)
    */
-  static prepareHandshakeData(): { fingerprint: string; visit_id?: string } {
-    let fingerprint = this.ensureFingerprint();
-    const visitId = CookieManager.get(this.COOKIE_KEYS.visitId) ||
-      StorageManager.get(this.STORAGE_KEYS.visitId);
-
-    return {
-      fingerprint,
-      visit_id: visitId || undefined
-    };
-  }
-
-  /**
-   * Sync localStorage with cookies after successful handshake
-   */
-  static syncAfterHandshake(): SessionData {
-    const cookieFingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint);
-    const cookieVisitId = CookieManager.get(this.COOKIE_KEYS.visitId);
-    const cookieConsent = CookieManager.get(this.COOKIE_KEYS.consent);
-
-    if (cookieFingerprint) {
-      StorageManager.set(this.STORAGE_KEYS.fingerprint, cookieFingerprint);
+  static prepareHandshakeData(): {
+    sessionId: string;
+    encryptedEmail?: string;
+    encryptedCode?: string;
+    consent?: string;
+  } {
+    const sessionId = (window as any).tractStackSessionId;
+    if (!sessionId) {
+      throw new Error('Session ID not available - ensure SSR session generation is working');
     }
 
-    if (cookieVisitId) {
-      StorageManager.set(this.STORAGE_KEYS.visitId, cookieVisitId);
-    }
+    const data: any = { sessionId };
 
-    if (cookieConsent) {
-      StorageManager.set(this.STORAGE_KEYS.consent, cookieConsent);
-    }
+    const encryptedEmail = StorageManager.get(this.STORAGE_KEYS.encryptedEmail);
+    const encryptedCode = StorageManager.get(this.STORAGE_KEYS.encryptedCode);
+    const consent = StorageManager.get(this.STORAGE_KEYS.consent);
 
-    return this.getCurrentSession();
+    if (encryptedEmail) data.encryptedEmail = encryptedEmail;
+    if (encryptedCode) data.encryptedCode = encryptedCode;
+    if (consent) data.consent = consent;
+
+    return data;
   }
 
   /**
@@ -146,7 +101,7 @@ export class SessionSync {
   }
 
   /**
-   * Clear entire session (localStorage and cookies)
+   * Clear entire session (localStorage)
    */
   static clearSession(): void {
     // Clear localStorage
@@ -154,37 +109,7 @@ export class SessionSync {
       StorageManager.remove(key);
     });
 
-    // Clear cookies
-    Object.values(this.COOKIE_KEYS).forEach(cookieName => {
-      CookieManager.remove(cookieName);
-    });
-
     console.log('TractStack: Session cleared completely');
-  }
-
-  /**
-   * Generate a fingerprint ID if none exists
-   */
-  static ensureFingerprint(): string {
-    let fingerprint = CookieManager.get(this.COOKIE_KEYS.fingerprint) ||
-      StorageManager.get(this.STORAGE_KEYS.fingerprint);
-
-    if (!fingerprint) {
-      fingerprint = this.generateFingerprint();
-      StorageManager.set(this.STORAGE_KEYS.fingerprint, fingerprint);
-    }
-
-    return fingerprint;
-  }
-
-  /**
-   * Generate a simple but unique fingerprint
-   */
-  private static generateFingerprint(): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substr(2, 9);
-    const userAgent = navigator.userAgent.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '');
-    return `fp_${timestamp}_${random}_${userAgent}`;
   }
 
   /**
@@ -198,14 +123,9 @@ export class SessionSync {
     const missingFields: string[] = [];
     const recommendations: string[] = [];
 
-    if (!session.fingerprint) {
-      missingFields.push('fingerprint');
-      recommendations.push('Generate fingerprint automatically');
-    }
-
-    if (!session.visitId) {
-      missingFields.push('visitId');
-      recommendations.push('Trigger session handshake');
+    if (!session.sessionId) {
+      missingFields.push('sessionId');
+      recommendations.push('Ensure SSR session ID generation is working');
     }
 
     if (!session.consent) {
@@ -239,13 +159,13 @@ export class SessionSync {
     console.group('TractStack Session Debug');
     console.log('Current Session:', session);
     console.log('Validation:', validation);
-    console.log('All Cookies:', document.cookie);
     console.log('TractStack LocalStorage:', {
       fp_id: StorageManager.get('fp_id'),
       visit_id: StorageManager.get('visit_id'),
       consent: StorageManager.get('consent'),
       encrypted_email: !!StorageManager.get('encrypted_email'),
       encrypted_code: !!StorageManager.get('encrypted_code'),
+      profile_token: !!StorageManager.get('profile_token'),
     });
     console.groupEnd();
   }
@@ -256,7 +176,6 @@ if (typeof window !== 'undefined') {
   (window as any).tractStackDebug = {
     session: () => SessionSync.debugSession(),
     clear: () => SessionSync.clearSession(),
-    sync: () => SessionSync.syncAfterHandshake(),
     prepare: () => SessionSync.prepareHandshakeData(),
   };
 }

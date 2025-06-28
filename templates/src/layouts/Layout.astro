@@ -1,15 +1,12 @@
 ---
 // TractStack Layout - Main layout with proper session handling
 
-import { SessionManager } from '../utils/auth/sessionManager';
 import SessionInit from '../components/auth/SessionInit.astro';
 
 export interface Props {
   title: string;
   description?: string;
 }
-
-const sessionId = SessionManager.getOrCreateSessionID();
 
 const { title, description = 'TractStack dynamic website' } = Astro.props;
 
@@ -117,9 +114,6 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
       document.body.addEventListener('htmx:responseError', function(evt) {
         console.error('TractStack API Error:', evt.detail);
       });
-    </script>
-    <script define:vars={{ sessionId }}>
-      window.tractStackSessionId = sessionId;
     </script>
   </body>
 </html>
