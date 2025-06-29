@@ -18,22 +18,25 @@ const contactPersona = [
     id: 'major',
     title: 'Major Updates Only',
     description: 'Will only send major updates and do so infrequently.',
+    disabled: false,
   },
   {
     id: 'all',
     title: 'All Updates',
     description: 'Be fully in the know!',
+    disabled: false,
   },
   {
     id: 'open',
     title: 'DMs open',
     description: "Leave your contact details and we'll get in touch!",
+    disabled: false,
   },
   {
     id: 'none',
     title: 'None',
     description: 'Disables all communications from us.',
-    disabled: true,
+    disabled: false, // Changed from true to false to allow selection
   },
 ];
 
@@ -51,6 +54,7 @@ async function createProfile(payload: {
 }) {
   try {
     const sessionData = ProfileStorage.prepareHandshakeData();
+    const currentConsent = ProfileStorage.getConsent() || '1'; // default to true
 
     const response = await fetch('/api/auth/profile', {
       method: 'POST',
@@ -64,11 +68,19 @@ async function createProfile(payload: {
         contactPersona: payload.persona,
         shortBio: payload.bio,
         sessionId: sessionData.sessionId,
+        consent: currentConsent, // Include actual consent value
         isUpdate: false, // This is a create operation
       }),
     });
 
     const result = await response.json();
+
+    console.log('Profile creation response:', {
+      success: result.success,
+      hasProfile: result.profile ? 'yes' : 'no',
+      consent: result.consent,
+      error: result.error,
+    });
 
     if (!result.success) {
       ProfileStorage.clearProfile();
@@ -78,13 +90,14 @@ async function createProfile(payload: {
       };
     }
 
-    // Store profile data and tokens
+    // Store profile data and tokens - use lowercase field names consistently
     if (result.profile) {
       ProfileStorage.setProfileData({
-        firstname: result.profile.firstname,
-        contactPersona: result.profile.contactPersona,
-        email: result.profile.email,
-        shortBio: result.profile.shortBio,
+        firstname: result.profile.firstname || result.profile.Firstname, // handle both cases
+        contactPersona:
+          result.profile.contactPersona || result.profile.ContactPersona,
+        email: result.profile.email || result.profile.Email,
+        shortBio: result.profile.shortBio || result.profile.ShortBio,
       });
     }
 
@@ -145,30 +158,12 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
 
   const iconClass =
     personaSelected.title === `DMs open`
-      ? `text-black`
+      ? `text-green-500`
       : personaSelected.title === `Major Updates Only`
         ? `text-gray-600`
         : personaSelected.title === `All Updates`
           ? `text-orange-500`
           : `text-gray-600`;
-
-  const barClass =
-    personaSelected.title === `DMs open`
-      ? `bg-green-400/80`
-      : personaSelected.title === `All Updates`
-        ? `bg-orange-400/80`
-        : personaSelected.title === `Major Updates Only`
-          ? `bg-orange-400/50`
-          : `bg-gray-100/5`;
-
-  const barWidth =
-    personaSelected.title === `DMs open`
-      ? `100%`
-      : personaSelected.title === `All Updates`
-        ? `100%`
-        : personaSelected.title === `Major Updates Only`
-          ? `50%`
-          : `2%`;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -176,12 +171,20 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
     setIsLoading(true);
     setBadSave(false);
 
+    console.log('Form submission data:', {
+      firstname,
+      email,
+      bio,
+      persona: personaSelected.id,
+      codeword: codeword ? '[REDACTED]' : 'empty',
+    });
+
     if (firstname && codeword && email && personaSelected.id) {
       const result = await createProfile({
         firstname,
         email,
         codeword,
-        bio,
+        bio: bio || '', // Ensure bio is string, not undefined
         persona: personaSelected.id,
       });
 
@@ -347,7 +350,7 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
                       </Select.ValueText>
                       <Select.Indicator className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronDownIcon
-                          className="h-5 w-5 text-gray-600"
+                          className="h-5 w-5 text-gray-400"
                           aria-hidden="true"
                         />
                       </Select.Indicator>
@@ -356,18 +359,21 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
 
                   <Portal>
                     <Select.Positioner>
-                      <Select.Content className="z-10 mt-2 w-full overflow-auto rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        {personaCollection.items.map((option) => (
+                      <Select.Content className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {contactPersona.map((item) => (
                           <Select.Item
-                            key={option.id}
-                            item={option}
-                            className="persona-item cursor-default select-none p-2 text-sm text-black hover:bg-slate-100"
+                            key={item.id}
+                            item={item}
+                            className="persona-item relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-cyan-600 hover:text-white"
                           >
-                            <Select.ItemText className="block truncate">
-                              {option.title}
+                            <Select.ItemText className="block truncate font-normal">
+                              {item.title}
                             </Select.ItemText>
-                            <Select.ItemIndicator className="persona-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                              {/* CheckIcon would go here if needed */}
+                            <Select.ItemIndicator className="persona-indicator absolute inset-y-0 right-0 hidden items-center pr-4 text-cyan-600">
+                              <ChevronRightIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
                             </Select.ItemIndicator>
                           </Select.Item>
                         ))}
@@ -376,31 +382,16 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
                   </Portal>
                 </Select.Root>
               </div>
-              <div className="flex flex-1 items-center">
-                <div
+              <div className="ml-4 flex items-center">
+                <Icon
+                  className={classNames(iconClass, `mr-2 h-5 w-5`)}
                   aria-hidden="true"
-                  className="ml-1 flex flex-1 items-center"
-                >
-                  <Icon
-                    className={classNames(iconClass, `h-5 w-5 flex-shrink-0`)}
-                    aria-hidden="true"
-                  />
-                  <div className="relative ml-3 flex-1">
-                    <div className="h-7 rounded-full border border-gray-300/20" />
-                    <div
-                      className={classNames(
-                        `absolute inset-y-0 rounded-full border-gray-300/20`,
-                        barClass
-                      )}
-                      style={{ width: barWidth }}
-                    />
-                  </div>
-                </div>
+                />
+                <span className="text-sm text-gray-600">
+                  {personaSelected.description}
+                </span>
               </div>
             </div>
-            <p className="text-right text-sm text-gray-600">
-              {personaSelected.description}
-            </p>
           </div>
         </div>
 
@@ -480,15 +471,15 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex rounded-md bg-cyan-600/10 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
+                className={classNames(
+                  `font-action rounded-lg px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1`,
+                  isLoading
+                    ? `cursor-not-allowed bg-gray-400`
+                    : `bg-black hover:bg-orange-500`
+                )}
               >
-                <span className="pr-4">
-                  {isLoading ? 'Saving...' : 'Save Profile'}
-                </span>
-                <ChevronRightIcon className="mr-3 h-5 w-5" aria-hidden="true" />
+                {isLoading ? 'Saving...' : 'Create Profile'}
               </button>
-            ) : !badSave ? (
-              `Profile disabled. (Privacy mode enabled)`
             ) : null}
           </div>
         </div>

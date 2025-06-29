@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
-import ChevronRightIcon from '@heroicons/react/20/solid/ChevronRightIcon';
+import { useEffect, useState } from 'react';
 import { ProfileStorage } from '../../utils/profileStorage';
+import type { FormEvent } from 'react';
 
 interface ProfileUnlockProps {
   initialEmail?: string;
@@ -19,13 +18,10 @@ async function unlockProfile(payload: { email: string; codeword: string }) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        firstname: 'Friend', // Default for unlock
         email: payload.email,
         codeword: payload.codeword,
-        contactPersona: 'major', // Default for unlock
-        shortBio: '',
         sessionId: sessionData.sessionId,
-        isUpdate: true, // This is an unlock/authentication operation - use existing profile
+        isUpdate: true,
       }),
     });
 
@@ -42,10 +38,10 @@ async function unlockProfile(payload: { email: string; codeword: string }) {
     // Store profile data and tokens
     if (result.profile) {
       ProfileStorage.setProfileData({
-        firstname: result.profile.Firstname, // Capital F
-        contactPersona: result.profile.ContactPersona, // Capital C
-        email: result.profile.Email, // Capital E
-        shortBio: result.profile.ShortBio, // Capital S
+        firstname: result.profile.Firstname,
+        contactPersona: result.profile.ContactPersona,
+        email: result.profile.Email,
+        shortBio: result.profile.ShortBio,
       });
     }
 
@@ -63,9 +59,6 @@ async function unlockProfile(payload: { email: string; codeword: string }) {
     if (result.consent) {
       ProfileStorage.storeConsent(result.consent);
     }
-
-    // Note: In v1, this also handled heldBeliefs and set KnownLead belief
-    // In v2, beliefs will be handled separately if needed
 
     return { success: true, data: result };
   } catch (e) {
@@ -107,8 +100,10 @@ export const ProfileUnlock = ({
         onSuccess?.();
       } else {
         setBadLogin(true);
-        onError?.(result.error || 'Login failed');
+        onError?.(result.error || 'Invalid credentials');
       }
+    } else {
+      console.error('Missing required fields:', { email, codeword });
     }
 
     setIsLoading(false);
@@ -116,32 +111,30 @@ export const ProfileUnlock = ({
 
   useEffect(() => {
     if (badLogin) {
-      const timeout = setTimeout(() => setBadLogin(false), 7000);
+      const timeout = setTimeout(() => setBadLogin(false), 5000);
       return () => clearTimeout(timeout);
     }
   }, [badLogin]);
 
+  // Try to get last used email
+  useEffect(() => {
+    if (!email) {
+      const lastEmail = ProfileStorage.getLastEmail();
+      if (lastEmail) {
+        setEmail(lastEmail);
+      }
+    }
+  }, [email]);
+
   return (
     <>
       <h3 className="font-action py-6 text-xl text-blue-600">
-        Welcome Back. Unlock your profile &gt;
+        Welcome back! Please unlock your profile
       </h3>
-      <p className="text-md pb-6">
-        Don't have a profile?
-        <button
-          className="ml-3 text-blue-600 underline hover:text-black"
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('tractstack:show-create'));
-          }}
-        >
-          Create one
-        </button>
-        .
-      </p>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-3 px-4 pt-6">
+        <div className="grid grid-cols-1 gap-4">
+          <div className="px-4 pt-6">
             <label htmlFor="email" className="block text-sm text-gray-600">
               Email address
             </label>
@@ -149,13 +142,12 @@ export const ProfileUnlock = ({
               type="email"
               name="email"
               id="email"
-              autoComplete="new-password"
-              aria-autocomplete="none"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               className={classNames(
-                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-orange-500 focus:ring-orange-500`,
+                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
                 submitted && email === `` ? `border-red-500` : `border-gray-300`
               )}
             />
@@ -164,21 +156,20 @@ export const ProfileUnlock = ({
             )}
           </div>
 
-          <div className="col-span-3 px-4 pt-6">
+          <div className="px-4 pt-6">
             <label htmlFor="codeword" className="block text-sm text-gray-600">
-              Enter your secret code word to unlock your account:
+              Secret code word
             </label>
             <input
               type="password"
               name="codeword"
               id="codeword"
-              autoComplete="new-password"
-              aria-autocomplete="none"
+              autoComplete="off"
               value={codeword}
               onChange={(e) => setCodeword(e.target.value)}
               disabled={isLoading}
               className={classNames(
-                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-orange-500 focus:ring-orange-500`,
+                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
                 submitted && codeword === ``
                   ? `border-red-500`
                   : `border-gray-300`
@@ -190,31 +181,39 @@ export const ProfileUnlock = ({
           </div>
 
           {badLogin ? (
-            <div className="align-center col-span-3 flex justify-center py-12">
-              <div className="w-full max-w-md rounded-md border border-red-400 bg-red-100 px-4 py-3 text-red-700">
-                <p className="text-sm font-bold">Login Failed</p>
-                <p className="text-sm">
-                  The email or code word you entered is incorrect. Please try
-                  again.
-                </p>
-              </div>
+            <div className="align-center font-action col-span-1 flex justify-center py-6 text-red-500">
+              Invalid credentials. Please try again.
             </div>
           ) : null}
 
-          {codeword !== `` ? (
-            <div className="align-center col-span-3 flex justify-center py-12">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="inline-flex rounded-md bg-orange-500/10 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="pr-4">
-                  {isLoading ? 'Unlocking...' : 'Unlock Profile'}
-                </span>
-                <ChevronRightIcon className="mr-3 h-5 w-5" aria-hidden="true" />
-              </button>
-            </div>
-          ) : null}
+          <div className="align-center col-span-1 flex justify-center py-12">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={classNames(
+                `font-action rounded-lg px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1`,
+                isLoading
+                  ? `cursor-not-allowed bg-gray-400`
+                  : `bg-black hover:bg-orange-500`
+              )}
+            >
+              {isLoading ? 'Unlocking...' : 'Unlock Profile'}
+            </button>
+          </div>
+
+          <div className="align-center col-span-1 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                // Clear any stored data and reload to show create form
+                ProfileStorage.clearProfile();
+                window.location.reload();
+              }}
+              className="text-sm text-blue-600 underline hover:text-black"
+            >
+              Create new profile instead
+            </button>
+          </div>
         </div>
       </form>
     </>

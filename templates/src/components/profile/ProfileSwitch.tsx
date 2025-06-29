@@ -50,6 +50,53 @@ async function restoreProfileFromToken(): Promise<boolean> {
   }
 }
 
+// Fast pass auto-unlock using encrypted credentials
+async function tryFastPassUnlock(): Promise<boolean> {
+  try {
+    const sessionData = ProfileStorage.prepareHandshakeData();
+
+    if (!sessionData.encryptedEmail || !sessionData.encryptedCode) {
+      return false;
+    }
+
+    const response = await fetch('/api/auth/profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        encryptedEmail: sessionData.encryptedEmail,
+        encryptedCode: sessionData.encryptedCode,
+        sessionId: sessionData.sessionId,
+        isUpdate: true,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success && result.profile) {
+      // Fast pass successful - store profile data
+      ProfileStorage.setProfileData({
+        firstname: result.profile.Firstname,
+        contactPersona: result.profile.ContactPersona,
+        email: result.profile.Email,
+        shortBio: result.profile.ShortBio,
+      });
+
+      if (result.token) {
+        ProfileStorage.storeProfileToken(result.token);
+      }
+
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.log('Fast pass error:', error);
+    return false;
+  }
+}
+
 export const ProfileSwitch = () => {
   const [mode, setMode] = useState<'unset' | 'create' | 'unlock' | 'edit'>(
     'unset'
@@ -68,20 +115,28 @@ export const ProfileSwitch = () => {
         return;
       }
 
-      // First, check if we have a profile token from the handshake
-      const hasToken = !!localStorage.getItem('profile_token'); // FIXED: Removed incorrect negation
       const profileData = ProfileStorage.getProfileData();
       const hasProfile = ProfileStorage.hasProfile();
       const isUnlocked = ProfileStorage.isProfileUnlocked();
       const consent = ProfileStorage.getConsent();
+      const hasToken = !!localStorage.getItem('profile_token');
+      const session = ProfileStorage.getCurrentSession();
 
-      console.log('ProfileSwitch Debug:', {
-        hasToken,
-        hasProfile,
-        isUnlocked,
-        consent,
-        hasFirstname: !!profileData.firstname,
-      });
+      // Try fast pass auto-unlock if we have consent and encrypted credentials but no profile data
+      if (
+        consent === '1' &&
+        session.encryptedEmail &&
+        session.encryptedCode &&
+        !hasToken
+      ) {
+        const fastPassSuccess = await tryFastPassUnlock();
+        if (fastPassSuccess) {
+          setMode('edit');
+          setIsLoading(false);
+          return;
+        }
+        // Fast pass failed, continue with normal flow
+      }
 
       // If we have a token but no local profile data, restore from token
       if (hasToken && !profileData.firstname) {
@@ -94,7 +149,6 @@ export const ProfileSwitch = () => {
       }
 
       // If we have encrypted credentials but no profile token, show unlock
-      const session = ProfileStorage.getCurrentSession();
       if (
         (session.encryptedCode && session.encryptedEmail && !hasToken) ||
         (hasProfile && !isUnlocked)
@@ -171,9 +225,6 @@ export const ProfileSwitch = () => {
 
   // Don't render edit mode if we don't have profile data
   if (mode === 'edit' && !ProfileStorage.getProfileData().firstname) {
-    console.log(
-      'ProfileSwitch: Switching from edit to unset due to missing profile data'
-    );
     return <div />;
   }
 

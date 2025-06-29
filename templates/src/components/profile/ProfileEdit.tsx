@@ -17,22 +17,25 @@ const contactPersona = [
     id: 'major',
     title: 'Major Updates Only',
     description: 'Will only send major updates and do so infrequently.',
+    disabled: false,
   },
   {
     id: 'all',
     title: 'All Updates',
     description: 'Be fully in the know!',
+    disabled: false,
   },
   {
     id: 'open',
     title: 'DMs open',
     description: "Leave your contact details and we'll get in touch!",
+    disabled: false,
   },
   {
     id: 'none',
     title: 'None',
     description: 'Disables all communications from us.',
-    disabled: true,
+    disabled: false, // Changed from true to false to allow selection
   },
 ];
 
@@ -50,6 +53,7 @@ async function updateProfile(payload: {
 }) {
   try {
     const sessionData = ProfileStorage.prepareHandshakeData();
+    const currentConsent = ProfileStorage.getConsent() || '1'; // default to true
 
     const response = await fetch('/api/auth/profile', {
       method: 'POST',
@@ -63,6 +67,7 @@ async function updateProfile(payload: {
         contactPersona: payload.persona,
         shortBio: payload.bio,
         sessionId: sessionData.sessionId,
+        consent: currentConsent, // Include actual consent value
         isUpdate: true, // This is an update operation
       }),
     });
@@ -73,13 +78,14 @@ async function updateProfile(payload: {
       return { success: false, error: result.error || 'Profile update failed' };
     }
 
-    // Store updated profile data and tokens
+    // Store updated profile data and tokens - use lowercase field names consistently
     if (result.profile) {
       ProfileStorage.setProfileData({
-        firstname: result.profile.Firstname, // Capital F
-        contactPersona: result.profile.ContactPersona, // Capital C
-        email: result.profile.Email, // Capital E
-        shortBio: result.profile.ShortBio, // Capital S
+        firstname: result.profile.firstname || result.profile.Firstname, // handle both cases
+        contactPersona:
+          result.profile.contactPersona || result.profile.ContactPersona,
+        email: result.profile.email || result.profile.Email,
+        shortBio: result.profile.shortBio || result.profile.ShortBio,
       });
     }
 
@@ -92,6 +98,10 @@ async function updateProfile(payload: {
         result.encryptedEmail,
         result.encryptedCode
       );
+    }
+
+    if (result.consent) {
+      ProfileStorage.storeConsent(result.consent);
     }
 
     return { success: true, data: result };
@@ -135,30 +145,12 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
   const iconClass =
     personaSelected.title === `DMs open`
-      ? `text-black`
+      ? `text-green-500`
       : personaSelected.title === `Major Updates Only`
         ? `text-gray-600`
         : personaSelected.title === `All Updates`
           ? `text-orange-500`
           : `text-gray-600`;
-
-  const barClass =
-    personaSelected.title === `DMs open`
-      ? `bg-green-400/80`
-      : personaSelected.title === `All Updates`
-        ? `bg-orange-400/80`
-        : personaSelected.title === `Major Updates Only`
-          ? `bg-orange-400/50`
-          : `bg-gray-100/5`;
-
-  const barWidth =
-    personaSelected.title === `DMs open`
-      ? `100%`
-      : personaSelected.title === `All Updates`
-        ? `100%`
-        : personaSelected.title === `Major Updates Only`
-          ? `50%`
-          : `2%`;
 
   // Initialize form with current profile data
   useEffect(() => {
@@ -186,7 +178,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
         firstname,
         email,
         codeword,
-        bio,
+        bio: bio || '', // Ensure bio is string, not undefined
         persona: personaSelected.id,
       });
 
@@ -196,6 +188,13 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
       } else {
         onError?.(result.error || 'Profile update failed');
       }
+    } else {
+      console.error('Missing required fields:', {
+        firstname,
+        email,
+        codeword,
+        persona: personaSelected.id,
+      });
     }
 
     setIsLoading(false);
@@ -213,7 +212,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
   useEffect(() => {
     if (saved) {
-      const timeout = setTimeout(() => setSaved(false), 7000);
+      const timeout = setTimeout(() => setSaved(false), 3000);
       return () => clearTimeout(timeout);
     }
   }, [saved]);
@@ -242,76 +241,63 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
     <>
       <style>{selectItemStyles}</style>
       <h3 className="font-action py-6 text-xl text-blue-600">
-        Welcome to Tract Stack
+        Update your profile
       </h3>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-3 gap-4">
-          {!personaSelected?.disabled ? (
-            <>
-              <div className="col-span-3 px-4 pt-6 md:col-span-1">
-                <label
-                  htmlFor="firstname"
-                  className="block text-sm text-gray-600"
-                >
-                  First name
-                </label>
-                <input
-                  type="text"
-                  name="firstname"
-                  id="firstname"
-                  autoComplete="given-name"
-                  value={firstname}
-                  onChange={(e) => setFirstname(e.target.value)}
-                  disabled={isLoading}
-                  className={classNames(
-                    `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
-                    submitted && firstname === ``
-                      ? `border-red-500`
-                      : `border-gray-300`
-                  )}
-                />
-                {submitted && firstname === `` && (
-                  <span className="px-4 text-xs text-red-500">
-                    Required field.
-                  </span>
-                )}
-              </div>
+          <div className="col-span-3 px-4 pt-6 md:col-span-1">
+            <label htmlFor="firstname" className="block text-sm text-gray-600">
+              First name
+            </label>
+            <input
+              type="text"
+              name="firstname"
+              id="firstname"
+              autoComplete="given-name"
+              value={firstname}
+              onChange={(e) => setFirstname(e.target.value)}
+              disabled={isLoading}
+              className={classNames(
+                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
+                submitted && firstname === ``
+                  ? `border-red-500`
+                  : `border-gray-300`
+              )}
+            />
+            {submitted && firstname === `` && (
+              <span className="px-4 text-xs text-red-500">Required field.</span>
+            )}
+          </div>
 
-              <div className="col-span-3 px-4 pt-6 md:col-span-2">
-                <label htmlFor="email" className="block text-sm text-gray-600">
-                  Email address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  className={classNames(
-                    `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
-                    submitted && email === ``
-                      ? `border-red-500`
-                      : `border-gray-300`
-                  )}
-                />
-                {submitted && email === `` && (
-                  <span className="px-4 text-xs text-red-500">
-                    Required field.
-                  </span>
-                )}
-              </div>
-            </>
-          ) : null}
+          <div className="col-span-3 px-4 pt-6 md:col-span-2">
+            <label htmlFor="email" className="block text-sm text-gray-600">
+              Email address
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              className={classNames(
+                `text-md mt-2 block w-full rounded-md bg-white p-3 shadow-sm focus:border-cyan-600 focus:ring-cyan-600`,
+                submitted && email === `` ? `border-red-500` : `border-gray-300`
+              )}
+            />
+            {submitted && email === `` && (
+              <span className="px-4 text-xs text-red-500">Required field.</span>
+            )}
+          </div>
 
           <div className="col-span-3 px-4 pt-6">
             <div className="flex items-center text-sm">
               <div className="pr-8 text-sm text-black">
                 <Select.Root
                   collection={personaCollection}
-                  defaultValue={[personaSelected.id]}
+                  value={[personaSelected.id]}
                   onValueChange={handlePersonaChange}
                   disabled={isLoading}
                 >
@@ -326,7 +312,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                       </Select.ValueText>
                       <Select.Indicator className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronDownIcon
-                          className="h-5 w-5 text-gray-600"
+                          className="h-5 w-5 text-gray-400"
                           aria-hidden="true"
                         />
                       </Select.Indicator>
@@ -335,18 +321,21 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
                   <Portal>
                     <Select.Positioner>
-                      <Select.Content className="z-10 mt-2 w-full overflow-auto rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        {personaCollection.items.map((option) => (
+                      <Select.Content className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {contactPersona.map((item) => (
                           <Select.Item
-                            key={option.id}
-                            item={option}
-                            className="persona-item cursor-default select-none p-2 text-sm text-black hover:bg-slate-100"
+                            key={item.id}
+                            item={item}
+                            className="persona-item relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-cyan-600 hover:text-white"
                           >
-                            <Select.ItemText className="block truncate">
-                              {option.title}
+                            <Select.ItemText className="block truncate font-normal">
+                              {item.title}
                             </Select.ItemText>
-                            <Select.ItemIndicator className="persona-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                              {/* CheckIcon would go here if needed */}
+                            <Select.ItemIndicator className="persona-indicator absolute inset-y-0 right-0 hidden items-center pr-4 text-cyan-600">
+                              <ChevronRightIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
                             </Select.ItemIndicator>
                           </Select.Item>
                         ))}
@@ -355,38 +344,31 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
                   </Portal>
                 </Select.Root>
               </div>
-              <div className="flex flex-1 items-center">
-                <div
+              <div className="ml-4 flex items-center">
+                <Icon
+                  className={classNames(iconClass, `mr-2 h-5 w-5`)}
                   aria-hidden="true"
-                  className="ml-1 flex flex-1 items-center"
-                >
-                  <Icon
-                    className={classNames(iconClass, `h-5 w-5 flex-shrink-0`)}
-                    aria-hidden="true"
-                  />
-                  <div className="relative ml-3 flex-1">
-                    <div className="h-7 rounded-full border border-gray-300/20" />
-                    <div
-                      className={classNames(
-                        `absolute inset-y-0 rounded-full border-gray-300/20`,
-                        barClass
-                      )}
-                      style={{ width: barWidth }}
-                    />
-                  </div>
-                </div>
+                />
+                <span className="text-sm text-gray-600">
+                  {personaSelected.description}
+                </span>
               </div>
             </div>
-            <p className="text-right text-sm text-gray-600">
-              {personaSelected.description}
-            </p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div className="col-span-3 px-4 pt-6">
             <label htmlFor="bio" className="block text-sm text-gray-600">
-              Hello {firstname}. Is there anything else you would like to share?
+              {firstname ? (
+                <>
+                  Hello {firstname}. Is there anything else you would like to
+                  share?
+                </>
+              ) : (
+                <>
+                  Would you like to share anything else? (Contact preferences;
+                  company bio; phone number)
+                </>
+              )}
             </label>
             <div className="mt-2">
               <textarea
@@ -405,13 +387,13 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
           <div className="col-span-1 px-4 pt-6">
             <label htmlFor="codeword" className="block text-sm text-gray-600">
-              Re-Enter your secret code word to save any changes:
+              Enter your secret code word to save changes:
             </label>
             <input
               type="password"
               name="codeword"
               id="codeword"
-              autoComplete="current-password"
+              autoComplete="off"
               value={codeword}
               onChange={(e) => setCodeword(e.target.value)}
               disabled={isLoading}
@@ -428,32 +410,25 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
           </div>
 
           {saved ? (
-            <div className="align-center font-action col-span-3 flex justify-center py-12 text-green-500">
-              Profile Saved
+            <div className="align-center font-action col-span-3 flex justify-center py-12 text-green-600">
+              Profile updated successfully!
             </div>
           ) : null}
 
-          {codeword !== `` ? (
-            <div className="align-center col-span-3 flex justify-center py-12">
-              {!personaSelected?.disabled ? (
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="inline-flex rounded-md bg-cyan-600/10 px-3.5 py-1.5 text-base leading-7 text-black shadow-sm hover:bg-black hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span className="pr-4">
-                    {isLoading ? 'Saving...' : 'Save Profile'}
-                  </span>
-                  <ChevronRightIcon
-                    className="mr-3 h-5 w-5"
-                    aria-hidden="true"
-                  />
-                </button>
-              ) : (
-                `Profile disabled. (Privacy mode enabled)`
+          <div className="align-center col-span-3 flex justify-center py-12">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={classNames(
+                `font-action rounded-lg px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1`,
+                isLoading
+                  ? `cursor-not-allowed bg-gray-400`
+                  : `bg-black hover:bg-orange-500`
               )}
-            </div>
-          ) : null}
+            >
+              {isLoading ? 'Saving...' : 'Update Profile'}
+            </button>
+          </div>
         </div>
       </form>
     </>
