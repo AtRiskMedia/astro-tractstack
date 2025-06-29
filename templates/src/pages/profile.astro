@@ -2,8 +2,8 @@
 // Profile configuration page for TractStack v2.0
 // Integrates with Go backend using session-first architecture
 
-import Layout from '../layouts/Layout.astro';
-import { ProfileSwitch } from '../components/profile/ProfileSwitch';
+import Layout from '@/layouts/Layout.astro';
+import { ProfileSwitch } from '@/components/profile/ProfileSwitch';
 
 const config = {
   title: 'Configure your Session',
@@ -143,8 +143,8 @@ const gtag = import.meta.env.PUBLIC_GTAG || false;
           ProfileStorage.storeConsent('1');
         } else {
           ProfileStorage.storeConsent('0');
-          // Optionally clear profile when consent is removed
-          // ProfileStorage.clearProfile();
+          // Clear all localStorage when consent is removed
+          ProfileStorage.clearSession();
         }
 
         // Trigger ProfileSwitch re-render by reloading

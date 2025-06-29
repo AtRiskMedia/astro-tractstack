@@ -18,7 +18,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Get tenant info from environment
     const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
-    const backendUrl = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    const backendUrl =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
     // Prepare request to Go backend
     const backendRequest = {
@@ -44,7 +45,7 @@ export const POST: APIRoute = async ({ request }) => {
 
       // Build response headers
       const responseHeaders: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
 
       if (setCookieHeader) {

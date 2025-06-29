@@ -109,7 +109,7 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/utils/auth.ts'),
       dest: 'src/utils/auth.ts',
     },
-    // NEW: Enhanced auth utilities  
+    // NEW: Enhanced auth utilities
     {
       src: resolve('templates/src/utils/core/auth.ts'),
       dest: 'src/utils/core/auth.ts',

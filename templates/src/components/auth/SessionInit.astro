@@ -55,7 +55,7 @@
         localStorage.setItem('consent', data.consent);
 
         // Store JWT token if provided
-        if (data.token) {
+        if (data.token && localStorage.getItem('consent') === '1') {
           localStorage.setItem('profile_token', data.token);
         }
 

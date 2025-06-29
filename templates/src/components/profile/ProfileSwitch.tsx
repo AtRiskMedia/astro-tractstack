@@ -69,11 +69,19 @@ export const ProfileSwitch = () => {
       }
 
       // First, check if we have a profile token from the handshake
-      const hasToken = !!localStorage.getItem('profile_token');
+      const hasToken = !!localStorage.getItem('profile_token'); // FIXED: Removed incorrect negation
       const profileData = ProfileStorage.getProfileData();
       const hasProfile = ProfileStorage.hasProfile();
       const isUnlocked = ProfileStorage.isProfileUnlocked();
       const consent = ProfileStorage.getConsent();
+
+      console.log('ProfileSwitch Debug:', {
+        hasToken,
+        hasProfile,
+        isUnlocked,
+        consent,
+        hasFirstname: !!profileData.firstname,
+      });
 
       // If we have a token but no local profile data, restore from token
       if (hasToken && !profileData.firstname) {
@@ -101,7 +109,7 @@ export const ProfileSwitch = () => {
       else if ((isUnlocked || hasToken) && profileData.firstname) {
         setMode('edit');
       }
-      // Default case
+      // Default case - when everything is cleared
       else {
         setMode('unset');
       }
@@ -163,6 +171,9 @@ export const ProfileSwitch = () => {
 
   // Don't render edit mode if we don't have profile data
   if (mode === 'edit' && !ProfileStorage.getProfileData().firstname) {
+    console.log(
+      'ProfileSwitch: Switching from edit to unset due to missing profile data'
+    );
     return <div />;
   }
 

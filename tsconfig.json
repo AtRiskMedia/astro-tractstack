@@ -17,6 +17,15 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/components/*": ["src/components/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/types/*": ["src/types/*"],
+      "@/layouts/*": ["src/layouts/*"],
+      "@/pages/*": ["src/pages/*"]
+    },
     "types": [
       "node",
       "astro",

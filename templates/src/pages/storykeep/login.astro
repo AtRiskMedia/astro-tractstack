@@ -1,5 +1,5 @@
 ---
-import { isAuthenticated } from '../../utils/auth';
+import { isAuthenticated } from '@/utils/auth';
 
 // Get redirect path from query params
 const url = new URL(Astro.request.url);
@@ -246,4 +246,3 @@ const wordmark = `${brandBasePath}/wordmark.svg`;
     </script>
   </body>
 </html>
-

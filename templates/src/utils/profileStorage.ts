@@ -71,8 +71,61 @@ export class ProfileStorage {
         StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
       encryptedCode:
         StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
-      hasProfile: !!StorageManager.get(this.STORAGE_KEYS.profileToken),
+      hasProfile: !StorageManager.get(this.STORAGE_KEYS.hasProfile),
     };
+  }
+
+  /**
+   * Check if profile is unlocked
+   */
+  static isProfileUnlocked(): boolean {
+    return !!StorageManager.get(this.STORAGE_KEYS.unlockedProfile);
+  }
+
+  /**
+   * Check if should show unlock form
+   */
+  static shouldShowUnlock(): boolean {
+    return !!StorageManager.get(this.STORAGE_KEYS.showUnlock);
+  }
+
+  /**
+   * Set show unlock flag
+   */
+  static setShowUnlock(show: boolean): void {
+    if (show) {
+      StorageManager.set(this.STORAGE_KEYS.showUnlock, '1');
+    } else {
+      StorageManager.remove(this.STORAGE_KEYS.showUnlock);
+    }
+  }
+
+  /**
+   * Store consent
+   */
+  static storeConsent(consent: string): void {
+    StorageManager.set(this.STORAGE_KEYS.consent, consent);
+  }
+
+  /**
+   * Get consent
+   */
+  static getConsent(): string | null {
+    return StorageManager.get(this.STORAGE_KEYS.consent);
+  }
+
+  /**
+   * Store last email for unlock form
+   */
+  static storeLastEmail(email: string): void {
+    StorageManager.set(this.STORAGE_KEYS.lastEmail, email);
+  }
+
+  /**
+   * Get last email
+   */
+  static getLastEmail(): string | null {
+    return StorageManager.get(this.STORAGE_KEYS.lastEmail);
   }
 
   /**
@@ -183,68 +236,36 @@ export class ProfileStorage {
   }
 
   /**
-   * Check if profile is unlocked
-   */
-  static isProfileUnlocked(): boolean {
-    return !!StorageManager.get(this.STORAGE_KEYS.unlockedProfile);
-  }
-
-  /**
-   * Check if should show unlock form
-   */
-  static shouldShowUnlock(): boolean {
-    return !!StorageManager.get(this.STORAGE_KEYS.showUnlock);
-  }
-
-  /**
-   * Set show unlock flag
-   */
-  static setShowUnlock(show: boolean): void {
-    if (show) {
-      StorageManager.set(this.STORAGE_KEYS.showUnlock, '1');
-    } else {
-      StorageManager.remove(this.STORAGE_KEYS.showUnlock);
-    }
-  }
-
-  /**
-   * Store consent
-   */
-  static storeConsent(consent: string): void {
-    StorageManager.set(this.STORAGE_KEYS.consent, consent);
-  }
-
-  /**
-   * Get consent
-   */
-  static getConsent(): string | null {
-    return StorageManager.get(this.STORAGE_KEYS.consent);
-  }
-
-  /**
-   * Store last email for unlock form
-   */
-  static storeLastEmail(email: string): void {
-    StorageManager.set(this.STORAGE_KEYS.lastEmail, email);
-  }
-
-  /**
-   * Get last email
-   */
-  static getLastEmail(): string | null {
-    return StorageManager.get(this.STORAGE_KEYS.lastEmail);
-  }
-
-  /**
-   * Clear entire session (localStorage)
+   * Clear entire session (localStorage) INCLUDING session ID
    */
   static clearSession(): void {
-    // Clear all localStorage keys
+    // Clear all localStorage keys with tractstack prefix
     Object.values(this.STORAGE_KEYS).forEach((key) => {
       StorageManager.remove(key);
     });
 
-    console.log('TractStack: Session cleared completely');
+    // CRITICAL: Also clear the session ID that's stored without prefix
+    try {
+      localStorage.removeItem('tractstack_session_id');
+    } catch {
+      // Silently fail
+    }
+
+    // Clear any other non-prefixed TractStack keys
+    try {
+      localStorage.removeItem('fp_id');
+      localStorage.removeItem('visit_id');
+      localStorage.removeItem('profile_token');
+    } catch {
+      // Silently fail
+    }
+
+    // Clear global session reference
+    if (typeof window !== 'undefined') {
+      (window as any).tractStackSessionId = undefined;
+    }
+
+    console.log('TractStack: Session cleared completely including session ID');
   }
 
   /**
@@ -278,6 +299,7 @@ export class ProfileStorage {
       encrypted_email: !!StorageManager.get('encrypted_email'),
       encrypted_code: !!StorageManager.get('encrypted_code'),
       consent: StorageManager.get('consent'),
+      session_id: localStorage.getItem('tractstack_session_id'),
     });
     console.groupEnd();
   }
