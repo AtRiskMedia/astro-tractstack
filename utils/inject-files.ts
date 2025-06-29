@@ -104,6 +104,38 @@ export async function injectTemplateFiles(
       src: resolve('templates/tailwind.config.cjs'),
       dest: 'tailwind.config.cjs',
     },
+    // Existing auth utility (keeping the path that's already used)
+    {
+      src: resolve('templates/src/utils/auth.ts'),
+      dest: 'src/utils/auth.ts',
+    },
+    // NEW: Enhanced auth utilities  
+    {
+      src: resolve('templates/src/utils/core/auth.ts'),
+      dest: 'src/utils/core/auth.ts',
+    },
+    // NEW: Brand assets
+    {
+      src: resolve('templates/brand/logo.svg'),
+      dest: 'public/brand/logo.svg',
+    },
+    {
+      src: resolve('templates/brand/wordmark.svg'),
+      dest: 'public/brand/wordmark.svg',
+    },
+    // NEW: Admin auth pages
+    {
+      src: resolve('templates/src/pages/storykeep/login.astro'),
+      dest: 'src/pages/storykeep/login.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/logout.astro'),
+      dest: 'src/pages/storykeep/logout.astro',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/login.ts'),
+      dest: 'src/pages/api/auth/login.ts',
+    },
   ];
 
   for (const file of templateFiles) {

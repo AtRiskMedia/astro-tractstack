@@ -1,0 +1,249 @@
+---
+import { isAuthenticated } from '../../utils/auth';
+
+// Get redirect path from query params
+const url = new URL(Astro.request.url);
+const redirectPath = url.searchParams.get('redirect') || '/storykeep';
+const forceLogin = url.searchParams.get('force') === 'true';
+
+// If already authenticated and not forcing login, redirect
+if (isAuthenticated(Astro) && !forceLogin) {
+  return Astro.redirect(redirectPath);
+}
+
+// Determine asset paths based on environment
+const isDev = import.meta.env.DEV;
+const brandBasePath = isDev ? '/brand' : '/media/brand';
+
+// Brand assets with environment-aware paths
+const logo = `${brandBasePath}/logo.svg`;
+const wordmark = `${brandBasePath}/wordmark.svg`;
+---
+
+<!doctype html>
+<html lang="en" class="bg-mywhite h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | TractStack</title>
+    <link rel="stylesheet" href="/styles/custom.css" />
+    <link rel="stylesheet" href="/styles/storykeep.css" />
+  </head>
+  <body class="h-full">
+    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div class="mx-auto pb-6">
+        <!-- Logo and Wordmark -->
+        <div class="flex flex-col items-center justify-center gap-4">
+          <div class="h-16 w-auto">
+            <img
+              src={logo}
+              class="pointer-events-none h-full w-auto"
+              alt="Logo"
+            />
+          </div>
+          <div class="h-16 w-auto">
+            <img
+              src={wordmark}
+              class="pointer-events-none h-full w-auto max-w-48 md:max-w-72"
+              alt="Wordmark"
+            />
+          </div>
+        </div>
+
+        <h2
+          class="text-mydarkgrey mt-6 text-center text-2xl font-bold leading-9 tracking-tight"
+        >
+          Sign in to your Storykeep
+        </h2>
+      </div>
+
+      <div class="mx-auto">
+        <div class="rounded-lg bg-white px-6 py-12 shadow-inner">
+          <!-- Error message -->
+          <div
+            id="loginError"
+            class="bg-myred/10 mb-6 rounded-md p-4"
+            style="display: none;"
+          >
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg
+                  class="text-myred h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-myred text-sm font-bold">
+                  Invalid credentials
+                </h3>
+                <div class="text-myred/90 mt-2 text-sm">
+                  <p>Please check your password and try again.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Login form -->
+          <div id="loginForm" class="space-y-6">
+            <div>
+              <label
+                for="password"
+                class="text-mydarkgrey block text-sm font-bold leading-6"
+              >
+                Password
+              </label>
+              <div class="mt-2">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  class="text-mydarkgrey ring-mylightgrey placeholder:text-mylightgrey focus:ring-myorange block w-full rounded-md border-0 px-3 py-1.5 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
+
+            <input
+              type="hidden"
+              id="redirectPath"
+              name="redirect"
+              value={redirectPath}
+            />
+
+            <div>
+              <button
+                type="button"
+                id="submitButton"
+                class="bg-myblue hover:bg-myorange focus-visible:outline-myorange flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-bold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                Sign in
+              </button>
+            </div>
+          </div>
+
+          <!-- Success message -->
+          <div id="loginSuccess" class="space-y-6" style="display: none;">
+            <div class="rounded-md bg-green-50 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg
+                    class="h-5 w-5 text-green-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.25a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-green-800">
+                    Login successful!
+                  </h3>
+                  <div class="mt-2 text-sm text-green-700">
+                    <p>Role: <span id="userRole"></span></p>
+                    <p>Redirecting...</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function () {
+        const submitButton = document.getElementById('submitButton');
+        const passwordInput = document.getElementById('password');
+        const redirectInput = document.getElementById('redirectPath');
+        const loginErrorDiv = document.getElementById('loginError');
+        const loginFormDiv = document.getElementById('loginForm');
+        const loginSuccessDiv = document.getElementById('loginSuccess');
+        const userRoleSpan = document.getElementById('userRole');
+
+        if (submitButton && passwordInput && redirectInput) {
+          const buttonText = submitButton.textContent.trim();
+
+          submitButton.addEventListener('click', async function () {
+            // Hide error message
+            if (loginErrorDiv) loginErrorDiv.style.display = 'none';
+
+            // Show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = 'Signing in...';
+
+            const password = passwordInput.value;
+            const redirectPath = redirectInput.value;
+
+            if (!password) {
+              if (loginErrorDiv) loginErrorDiv.style.display = 'block';
+              submitButton.disabled = false;
+              submitButton.textContent = buttonText;
+              return;
+            }
+
+            try {
+              const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                  password,
+                  redirect: redirectPath,
+                }),
+              });
+
+              const result = await response.json();
+
+              if (result.success) {
+                // Show success message with role
+                if (loginFormDiv) loginFormDiv.style.display = 'none';
+                if (loginSuccessDiv) loginSuccessDiv.style.display = 'block';
+                if (userRoleSpan)
+                  userRoleSpan.textContent = result.role || 'authenticated';
+
+                // Console log for debugging
+                console.log('Login successful:', result);
+                console.log('User role:', result.role);
+
+                // Redirect after short delay
+                setTimeout(() => {
+                  window.location.href = result.redirect || redirectPath;
+                }, 1500);
+              } else {
+                if (loginErrorDiv) loginErrorDiv.style.display = 'block';
+                submitButton.disabled = false;
+                submitButton.textContent = buttonText;
+              }
+            } catch (error) {
+              console.error('Login error:', error);
+              if (loginErrorDiv) loginErrorDiv.style.display = 'block';
+              submitButton.disabled = false;
+              submitButton.textContent = buttonText;
+            }
+          });
+
+          passwordInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              submitButton.click();
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
+

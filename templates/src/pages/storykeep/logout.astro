@@ -1,0 +1,9 @@
+---
+import { clearAuth } from '../../utils/auth';
+
+// Clear the authentication cookie
+clearAuth(Astro);
+
+// Redirect to home page
+return Astro.redirect('/');
+---
