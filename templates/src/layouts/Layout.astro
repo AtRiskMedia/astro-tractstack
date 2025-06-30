@@ -126,6 +126,7 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
       });
 
       document.addEventListener('astro:after-swap', () => {
+        htmx.process(document.body);
         const indicator = document.getElementById('loading-indicator');
         if (indicator) {
           indicator.style.transform = 'scale-x-0';
