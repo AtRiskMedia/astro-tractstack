@@ -105,7 +105,9 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
       // Configure HTMX
       htmx.config.selfRequestsOnly = false;
       htmx.config.defaultSwapStyle = 'innerHTML';
-      htmx.config.historyCacheSize = 10;
+      htmx.config.historyCacheSize = 50;
+      htmx.config.requestClass = 'htmx-request';
+      htmx.config.refreshOnHistoryMiss = true;
 
       // Set up default headers for TractStack
       document.body.addEventListener('htmx:configRequest', function (evt) {
