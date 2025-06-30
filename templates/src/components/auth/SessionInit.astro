@@ -23,6 +23,9 @@
 
     //console.log('TRACTSTACK_CONFIG ready:', window.TRACTSTACK_CONFIG);
 
+    // Check and cleanup expired sessions first
+    cleanupExpiredSessions();
+
     try {
       // Get or create persistent sessionId
       const sessionId = getOrCreateSessionId();
@@ -31,32 +34,34 @@
       // Prepare session data (session-only, no client-generated IDs)
       const sessionData = {
         sessionId: sessionId,
-        encryptedEmail: localStorage.getItem('encrypted_email') || '',
-        encryptedCode: localStorage.getItem('encrypted_code') || '',
-        consent: localStorage.getItem('consent') || '',
+        encryptedEmail:
+          localStorage.getItem('tractstack_encrypted_email') || '',
+        encryptedCode: localStorage.getItem('tractstack_encrypted_code') || '',
+        consent: localStorage.getItem('tractstack_consent') || '',
       };
 
       // Make fetch request to CORS proxy
       const response = await fetch('/api/auth/visit', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           'X-TractStack-Tenant': window.TRACTSTACK_CONFIG.tenantId,
         },
-        body: new URLSearchParams(sessionData),
+        body: JSON.stringify(sessionData),
       });
 
       if (response.ok) {
         const data = await response.json();
 
         // Store backend-generated session data
-        localStorage.setItem('fp_id', data.fingerprint);
-        localStorage.setItem('visit_id', data.visitId);
-        localStorage.setItem('consent', data.consent);
+        localStorage.setItem('tractstack_fp_id', data.fingerprint);
+        localStorage.setItem('tractstack_visit_id', data.visitId);
+        localStorage.setItem('tractstack_consent', data.consent);
+        localStorage.setItem('tractstack_lastActive', Date.now().toString());
 
         // Store JWT token if provided
-        if (data.token && localStorage.getItem('consent') === '1') {
-          localStorage.setItem('profile_token', data.token);
+        if (data.token && localStorage.getItem('tractstack_consent') === '1') {
+          localStorage.setItem('tractstack_profile_token', data.token);
         }
 
         // Update global TRACTSTACK_CONFIG if it exists
@@ -123,5 +128,39 @@
     window.tractStackSessionId = sessionId;
 
     return sessionId;
+  }
+
+  // Cleanup expired sessions based on consent
+  function cleanupExpiredSessions() {
+    const lastActive = localStorage.getItem('tractstack_lastActive');
+    const consent = localStorage.getItem('tractstack_consent');
+
+    if (!lastActive) return;
+
+    const lastActiveTime = parseInt(lastActive, 10);
+    const now = Date.now();
+    const timeDiff = now - lastActiveTime;
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+
+    // If no consent and more than 2 hours passed, clear all tractstack data
+    if (consent !== '1' && timeDiff > TWO_HOURS) {
+      clearAllTractStackData();
+    }
+  }
+
+  // Clear all TractStack data from localStorage
+  function clearAllTractStackData() {
+    const tractStackKeys = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('tractstack_')) {
+        tractStackKeys.push(key);
+      }
+    }
+
+    tractStackKeys.forEach((key) => {
+      localStorage.removeItem(key);
+    });
   }
 </script>

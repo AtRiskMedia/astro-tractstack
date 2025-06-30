@@ -27,55 +27,81 @@ export const POST: APIRoute = async ({ request }) => {
       tenantId,
     };
 
-    // Call Go backend login endpoint
-    const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-TractStack-Tenant': tenantId,
-      },
-      body: JSON.stringify(backendRequest),
-    });
+    // Create abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    const result = await response.json();
+    try {
+      // Call Go backend login endpoint
+      const response = await fetch(`${backendUrl}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TractStack-Tenant': tenantId,
+        },
+        body: JSON.stringify(backendRequest),
+        signal: controller.signal,
+      });
 
-    if (response.ok && result.status === 'ok') {
-      // Get Set-Cookie header from backend response
-      const setCookieHeader = response.headers.get('Set-Cookie');
+      clearTimeout(timeoutId);
 
-      // Build response headers
-      const responseHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
+      const result = await response.json();
 
-      if (setCookieHeader) {
-        responseHeaders['Set-Cookie'] = setCookieHeader;
+      if (response.ok && result.status === 'ok') {
+        // Get Set-Cookie header from backend response
+        const setCookieHeader = response.headers.get('Set-Cookie');
+
+        // Build response headers
+        const responseHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+
+        if (setCookieHeader) {
+          responseHeaders['Set-Cookie'] = setCookieHeader;
+        }
+
+        // Success response
+        return new Response(
+          JSON.stringify({
+            success: true,
+            role: result.role || 'authenticated',
+            redirect: redirect || '/storykeep',
+          }),
+          {
+            status: 200,
+            headers: responseHeaders,
+          }
+        );
+      } else {
+        // Login failed
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: result.error || 'Invalid credentials',
+          }),
+          {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
 
-      // Success response
-      return new Response(
-        JSON.stringify({
-          success: true,
-          role: result.role || 'authenticated',
-          redirect: redirect || '/storykeep',
-        }),
-        {
-          status: 200,
-          headers: responseHeaders,
-        }
-      );
-    } else {
-      // Login failed
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: result.error || 'Invalid credentials',
-        }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('Login request timeout');
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Request timeout - please try again',
+          }),
+          {
+            status: 408,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      throw fetchError;
     }
   } catch (error) {
     console.error('Login API error:', error);

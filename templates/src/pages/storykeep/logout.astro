@@ -1,9 +1,80 @@
 ---
-import { clearAuth } from '@/utils/auth';
-
-// Clear the authentication cookie
-clearAuth(Astro);
-
-// Redirect to home page
-return Astro.redirect('/');
+// JWT-based logout - client-side token removal
+// No server-side state to clear since we use stateless JWT tokens
 ---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logging out...</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background-color: #f3f4f6;
+      }
+      .logout-container {
+        text-align: center;
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logout-container">
+      <h1>Logging out...</h1>
+      <p>Please wait while we clear your session.</p>
+    </div>
+
+    <script>
+      // Clear all authentication data
+      function logout() {
+        try {
+          // Clear admin/editor JWT tokens (if any)
+          // These would be stored by the login system
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('editor_token');
+          sessionStorage.removeItem('admin_token');
+          sessionStorage.removeItem('editor_token');
+
+          // Clear all TractStack data
+          const tractStackKeys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('tractstack_')) {
+              tractStackKeys.push(key);
+            }
+          }
+          tractStackKeys.forEach((key) => localStorage.removeItem(key));
+
+          // Clear global session reference
+          if (typeof window !== 'undefined') {
+            window.tractStackSessionId = undefined;
+          }
+
+          console.log('TractStack: Logout completed - all tokens cleared');
+
+          // Redirect to home page after clearing data
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Still redirect even if cleanup fails
+          window.location.href = '/';
+        }
+      }
+
+      // Execute logout immediately
+      logout();
+    </script>
+  </body>
+</html>

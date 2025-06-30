@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-// Define Locals interface locally if global declaration isn’t picked up
+// Define Locals interface locally if global declaration isn't picked up
 interface Locals {
   session?: Record<string, any>;
 }
@@ -22,90 +22,75 @@ export const POST: APIRoute = async ({
   try {
     // Forward the request to Go backend
     const body = await request.text();
-    const goResponse = await fetch(`${goBackend}/api/v1/auth/visit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type':
-          request.headers.get('Content-Type') ||
-          'application/x-www-form-urlencoded',
-        'X-TractStack-Tenant':
-          request.headers.get('X-TractStack-Tenant') || 'default',
-        Origin: request.headers.get('Origin') || 'http://localhost:4321',
-      },
-      body: body,
-    });
 
-    if (!goResponse.ok) {
-      console.error('API Proxy: Go backend error:', goResponse.status);
-      return new Response(JSON.stringify({ error: 'Backend error' }), {
-        status: goResponse.status,
+    // Create abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    try {
+      const goResponse = await fetch(`${goBackend}/api/v1/auth/visit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            request.headers.get('Content-Type') ||
+            'application/x-www-form-urlencoded',
+          'X-TractStack-Tenant':
+            request.headers.get('X-TractStack-Tenant') || 'default',
+          Origin: request.headers.get('Origin') || 'http://localhost:4321',
+        },
+        body: body,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!goResponse.ok) {
+        console.error('API Proxy: Go backend error:', goResponse.status);
+        return new Response(JSON.stringify({ error: 'Backend error' }), {
+          status: goResponse.status,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const responseData = await goResponse.json();
+
+      // Build session data for locals (JWT-only approach)
+      interface SessionData {
+        isReady: boolean;
+        fingerprint?: string;
+        visitId?: string;
+        consent?: string;
+        hasProfile?: boolean;
+      }
+
+      const sessionData: SessionData = {
+        isReady: !!responseData.fingerprint,
+        fingerprint: responseData.fingerprint,
+        visitId: responseData.visitId,
+        consent: responseData.consent,
+        hasProfile: !!responseData.token,
+      };
+
+      if (sessionData.fingerprint || sessionData.visitId) {
+        locals.session = sessionData;
+      }
+
+      return new Response(JSON.stringify(responseData), {
+        status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
-    }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
 
-    const responseData = await goResponse.json();
-
-    // Extract cookies from Go response
-    const setCookieHeaders = goResponse.headers.getSetCookie
-      ? goResponse.headers.getSetCookie()
-      : [];
-
-    // Define session data type for better type safety
-    interface SessionData {
-      isReady: boolean;
-      fingerprint?: string;
-      visitId?: string;
-      consent?: string;
-      hasProfile?: boolean;
-    }
-
-    // Parse and set cookies in Astro
-    const sessionData: SessionData = { isReady: false };
-    setCookieHeaders.forEach((cookieHeader) => {
-      const [nameValue] = cookieHeader.split(';');
-      const [name, value] = nameValue.split('=');
-
-      if (name && value) {
-        const cookieName = name.trim();
-        const cookieValue = value.trim();
-
-        // Set non-sensitive cookies accessible to JS
-        if (['fp_id', 'visit_id', 'consent'].includes(cookieName)) {
-          cookies.set(cookieName, cookieValue, {
-            path: '/',
-            maxAge: cookieName === 'fp_id' ? 30 * 24 * 60 * 60 : 24 * 60 * 60,
-            httpOnly: false, // Allow JS access
-            sameSite: 'lax',
-          });
-        }
-
-        // Profile token stays HttpOnly for security
-        if (cookieName === 'profile_token') {
-          cookies.set(cookieName, cookieValue, {
-            path: '/',
-            maxAge: 30 * 24 * 60 * 60,
-            httpOnly: true,
-            sameSite: 'lax',
-          });
-        }
-
-        // Build session data for locals
-        if (cookieName === 'fp_id') sessionData.fingerprint = cookieValue;
-        if (cookieName === 'visit_id') sessionData.visitId = cookieValue;
-        if (cookieName === 'consent') sessionData.consent = cookieValue;
-        if (cookieName === 'profile_token') sessionData.hasProfile = true;
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('Visit request timeout');
+        return new Response(JSON.stringify({ error: 'Request timeout' }), {
+          status: 408,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
-    });
-
-    if (sessionData.fingerprint || sessionData.visitId) {
-      sessionData.isReady = true;
-      locals.session = sessionData; // TypeScript should recognize `session` via Locals interface
+      throw fetchError;
     }
-
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error('API Proxy: Error:', error);
     return new Response(JSON.stringify({ error: 'Proxy error' }), {

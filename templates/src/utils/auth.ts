@@ -2,7 +2,7 @@ import type { APIContext } from 'astro';
 
 /**
  * Admin/Editor Authentication Utilities
- * Uses JWT tokens in httpOnly cookies for secure admin authentication
+ * Uses JWT tokens in Authorization headers for secure admin authentication
  */
 
 export interface AdminAuthClaims {
@@ -17,9 +17,10 @@ export interface AdminAuthClaims {
  * Check if user is authenticated (either admin or editor)
  */
 export function isAuthenticated(context: APIContext): boolean {
-  const token = context.cookies.get('auth_token')?.value;
-  if (!token) return false;
+  const authHeader = context.request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
 
+  const token = authHeader.substring(7);
   try {
     const claims = validateAdminToken(token);
     return claims !== null;
@@ -32,9 +33,10 @@ export function isAuthenticated(context: APIContext): boolean {
  * Check if user has admin role
  */
 export function isAdmin(context: APIContext): boolean {
-  const token = context.cookies.get('auth_token')?.value;
-  if (!token) return false;
+  const authHeader = context.request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
 
+  const token = authHeader.substring(7);
   try {
     const claims = validateAdminToken(token);
     return claims?.role === 'admin';
@@ -47,9 +49,10 @@ export function isAdmin(context: APIContext): boolean {
  * Check if user has editor role
  */
 export function isEditor(context: APIContext): boolean {
-  const token = context.cookies.get('auth_token')?.value;
-  if (!token) return false;
+  const authHeader = context.request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
 
+  const token = authHeader.substring(7);
   try {
     const claims = validateAdminToken(token);
     return claims?.role === 'editor';
@@ -62,9 +65,10 @@ export function isEditor(context: APIContext): boolean {
  * Get user role (admin, editor, or null)
  */
 export function getUserRole(context: APIContext): 'admin' | 'editor' | null {
-  const token = context.cookies.get('auth_token')?.value;
-  if (!token) return null;
+  const authHeader = context.request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
 
+  const token = authHeader.substring(7);
   try {
     const claims = validateAdminToken(token);
     return claims?.role || null;
@@ -149,13 +153,6 @@ export function requireAdminOrEditorAPI(context: APIContext): void {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
-
-/**
- * Clear authentication cookie
- */
-export function clearAuth(context: APIContext): void {
-  context.cookies.delete('auth_token', { path: '/' });
 }
 
 /**

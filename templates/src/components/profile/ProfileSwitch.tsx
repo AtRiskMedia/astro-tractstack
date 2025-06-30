@@ -8,7 +8,7 @@ import { ProfileStorage } from '../../utils/profileStorage';
 async function restoreProfileFromToken(): Promise<boolean> {
   try {
     // Check if we have a profile token from the handshake
-    const token = localStorage.getItem('profile_token');
+    const token = localStorage.getItem('tractstack_profile_token');
     if (!token) {
       return false;
     }
@@ -119,7 +119,7 @@ export const ProfileSwitch = () => {
       const hasProfile = ProfileStorage.hasProfile();
       const isUnlocked = ProfileStorage.isProfileUnlocked();
       const consent = ProfileStorage.getConsent();
-      const hasToken = !!localStorage.getItem('profile_token');
+      const hasToken = !!localStorage.getItem('tractstack_profile_token');
       const session = ProfileStorage.getCurrentSession();
 
       // Try fast pass auto-unlock if we have consent and encrypted credentials but no profile data

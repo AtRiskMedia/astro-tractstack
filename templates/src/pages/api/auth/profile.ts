@@ -8,27 +8,55 @@ export const POST: APIRoute = async ({ request }) => {
     // Forward the request to the Go backend
     const body = await request.text();
 
-    const response = await fetch(`${GO_BACKEND}/api/v1/auth/profile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-TractStack-Tenant': import.meta.env.PUBLIC_TENANTID || 'default',
-        ...(request.headers.get('Authorization') && {
-          Authorization: request.headers.get('Authorization')!,
-        }),
-      },
-      body: body,
-    });
+    // Create abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    const data = await response.json();
+    try {
+      const response = await fetch(`${GO_BACKEND}/api/v1/auth/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-TractStack-Tenant': import.meta.env.PUBLIC_TENANTID || 'default',
+          ...(request.headers.get('Authorization') && {
+            Authorization: request.headers.get('Authorization')!,
+          }),
+        },
+        body: body,
+        signal: controller.signal,
+      });
 
-    // Return the response with the same status code
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+      clearTimeout(timeoutId);
+
+      const data = await response.json();
+
+      // Return the response with the same status code
+      return new Response(JSON.stringify(data), {
+        status: response.status,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('Profile request timeout');
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Request timeout - please try again',
+          }),
+          {
+            status: 408,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+      }
+      throw fetchError;
+    }
   } catch (error) {
     console.error('Profile API proxy error:', error);
 
