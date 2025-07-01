@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-TractStack-Tenant': import.meta.env.PUBLIC_TENANTID || 'default',
+          'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
           ...(request.headers.get('Authorization') && {
             Authorization: request.headers.get('Authorization')!,
           }),

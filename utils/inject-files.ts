@@ -15,8 +15,12 @@ export async function injectTemplateFiles(
       dest: 'src/layouts/Layout.astro',
     },
     {
-      src: resolve('templates/src/pages/index.astro'),
-      dest: 'src/pages/index.astro',
+      src: resolve('templates/src/pages/[...slug].astro'),
+      dest: 'src/pages/[...slug].astro',
+    },
+    {
+      src: resolve('templates/src/pages/test.astro'),
+      dest: 'src/pages/test.astro',
     },
     {
       src: resolve('templates/src/pages/api/auth/visit.ts'),
@@ -45,8 +49,8 @@ export async function injectTemplateFiles(
     { src: resolve('templates/src/utils/api.ts'), dest: 'src/utils/api.ts' },
     { src: resolve('templates/.gitignore'), dest: '.gitignore' },
     {
-      src: resolve('templates/src/pages/profile.astro'),
-      dest: 'src/pages/profile.astro',
+      src: resolve('templates/src/pages/storykeep/profile.astro'),
+      dest: 'src/pages/storykeep/profile.astro',
     },
     {
       src: resolve('templates/src/pages/api/auth/profile.ts'),

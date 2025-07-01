@@ -19,8 +19,7 @@ async function restoreProfileFromToken(): Promise<boolean> {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'X-TractStack-Tenant':
-          (window as any).TRACTSTACK_CONFIG?.tenantId || '',
+        'X-Tenant-ID': (window as any).TRACTSTACK_CONFIG?.tenantId || '',
       },
     });
 

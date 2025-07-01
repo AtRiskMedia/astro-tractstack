@@ -34,8 +34,7 @@ export const POST: APIRoute = async ({
           'Content-Type':
             request.headers.get('Content-Type') ||
             'application/x-www-form-urlencoded',
-          'X-TractStack-Tenant':
-            request.headers.get('X-TractStack-Tenant') || 'default',
+          'X-Tenant-ID': request.headers.get('X-Tenant-ID') || 'default',
           Origin: request.headers.get('Origin') || 'http://localhost:4321',
         },
         body: body,

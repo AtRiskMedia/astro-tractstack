@@ -1,0 +1,316 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import type { AuthStatus } from '@/types.ts';
+
+const user = Astro.locals.user as AuthStatus;
+const tenantId = Astro.locals.tenant?.id || 'default';
+
+const { slug } = Astro.params;
+const lookup = slug || '';
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+const endpoint = lookup
+  ? `${goBackend}/api/v1/nodes/storyfragments/slug/${lookup}`
+  : `${goBackend}/api/v1/nodes/storyfragments/home`;
+
+let storyData;
+try {
+  const response = await fetch(endpoint, {
+    headers: {
+      'X-Tenant-ID': tenantId,
+    },
+  });
+
+  if (!response.ok) {
+    return new Response(null, {
+      status: 404,
+      statusText: 'Story not found',
+    });
+  }
+
+  storyData = await response.json();
+} catch (error) {
+  console.error('Error fetching storyfragment:', error);
+  return new Response(null, {
+    status: 500,
+    statusText: 'Failed to load story',
+  });
+}
+
+if (!storyData) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Story not found',
+  });
+}
+
+const storyfragmentId = storyData.id;
+const storyfragmentTitle = storyData.title || 'Untitled Story';
+const paneIds = storyData.paneIds || [];
+
+// Server-side batch render all fragments (no personalization)
+let fragmentsData = {};
+try {
+  const batchResponse = await fetch(`${goBackend}/api/v1/fragments/panes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-ID': tenantId,
+      // No session headers - will get non-personalized content
+    },
+    body: JSON.stringify({ paneIds: paneIds }),
+  });
+
+  if (batchResponse.ok) {
+    const batchData = await batchResponse.json();
+    fragmentsData = batchData.fragments || {};
+
+    // Handle any errors from the batch response
+    if (batchData.errors) {
+      Object.entries(batchData.errors).forEach(([paneId, error]) => {
+        fragmentsData[paneId] =
+          `<div class="error">Failed to load pane ${paneId}: ${error}</div>`;
+      });
+    }
+  } else {
+    console.error('Batch fragment request failed:', batchResponse.status);
+    // Fallback: create error messages for all panes
+    paneIds.forEach((paneId) => {
+      fragmentsData[paneId] =
+        `<div class="error">Failed to load pane ${paneId}</div>`;
+    });
+  }
+} catch (error) {
+  console.error('Error fetching fragments batch:', error);
+  // Fallback: create error messages for all panes
+  paneIds.forEach((paneId) => {
+    fragmentsData[paneId] =
+      `<div class="error">Error loading pane ${paneId}</div>`;
+  });
+}
+---
+
+<Layout title={storyfragmentTitle}>
+  <div class="border-b bg-gray-100 p-4">
+    <h1 class="text-2xl font-bold">{storyfragmentTitle}</h1>
+    <p class="text-sm text-gray-600">
+      Header placeholder - slug: {lookup || 'home'}
+    </p>
+  </div>
+
+  <main id="main-content" class="min-h-screen w-full">
+    <div class="panes-container">
+      {
+        paneIds.map((paneId: string) => (
+          <div
+            key={paneId}
+            data-pane-id={paneId}
+            class="pane-fragment-container border-b p-4"
+            hx-get={`${goBackend}/api/v1/fragments/panes/${paneId}`}
+            hx-trigger="refresh"
+            hx-swap="innerHTML"
+            set:html={fragmentsData[paneId]}
+          />
+        ))
+      }
+    </div>
+  </main>
+
+  <div class="border-t bg-gray-100 p-4">
+    <p class="text-sm text-gray-600">Footer placeholder</p>
+  </div>
+</Layout>
+
+<script define:vars={{ goBackend, storyfragmentId, tenantId }}>
+  const BACKEND_URL = goBackend;
+  const STORYFRAGMENT_ID = storyfragmentId;
+  const TENANT_ID = tenantId;
+
+  let sessionId = '';
+  let eventSource = null;
+  let sseReconnectAttempts = 0;
+  const maxReconnectDelay = 30000; // 30 seconds max
+  const maxReconnectAttempts = 10; // Stop after 10 attempts
+  let reconnectTimeout = null; // Track pending reconnect timeout
+
+  async function initializeSessionAndSSE() {
+    try {
+      sessionId = getOrCreateSessionId();
+      console.log(`Using sessionId: ${sessionId}`);
+
+      // Wait for SessionInit to complete first
+      await waitForSessionReady();
+
+      updateHTMXHeaders();
+      setupSSEConnection();
+    } catch (error) {
+      console.error('Error initializing session:', error);
+    }
+  }
+
+  function waitForSessionReady() {
+    return new Promise((resolve) => {
+      if (window.TRACTSTACK_CONFIG?.session?.isReady) {
+        resolve();
+      } else {
+        window.addEventListener('tractstack:session-ready', () => resolve(), {
+          once: true,
+        });
+      }
+    });
+  }
+
+  function getOrCreateSessionId() {
+    const SESSION_KEY = 'tractstack_session_id';
+    let sessionId = localStorage.getItem(SESSION_KEY);
+
+    if (!sessionId) {
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 11);
+      sessionId = `sess_${timestamp}_${random}`;
+      localStorage.setItem(SESSION_KEY, sessionId);
+    }
+
+    return sessionId;
+  }
+
+  function updateHTMXHeaders() {
+    const paneContainers = document.querySelectorAll('[data-pane-id]');
+    paneContainers.forEach((container) => {
+      const headers = JSON.stringify({
+        'X-TractStack-Session-ID': sessionId,
+        'X-StoryFragment-ID': STORYFRAGMENT_ID,
+        'X-Tenant-ID': TENANT_ID,
+      });
+      container.setAttribute('hx-headers', headers);
+    });
+  }
+
+  function setupSSEConnection() {
+    // Clear any pending reconnect timeout
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    const sseUrl = `${BACKEND_URL}/api/v1/auth/sse?storyfragment=${STORYFRAGMENT_ID}&sessionId=${sessionId}`;
+    eventSource = new EventSource(sseUrl);
+
+    eventSource.onopen = function (event) {
+      console.log(
+        `SSE connection opened for storyfragment: ${STORYFRAGMENT_ID}`
+      );
+      // Reset retry counter on successful connection
+      sseReconnectAttempts = 0;
+    };
+
+    eventSource.addEventListener('panes_updated', function (event) {
+      const data = JSON.parse(event.data);
+      console.log('Panes update received:', data);
+
+      if (data.storyfragmentId === STORYFRAGMENT_ID) {
+        console.log(
+          `Processing pane updates for storyfragment ${STORYFRAGMENT_ID}:`,
+          data.affectedPanes
+        );
+
+        if (data.affectedPanes && Array.isArray(data.affectedPanes)) {
+          data.affectedPanes.forEach((paneId) => {
+            const element = document.querySelector(
+              `[data-pane-id="${paneId}"]`
+            );
+            if (element) {
+              console.log(`Refreshing pane: ${paneId}`);
+              htmx.trigger(element, 'refresh');
+            } else {
+              console.warn(`Pane element not found: ${paneId}`);
+            }
+          });
+        }
+      } else {
+        console.log(
+          `Ignoring pane update for different storyfragment: ${data.storyfragmentId}`
+        );
+      }
+    });
+
+    eventSource.addEventListener('connected', function (event) {
+      const data = JSON.parse(event.data);
+      console.log(
+        `SSE connected - Session: ${data.sessionId}, Tenant: ${data.tenantId}, Storyfragment: ${data.storyfragmentId}`
+      );
+    });
+
+    eventSource.addEventListener('heartbeat', function (event) {
+      const data = JSON.parse(event.data);
+      console.log(
+        `SSE heartbeat - Session: ${data.sessionId}, Tenant: ${data.tenantId}`
+      );
+    });
+
+    eventSource.addEventListener('timeout', function (event) {
+      const data = JSON.parse(event.data);
+      if (data.reason === 'max_duration' && data.action === 'reconnect') {
+        console.log(
+          'SSE connection reached 30-minute limit, reconnecting immediately...'
+        );
+        eventSource.close(); // Close current connection
+        setupSSEConnection(); // Immediate reconnect
+      } else if (data.reason === 'inactivity') {
+        console.log('SSE connection closed due to inactivity');
+        // Could show user a message about inactivity
+      }
+    });
+
+    eventSource.onerror = function (event) {
+      // Close immediately to stop EventSource auto-reconnects
+      eventSource.close();
+
+      sseReconnectAttempts++;
+
+      if (sseReconnectAttempts > maxReconnectAttempts) {
+        console.error(
+          `SSE connection failed after ${maxReconnectAttempts} attempts. Giving up.`
+        );
+        return;
+      }
+
+      // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (max)
+      const delay = Math.min(
+        1000 * Math.pow(2, sseReconnectAttempts - 1),
+        maxReconnectDelay
+      );
+
+      console.error(
+        `SSE connection error (attempt ${sseReconnectAttempts}/${maxReconnectAttempts}). Retrying in ${delay}ms...`,
+        event
+      );
+
+      // Store the timeout so we can clear it later
+      reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = null;
+        setupSSEConnection();
+      }, delay);
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSessionAndSSE);
+  } else {
+    initializeSessionAndSSE();
+  }
+
+  window.addEventListener('beforeunload', function () {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+    if (eventSource) {
+      eventSource.close();
+    }
+  });
+</script>

@@ -3,8 +3,6 @@
 ---
 
 <script>
-  //console.log('SessionInit script loaded!');
-
   // Initialize session when DOM is ready
   document.addEventListener('DOMContentLoaded', function () {
     //console.log('DOMContentLoaded fired, calling initializeSession');
@@ -12,16 +10,18 @@
   });
 
   async function initializeSession() {
-    //console.log('initializeSession started');
+    //console.log('DEBUG: SessionInit - initializeSession started');
 
     // Wait for configuration to be available
     if (!window.TRACTSTACK_CONFIG?.configured) {
-      //console.log('TRACTSTACK_CONFIG not ready, retrying...');
+      console.log(
+        'DEBUG: SessionInit - TRACTSTACK_CONFIG not ready, retrying...'
+      );
       setTimeout(initializeSession, 100);
       return;
     }
 
-    //console.log('TRACTSTACK_CONFIG ready:', window.TRACTSTACK_CONFIG);
+    //console.log('DEBUG: SessionInit - TRACTSTACK_CONFIG ready');
 
     // Check and cleanup expired sessions first
     cleanupExpiredSessions();
@@ -29,29 +29,51 @@
     try {
       // Get or create persistent sessionId
       const sessionId = getOrCreateSessionId();
-      //console.log('Generated sessionId:', sessionId);
+      //console.log('DEBUG: SessionInit - Generated sessionId:', sessionId);
 
       // Prepare session data (session-only, no client-generated IDs)
+      const encryptedEmail = localStorage.getItem('tractstack_encrypted_email');
+      const encryptedCode = localStorage.getItem('tractstack_encrypted_code');
+      const consent = localStorage.getItem('tractstack_consent') || '';
+
+      //console.log('DEBUG: SessionInit - Retrieved from localStorage:');
+      //console.log('  encryptedEmail:', encryptedEmail ? 'PRESENT' : 'NULL');
+      //console.log('  encryptedCode:', encryptedCode ? 'PRESENT' : 'NULL');
+      //console.log('  consent:', consent);
+      //console.log('  typeof encryptedEmail:', typeof encryptedEmail);
+      //console.log('  typeof encryptedCode:', typeof encryptedCode);
+
       const sessionData = {
         sessionId: sessionId,
-        encryptedEmail:
-          localStorage.getItem('tractstack_encrypted_email') || '',
-        encryptedCode: localStorage.getItem('tractstack_encrypted_code') || '',
-        consent: localStorage.getItem('tractstack_consent') || '',
+        consent: consent,
+        ...(typeof encryptedEmail === 'string' && encryptedEmail
+          ? { encryptedEmail }
+          : {}),
+        ...(typeof encryptedCode === 'string' && encryptedCode
+          ? { encryptedCode }
+          : {}),
       };
+
+      //console.log(
+      //  'DEBUG: SessionInit - Final sessionData being sent:',
+      //  sessionData
+      //);
 
       // Make fetch request to CORS proxy
       const response = await fetch('/api/auth/visit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-TractStack-Tenant': window.TRACTSTACK_CONFIG.tenantId,
+          'X-Tenant-ID': window.TRACTSTACK_CONFIG.tenantId,
         },
         body: JSON.stringify(sessionData),
       });
 
+      //console.log('DEBUG: SessionInit - Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        //console.log('DEBUG: SessionInit - Response data:', data);
 
         // Store backend-generated session data
         localStorage.setItem('tractstack_fp_id', data.fingerprint);

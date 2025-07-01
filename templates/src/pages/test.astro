@@ -1,5 +1,5 @@
 ---
-// TractStack Home Page
+// TractStack Test Page - Working HTMX Pattern
 import Layout from '@/layouts/Layout.astro';
 import Counter from '@/components/Counter';
 
@@ -100,7 +100,7 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
   }
 </style>
 
-<Layout title="TractStack Home">
+<Layout title="TractStack Test">
   <main>
     <div class="hero-section">
       <pre
@@ -121,7 +121,7 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
   ███            ███   ▀   ███    ███ ███         ▄█████▀   
 ▀███████████     ███     ▀███████████ ███        ▀▀█████▄   
          ███     ███       ███    ███ ███    █▄    ███▐██▄  
-   ▄█    ███     ███       ███    ███ ███    ███   ███ ▀███▄
+   ▄█    ███     ███       ███    ███ ███    ███   ███ ▀███��
  ▄████████▀     ▄████▀     ███    █▀  ████████▀    ███   ▀█▀
                                                    ▀        
       </pre>
@@ -179,3 +179,18 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     </div>
   </main>
 </Layout>
+
+<script define:vars={{ goBackend, tenantId }}>
+  // Simple HTMX setup with basic headers
+  document.addEventListener('DOMContentLoaded', function () {
+    // Add tenant ID to all HTMX requests
+    document.body.addEventListener('htmx:configRequest', function (event) {
+      event.detail.headers['X-Tenant-ID'] = tenantId;
+    });
+
+    // Log HTMX responses
+    document.body.addEventListener('htmx:afterRequest', function (event) {
+      console.log('HTMX request completed:', event.detail);
+    });
+  });
+</script>

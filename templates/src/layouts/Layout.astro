@@ -111,7 +111,7 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
       // Set up default headers for TractStack
       document.body.addEventListener('htmx:configRequest', function (evt) {
-        evt.detail.headers['X-TractStack-Tenant'] = tenantId;
+        evt.detail.headers['X-Tenant-ID'] = tenantId;
       });
 
       // Handle API errors

@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-TractStack-Tenant': tenantId,
+          'X-Tenant-ID': tenantId,
         },
         body: JSON.stringify(backendRequest),
         signal: controller.signal,

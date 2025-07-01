@@ -34,7 +34,7 @@ export const GET: APIRoute = async ({ request }) => {
         method: 'GET',
         headers: {
           Authorization: authHeader,
-          'X-TractStack-Tenant': tenantId,
+          'X-Tenant-ID': tenantId,
         },
         signal: controller.signal,
       });
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request }) => {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, OPTIONS',
           'Access-Control-Allow-Headers':
-            'Content-Type, Authorization, X-TractStack-Tenant',
+            'Content-Type, Authorization, X-Tenant-ID',
         },
       });
     } catch (fetchError) {
@@ -95,7 +95,7 @@ export const OPTIONS: APIRoute = async () => {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers':
-        'Content-Type, Authorization, X-TractStack-Tenant',
+        'Content-Type, Authorization, X-Tenant-ID',
     },
   });
 };
