@@ -128,6 +128,12 @@ PUBLIC_TENANTID="${responses.tenantId}"
     });
     console.log(kleur.green('✅ UI components installed'));
 
+    // Install Zag.js widgets
+    execSync(`${addCommand} @zag-js/core @zag-js/select @zag-js/switch`, {
+      stdio: 'inherit',
+    });
+    console.log(kleur.green('✅ Zag.js widgets installed'));
+
     // Install additional dependencies
     execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });
     console.log(kleur.green('✅ Additional dependencies installed'));

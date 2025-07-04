@@ -61,6 +61,15 @@ const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
     <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"
     ></script>
 
+    <!-- Zag.js Widgets -->
+    <script>
+      import * as zag from '@zag-js/core';
+      import * as select from '@zag-js/select';
+      import * as switchMachine from '@zag-js/switch';
+
+      window.zag = { ...zag, select, switch: switchMachine };
+    </script>
+
     <!-- Bunny player.js -->
     <script
       is:inline

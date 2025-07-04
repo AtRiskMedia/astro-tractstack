@@ -15,7 +15,7 @@ The `tractstack-go` package provides a backend server for the `astro-tractstack`
 
 ## Version 2.0 under development
 
-Tract Stack makes it easy for non-technical people to build and grow a fast, beautiful, SEO-ready,  accessible and adaptive website or newsletter.
+Tract Stack makes it easy for non-technical people to build and grow a fast, beautiful, SEO-ready, accessible and adaptive website or newsletter.
 
 Tract Stack is built on [Astro](https://astro.build/) with [HTMX](https://htmx.org/) and a [Go Lang](https://go.dev/) backend -- we use [Turso](https://app.turso.tech/) as database
 

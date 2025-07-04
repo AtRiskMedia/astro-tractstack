@@ -54,12 +54,21 @@ export default function tractstack(
               },
             },
             ssr: {
-              noExternal: ['path-to-regexp', '@ark-ui/react'],
+              noExternal: [
+                'path-to-regexp',
+                '@ark-ui/react',
+                '@zag-js/core',
+                '@zag-js/select',
+                '@zag-js/switch',
+              ],
             },
             optimizeDeps: {
               include: [
                 '@heroicons/react/24/outline',
                 '@heroicons/react/20/solid',
+                '@zag-js/core',
+                '@zag-js/select',
+                '@zag-js/switch',
               ],
             },
           },
