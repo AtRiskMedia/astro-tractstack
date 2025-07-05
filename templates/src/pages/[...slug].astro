@@ -57,6 +57,7 @@ try {
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-ID': tenantId,
+      'X-StoryFragment-ID': storyfragmentId, // NOW we have storyfragmentId
       // No session headers - will get non-personalized content
     },
     body: JSON.stringify({ paneIds: paneIds }),
@@ -106,7 +107,7 @@ try {
           <div
             key={paneId}
             data-pane-id={paneId}
-            class="pane-fragment-container border-b p-4"
+            class="pane-fragment-container"
             hx-get={`${goBackend}/api/v1/fragments/panes/${paneId}`}
             hx-trigger="refresh"
             hx-swap="innerHTML"
