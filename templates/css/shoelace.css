@@ -1,0 +1,188 @@
+/* Shoelace styles customized to match Zag.js belief and toggle widgets */
+@import url('https://unpkg.com/@shoelace-style/shoelace@2.17.1/dist/themes/light.css');
+
+/* Select (matches belief.go) */
+sl-select[data-shoelace="select"] {
+  --sl-input-height-medium: 40px;
+  --sl-input-font-size-medium: 16px;
+  --sl-input-border-radius-medium: 6px;
+  --sl-input-border-width: 1px;
+  width: fit-content;
+  margin-top: 12px; /* mt-3 */
+  position: relative;
+}
+
+sl-select[data-shoelace="select"]::part(combobox) {
+  position: relative;
+  width: 100%;
+  cursor: default;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb; /* Matches border-slate-200 */
+  background-color: #ffffff; /* Matches bg-white */
+  color: #000000; /* Matches text-black */
+  padding: 8px 40px 8px 12px; /* Matches py-2 pl-3 pr-10 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Matches shadow-sm */
+  outline: none;
+}
+
+sl-select[data-shoelace="select"]:not([value="0"])::part(combobox) {
+  border-color: #f97316; /* Matches border-orange-500 for non-default */
+}
+
+sl-select[data-shoelace="select"]::part(combobox)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 8px; /* Matches pr-2 */
+  transform: translateY(-50%);
+  width: 20px; /* Matches h-5 w-5 */
+  height: 20px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="%234b5563" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/></svg>') no-repeat center;
+  pointer-events: none;
+}
+
+sl-select[data-shoelace="select"]::part(listbox) {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px; /* Matches mt-1 */
+  max-height: 240px; /* Matches max-h-60 */
+  width: 100%;
+  overflow-y: auto;
+  background-color: #ffffff; /* Matches bg-white */
+  padding: 4px 0; /* Matches py-1 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Matches shadow-lg */
+  border: 1px solid rgba(0, 0, 0, 0.05); /* Matches ring-1 ring-black ring-opacity-5 */
+  border-radius: 6px; /* Matches rounded-md */
+  z-index: 50; /* Matches z-50 */
+}
+
+sl-option {
+  position: relative;
+  cursor: default;
+  padding: 8px 36px 8px 12px; /* Matches py-2 pl-3 pr-9 */
+  color: #000000; /* Matches text-black */
+  user-select: none;
+}
+
+sl-option:hover {
+  background-color: #f8fafc; /* Matches hover:bg-slate-50 */
+}
+
+sl-option[selected] {
+  background-color: #f1f5f9; /* Matches bg-slate-100 */
+  color: #0891b2; /* Matches text-cyan-600 */
+}
+
+sl-option::before {
+  content: '';
+  display: inline-block;
+  width: 8px; /* Matches h-2 w-2 */
+  height: 8px;
+  border-radius: 50%; /* Matches rounded-full */
+  margin-right: 12px; /* Matches mr-2 */
+  vertical-align: middle;
+}
+
+sl-option[value="0"]::before {
+  background-color: #f97316; /* bg-orange-500 */
+}
+sl-option[value="STRONGLY_AGREES"]::before {
+  background-color: #2dd4bf; /* bg-teal-400 */
+}
+sl-option[value="AGREES"]::before,
+sl-option[value="INTERESTED"]::before,
+sl-option[value="BELIEVES_YES"]::before,
+sl-option[value="BELIEVES_TRUE"]::before {
+  background-color: #a3e635; /* bg-lime-400 */
+}
+sl-option[value="NEITHER_AGREES_NOR_DISAGREES"]::before {
+  background-color: #e5e7eb; /* bg-slate-200 */
+}
+sl-option[value="DISAGREES"]::before,
+sl-option[value="NOT_INTERESTED"]::before,
+sl-option[value="BELIEVES_NO"]::before,
+sl-option[value="BELIEVES_FALSE"]::before {
+  background-color: #f59e0b; /* bg-amber-400 */
+}
+sl-option[value="STRONGLY_DISAGREES"]::before {
+  background-color: #f87171; /* bg-red-400 */
+}
+
+/* Switch (matches toggle.go) */
+sl-switch[data-shoelace="switch"] {
+  --sl-input-height-medium: 24px;
+  --sl-input-width-medium: 44px;
+  --sl-thumb-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 24px; /* mt-6 */
+}
+
+sl-switch[data-shoelace="switch"]::part(control) {
+  position: relative;
+  display: inline-flex;
+  height: 24px;
+  width: 44px;
+  border-radius: 999px; /* Matches rounded-full */
+  border: 2px solid transparent; /* Matches border-2 border-transparent */
+  background-color: #2563eb; /* Matches bg-blue-600 (myblue) */
+  transition: background-color 200ms ease-in-out; /* Matches transition-colors duration-200 ease-in-out */
+  cursor: pointer;
+  outline: none;
+}
+
+sl-switch[data-shoelace="switch"][checked]::part(control) {
+  background-color: #0891b2; /* Matches bg-cyan-600 */
+}
+
+sl-switch[data-shoelace="switch"]::part(thumb) {
+  pointer-events: none;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%; /* Matches rounded-full */
+  background-color: #ffffff; /* Matches bg-white */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Matches shadow */
+  transition: transform 200ms ease-in-out; /* Matches transition-transform duration-200 ease-in-out */
+  transform: translateX(0); /* Matches translate-x-0 */
+}
+
+sl-switch[data-shoelace="switch"][checked]::part(thumb) {
+  transform: translateX(24px); /* Adjusted for 44px width - 20px thumb */
+}
+
+sl-switch[data-shoelace="switch"]:not([checked])::part(thumb) {
+  animation: pulse 2s ease-in-out infinite; /* Matches motion-safe:animate-pulse */
+}
+
+sl-switch[data-shoelace="switch"]::part(label) {
+  margin-left: 12px; /* Matches ml-3 */
+  cursor: pointer;
+}
+
+/* Pulse animation for toggle thumb (matches animate-wig) */
+@keyframes pulse {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+  sl-select[data-shoelace="select"]::part(combobox) {
+    font-size: 16px;
+  }
+  sl-select[data-shoelace="select"]::part(listbox) {
+    max-height: 192px; /* Matches max-h-48 */
+  }
+  sl-switch[data-shoelace="switch"]::part(control) {
+    width: 48px; /* Slightly larger for touch */
+  }
+  sl-switch[data-shoelace="switch"]::part(thumb) {
+    width: 22px;
+    height: 22px;
+  }
+}

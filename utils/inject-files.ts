@@ -93,6 +93,14 @@ export async function injectTemplateFiles(
       dest: 'public/styles/storykeep.css',
     },
     {
+      src: resolve('templates/css/shoelace.css'),
+      dest: 'public/styles/shoelace.css',
+    },
+    {
+      src: resolve('templates/src/client/shoelace-init.ts'),
+      dest: 'src/client/shoelace-init.ts',
+    },
+    {
       src: resolve('templates/fonts/Inter-Black.woff2'),
       dest: 'public/fonts/Inter-Black.woff2',
     },

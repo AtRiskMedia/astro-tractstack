@@ -62,14 +62,9 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
     <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"
     ></script>
 
-    <!-- Zag.js Widgets -->
-    <script>
-      import * as zag from '@zag-js/core';
-      import * as select from '@zag-js/select';
-      import * as switchMachine from '@zag-js/switch';
-
-      window.zag = { ...zag, select, switch: switchMachine };
-    </script>
+    <!-- Shoelace Components -->
+    <script type="module" src="/client/shoelace-init.js"></script>
+    <link rel="stylesheet" href="/styles/shoelace.css" />
 
     <!-- Bunny player.js -->
     <script

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import prompts from 'prompts';
 import kleur from 'kleur';
@@ -128,11 +128,11 @@ PUBLIC_TENANTID="${responses.tenantId}"
     });
     console.log(kleur.green('✅ UI components installed'));
 
-    // Install Zag.js widgets
-    execSync(`${addCommand} @zag-js/core @zag-js/select @zag-js/switch`, {
+    // Install Shoelace components
+    execSync(`${addCommand} @shoelace-style/shoelace`, {
       stdio: 'inherit',
     });
-    console.log(kleur.green('✅ Zag.js widgets installed'));
+    console.log(kleur.green('✅ Shoelace components installed'));
 
     // Install additional dependencies
     execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });
@@ -265,6 +265,9 @@ declare global {
   }
 }
 `;
+  if (!existsSync('src/types')) {
+    mkdirSync('src/types', { recursive: true });
+  }
   if (!existsSync('src/types/astro.d.ts')) {
     writeFileSync('src/types/astro.d.ts', astroTypes);
     console.log(kleur.green('✅ Created src/types/astro.d.ts'));
