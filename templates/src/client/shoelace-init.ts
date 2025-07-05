@@ -1,70 +1,130 @@
-// TractStack Shoelace Initialization
-// Initializes select and switch components
-
 import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
 import SlSwitch from '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import SlOption from '@shoelace-style/shoelace/dist/components/option/option.js';
 
-// Register Shoelace components
-customElements.define('sl-select', SlSelect);
-customElements.define('sl-switch', SlSwitch);
-
-// Initialize Shoelace components
-function initializeShoelace() {
-  console.log('🎯 TractStack: Initializing Shoelace components...');
-
-  // Handle select components
-  const selectElements = document.querySelectorAll<SlSelect>(
-    'sl-select[data-shoelace="select"]'
-  );
-  console.log(`🎯 Found ${selectElements.length} select components`);
-
-  selectElements.forEach((select, index) => {
-    console.log(`🎯 Processing select ${index + 1}:`, select);
-    // Ensure HTMX attributes are processed
-    window.htmx.process(select);
-    // Add sl-change listener for HTMX submission
-    select.addEventListener('sl-change', () => {
-      console.log(`Select ${index + 1} changed to:`, select.value);
-      window.htmx.trigger(select, 'refresh');
-    });
-  });
-
-  // Handle switch components
-  const switchElements = document.querySelectorAll<SlSwitch>(
-    'sl-switch[data-shoelace="switch"]'
-  );
-  console.log(`🔄 Found ${switchElements.length} switch components`);
-
-  switchElements.forEach((sw, index) => {
-    console.log(`🔄 Processing switch ${index + 1}:`, sw);
-    // Ensure HTMX attributes are processed
-    window.htmx.process(sw);
-    // Add sl-change listener for HTMX submission
-    sw.addEventListener('sl-change', () => {
-      console.log(`Switch ${index + 1} changed to:`, sw.checked);
-      window.htmx.trigger(sw, 'refresh');
-    });
-  });
-
-  console.log('🎯 Shoelace initialization complete');
+// TypeScript declarations
+declare global {
+  interface Window {
+    TENANT_ID?: string;
+    PUBLIC_GO_BACKEND?: string;
+    STORYFRAGMENT_ID?: string;
+  }
 }
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('📄 DOMContentLoaded: Initializing Shoelace');
-  initializeShoelace();
+// Shoelace event interfaces
+interface ShoelaceChangeEvent extends Event {
+  detail?: {
+    item?: {
+      value: string;
+    };
+  };
+  target: HTMLElement & {
+    value?: string;
+    checked?: boolean;
+    getAttribute(name: string): string | null;
+  };
+}
+
+interface BeliefUpdateData {
+  [key: string]: string;
+  beliefId: string;
+  beliefType: string;
+  beliefValue: string;
+}
+
+// Register Shoelace components
+if (!customElements.get('sl-select')) {
+  customElements.define('sl-select', SlSelect);
+}
+if (!customElements.get('sl-switch')) {
+  customElements.define('sl-switch', SlSwitch);
+}
+if (!customElements.get('sl-option')) {
+  customElements.define('sl-option', SlOption);
+}
+
+// Handle Shoelace events with fetch
+document.addEventListener('DOMContentLoaded', function () {
+  setupShoelaceEventHandlers();
 });
 
-document.body.addEventListener('htmx:afterSwap', () => {
-  console.log('🔄 HTMX afterSwap: Re-initializing Shoelace');
-  setTimeout(() => {
-    window.htmx.process(document.body);
-    initializeShoelace();
-  }, 0);
+// Also re-setup after HTMX swaps
+document.body.addEventListener('htmx:afterSwap', function (evt) {
+  setupShoelaceEventHandlers();
 });
 
-document.addEventListener('astro:after-swap', () => {
-  console.log('🔄 Astro after-swap: Re-initializing Shoelace');
-  window.htmx.process(document.body);
-  setTimeout(initializeShoelace, 0);
-});
+function setupShoelaceEventHandlers(): void {
+  // Handle sl-select changes
+  document.querySelectorAll('sl-select[data-shoelace="select"]').forEach(select => {
+    // Remove existing listeners to avoid duplicates
+    select.removeEventListener('sl-change', handleSelectChange as EventListener);
+    select.addEventListener('sl-change', handleSelectChange as EventListener);
+  });
+
+  // Handle sl-switch changes  
+  document.querySelectorAll('sl-switch[data-shoelace="switch"]').forEach(switchEl => {
+    switchEl.removeEventListener('sl-change', handleSwitchChange as EventListener);
+    switchEl.addEventListener('sl-change', handleSwitchChange as EventListener);
+  });
+}
+
+async function handleSelectChange(event: Event): Promise<void> {
+  const shoelaceEvent = event as ShoelaceChangeEvent;
+  const select = shoelaceEvent.target;
+  const beliefId = select.getAttribute('data-belief-id');
+  const beliefType = select.getAttribute('data-belief-type');
+  const beliefValue = shoelaceEvent.detail?.item?.value || select.value || '';
+
+  if (!beliefId || !beliefType) {
+    console.error('Missing belief data attributes on select element');
+    return;
+  }
+
+  console.log('Select changed:', { beliefId, beliefType, beliefValue });
+
+  await sendBeliefUpdate({ beliefId, beliefType, beliefValue });
+}
+
+async function handleSwitchChange(event: Event): Promise<void> {
+  const shoelaceEvent = event as ShoelaceChangeEvent;
+  const switchEl = shoelaceEvent.target;
+  const beliefId = switchEl.getAttribute('data-belief-id');
+  const beliefType = switchEl.getAttribute('data-belief-type');
+  const beliefValue = switchEl.checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
+
+  if (!beliefId || !beliefType) {
+    console.error('Missing belief data attributes on switch element');
+    return;
+  }
+
+  console.log('Switch changed:', { beliefId, beliefType, beliefValue });
+
+  await sendBeliefUpdate({ beliefId, beliefType, beliefValue });
+}
+
+async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
+  try {
+    const goBackend = window.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    const sessionId = localStorage.getItem('tractstack_session_id');
+    const response = await fetch(`${goBackend}/api/v1/state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Tenant-ID': window.TENANT_ID || 'default',
+        'X-TractStack-Session-ID': sessionId || '',
+        'X-StoryFragment-ID': window.STORYFRAGMENT_ID || '',
+      },
+      body: new URLSearchParams(data)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Belief update successful:', result);
+
+  } catch (error) {
+    console.error('Failed to update belief:', error);
+  }
+}

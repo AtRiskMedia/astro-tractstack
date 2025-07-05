@@ -63,7 +63,7 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
     ></script>
 
     <!-- Shoelace Components -->
-    <script type="module" src="/client/shoelace-init.js"></script>
+    <script type="module" src="/src/client/shoelace-init.js"></script>
     <link rel="stylesheet" href="/styles/shoelace.css" />
 
     <!-- Bunny player.js -->
@@ -117,8 +117,21 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
       htmx.config.requestClass = 'htmx-request';
       htmx.config.refreshOnHistoryMiss = true;
 
-      // Set up default headers for TractStack
+      // Set up default headers and URL resolution for TractStack
       document.body.addEventListener('htmx:configRequest', function (evt) {
+        // Handle direct Go backend API routes only
+        if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
+          // Convert relative URLs to absolute
+          evt.detail.path = goBackend + evt.detail.path;
+
+          // Add session ID if available
+          const sessionId = localStorage.getItem('tractstack_session_id');
+          if (sessionId) {
+            evt.detail.headers['X-TractStack-Session-ID'] = sessionId;
+          }
+        }
+
+        // Add tenant and storyfragment headers for all HTMX requests
         evt.detail.headers['X-Tenant-ID'] = tenantId;
         evt.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
       });
