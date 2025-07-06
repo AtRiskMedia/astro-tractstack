@@ -2,6 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import type { AuthStatus } from '@/types.ts';
 
+const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
 const tenantId = Astro.locals.tenant?.id || 'default';
 
@@ -123,22 +124,24 @@ try {
   </div>
 </Layout>
 
-<script define:vars={{ goBackend, storyfragmentId, tenantId }}>
-  console.log('🟢 SCRIPT START: Variables received:', {
-    goBackend,
-    storyfragmentId,
-    tenantId,
-  });
+<script define:vars={{ goBackend, storyfragmentId, tenantId, VERBOSE }}>
+  if (VERBOSE)
+    console.log('🟢 SCRIPT START: Variables received:', {
+      goBackend,
+      storyfragmentId,
+      tenantId,
+    });
 
   const BACKEND_URL = goBackend;
   const STORYFRAGMENT_ID = storyfragmentId;
   const TENANT_ID = tenantId;
 
-  console.log('🟢 SCRIPT: Constants set:', {
-    BACKEND_URL,
-    STORYFRAGMENT_ID,
-    TENANT_ID,
-  });
+  if (VERBOSE)
+    console.log('🟢 SCRIPT: Constants set:', {
+      BACKEND_URL,
+      STORYFRAGMENT_ID,
+      TENANT_ID,
+    });
 
   let sessionId = '';
   let eventSource = null;
@@ -147,45 +150,46 @@ try {
   const maxReconnectAttempts = 10; // Stop after 10 attempts
   let reconnectTimeout = null; // Track pending reconnect timeout
 
-  console.log('🟢 SCRIPT: Variables initialized');
+  if (VERBOSE) console.log('🟢 SCRIPT: Variables initialized');
 
   async function initializeSessionAndSSE() {
-    console.log('🔵 INIT: Starting session and SSE initialization');
+    if (VERBOSE)
+      console.log('🔵 INIT: Starting session and SSE initialization');
 
     try {
-      console.log('🔵 INIT: Getting session ID');
+      if (VERBOSE) console.log('🔵 INIT: Getting session ID');
       sessionId = getOrCreateSessionId();
-      console.log('🔵 INIT: Session ID obtained:', sessionId);
+      if (VERBOSE) console.log('🔵 INIT: Session ID obtained:', sessionId);
 
-      console.log('🔵 INIT: Waiting for session ready');
+      if (VERBOSE) console.log('🔵 INIT: Waiting for session ready');
       await waitForSessionReady();
-      console.log('🔵 INIT: Session ready confirmed');
+      if (VERBOSE) console.log('🔵 INIT: Session ready confirmed');
 
-      console.log('🔵 INIT: Updating HTMX headers');
+      if (VERBOSE) console.log('🔵 INIT: Updating HTMX headers');
       updateHTMXHeaders();
-      console.log('🔵 INIT: HTMX headers updated');
+      if (VERBOSE) console.log('🔵 INIT: HTMX headers updated');
 
-      console.log('🔵 INIT: Setting up SSE connection');
+      if (VERBOSE) console.log('🔵 INIT: Setting up SSE connection');
       setupSSEConnection();
-      console.log('🔵 INIT: SSE setup complete');
+      if (VERBOSE) console.log('🔵 INIT: SSE setup complete');
     } catch (error) {
       console.error('🔴 INIT ERROR:', error);
     }
   }
 
   function waitForSessionReady() {
-    console.log('⏳ SESSION: Checking if session is ready');
+    if (VERBOSE) console.log('⏳ SESSION: Checking if session is ready');
 
     return new Promise((resolve) => {
       if (window.TRACTSTACK_CONFIG?.session?.isReady) {
-        console.log('✅ SESSION: Already ready');
+        if (VERBOSE) console.log('✅ SESSION: Already ready');
         resolve();
       } else {
-        console.log('⏳ SESSION: Waiting for session-ready event');
+        if (VERBOSE) console.log('⏳ SESSION: Waiting for session-ready event');
         window.addEventListener(
           'tractstack:session-ready',
           () => {
-            console.log('✅ SESSION: Ready event received');
+            if (VERBOSE) console.log('✅ SESSION: Ready event received');
             resolve();
           },
           { once: true }
@@ -195,37 +199,42 @@ try {
   }
 
   function getOrCreateSessionId() {
-    console.log('🆔 SESSION_ID: Getting or creating session ID');
+    if (VERBOSE) console.log('🆔 SESSION_ID: Getting or creating session ID');
 
     const SESSION_KEY = 'tractstack_session_id';
     let sessionId = localStorage.getItem(SESSION_KEY);
 
     if (!sessionId) {
-      console.log('🆔 SESSION_ID: No existing session, creating new one');
+      if (VERBOSE)
+        console.log('🆔 SESSION_ID: No existing session, creating new one');
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(2, 11);
       sessionId = `sess_${timestamp}_${random}`;
       localStorage.setItem(SESSION_KEY, sessionId);
-      console.log('🆔 SESSION_ID: New session created:', sessionId);
+      if (VERBOSE)
+        console.log('🆔 SESSION_ID: New session created:', sessionId);
     } else {
-      console.log('🆔 SESSION_ID: Using existing session:', sessionId);
+      if (VERBOSE)
+        console.log('🆔 SESSION_ID: Using existing session:', sessionId);
     }
 
     return sessionId;
   }
 
   function updateHTMXHeaders() {
-    console.log('📋 HTMX: Updating headers for pane containers');
+    if (VERBOSE) console.log('📋 HTMX: Updating headers for pane containers');
 
     const paneContainers = document.querySelectorAll('[data-pane-id]');
-    console.log('📋 HTMX: Found', paneContainers.length, 'pane containers');
+    if (VERBOSE)
+      console.log('📋 HTMX: Found', paneContainers.length, 'pane containers');
 
     paneContainers.forEach((container, index) => {
       const paneId = container.getAttribute('data-pane-id');
-      console.log(
-        `📋 HTMX: [${index + 1}/${paneContainers.length}] Updating headers for pane:`,
-        paneId
-      );
+      if (VERBOSE)
+        console.log(
+          `📋 HTMX: [${index + 1}/${paneContainers.length}] Updating headers for pane:`,
+          paneId
+        );
 
       const headers = JSON.stringify({
         'X-TractStack-Session-ID': sessionId,
@@ -235,78 +244,87 @@ try {
       container.setAttribute('hx-headers', headers);
     });
 
-    console.log('📋 HTMX: Headers update complete');
+    if (VERBOSE) console.log('📋 HTMX: Headers update complete');
   }
 
   function setupSSEConnection() {
-    console.log('🔌 SSE: Setting up connection');
+    if (VERBOSE) console.log('🔌 SSE: Setting up connection');
 
     // Clear any pending reconnect timeout
     if (reconnectTimeout) {
-      console.log('🔌 SSE: Clearing existing reconnect timeout');
+      if (VERBOSE) console.log('🔌 SSE: Clearing existing reconnect timeout');
       clearTimeout(reconnectTimeout);
       reconnectTimeout = null;
     }
 
     if (eventSource) {
-      console.log('🔌 SSE: Closing existing connection');
+      if (VERBOSE) console.log('🔌 SSE: Closing existing connection');
       eventSource.close();
     }
 
     const sseUrl = `${BACKEND_URL}/api/v1/auth/sse?storyfragment=${STORYFRAGMENT_ID}&sessionId=${sessionId}`;
-    console.log('🔌 SSE: Creating EventSource with URL:', sseUrl);
+    if (VERBOSE) console.log('🔌 SSE: Creating EventSource with URL:', sseUrl);
 
     eventSource = new EventSource(sseUrl);
 
     eventSource.onopen = function (event) {
-      console.log(
-        '✅ SSE: Connection opened for storyfragment:',
-        STORYFRAGMENT_ID
-      );
-      console.log('✅ SSE: Open event details:', event);
+      if (VERBOSE)
+        console.log(
+          '✅ SSE: Connection opened for storyfragment:',
+          STORYFRAGMENT_ID
+        );
+      if (VERBOSE) console.log('✅ SSE: Open event details:', event);
       // Reset retry counter on successful connection
       sseReconnectAttempts = 0;
     };
 
     eventSource.addEventListener('panes_updated', function (event) {
-      console.log('📨 SSE: === PANES_UPDATED EVENT RECEIVED ===');
-      console.log('📨 SSE: Raw event data:', event.data);
+      if (VERBOSE) console.log('📨 SSE: === PANES_UPDATED EVENT RECEIVED ===');
+      if (VERBOSE) console.log('📨 SSE: Raw event data:', event.data);
 
       try {
         const data = JSON.parse(event.data);
-        console.log('📨 SSE: Parsed data:', data);
-        console.log('📨 SSE: Current storyfragment:', STORYFRAGMENT_ID);
-        console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
-        console.log('📨 SSE: Affected panes:', data.affectedPanes);
+        if (VERBOSE) {
+          console.log('📨 SSE: Parsed data:', data);
+          console.log('📨 SSE: Current storyfragment:', STORYFRAGMENT_ID);
+          console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
+          console.log('📨 SSE: Affected panes:', data.affectedPanes);
+        }
 
         if (data.storyfragmentId === STORYFRAGMENT_ID) {
-          console.log('✅ SSE: Storyfragment matches, processing updates');
+          if (VERBOSE)
+            console.log('✅ SSE: Storyfragment matches, processing updates');
 
           if (data.affectedPanes && Array.isArray(data.affectedPanes)) {
-            console.log(
-              `🔄 SSE: Processing ${data.affectedPanes.length} pane updates`
-            );
+            if (VERBOSE)
+              console.log(
+                `🔄 SSE: Processing ${data.affectedPanes.length} pane updates`
+              );
 
             data.affectedPanes.forEach((paneId, index) => {
-              console.log(
-                `🔄 SSE: [${index + 1}/${data.affectedPanes.length}] Looking for pane: ${paneId}`
-              );
+              if (VERBOSE)
+                console.log(
+                  `🔄 SSE: [${index + 1}/${data.affectedPanes.length}] Looking for pane: ${paneId}`
+                );
 
               const element = document.querySelector(
                 `[data-pane-id="${paneId}"]`
               );
               if (element) {
-                console.log(
-                  `✅ SSE: Found element for pane ${paneId}, triggering refresh`
-                );
-                console.log(`🔄 SSE: Element details:`, element);
+                if (VERBOSE)
+                  console.log(
+                    `✅ SSE: Found element for pane ${paneId}, triggering refresh`
+                  );
+                if (VERBOSE) console.log(`🔄 SSE: Element details:`, element);
 
                 if (typeof htmx !== 'undefined') {
-                  console.log(
-                    `🔄 SSE: HTMX available, triggering refresh for pane ${paneId}`
-                  );
+                  if (VERBOSE)
+                    console.log(
+                      `🔄 SSE: HTMX available, triggering refresh for pane ${paneId}`
+                    );
                   htmx.trigger(element, 'refresh');
-                  console.log(`✅ SSE: Refresh triggered for pane ${paneId}`);
+                  if (VERBOSE)
+                    console.log(`✅ SSE: Refresh triggered for pane ${paneId}`);
                 } else {
                   console.error(
                     `🔴 SSE: HTMX not available! Cannot trigger refresh for pane ${paneId}`
@@ -316,78 +334,89 @@ try {
                 console.warn(`❌ SSE: Element not found for pane: ${paneId}`);
                 // Also log all available pane elements for debugging
                 const allPanes = document.querySelectorAll('[data-pane-id]');
-                console.log(
-                  '🔍 SSE: Available panes:',
-                  Array.from(allPanes).map((el) =>
-                    el.getAttribute('data-pane-id')
-                  )
-                );
+                if (VERBOSE)
+                  console.log(
+                    '🔍 SSE: Available panes:',
+                    Array.from(allPanes).map((el) =>
+                      el.getAttribute('data-pane-id')
+                    )
+                  );
               }
             });
           } else {
-            console.warn('❌ SSE: No affectedPanes array found in event data');
+            if (VERBOSE)
+              console.warn(
+                '❌ SSE: No affectedPanes array found in event data'
+              );
           }
         } else {
-          console.log(
-            `❌ SSE: Ignoring event for different storyfragment: ${data.storyfragmentId}`
-          );
+          if (VERBOSE)
+            console.log(
+              `❌ SSE: Ignoring event for different storyfragment: ${data.storyfragmentId}`
+            );
         }
       } catch (parseError) {
         console.error('🔴 SSE: Error parsing event data:', parseError);
         console.error('🔴 SSE: Raw data was:', event.data);
       }
 
-      console.log('📨 SSE: === END PANES_UPDATED EVENT ===');
+      if (VERBOSE) console.log('📨 SSE: === END PANES_UPDATED EVENT ===');
     });
 
     eventSource.addEventListener('connected', function (event) {
-      console.log('🔗 SSE: Connected event received');
-      console.log('🔗 SSE: Event data:', event.data);
+      if (VERBOSE) {
+        console.log('🔗 SSE: Connected event received');
+        console.log('🔗 SSE: Event data:', event.data);
+      }
 
       try {
         const data = JSON.parse(event.data);
-        console.log(
-          '🔗 SSE: Connected - Session:',
-          data.sessionId,
-          'Tenant:',
-          data.tenantId,
-          'Storyfragment:',
-          data.storyfragmentId
-        );
+        if (VERBOSE)
+          console.log(
+            '🔗 SSE: Connected - Session:',
+            data.sessionId,
+            'Tenant:',
+            data.tenantId,
+            'Storyfragment:',
+            data.storyfragmentId
+          );
       } catch (parseError) {
         console.error('🔴 SSE: Error parsing connected event:', parseError);
       }
     });
 
     eventSource.addEventListener('heartbeat', function (event) {
-      console.log('💓 SSE: Heartbeat received');
+      if (VERBOSE) console.log('💓 SSE: Heartbeat received');
 
       try {
         const data = JSON.parse(event.data);
-        console.log(
-          '💓 SSE: Heartbeat - Session:',
-          data.sessionId,
-          'Tenant:',
-          data.tenantId
-        );
+        if (VERBOSE)
+          console.log(
+            '💓 SSE: Heartbeat - Session:',
+            data.sessionId,
+            'Tenant:',
+            data.tenantId
+          );
       } catch (parseError) {
         console.error('🔴 SSE: Error parsing heartbeat:', parseError);
       }
     });
 
     eventSource.addEventListener('timeout', function (event) {
-      console.log('⏰ SSE: Timeout event received');
+      if (VERBOSE) console.log('⏰ SSE: Timeout event received');
 
       try {
         const data = JSON.parse(event.data);
         if (data.reason === 'max_duration' && data.action === 'reconnect') {
-          console.log(
-            '⏰ SSE: Connection reached 30-minute limit, reconnecting immediately...'
-          );
+          if (VERBOSE)
+            console.log(
+              '⏰ SSE: Connection reached 30-minute limit, reconnecting immediately...'
+            );
           eventSource.close(); // Close current connection
           setupSSEConnection(); // Immediate reconnect
         } else if (data.reason === 'inactivity') {
-          console.log('⏰ SSE: Connection closed due to inactivity');
+          if (VERBOSE)
+            console.log('⏰ SSE: Connection closed due to inactivity');
           // Could show user a message about inactivity
         }
       } catch (parseError) {
@@ -396,7 +425,7 @@ try {
     });
 
     eventSource.onerror = function (event) {
-      console.error('🔴 SSE: Error event received:', event);
+      if (VERBOSE) console.error('🔴 SSE: Error event received:', event);
 
       // Close immediately to stop EventSource auto-reconnects
       eventSource.close();
@@ -428,36 +457,45 @@ try {
       }, delay);
     };
 
-    console.log('🔌 SSE: Event listeners attached');
+    if (VERBOSE) console.log('🔌 SSE: Event listeners attached');
   }
 
-  console.log('🟢 SCRIPT: Checking document ready state:', document.readyState);
+  if (VERBOSE)
+    console.log(
+      '🟢 SCRIPT: Checking document ready state:',
+      document.readyState
+    );
 
   if (document.readyState === 'loading') {
-    console.log(
-      '⏳ SCRIPT: Document still loading, adding DOMContentLoaded listener'
-    );
+    if (VERBOSE)
+      console.log(
+        '⏳ SCRIPT: Document still loading, adding DOMContentLoaded listener'
+      );
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('✅ SCRIPT: DOMContentLoaded fired, initializing');
+      if (VERBOSE)
+        console.log('✅ SCRIPT: DOMContentLoaded fired, initializing');
       initializeSessionAndSSE();
     });
   } else {
-    console.log('✅ SCRIPT: Document already loaded, initializing immediately');
+    if (VERBOSE)
+      console.log(
+        '✅ SCRIPT: Document already loaded, initializing immediately'
+      );
     initializeSessionAndSSE();
   }
 
   window.addEventListener('beforeunload', function () {
-    console.log('👋 SCRIPT: Page unloading, cleaning up');
+    if (VERBOSE) console.log('👋 SCRIPT: Page unloading, cleaning up');
 
     if (reconnectTimeout) {
-      console.log('🧹 SCRIPT: Clearing reconnect timeout');
+      if (VERBOSE) console.log('🧹 SCRIPT: Clearing reconnect timeout');
       clearTimeout(reconnectTimeout);
     }
     if (eventSource) {
-      console.log('🧹 SCRIPT: Closing SSE connection');
+      if (VERBOSE) console.log('🧹 SCRIPT: Closing SSE connection');
       eventSource.close();
     }
   });
 
-  console.log('🟢 SCRIPT END: Setup complete');
+  if (VERBOSE) console.log('🟢 SCRIPT END: Setup complete');
 </script>

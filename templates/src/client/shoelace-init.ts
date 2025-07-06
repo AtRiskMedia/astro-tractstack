@@ -2,6 +2,8 @@ import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js'
 import SlSwitch from '@shoelace-style/shoelace/dist/components/switch/switch.js';
 import SlOption from '@shoelace-style/shoelace/dist/components/option/option.js';
 
+const VERBOSE = false
+
 // TypeScript declarations
 declare global {
   interface Window {
@@ -36,7 +38,8 @@ interface BeliefUpdateData {
 class CustomSlSelect extends SlSelect {
   focus(options?: FocusOptions) {
     if (this.hasAttribute('no-autofocus')) {
-      console.log(`🔍 SHOELACE: Skipping focus for sl-select#${this.id} due to no-autofocus`);
+      if (VERBOSE)
+        console.log(`🔍 SHOELACE: Skipping focus for sl-select#${this.id} due to no-autofocus`);
       return;
     }
     super.focus(options);
@@ -67,19 +70,23 @@ function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (.
 
 // Set up Shoelace event handlers
 function setupShoelaceEventHandlers(): void {
-  console.log('🔧 SHOELACE: Setting up event handlers');
+  if (VERBOSE)
+    console.log('🔧 SHOELACE: Setting up event handlers');
 
   const selectCount = document.querySelectorAll('sl-select[data-shoelace="select"]').length;
-  console.log(`🔍 SHOELACE: Found ${selectCount} sl-select elements`);
+  if (VERBOSE)
+    console.log(`🔍 SHOELACE: Found ${selectCount} sl-select elements`);
 
   // Handle sl-select changes
   document.querySelectorAll('sl-select[data-shoelace="select"]').forEach((select) => {
     const slSelect = select as CustomSlSelect;
     if (slSelect.shadowRoot && slSelect.hasAttribute('data-shoelace-initialized')) {
-      console.log(`🔍 SHOELACE: Skipping reinitialization for sl-select#${slSelect.id}`);
+      if (VERBOSE)
+        console.log(`🔍 SHOELACE: Skipping reinitialization for sl-select#${slSelect.id}`);
       return;
     }
-    console.log(`🔍 SHOELACE: Initializing sl-select#${slSelect.id}, shadowRoot: ${slSelect.shadowRoot !== null}`);
+    if (VERBOSE)
+      console.log(`🔍 SHOELACE: Initializing sl-select#${slSelect.id}, shadowRoot: ${slSelect.shadowRoot !== null}`);
     slSelect.removeEventListener('sl-change', handleSelectChange as EventListener);
     slSelect.addEventListener('sl-change', handleSelectChange as EventListener);
     slSelect.disconnectedCallback?.();
@@ -88,16 +95,19 @@ function setupShoelaceEventHandlers(): void {
   });
 
   const switchCount = document.querySelectorAll('sl-switch[data-shoelace="switch"]').length;
-  console.log(`🔍 SHOELACE: Found ${switchCount} sl-switch elements`);
+  if (VERBOSE)
+    console.log(`🔍 SHOELACE: Found ${switchCount} sl-switch elements`);
 
   // Handle sl-switch changes
   document.querySelectorAll('sl-switch[data-shoelace="switch"]').forEach((switchEl) => {
     const slSwitch = switchEl as SlSwitch;
     if (slSwitch.shadowRoot && slSwitch.hasAttribute('data-shoelace-initialized')) {
-      console.log(`🔍 SHOELACE: Skipping reinitialization for sl-switch#${slSwitch.id}`);
+      if (VERBOSE)
+        console.log(`🔍 SHOELACE: Skipping reinitialization for sl-switch#${slSwitch.id}`);
       return;
     }
-    console.log(`🔍 SHOELACE: Initializing sl-switch#${slSwitch.id}, shadowRoot: ${slSwitch.shadowRoot !== null}`);
+    if (VERBOSE)
+      console.log(`🔍 SHOELACE: Initializing sl-switch#${slSwitch.id}, shadowRoot: ${slSwitch.shadowRoot !== null}`);
     slSwitch.removeEventListener('sl-change', handleSwitchChange as EventListener);
     slSwitch.addEventListener('sl-change', handleSwitchChange as EventListener);
     slSwitch.disconnectedCallback?.();
@@ -105,7 +115,8 @@ function setupShoelaceEventHandlers(): void {
     slSwitch.setAttribute('data-shoelace-initialized', 'true');
   });
 
-  console.log('✅ SHOELACE: Event handlers setup complete');
+  if (VERBOSE)
+    console.log('✅ SHOELACE: Event handlers setup complete');
 }
 
 // Debounced version of setupShoelaceEventHandlers
@@ -113,41 +124,48 @@ const debouncedSetupShoelaceEventHandlers = debounce(setupShoelaceEventHandlers,
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function () {
-  console.log('📄 DOM: DOMContentLoaded, setting up Shoelace handlers');
+  if (VERBOSE)
+    console.log('📄 DOM: DOMContentLoaded, setting up Shoelace handlers');
   setupShoelaceEventHandlers();
 });
 
 // Reinitialize after HTMX swaps
 document.body.addEventListener('htmx:afterSwap', function (evt: any) {
   const target = evt.detail?.target;
-  console.log('🔄 HTMX: afterSwap for element:', target?.id || target);
+  if (VERBOSE)
+    console.log('🔄 HTMX: afterSwap for element:', target?.id || target);
   target.querySelectorAll('sl-select').forEach((select: CustomSlSelect) => {
     const attrValue = select.getAttribute('value');
     if (select.value === '' && attrValue !== null && attrValue !== '') {
-      console.log(`🔍 SHOELACE: Fixing empty value for sl-select#${select.id}`);
+      if (VERBOSE)
+        console.log(`🔍 SHOELACE: Fixing empty value for sl-select#${select.id}`);
       select.value = attrValue;
     }
-    console.log('🔍 SHOELACE: sl-select state:', {
-      id: select.id,
-      hasShadowRoot: select.shadowRoot !== null,
-      value: select.value,
-      noAutofocus: select.hasAttribute('no-autofocus')
-    });
+    if (VERBOSE)
+      console.log('🔍 SHOELACE: sl-select state:', {
+        id: select.id,
+        hasShadowRoot: select.shadowRoot !== null,
+        value: select.value,
+        noAutofocus: select.hasAttribute('no-autofocus')
+      });
   });
   target.querySelectorAll('sl-switch').forEach((switchEl: SlSwitch) => {
-    console.log('🔍 SHOELACE: sl-switch state:', {
-      id: switchEl.id,
-      hasShadowRoot: switchEl.shadowRoot !== null,
-      checked: switchEl.checked
-    });
+    if (VERBOSE)
+      console.log('🔍 SHOELACE: sl-switch state:', {
+        id: switchEl.id,
+        hasShadowRoot: switchEl.shadowRoot !== null,
+        checked: switchEl.checked
+      });
   });
   debouncedSetupShoelaceEventHandlers();
 });
 
 // Debug HTMX swap process
 document.body.addEventListener('htmx:beforeSwap', function (evt: any) {
-  console.log('🔄 HTMX: Before swap for element:', evt.detail?.target?.id || evt.detail?.target || evt.target);
-  console.log('🔄 HTMX: Incoming content length:', evt.detail?.xhr?.responseText?.length || 'unknown');
+  if (VERBOSE)
+    console.log('🔄 HTMX: Before swap for element:', evt.detail?.target?.id || evt.detail?.target || evt.target);
+  if (VERBOSE)
+    console.log('🔄 HTMX: Incoming content length:', evt.detail?.xhr?.responseText?.length || 'unknown');
 });
 
 // Handle sl-select changes
@@ -160,11 +178,13 @@ async function handleSelectChange(event: Event): Promise<void> {
   const beliefValue = Array.isArray(rawValue) ? rawValue[0] : rawValue;
 
   if (!beliefId || !beliefType || !beliefValue) {
-    console.error('🔴 SHOELACE: Invalid belief data for sl-select#', select.id, { beliefId, beliefType, beliefValue });
+    if (VERBOSE)
+      console.error('🔴 SHOELACE: Invalid belief data for sl-select#', select.id, { beliefId, beliefType, beliefValue });
     return;
   }
 
-  console.log('🔄 SHOELACE: Select changed:', { beliefId, beliefType, beliefValue });
+  if (VERBOSE)
+    console.log('🔄 SHOELACE: Select changed:', { beliefId, beliefType, beliefValue });
   await sendBeliefUpdate({ beliefId, beliefType, beliefValue });
 }
 
@@ -177,11 +197,13 @@ async function handleSwitchChange(event: Event): Promise<void> {
   const beliefValue = switchEl.checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
 
   if (!beliefId || !beliefType) {
-    console.error('🔴 SHOELACE: Missing belief data attributes on sl-switch#', switchEl.id);
+    if (VERBOSE)
+      console.error('🔴 SHOELACE: Missing belief data attributes on sl-switch#', switchEl.id);
     return;
   }
 
-  console.log('🔄 SHOELACE: Switch changed:', { beliefId, beliefType, beliefValue });
+  if (VERBOSE)
+    console.log('🔄 SHOELACE: Switch changed:', { beliefId, beliefType, beliefValue });
   await sendBeliefUpdate({ beliefId, beliefType, beliefValue });
 }
 
@@ -190,7 +212,8 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
   try {
     const goBackend = window.PUBLIC_GO_BACKEND || 'http://localhost:8080';
     const sessionId = localStorage.getItem('tractstack_session_id');
-    console.log('📡 SHOELACE: Sending belief update:', { data, sessionId, goBackend });
+    if (VERBOSE)
+      console.log('📡 SHOELACE: Sending belief update:', { data, sessionId, goBackend });
 
     const response = await fetch(`${goBackend}/api/v1/state`, {
       method: 'POST',
@@ -208,7 +231,8 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
     }
 
     const result = await response.json();
-    console.log('✅ SHOELACE: Belief update successful:', result);
+    if (VERBOSE)
+      console.log('✅ SHOELACE: Belief update successful:', result);
   } catch (error) {
     console.error('🔴 SHOELACE: Failed to update belief:', error);
   }
