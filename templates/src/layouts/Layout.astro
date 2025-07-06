@@ -58,19 +58,23 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
     <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
     <link rel="stylesheet" href={mainStylesUrl} />
 
-    <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"
-    ></script>
-
-    <!-- Shoelace Components -->
-    <script type="module" src="/src/client/shoelace-init.js"></script>
-    <link rel="stylesheet" href="/styles/shoelace.css" />
-
     <!-- Bunny player.js -->
     <script
       is:inline
       type="text/javascript"
       src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
+
+    <!-- Load Shoelace CSS FIRST -->
+    <link rel="stylesheet" href="/styles/shoelace.css" />
+
+    <!-- Load Shoelace components with proper module type -->
+    <script type="module">
+      import '/src/client/shoelace-init.js';
+    </script>
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.4" crossorigin="anonymous"
+    ></script>
 
     <ClientRouter />
   </head>
