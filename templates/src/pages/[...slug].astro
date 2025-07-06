@@ -391,8 +391,20 @@ try {
         );
       }
 
-      // Delay to allow DOM updates from HTMX to complete
-      setTimeout(() => {
+      // Wait for HTMX requests to actually complete by checking for .htmx-request class
+      const checkAndScroll = () => {
+        const stillLoading =
+          document.querySelectorAll('.htmx-request').length > 0;
+
+        if (stillLoading) {
+          if (VERBOSE) console.log(`🎯 SSE: HTMX still loading, waiting...`);
+          setTimeout(checkAndScroll, 50);
+          return;
+        }
+
+        if (VERBOSE)
+          console.log(`🎯 SSE: HTMX loading complete, scrolling now`);
+
         // Try multiple potential target selectors
         const selectors = [
           `#pane-${paneId}`, // Standard pane ID format
@@ -459,7 +471,10 @@ try {
             });
           }
         }
-      }, 100); // 100ms delay for DOM updates
+      };
+
+      // Start checking immediately
+      checkAndScroll();
     }
 
     eventSource.addEventListener('connected', function (event) {
