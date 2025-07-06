@@ -128,12 +128,6 @@ PUBLIC_TENANTID="${responses.tenantId}"
     });
     console.log(kleur.green('✅ UI components installed'));
 
-    // Install Shoelace components
-    execSync(`${addCommand} @shoelace-style/shoelace`, {
-      stdio: 'inherit',
-    });
-    console.log(kleur.green('✅ Shoelace components installed'));
-
     // Install additional dependencies
     execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });
     console.log(kleur.green('✅ Additional dependencies installed'));
