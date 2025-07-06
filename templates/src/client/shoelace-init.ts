@@ -1,8 +1,5 @@
-import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
-import SlSwitch from '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import SlOption from '@shoelace-style/shoelace/dist/components/option/option.js';
-
-const VERBOSE = false
+// Enhanced Shoelace initialization with Firefox adoptedStyleSheets fix
+const VERBOSE = false;
 
 // TypeScript declarations
 declare global {
@@ -10,8 +7,45 @@ declare global {
     TENANT_ID?: string;
     PUBLIC_GO_BACKEND?: string;
     STORYFRAGMENT_ID?: string;
+    ShoelaceAutoLoader?: any;
   }
 }
+
+// Browser compatibility check
+const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+
+// Force Shoelace to use inline styles instead of adoptedStyleSheets for Firefox
+(window as any).ShoelaceAutoLoader = {
+  setBasePath: () => { },
+  getBasePath: () => '/styles/',
+};
+
+// Override Shoelace's stylesheet adoption for Firefox
+if (isFirefox) {
+  const originalAdoptedStyleSheets = Object.getOwnPropertyDescriptor(Document.prototype, 'adoptedStyleSheets') ||
+    Object.getOwnPropertyDescriptor(ShadowRoot.prototype, 'adoptedStyleSheets');
+
+  if (originalAdoptedStyleSheets) {
+    Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', {
+      get() { return []; },
+      set(sheets) {
+        // Convert adoptedStyleSheets to inline <style> elements
+        sheets.forEach((sheet: any) => {
+          if (sheet.cssRules) {
+            const style = document.createElement('style');
+            style.textContent = Array.from(sheet.cssRules).map((rule: any) => rule.cssText).join('\n');
+            this.appendChild(style);
+          }
+        });
+      }
+    });
+  }
+}
+
+// Import Shoelace components after the adoptedStyleSheets override
+import SlSelect from '@shoelace-style/shoelace/dist/components/select/select.js';
+import SlSwitch from '@shoelace-style/shoelace/dist/components/switch/switch.js';
+import SlOption from '@shoelace-style/shoelace/dist/components/option/option.js';
 
 // Shoelace event interfaces
 interface ShoelaceChangeEvent extends Event {
@@ -87,6 +121,7 @@ function setupShoelaceEventHandlers(): void {
     }
     if (VERBOSE)
       console.log(`🔍 SHOELACE: Initializing sl-select#${slSelect.id}, shadowRoot: ${slSelect.shadowRoot !== null}`);
+
     slSelect.removeEventListener('sl-change', handleSelectChange as EventListener);
     slSelect.addEventListener('sl-change', handleSelectChange as EventListener);
     slSelect.disconnectedCallback?.();
@@ -108,6 +143,7 @@ function setupShoelaceEventHandlers(): void {
     }
     if (VERBOSE)
       console.log(`🔍 SHOELACE: Initializing sl-switch#${slSwitch.id}, shadowRoot: ${slSwitch.shadowRoot !== null}`);
+
     slSwitch.removeEventListener('sl-change', handleSwitchChange as EventListener);
     slSwitch.addEventListener('sl-change', handleSwitchChange as EventListener);
     slSwitch.disconnectedCallback?.();
@@ -134,30 +170,35 @@ document.body.addEventListener('htmx:afterSwap', function (evt: any) {
   const target = evt.detail?.target;
   if (VERBOSE)
     console.log('🔄 HTMX: afterSwap for element:', target?.id || target);
-  target.querySelectorAll('sl-select').forEach((select: CustomSlSelect) => {
-    const attrValue = select.getAttribute('value');
-    if (select.value === '' && attrValue !== null && attrValue !== '') {
+
+  setTimeout(() => {
+    target.querySelectorAll('sl-select').forEach((select: CustomSlSelect) => {
+      const attrValue = select.getAttribute('value');
+      if (select.value === '' && attrValue !== null && attrValue !== '') {
+        if (VERBOSE)
+          console.log(`🔍 SHOELACE: Fixing empty value for sl-select#${select.id}`);
+        select.value = attrValue;
+      }
       if (VERBOSE)
-        console.log(`🔍 SHOELACE: Fixing empty value for sl-select#${select.id}`);
-      select.value = attrValue;
-    }
-    if (VERBOSE)
-      console.log('🔍 SHOELACE: sl-select state:', {
-        id: select.id,
-        hasShadowRoot: select.shadowRoot !== null,
-        value: select.value,
-        noAutofocus: select.hasAttribute('no-autofocus')
-      });
-  });
-  target.querySelectorAll('sl-switch').forEach((switchEl: SlSwitch) => {
-    if (VERBOSE)
-      console.log('🔍 SHOELACE: sl-switch state:', {
-        id: switchEl.id,
-        hasShadowRoot: switchEl.shadowRoot !== null,
-        checked: switchEl.checked
-      });
-  });
-  debouncedSetupShoelaceEventHandlers();
+        console.log('🔍 SHOELACE: sl-select state:', {
+          id: select.id,
+          hasShadowRoot: select.shadowRoot !== null,
+          value: select.value,
+          noAutofocus: select.hasAttribute('no-autofocus')
+        });
+    });
+
+    target.querySelectorAll('sl-switch').forEach((switchEl: SlSwitch) => {
+      if (VERBOSE)
+        console.log('🔍 SHOELACE: sl-switch state:', {
+          id: switchEl.id,
+          hasShadowRoot: switchEl.shadowRoot !== null,
+          checked: switchEl.checked
+        });
+    });
+
+    debouncedSetupShoelaceEventHandlers();
+  }, 50);
 });
 
 // Debug HTMX swap process
