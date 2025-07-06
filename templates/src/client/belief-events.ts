@@ -5,100 +5,68 @@ interface BeliefUpdateData {
   beliefId: string;
   beliefType: string;
   beliefValue: string;
+  paneId: string;
 }
 
-// Single event delegation handler for all belief widgets
-document.addEventListener('change', function (event: Event) {
-  if (VERBOSE) console.log('🔥 CHANGE EVENT FIRED:', event.target);
-
-  const target = event.target as HTMLElement;
-
-  // Handle belief selects
-  if (target.matches && target.matches('select[data-belief-id]')) {
-    if (VERBOSE) console.log('🎯 BELIEF SELECT MATCHED:', target);
-    handleBeliefChange(target as HTMLSelectElement);
+// Initialize beliefStates and clear aggressively
+const beliefStates: { [key: string]: string } = {};
+function clearBeliefStates() {
+  const previousState = { ...beliefStates };
+  Object.keys(beliefStates).forEach(key => delete beliefStates[key]);
+  if (VERBOSE && Object.keys(previousState).length > 0) {
+    console.log('🔧 BELIEF: Cleared beliefStates, previous state:', previousState);
+  } else if (VERBOSE) {
+    console.log('🔧 BELIEF: Cleared beliefStates, no previous state');
   }
+}
 
-  // Handle belief toggles (checkboxes)
-  if (
-    target.matches &&
-    target.matches('input[type="checkbox"][data-belief-id]')
-  ) {
-    if (VERBOSE) console.log('🎯 BELIEF CHECKBOX MATCHED:', target);
-    handleBeliefChange(target as HTMLInputElement);
-  }
-});
+// Clear state immediately on script load and before HTMX/DOM events
+clearBeliefStates(); // Immediate clear on script execution
+window.addEventListener('load', clearBeliefStates);
+document.addEventListener('htmx:configRequest', clearBeliefStates);
 
 // Single event delegation handler for all belief widgets
 document.addEventListener('change', function (event: Event) {
   const target = event.target as HTMLElement;
 
-  // Handle belief selects
   if (target.matches && target.matches('select[data-belief-id]')) {
     handleBeliefChange(target as HTMLSelectElement);
-  }
-
-  // Handle belief toggles (checkboxes)
-  if (
-    target.matches &&
-    target.matches('input[type="checkbox"][data-belief-id]')
-  ) {
+  } else if (target.matches && target.matches('input[type="checkbox"][data-belief-id]')) {
     handleBeliefChange(target as HTMLInputElement);
   }
 });
 
 // Handle belief widget changes
-async function handleBeliefChange(
-  element: HTMLSelectElement | HTMLInputElement
-): Promise<void> {
+async function handleBeliefChange(element: HTMLSelectElement | HTMLInputElement): Promise<void> {
   const beliefId = element.getAttribute('data-belief-id');
   const beliefType = element.getAttribute('data-belief-type');
+  const paneId = element.getAttribute('data-pane-id');
 
   if (!beliefId || !beliefType) {
-    if (VERBOSE)
-      console.error(
-        '🔴 BELIEF: Missing belief data attributes on element#',
-        element.id
-      );
+    if (VERBOSE) console.error('🔴 BELIEF: Missing required attributes on', element.id);
     return;
   }
 
-  // Extract value based on element type
   let beliefValue: string;
   if (element.type === 'checkbox') {
-    beliefValue = (element as HTMLInputElement).checked
-      ? 'BELIEVES_YES'
-      : 'BELIEVES_NO';
+    beliefValue = (element as HTMLInputElement).checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
   } else {
     beliefValue = (element as HTMLSelectElement).value;
   }
 
-  if (VERBOSE)
-    console.log('🔄 BELIEF: Widget changed:', {
-      beliefId,
-      beliefType,
-      beliefValue,
-    });
+  if (VERBOSE) console.log('🔄 BELIEF: Widget changed', { beliefId, beliefType, beliefValue, paneId });
 
-  // Track the state change
   trackBeliefState(beliefId, beliefValue);
-
-  await sendBeliefUpdate({ beliefId, beliefType, beliefValue });
+  await sendBeliefUpdate({ beliefId, beliefType, beliefValue, paneId: paneId || '' });
 }
 
-// Send belief update to backend - same logic as shoelace version
+// Send belief update to backend
 async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
   try {
-    const goBackend =
-      (window as any).PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    const goBackend = (window as any).PUBLIC_GO_BACKEND || 'http://localhost:8080';
     const sessionId = localStorage.getItem('tractstack_session_id');
 
-    if (VERBOSE)
-      console.log('📡 BELIEF: Sending belief update:', {
-        data,
-        sessionId,
-        goBackend,
-      });
+    if (VERBOSE) console.log('📡 BELIEF: Sending update to', goBackend, { data, sessionId });
 
     const response = await fetch(`${goBackend}/api/v1/state`, {
       method: 'POST',
@@ -111,73 +79,77 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
       body: new URLSearchParams(data),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const result = await response.json();
-    if (VERBOSE) console.log('✅ BELIEF: Belief update successful:', result);
+    if (VERBOSE) console.log('✅ BELIEF: Update successful', { beliefId: data.beliefId, result });
+
+    if (result.beliefValue) {
+      beliefStates[data.beliefId] = result.beliefValue;
+      if (VERBOSE) console.log('🔄 BELIEF: Synced beliefStates', { beliefId: data.beliefId, value: result.beliefValue });
+    } else {
+      delete beliefStates[data.beliefId];
+      if (VERBOSE) console.log('🔄 BELIEF: Cleared beliefStates', { beliefId: data.beliefId });
+    }
   } catch (error) {
-    console.error('🔴 BELIEF: Failed to update belief:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (VERBOSE) console.error('🔴 BELIEF: Update failed', { error: errorMessage, beliefId: data.beliefId });
   }
 }
 
-// Debug logging for development
-if (VERBOSE) {
-  console.log('🔧 BELIEF: Event handlers initialized');
-}
+// Initialize event handlers
+if (VERBOSE) console.log('🔧 BELIEF: Event handlers initialized');
 
-// Restore widget states after HTMX swaps
-document.body.addEventListener('htmx:afterSwap', function (event: any) {
-  if (VERBOSE) {
-    console.log('🔄 HTMX: afterSwap detected, restoring widget states');
-  }
-
-  // Small delay to ensure DOM is ready
-  setTimeout(restoreWidgetStates, 10);
+// Restore widget states after HTMX swaps with safe logic
+document.body.addEventListener('htmx:afterSwap', function (event) {
+  if (VERBOSE) console.log('🔄 HTMX: afterSwap triggered, checking for restoration');
+  setTimeout(restoreWidgetStates, 10); // Delay for DOM readiness
 });
 
-// Track current belief states in memory
-const beliefStates: { [key: string]: string } = {};
-
-// Update belief states tracking when changes occur
 function trackBeliefState(beliefId: string, beliefValue: string) {
   beliefStates[beliefId] = beliefValue;
-  if (VERBOSE) {
-    console.log('📝 BELIEF: Tracked state update:', { beliefId, beliefValue });
-  }
+  if (VERBOSE) console.log('📝 BELIEF: Tracked state', { beliefId, beliefValue });
 }
 
-// Restore widget states after HTMX content swaps
 function restoreWidgetStates() {
-  // Restore select elements
+  if (VERBOSE) console.log('🔄 BELIEF: Entering restoreWidgetStates', { beliefStates: { ...beliefStates } });
+
   document.querySelectorAll('select[data-belief-id]').forEach((select) => {
     const beliefId = select.getAttribute('data-belief-id');
     if (beliefId && beliefStates[beliefId]) {
-      (select as HTMLSelectElement).value = beliefStates[beliefId];
-      if (VERBOSE) {
-        console.log('🔄 BELIEF: Restored select state:', {
+      const currentValue = (select as HTMLSelectElement).value;
+      const storedValue = beliefStates[beliefId];
+      const validOptions = Array.from((select as HTMLSelectElement).options)
+        .filter(option => option.value !== '') // Exclude placeholder
+        .map(option => option.value);
+
+      if (currentValue === '' && validOptions.includes(storedValue)) {
+        (select as HTMLSelectElement).value = storedValue;
+        if (VERBOSE) console.log('🔄 BELIEF: Restored state', {
           beliefId,
-          value: beliefStates[beliefId],
+          value: storedValue,
+          reason: 'Placeholder overridden with tracked state',
+        });
+      } else if (VERBOSE) {
+        console.log('🔄 BELIEF: Skipped restoration', {
+          beliefId,
+          currentValue,
+          storedValue,
+          reason: currentValue !== '' ? 'Server state present' : 'Invalid stored value',
+          validOptions,
         });
       }
     }
   });
 
-  // Restore checkbox elements
-  document
-    .querySelectorAll('input[type="checkbox"][data-belief-id]')
-    .forEach((checkbox) => {
-      const beliefId = checkbox.getAttribute('data-belief-id');
-      if (beliefId && beliefStates[beliefId]) {
-        (checkbox as HTMLInputElement).checked =
-          beliefStates[beliefId] === 'BELIEVES_YES';
-        if (VERBOSE) {
-          console.log('🔄 BELIEF: Restored checkbox state:', {
-            beliefId,
-            checked: beliefStates[beliefId] === 'BELIEVES_YES',
-          });
-        }
+  document.querySelectorAll('input[type="checkbox"][data-belief-id]').forEach((checkbox) => {
+    const beliefId = checkbox.getAttribute('data-belief-id');
+    if (beliefId && beliefStates[beliefId]) {
+      const storedValue = beliefStates[beliefId];
+      if (storedValue === 'BELIEVES_YES' || storedValue === 'BELIEVES_NO') {
+        (checkbox as HTMLInputElement).checked = storedValue === 'BELIEVES_YES';
+        if (VERBOSE) console.log('🔄 BELIEF: Restored checkbox', { beliefId, checked: storedValue === 'BELIEVES_YES' });
       }
-    });
+    }
+  });
 }

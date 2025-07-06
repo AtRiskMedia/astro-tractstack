@@ -2,7 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import type { AuthStatus } from '@/types.ts';
 
-const VERBOSE = false;
+const VERBOSE = true;
 const user = Astro.locals.user as AuthStatus;
 const tenantId = Astro.locals.tenant?.id || 'default';
 
@@ -289,6 +289,10 @@ try {
           console.log('📨 SSE: Current storyfragment:', STORYFRAGMENT_ID);
           console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
           console.log('📨 SSE: Affected panes:', data.affectedPanes);
+
+          if (data.gotoPaneId) {
+            console.log('📨 SSE: Scroll target:', data.gotoPaneId);
+          }
         }
 
         if (data.storyfragmentId === STORYFRAGMENT_ID) {
@@ -301,6 +305,7 @@ try {
                 `🔄 SSE: Processing ${data.affectedPanes.length} pane updates`
               );
 
+            // Existing pane refresh logic remains unchanged
             data.affectedPanes.forEach((paneId, index) => {
               if (VERBOSE)
                 console.log(
@@ -343,6 +348,15 @@ try {
                   );
               }
             });
+
+            // NEW: Handle scroll targeting after pane updates
+            if (data.gotoPaneId) {
+              if (VERBOSE)
+                console.log(
+                  `🎯 SSE: Scroll target specified: ${data.gotoPaneId}`
+                );
+              handleScrollToTarget(data.gotoPaneId);
+            }
           } else {
             if (VERBOSE)
               console.warn(
@@ -362,6 +376,91 @@ try {
 
       if (VERBOSE) console.log('📨 SSE: === END PANES_UPDATED EVENT ===');
     });
+
+    function handleScrollToTarget(paneId) {
+      if (VERBOSE) console.log(`🎯 SSE: Starting scroll to pane ${paneId}`);
+
+      // Check user preference for reduced motion
+      const prefersReducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+
+      if (VERBOSE) {
+        console.log(
+          `🎯 SSE: User prefers reduced motion: ${prefersReducedMotion}`
+        );
+      }
+
+      // Delay to allow DOM updates from HTMX to complete
+      setTimeout(() => {
+        // Try multiple potential target selectors
+        const selectors = [
+          `#pane-${paneId}`, // Standard pane ID format
+          `[data-pane-id="${paneId}"]`, // Pane container with data attribute
+          `#${paneId}`, // Direct ID match
+          `.pane-${paneId}`, // Class-based selector
+        ];
+
+        let target = null;
+        let usedSelector = '';
+
+        // Find the first matching element
+        for (const selector of selectors) {
+          target = document.querySelector(selector);
+          if (target) {
+            usedSelector = selector;
+            break;
+          }
+        }
+
+        if (target) {
+          if (VERBOSE) {
+            console.log(
+              `🎯 SSE: Found scroll target using selector: ${usedSelector}`
+            );
+            console.log(`🎯 SSE: Target element:`, target);
+          }
+
+          // Scroll to the target element
+          target.scrollIntoView({
+            behavior: prefersReducedMotion ? 'auto' : 'smooth',
+            block: 'start',
+            inline: 'nearest',
+          });
+
+          if (VERBOSE)
+            console.log(`✅ SSE: Scroll completed for pane ${paneId}`);
+
+          // Optional: Add visual indication of the scrolled-to element
+          if (!prefersReducedMotion) {
+            target.style.transition = 'background-color 0.3s ease';
+            const originalBg = target.style.backgroundColor;
+            target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'; // Light blue highlight
+
+            setTimeout(() => {
+              target.style.backgroundColor = originalBg;
+              setTimeout(() => {
+                target.style.transition = '';
+              }, 300);
+            }, 1000);
+          }
+        } else {
+          console.warn(
+            `⚠️ SSE: Scroll target element not found for pane: ${paneId}`
+          );
+          if (VERBOSE) {
+            console.log(`🔍 SSE: Tried selectors:`, selectors);
+            console.log(`🔍 SSE: Available elements with data-pane-id:`);
+            const allPanes = document.querySelectorAll('[data-pane-id]');
+            allPanes.forEach((el) => {
+              console.log(
+                `  - ${el.getAttribute('data-pane-id')}: ${el.tagName}#${el.id || 'no-id'}.${el.className}`
+              );
+            });
+          }
+        }
+      }, 100); // 100ms delay for DOM updates
+    }
 
     eventSource.addEventListener('connected', function (event) {
       if (VERBOSE) {
