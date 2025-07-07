@@ -2,7 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import type { AuthStatus } from '@/types.ts';
 
-const VERBOSE = true;
+const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
 const tenantId = Astro.locals.tenant?.id || 'default';
 
