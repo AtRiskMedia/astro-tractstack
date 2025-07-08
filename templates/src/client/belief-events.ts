@@ -8,25 +8,26 @@ interface BeliefUpdateData {
   paneId: string;
 }
 
-// Initialize beliefStates and clear aggressively
+// Initialize beliefStates
 const beliefStates: { [key: string]: string } = {};
-function clearBeliefStates() {
-  const previousState = { ...beliefStates };
-  Object.keys(beliefStates).forEach((key) => delete beliefStates[key]);
-  if (VERBOSE && Object.keys(previousState).length > 0) {
-    console.log(
-      '🔧 BELIEF: Cleared beliefStates, previous state:',
-      previousState
-    );
-  } else if (VERBOSE) {
-    console.log('🔧 BELIEF: Cleared beliefStates, no previous state');
-  }
-}
+
+//function clearBeliefStates() {
+//  const previousState = { ...beliefStates };
+//  Object.keys(beliefStates).forEach((key) => delete beliefStates[key]);
+//  if (VERBOSE && Object.keys(previousState).length > 0) {
+//    console.log(
+//      '🔧 BELIEF: Cleared beliefStates, previous state:',
+//      previousState
+//    );
+//  } else if (VERBOSE) {
+//    console.log('🔧 BELIEF: Cleared beliefStates, no previous state');
+//  }
+//}
 
 // Clear state immediately on script load and before HTMX/DOM events
-clearBeliefStates(); // Immediate clear on script execution
-window.addEventListener('load', clearBeliefStates);
-document.addEventListener('htmx:configRequest', clearBeliefStates);
+//clearBeliefStates(); // Immediate clear on script execution
+//window.addEventListener('load', clearBeliefStates);
+//document.addEventListener('htmx:configRequest', clearBeliefStates);
 
 // Single event delegation handler for all belief widgets
 document.addEventListener('change', function (event: Event) {
@@ -114,18 +115,16 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
         beliefId: data.beliefId,
         result,
       });
-
-    if (result.beliefValue) {
-      beliefStates[data.beliefId] = result.beliefValue;
-      if (VERBOSE)
-        console.log('🔄 BELIEF: Synced beliefStates', {
-          beliefId: data.beliefId,
-          value: result.beliefValue,
-        });
-    } else {
+    if (result.unsetBeliefs && Array.isArray(result.unsetBeliefs) && result.unsetBeliefs.includes(data.beliefId)) {
       delete beliefStates[data.beliefId];
       if (VERBOSE)
-        console.log('🔄 BELIEF: Cleared beliefStates', {
+        console.log('🔄 BELIEF: Cleared beliefStates (server instructed unset)', {
+          beliefId: data.beliefId,
+        });
+    } else {
+      // Keep local state for restoration - normal success response
+      if (VERBOSE)
+        console.log('🔄 BELIEF: Keeping local state for restoration', {
           beliefId: data.beliefId,
         });
     }
@@ -143,12 +142,12 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
 // Initialize event handlers
 if (VERBOSE) console.log('🔧 BELIEF: Event handlers initialized');
 
-// Restore widget states after HTMX swaps with safe logic
-document.body.addEventListener('htmx:afterSwap', function (event) {
-  if (VERBOSE)
-    console.log('🔄 HTMX: afterSwap triggered, checking for restoration');
-  setTimeout(restoreWidgetStates, 10); // Delay for DOM readiness
-});
+//// Restore widget states after HTMX swaps with safe logic
+//document.body.addEventListener('htmx:afterSwap', function (event) {
+//  if (VERBOSE)
+//    console.log('🔄 HTMX: afterSwap triggered, checking for restoration');
+//  setTimeout(restoreWidgetStates, 10); // Delay for DOM readiness
+//});
 
 function trackBeliefState(beliefId: string, beliefValue: string) {
   beliefStates[beliefId] = beliefValue;
@@ -156,59 +155,80 @@ function trackBeliefState(beliefId: string, beliefValue: string) {
     console.log('📝 BELIEF: Tracked state', { beliefId, beliefValue });
 }
 
-function restoreWidgetStates() {
-  if (VERBOSE)
-    console.log('🔄 BELIEF: Entering restoreWidgetStates', {
-      beliefStates: { ...beliefStates },
-    });
-
-  document.querySelectorAll('select[data-belief-id]').forEach((select) => {
-    const beliefId = select.getAttribute('data-belief-id');
-    if (beliefId && beliefStates[beliefId]) {
-      const currentValue = (select as HTMLSelectElement).value;
-      const storedValue = beliefStates[beliefId];
-      const validOptions = Array.from((select as HTMLSelectElement).options)
-        .filter((option) => option.value !== '') // Exclude placeholder
-        .map((option) => option.value);
-
-      if (currentValue === '' && validOptions.includes(storedValue)) {
-        (select as HTMLSelectElement).value = storedValue;
-        if (VERBOSE)
-          console.log('🔄 BELIEF: Restored state', {
-            beliefId,
-            value: storedValue,
-            reason: 'Placeholder overridden with tracked state',
-          });
-      } else if (VERBOSE) {
-        console.log('🔄 BELIEF: Skipped restoration', {
-          beliefId,
-          currentValue,
-          storedValue,
-          reason:
-            currentValue !== ''
-              ? 'Server state present'
-              : 'Invalid stored value',
-          validOptions,
-        });
-      }
-    }
-  });
-
-  document
-    .querySelectorAll('input[type="checkbox"][data-belief-id]')
-    .forEach((checkbox) => {
-      const beliefId = checkbox.getAttribute('data-belief-id');
-      if (beliefId && beliefStates[beliefId]) {
-        const storedValue = beliefStates[beliefId];
-        if (storedValue === 'BELIEVES_YES' || storedValue === 'BELIEVES_NO') {
-          (checkbox as HTMLInputElement).checked =
-            storedValue === 'BELIEVES_YES';
-          if (VERBOSE)
-            console.log('🔄 BELIEF: Restored checkbox', {
-              beliefId,
-              checked: storedValue === 'BELIEVES_YES',
-            });
-        }
-      }
-    });
-}
+//function restoreWidgetStates() {
+//  if (VERBOSE)
+//    console.log('🔄 BELIEF: Entering restoreWidgetStates', {
+//      beliefStates: { ...beliefStates },
+//    });
+//
+//  document.querySelectorAll('select[data-belief-id]').forEach((select) => {
+//    const beliefId = select.getAttribute('data-belief-id');
+//    if (beliefId && beliefStates[beliefId]) {
+//      const currentValue = (select as HTMLSelectElement).value;
+//      const storedValue = beliefStates[beliefId];
+//      const validOptions = Array.from((select as HTMLSelectElement).options)
+//        .filter((option) => option.value !== '') // Exclude placeholder
+//        .map((option) => option.value);
+//
+//      // Don't restore UNSET values - they should remain as placeholder
+//      if (storedValue === 'UNSET') {
+//        if (VERBOSE)
+//          console.log('🔄 BELIEF: Skipped restoration of UNSET value', {
+//            beliefId,
+//            reason: 'UNSET values should not be restored',
+//          });
+//        return;
+//      }
+//
+//      if (currentValue === '' && validOptions.includes(storedValue)) {
+//        (select as HTMLSelectElement).value = storedValue;
+//        if (VERBOSE)
+//          console.log('🔄 BELIEF: Restored state', {
+//            beliefId,
+//            value: storedValue,
+//            reason: 'Placeholder overridden with tracked state',
+//          });
+//      } else if (VERBOSE) {
+//        console.log('🔄 BELIEF: Skipped restoration', {
+//          beliefId,
+//          currentValue,
+//          storedValue,
+//          reason:
+//            currentValue !== ''
+//              ? 'Server state present'
+//              : 'Invalid stored value',
+//          validOptions,
+//        });
+//      }
+//    }
+//  });
+//
+//  document
+//    .querySelectorAll('input[type="checkbox"][data-belief-id]')
+//    .forEach((checkbox) => {
+//      const beliefId = checkbox.getAttribute('data-belief-id');
+//      if (beliefId && beliefStates[beliefId]) {
+//        const storedValue = beliefStates[beliefId];
+//
+//        // Don't restore UNSET values for checkboxes either
+//        if (storedValue === 'UNSET') {
+//          if (VERBOSE)
+//            console.log('🔄 BELIEF: Skipped checkbox restoration of UNSET value', {
+//              beliefId,
+//              reason: 'UNSET values should not be restored',
+//            });
+//          return;
+//        }
+//
+//        if (storedValue === 'BELIEVES_YES' || storedValue === 'BELIEVES_NO') {
+//          (checkbox as HTMLInputElement).checked =
+//            storedValue === 'BELIEVES_YES';
+//          if (VERBOSE)
+//            console.log('🔄 BELIEF: Restored checkbox', {
+//              beliefId,
+//              checked: storedValue === 'BELIEVES_YES',
+//            });
+//        }
+//      }
+//    });
+//}

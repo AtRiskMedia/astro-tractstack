@@ -222,20 +222,12 @@ try {
   }
 
   function updateHTMXHeaders() {
-    if (VERBOSE) console.log('📋 HTMX: Updating headers for pane containers');
-
     const paneContainers = document.querySelectorAll('[data-pane-id]');
     if (VERBOSE)
       console.log('📋 HTMX: Found', paneContainers.length, 'pane containers');
 
     paneContainers.forEach((container, index) => {
       const paneId = container.getAttribute('data-pane-id');
-      if (VERBOSE)
-        console.log(
-          `📋 HTMX: [${index + 1}/${paneContainers.length}] Updating headers for pane:`,
-          paneId
-        );
-
       const headers = JSON.stringify({
         'X-TractStack-Session-ID': sessionId,
         'X-StoryFragment-ID': STORYFRAGMENT_ID,
@@ -320,7 +312,6 @@ try {
                   console.log(
                     `✅ SSE: Found element for pane ${paneId}, triggering refresh`
                   );
-                if (VERBOSE) console.log(`🔄 SSE: Element details:`, element);
 
                 if (typeof htmx !== 'undefined') {
                   if (VERBOSE)
