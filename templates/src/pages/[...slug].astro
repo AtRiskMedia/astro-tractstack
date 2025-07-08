@@ -24,8 +24,12 @@ try {
   });
 
   if (!response.ok) {
+    if (response.status >= 500 || response.status === 404) {
+      const currentPath = Astro.url.pathname;
+      return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+    }
     return new Response(null, {
-      status: 404,
+      status: response.status,
       statusText: 'Story not found',
     });
   }
@@ -33,24 +37,19 @@ try {
   storyData = await response.json();
 } catch (error) {
   console.error('Error fetching storyfragment:', error);
-  return new Response(null, {
-    status: 500,
-    statusText: 'Failed to load story',
-  });
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
 if (!storyData) {
-  return new Response(null, {
-    status: 404,
-    statusText: 'Story not found',
-  });
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
 const storyfragmentId = storyData.id;
 const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 
-// Server-side batch render all fragments (no personalization)
 let fragmentsData = {};
 try {
   const batchResponse = await fetch(`${goBackend}/api/v1/fragments/panes`, {
@@ -58,8 +57,7 @@ try {
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-ID': tenantId,
-      'X-StoryFragment-ID': storyfragmentId, // NOW we have storyfragmentId
-      // No session headers - will get non-personalized content
+      'X-StoryFragment-ID': storyfragmentId,
     },
     body: JSON.stringify({ paneIds: paneIds }),
   });
@@ -68,7 +66,6 @@ try {
     const batchData = await batchResponse.json();
     fragmentsData = batchData.fragments || {};
 
-    // Handle any errors from the batch response
     if (batchData.errors) {
       Object.entries(batchData.errors).forEach(([paneId, error]) => {
         fragmentsData[paneId] =
@@ -77,18 +74,29 @@ try {
     }
   } else {
     console.error('Batch fragment request failed:', batchResponse.status);
-    // Fallback: create error messages for all panes
-    paneIds.forEach((paneId) => {
-      fragmentsData[paneId] =
-        `<div class="error">Failed to load pane ${paneId}</div>`;
-    });
+    const currentPath = Astro.url.pathname;
+    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
   }
 } catch (error) {
-  console.error('Error fetching fragments batch:', error);
-  // Fallback: create error messages for all panes
-  paneIds.forEach((paneId) => {
-    fragmentsData[paneId] =
-      `<div class="error">Error loading pane ${paneId}</div>`;
+  console.error('Error fetching fragments:', error);
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
+if (!fragmentsData) {
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
+const title = storyfragmentTitle;
+const description = storyData.description || 'Dynamic content from TractStack';
+
+if (VERBOSE) {
+  console.log('Story Data:', {
+    id: storyfragmentId,
+    title: storyfragmentTitle,
+    paneCount: paneIds.length,
+    fragmentsCount: Object.keys(fragmentsData).length,
   });
 }
 ---
@@ -532,36 +540,33 @@ try {
     eventSource.onerror = function (event) {
       if (VERBOSE) console.error('🔴 SSE: Error event received:', event);
 
-      // Close immediately to stop EventSource auto-reconnects
       eventSource.close();
-
       sseReconnectAttempts++;
 
-      if (sseReconnectAttempts > maxReconnectAttempts) {
+      if (sseReconnectAttempts >= 5) {
         console.error(
-          `🔴 SSE: Connection failed after ${maxReconnectAttempts} attempts. Giving up.`
+          '🔴 SSE: Backend appears unavailable after 5 attempts. Redirecting to maintenance page...'
         );
+        const currentPath = window.location.pathname;
+        window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
         return;
       }
 
-      // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s (max)
       const delay = Math.min(
         1000 * Math.pow(2, sseReconnectAttempts - 1),
         maxReconnectDelay
       );
 
       console.error(
-        `🔴 SSE: Connection error (attempt ${sseReconnectAttempts}/${maxReconnectAttempts}). Retrying in ${delay}ms...`
+        `🔴 SSE: Connection error (attempt ${sseReconnectAttempts}/5). Retrying in ${delay}ms...`
       );
 
-      // Store the timeout so we can clear it later
       reconnectTimeout = setTimeout(() => {
         console.log('🔄 SSE: Retrying connection...');
         reconnectTimeout = null;
         setupSSEConnection();
       }, delay);
     };
-
     if (VERBOSE) console.log('🔌 SSE: Event listeners attached');
   }
 
@@ -603,4 +608,35 @@ try {
   });
 
   if (VERBOSE) console.log('🟢 SCRIPT END: Setup complete');
+</script>
+
+<script define:vars={{ storyfragmentId, goBackend, tenantId, VERBOSE }}>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.htmx) {
+      document.body.addEventListener('htmx:configRequest', function (event) {
+        event.detail.headers['X-Tenant-ID'] = tenantId;
+        event.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
+
+        const sessionId = localStorage.getItem('tractstack_session_id');
+        if (sessionId) {
+          event.detail.headers['X-TractStack-Session-ID'] = sessionId;
+        }
+      });
+
+      document.body.addEventListener('htmx:responseError', function (event) {
+        console.error('TractStack HTMX Error:', event.detail);
+
+        if (event.detail.xhr && event.detail.xhr.status >= 500) {
+          const currentPath = window.location.pathname;
+          window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
+        }
+      });
+
+      document.body.addEventListener('htmx:afterRequest', function (event) {
+        if (VERBOSE) {
+          console.log('HTMX request completed:', event.detail);
+        }
+      });
+    }
+  });
 </script>

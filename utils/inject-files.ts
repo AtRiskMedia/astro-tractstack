@@ -19,6 +19,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/[...slug].astro',
     },
     {
+      src: resolve('templates/src/pages/maint.astro'),
+      dest: 'src/pages/maint.astro',
+    },
+    {
       src: resolve('templates/src/pages/test.astro'),
       dest: 'src/pages/test.astro',
     },

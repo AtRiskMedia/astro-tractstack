@@ -115,12 +115,19 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
         beliefId: data.beliefId,
         result,
       });
-    if (result.unsetBeliefs && Array.isArray(result.unsetBeliefs) && result.unsetBeliefs.includes(data.beliefId)) {
+    if (
+      result.unsetBeliefs &&
+      Array.isArray(result.unsetBeliefs) &&
+      result.unsetBeliefs.includes(data.beliefId)
+    ) {
       delete beliefStates[data.beliefId];
       if (VERBOSE)
-        console.log('🔄 BELIEF: Cleared beliefStates (server instructed unset)', {
-          beliefId: data.beliefId,
-        });
+        console.log(
+          '🔄 BELIEF: Cleared beliefStates (server instructed unset)',
+          {
+            beliefId: data.beliefId,
+          }
+        );
     } else {
       // Keep local state for restoration - normal success response
       if (VERBOSE)

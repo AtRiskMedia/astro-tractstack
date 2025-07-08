@@ -1,0 +1,175 @@
+---
+const originalUrl = Astro.url.searchParams.get('from') || '/';
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+const isDev = import.meta.env.DEV;
+const brandBasePath = isDev ? '/brand' : '/media/brand';
+const logo = `${brandBasePath}/logo.svg`;
+const wordmark = `${brandBasePath}/wordmark.svg`;
+---
+
+<!doctype html>
+<html lang="en" class="bg-mywhite h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Maintenance | TractStack</title>
+    <link rel="stylesheet" href="/styles/custom.css" />
+    <link rel="stylesheet" href="/styles/storykeep.css" />
+  </head>
+  <body class="h-full">
+    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div class="mx-auto pb-6">
+        <div class="flex flex-col items-center justify-center gap-4">
+          <div class="h-16 w-auto">
+            <img
+              src={logo}
+              class="pointer-events-none h-full w-auto"
+              alt="Logo"
+            />
+          </div>
+          <div class="h-16 w-auto">
+            <img
+              src={wordmark}
+              class="pointer-events-none h-full w-auto max-w-48 md:max-w-72"
+              alt="Wordmark"
+            />
+          </div>
+        </div>
+
+        <h2
+          class="text-mydarkgrey mt-6 text-center text-2xl font-bold leading-9 tracking-tight"
+        >
+          Service Temporarily Unavailable
+        </h2>
+      </div>
+
+      <div class="mx-auto">
+        <div class="rounded-lg bg-white px-6 py-12 shadow-inner">
+          <div class="space-y-6 text-center">
+            <div class="text-myorange mx-auto h-12 w-12">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                ></path>
+              </svg>
+            </div>
+
+            <p class="text-mydarkgrey text-sm">
+              We're experiencing technical difficulties. The service will be
+              restored automatically.
+            </p>
+
+            <div
+              id="status-indicator"
+              class="border-mylightgrey inline-flex items-center rounded-md border bg-white px-4 py-2 shadow-sm"
+            >
+              <div class="text-myorange -ml-1 mr-3 h-5 w-5 animate-spin">
+                <svg fill="none" viewBox="0 0 24 24">
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              </div>
+              <span class="text-mydarkgrey text-sm"
+                >Checking service status...</span
+              >
+            </div>
+
+            <div class="text-mylightgrey text-center text-xs">
+              <p>
+                This page will automatically refresh when the service is
+                available
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script define:vars={{ goBackend, tenantId, originalUrl }}>
+      let checkCount = 0;
+      const maxChecks = 240;
+
+      function updateStatus(message, isChecking = true) {
+        const indicator = document.getElementById('status-indicator');
+        const spinner = indicator.querySelector('.animate-spin');
+        const text = indicator.querySelector('span');
+
+        if (isChecking) {
+          spinner.style.display = 'block';
+        } else {
+          spinner.style.display = 'none';
+        }
+
+        text.textContent = message;
+      }
+
+      async function checkBackendHealth() {
+        checkCount++;
+
+        try {
+          const response = await fetch(`${goBackend}/api/v1/health`, {
+            method: 'GET',
+            headers: {
+              'X-Tenant-ID': tenantId,
+            },
+            signal: AbortSignal.timeout(5000),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.healthy) {
+              updateStatus('Service restored! Redirecting...', false);
+
+              setTimeout(() => {
+                window.location.href = originalUrl;
+              }, 1000);
+              return;
+            }
+          }
+        } catch (error) {
+          console.log('Health check failed:', error.message);
+        }
+
+        if (checkCount < 5) {
+          updateStatus('Checking service status...');
+        } else if (checkCount < 20) {
+          updateStatus('Service still unavailable, continuing to check...');
+        } else if (checkCount < maxChecks) {
+          updateStatus(`Still checking... (attempt ${checkCount})`);
+        } else {
+          updateStatus(
+            'Extended outage detected. Please contact support.',
+            false
+          );
+          return;
+        }
+
+        setTimeout(checkBackendHealth, 30000);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        checkBackendHealth();
+      });
+    </script>
+  </body>
+</html>
