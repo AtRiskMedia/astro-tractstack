@@ -132,7 +132,10 @@ if (VERBOSE) {
   </div>
 </Layout>
 
-<script define:vars={{ goBackend, storyfragmentId, tenantId, VERBOSE }}>
+<script
+  is:inline
+  define:vars={{ goBackend, storyfragmentId, tenantId, VERBOSE }}
+>
   if (VERBOSE)
     console.log('🟢 SCRIPT START: Variables received:', {
       goBackend,
@@ -610,7 +613,10 @@ if (VERBOSE) {
   if (VERBOSE) console.log('🟢 SCRIPT END: Setup complete');
 </script>
 
-<script define:vars={{ storyfragmentId, goBackend, tenantId, VERBOSE }}>
+<script
+  is:inline
+  define:vars={{ storyfragmentId, goBackend, tenantId, VERBOSE }}
+>
   document.addEventListener('DOMContentLoaded', function () {
     if (window.htmx) {
       document.body.addEventListener('htmx:configRequest', function (event) {
