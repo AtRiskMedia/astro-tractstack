@@ -23,10 +23,6 @@ export async function injectTemplateFiles(
       dest: 'src/pages/maint.astro',
     },
     {
-      src: resolve('templates/src/pages/test.astro'),
-      dest: 'src/pages/test.astro',
-    },
-    {
       src: resolve('templates/src/pages/api/auth/visit.ts'),
       dest: 'src/pages/api/auth/visit.ts',
     },
