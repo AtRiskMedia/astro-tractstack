@@ -183,6 +183,9 @@ if (VERBOSE) {
       if (VERBOSE) console.log('🔵 INIT: Setting up SSE connection');
       setupSSEConnection();
       if (VERBOSE) console.log('🔵 INIT: SSE setup complete');
+
+      if (VERBOSE) console.log('🔵 INIT: Initializing analytics tracking');
+      window.initAnalyticsTracking(storyfragmentId);
     } catch (error) {
       console.error('🔴 INIT ERROR:', error);
     }
@@ -645,4 +648,9 @@ if (VERBOSE) {
       });
     }
   });
+</script>
+
+<script type="module" is:inline>
+  import '/src/client/belief-events.js';
+  import '/src/client/analytics-events.js';
 </script>

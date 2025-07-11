@@ -176,12 +176,6 @@ export function setupHTMXDefaults(): void {
   }
 }
 
-declare global {
-  interface Window {
-    htmx: any;
-  }
-}
-
 if (typeof window !== 'undefined') {
   if (window.htmx) {
     setupHTMXDefaults();

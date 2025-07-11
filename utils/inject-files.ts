@@ -11,6 +11,10 @@ export async function injectTemplateFiles(
 
   const templateFiles = [
     {
+      src: resolve('templates/src/constants.ts'),
+      dest: 'src/constants.ts',
+    },
+    {
       src: resolve('templates/src/layouts/Layout.astro'),
       dest: 'src/layouts/Layout.astro',
     },
@@ -29,10 +33,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/components/Fragment.astro'),
       dest: 'src/components/Fragment.astro',
-    },
-    {
-      src: resolve('templates/src/components/Counter.tsx'),
-      dest: 'src/components/Counter.tsx',
     },
     {
       src: resolve('templates/src/components/auth/SessionInit.astro'),
@@ -95,6 +95,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/client/belief-events.ts'),
       dest: 'src/client/belief-events.ts',
+    },
+    {
+      src: resolve('templates/src/client/analytics-events.ts'),
+      dest: 'src/client/analytics-events.ts',
     },
     {
       src: resolve('templates/fonts/Inter-Black.woff2'),
