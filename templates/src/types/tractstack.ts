@@ -97,3 +97,26 @@ export interface FragmentProps
 export type AstroComponentProps<T> = T extends (props: infer P) => any
   ? P
   : never;
+
+// StoryFragment types matching Go backend
+export interface StoryFragmentNode {
+  id: string;
+  title: string;
+  slug: string;
+  tractStackId: string;
+  menuId?: string;
+  paneIds: string[];
+  tailwindBgColour?: string;
+  socialImagePath?: string;
+  codeHookTargets?: Record<string, string>; // paneId -> codeHookTarget
+  isHome: boolean;
+  created: string;
+  changed?: string;
+}
+
+// CodeHook execution data
+export interface CodeHookData {
+  paneId: string;
+  target: string;
+  payload?: Record<string, string>;
+}
