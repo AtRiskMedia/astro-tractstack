@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import type { AuthStatus } from '@/types.ts';
+import { handleFailedResponse } from '@/utils/backend';
 
 const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
@@ -23,25 +24,26 @@ try {
     },
   });
 
-  if (!response.ok) {
-    if (response.status >= 500 || response.status === 404) {
-      const currentPath = Astro.url.pathname;
-      return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
-    }
-    return new Response(null, {
-      status: response.status,
-      statusText: 'Story not found',
-    });
+  // Handle failed response using utility
+  const failedResponse = await handleFailedResponse(
+    response,
+    goBackend,
+    tenantId,
+    Astro.url.pathname
+  );
+  if (failedResponse) {
+    return failedResponse;
   }
 
   storyData = await response.json();
+  if (storyData.isHome && lookup !== '') {
+    // This storyfragment is the home page but was accessed via its slug
+    // Redirect to / to normalize the URL
+    return Astro.redirect('/');
+  }
 } catch (error) {
   console.error('Error fetching storyfragment:', error);
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
-}
-
-if (!storyData) {
+  // Network errors likely mean backend is down - go straight to maintenance
   const currentPath = Astro.url.pathname;
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
@@ -74,8 +76,17 @@ try {
     }
   } else {
     console.error('Batch fragment request failed:', batchResponse.status);
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+
+    // Handle failed fragments response using utility
+    const failedFragmentsResponse = await handleFailedResponse(
+      batchResponse,
+      goBackend,
+      tenantId,
+      Astro.url.pathname
+    );
+    if (failedFragmentsResponse) {
+      return failedFragmentsResponse;
+    }
   }
 } catch (error) {
   console.error('Error fetching fragments:', error);

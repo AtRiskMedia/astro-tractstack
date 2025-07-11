@@ -121,26 +121,39 @@ function initPaneVisibilityTracking() {
         if (entry.isIntersecting) {
           // Pane entered viewport - start timing
           const wasAlreadyTracked = paneViewTimes.has(paneId);
-          const wasInitiallyVisible = (entry.target as HTMLElement).dataset.wasInitiallyVisible === 'true';
+          const wasInitiallyVisible =
+            (entry.target as HTMLElement).dataset.wasInitiallyVisible ===
+            'true';
 
           if (!wasAlreadyTracked && !wasInitiallyVisible) {
             const startTime = Date.now();
             paneViewTimes.set(paneId, startTime);
 
             if (VERBOSE) {
-              console.log(`🟢 PANE ENTER: ${paneId} entered viewport at ${new Date(startTime).toISOString()}`);
-              console.log(`📊 TRACKING MAP: Now tracking ${paneViewTimes.size} panes:`, Array.from(paneViewTimes.keys()));
+              console.log(
+                `🟢 PANE ENTER: ${paneId} entered viewport at ${new Date(startTime).toISOString()}`
+              );
+              console.log(
+                `📊 TRACKING MAP: Now tracking ${paneViewTimes.size} panes:`,
+                Array.from(paneViewTimes.keys())
+              );
             }
           } else if (wasInitiallyVisible) {
             // Remove the flag now that we've processed the initial state
-            (entry.target as HTMLElement).removeAttribute('data-was-initially-visible');
+            (entry.target as HTMLElement).removeAttribute(
+              'data-was-initially-visible'
+            );
 
             if (VERBOSE) {
-              console.log(`🚫 SKIP INITIAL: ${paneId} was already visible, skipping initial enter event`);
+              console.log(
+                `🚫 SKIP INITIAL: ${paneId} was already visible, skipping initial enter event`
+              );
             }
           } else if (wasAlreadyTracked) {
             if (VERBOSE) {
-              console.log(`⚠️  PANE RE-ENTER: ${paneId} re-entered but already being tracked (no action taken)`);
+              console.log(
+                `⚠️  PANE RE-ENTER: ${paneId} re-entered but already being tracked (no action taken)`
+              );
             }
           }
         } else {
@@ -155,9 +168,16 @@ function initPaneVisibilityTracking() {
             paneViewTimes.delete(paneId);
 
             if (VERBOSE) {
-              console.log(`🔴 PANE EXIT: ${paneId} exited viewport at ${new Date(exitTime).toISOString()}`);
-              console.log(`⏱️  DURATION: ${duration}ms (${(duration / 1000).toFixed(1)}s)`);
-              console.log(`📊 TRACKING MAP: Now tracking ${paneViewTimes.size} panes:`, Array.from(paneViewTimes.keys()));
+              console.log(
+                `🔴 PANE EXIT: ${paneId} exited viewport at ${new Date(exitTime).toISOString()}`
+              );
+              console.log(
+                `⏱️  DURATION: ${duration}ms (${(duration / 1000).toFixed(1)}s)`
+              );
+              console.log(
+                `📊 TRACKING MAP: Now tracking ${paneViewTimes.size} panes:`,
+                Array.from(paneViewTimes.keys())
+              );
             }
 
             // Determine event type based on duration (same logic as V1)
@@ -170,7 +190,9 @@ function initPaneVisibilityTracking() {
 
             if (eventVerb) {
               if (VERBOSE) {
-                console.log(`✅ EVENT SEND: Sending ${eventVerb} event for pane ${paneId} (duration: ${duration}ms)`);
+                console.log(
+                  `✅ EVENT SEND: Sending ${eventVerb} event for pane ${paneId} (duration: ${duration}ms)`
+                );
               }
 
               sendAnalyticsEvent({
@@ -180,12 +202,16 @@ function initPaneVisibilityTracking() {
               });
             } else {
               if (VERBOSE) {
-                console.log(`❌ BELOW THRESHOLD: Pane ${paneId} viewed for ${duration}ms (below ${THRESHOLD_GLOSSED}ms threshold)`);
+                console.log(
+                  `❌ BELOW THRESHOLD: Pane ${paneId} viewed for ${duration}ms (below ${THRESHOLD_GLOSSED}ms threshold)`
+                );
               }
             }
           } else {
             if (VERBOSE) {
-              console.log(`⚠️  PANE EXIT ERROR: ${paneId} exited but was not being tracked`);
+              console.log(
+                `⚠️  PANE EXIT ERROR: ${paneId} exited but was not being tracked`
+              );
             }
           }
         }
@@ -216,13 +242,19 @@ function observeAllPanes() {
     if (paneId) {
       // Check if pane is already visible to prevent false entry events
       const rect = pane.getBoundingClientRect();
-      const isCurrentlyVisible = rect.top < window.innerHeight && rect.bottom > 0 && rect.left < window.innerWidth && rect.right > 0;
+      const isCurrentlyVisible =
+        rect.top < window.innerHeight &&
+        rect.bottom > 0 &&
+        rect.left < window.innerWidth &&
+        rect.right > 0;
 
       if (isCurrentlyVisible) {
         // Mark as already visible to skip initial intersection event
         (pane as HTMLElement).dataset.wasInitiallyVisible = 'true';
         if (VERBOSE) {
-          console.log(`👁️  ALREADY VISIBLE: Pane ${paneId} is already in viewport, will skip initial enter event`);
+          console.log(
+            `👁️  ALREADY VISIBLE: Pane ${paneId} is already in viewport, will skip initial enter event`
+          );
         }
       } else {
         // Remove the flag if it exists
@@ -236,7 +268,10 @@ function observeAllPanes() {
   });
 
   if (VERBOSE) {
-    console.log(`🔍 OBSERVE SETUP: Found and observing ${observedCount} panes:`, paneIds);
+    console.log(
+      `🔍 OBSERVE SETUP: Found and observing ${observedCount} panes:`,
+      paneIds
+    );
   }
 }
 
@@ -245,8 +280,13 @@ function setupNavigationIntegration() {
   // Before HTMX navigates away, flush pending events
   document.addEventListener('htmx:beforeSwap', () => {
     if (VERBOSE) {
-      console.log('🚀 HTMX BEFORE SWAP: Navigation starting, flushing pending events');
-      console.log(`📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`, Array.from(paneViewTimes.keys()));
+      console.log(
+        '🚀 HTMX BEFORE SWAP: Navigation starting, flushing pending events'
+      );
+      console.log(
+        `📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`,
+        Array.from(paneViewTimes.keys())
+      );
     }
     flushPendingPaneEvents();
   });
@@ -255,7 +295,9 @@ function setupNavigationIntegration() {
   document.addEventListener('htmx:afterSwap', () => {
     setTimeout(() => {
       if (VERBOSE) {
-        console.log('🔄 HTMX AFTER SWAP: Re-observing panes after content swap');
+        console.log(
+          '🔄 HTMX AFTER SWAP: Re-observing panes after content swap'
+        );
       }
       observeAllPanes();
     }, 100);
@@ -264,8 +306,13 @@ function setupNavigationIntegration() {
   // Handle Astro page transitions (these reload [...slug].astro completely)
   document.addEventListener('astro:before-preparation', () => {
     if (VERBOSE) {
-      console.log('🚀 ASTRO BEFORE PREP: Navigation starting, flushing pending events');
-      console.log(`📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`, Array.from(paneViewTimes.keys()));
+      console.log(
+        '🚀 ASTRO BEFORE PREP: Navigation starting, flushing pending events'
+      );
+      console.log(
+        `📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`,
+        Array.from(paneViewTimes.keys())
+      );
     }
     flushPendingPaneEvents();
   });
@@ -274,7 +321,9 @@ function setupNavigationIntegration() {
     // For Astro navigation, [...slug].astro will reload and call initAnalyticsTracking again
     // So we just need to clean up here
     if (VERBOSE) {
-      console.log('🔄 ASTRO AFTER SWAP: Cleaning up for new page initialization');
+      console.log(
+        '🔄 ASTRO AFTER SWAP: Cleaning up for new page initialization'
+      );
     }
     isInitialized = false; // Allow re-initialization for new page
   });
@@ -283,7 +332,10 @@ function setupNavigationIntegration() {
   window.addEventListener('beforeunload', () => {
     if (VERBOSE) {
       console.log('👋 PAGE UNLOAD: Flushing events before page unload');
-      console.log(`📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`, Array.from(paneViewTimes.keys()));
+      console.log(
+        `📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`,
+        Array.from(paneViewTimes.keys())
+      );
     }
     flushPendingPaneEvents();
   });
@@ -299,7 +351,9 @@ function flushPendingPaneEvents() {
   }
 
   if (VERBOSE) {
-    console.log(`💨 FLUSH START: Flushing ${paneViewTimes.size} pending pane events`);
+    console.log(
+      `💨 FLUSH START: Flushing ${paneViewTimes.size} pending pane events`
+    );
   }
 
   const flushTime = Date.now();
@@ -311,7 +365,9 @@ function flushPendingPaneEvents() {
     flushedCount++;
 
     if (VERBOSE) {
-      console.log(`💨 FLUSH PANE: ${paneId} - started at ${new Date(startTime).toISOString()}, duration: ${duration}ms (${(duration / 1000).toFixed(1)}s)`);
+      console.log(
+        `💨 FLUSH PANE: ${paneId} - started at ${new Date(startTime).toISOString()}, duration: ${duration}ms (${(duration / 1000).toFixed(1)}s)`
+      );
     }
 
     let eventVerb: string | null = null;
@@ -324,7 +380,9 @@ function flushPendingPaneEvents() {
     if (eventVerb) {
       sentEventCount++;
       if (VERBOSE) {
-        console.log(`✅ FLUSH EVENT: Sending ${eventVerb} event for pane ${paneId} (duration: ${duration}ms)`);
+        console.log(
+          `✅ FLUSH EVENT: Sending ${eventVerb} event for pane ${paneId} (duration: ${duration}ms)`
+        );
       }
 
       sendAnalyticsEvent({
@@ -334,7 +392,9 @@ function flushPendingPaneEvents() {
       });
     } else {
       if (VERBOSE) {
-        console.log(`❌ FLUSH SKIP: Pane ${paneId} below threshold (${duration}ms < ${THRESHOLD_GLOSSED}ms)`);
+        console.log(
+          `❌ FLUSH SKIP: Pane ${paneId} below threshold (${duration}ms < ${THRESHOLD_GLOSSED}ms)`
+        );
       }
     }
   });
@@ -342,8 +402,12 @@ function flushPendingPaneEvents() {
   paneViewTimes.clear();
 
   if (VERBOSE) {
-    console.log(`💨 FLUSH COMPLETE: Processed ${flushedCount} panes, sent ${sentEventCount} events`);
-    console.log(`📊 TRACKING MAP: Cleared - now tracking ${paneViewTimes.size} panes`);
+    console.log(
+      `💨 FLUSH COMPLETE: Processed ${flushedCount} panes, sent ${sentEventCount} events`
+    );
+    console.log(
+      `📊 TRACKING MAP: Cleared - now tracking ${paneViewTimes.size} panes`
+    );
   }
 }
 
@@ -388,7 +452,9 @@ async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
     }
 
     if (VERBOSE) {
-      console.log(`✅ API SUCCESS: Event sent successfully for ${event.contentType} ${event.contentId} → ${event.eventVerb}`);
+      console.log(
+        `✅ API SUCCESS: Event sent successfully for ${event.contentType} ${event.contentId} → ${event.eventVerb}`
+      );
     }
   } catch (error) {
     // Fail silently for analytics events - don't disrupt user experience
@@ -417,5 +483,7 @@ function getPaneIdFromElement(element: HTMLElement): string | null {
 (window as any).initAnalyticsTracking = initAnalyticsTracking;
 
 if (VERBOSE) {
-  console.log('📊 ANALYTICS: Analytics events module loaded with enhanced logging');
+  console.log(
+    '📊 ANALYTICS: Analytics events module loaded with enhanced logging'
+  );
 }

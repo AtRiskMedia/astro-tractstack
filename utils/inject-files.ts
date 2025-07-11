@@ -15,6 +15,10 @@ export async function injectTemplateFiles(
       dest: 'src/constants.ts',
     },
     {
+      src: resolve('templates/src/utils/backend.ts'),
+      dest: 'src/utils/backend.ts',
+    },
+    {
       src: resolve('templates/src/layouts/Layout.astro'),
       dest: 'src/layouts/Layout.astro',
     },
