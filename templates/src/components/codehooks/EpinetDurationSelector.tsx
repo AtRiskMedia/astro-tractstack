@@ -57,12 +57,32 @@ const EpinetDurationSelector = () => {
     }));
   }, []);
 
+  // MODIFIED: Enhanced sync from store
   useEffect(() => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      visitorType: $epinetCustomFilters.visitorType || 'all',
-      selectedUserId: $epinetCustomFilters.selectedUserId,
-    }));
+    if ($epinetCustomFilters.startTimeUTC && $epinetCustomFilters.endTimeUTC) {
+      const startUTC = new Date($epinetCustomFilters.startTimeUTC);
+      const endUTC = new Date($epinetCustomFilters.endTimeUTC);
+
+      // Update local dates and hours to match store
+      setStartDate(new Date(startUTC.getFullYear(), startUTC.getMonth(), startUTC.getDate()));
+      setEndDate(new Date(endUTC.getFullYear(), endUTC.getMonth(), endUTC.getDate()));
+
+      setLocalFilters(prev => ({
+        ...prev,
+        startHour: startUTC.getHours().toString().padStart(2, '0'),
+        endHour: endUTC.getHours().toString().padStart(2, '0'),
+        visitorType: $epinetCustomFilters.visitorType || 'all',
+        selectedUserId: $epinetCustomFilters.selectedUserId,
+      }));
+
+      setHasLocalChanges(false);
+    } else {
+      setLocalFilters((prev) => ({
+        ...prev,
+        visitorType: $epinetCustomFilters.visitorType || 'all',
+        selectedUserId: $epinetCustomFilters.selectedUserId,
+      }));
+    }
   }, [$epinetCustomFilters]);
 
   useEffect(() => {
@@ -121,9 +141,7 @@ const EpinetDurationSelector = () => {
     }
 
     const nowUTC = new Date();
-    const maxPastTime = new Date(
-      nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000
-    );
+    const maxPastTime = new Date(nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000);
 
     if (startUTCTime < maxPastTime) {
       setErrorMessage(
@@ -166,9 +184,7 @@ const EpinetDurationSelector = () => {
     );
 
     const nowUTC = new Date();
-    const maxPastTime = new Date(
-      nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000
-    );
+    const maxPastTime = new Date(nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000);
 
     if (newDate < maxPastTime) {
       setErrorMessage(
@@ -224,16 +240,15 @@ const EpinetDurationSelector = () => {
     const endLocal = new Date(endTimeUTC);
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    const formatTime = (date: Date) =>
-      date.toLocaleString(undefined, {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-        timeZone,
-      });
+    const formatTime = (date: Date) => date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone,
+    });
 
     return `${formatTime(startLocal)} to ${formatTime(endLocal)} (${timeZone})`;
   };
@@ -326,11 +341,7 @@ const EpinetDurationSelector = () => {
     let baseMessage: string;
     if (needsApply && startDate && endDate) {
       baseMessage = `${prefix} from ${formatDateHourDisplay(startDate, localFilters.startHour)} to ${formatDateHourDisplay(endDate, localFilters.endHour)}`;
-    } else if (
-      !needsApply &&
-      $epinetCustomFilters.startTimeUTC &&
-      $epinetCustomFilters.endTimeUTC
-    ) {
+    } else if (!needsApply && $epinetCustomFilters.startTimeUTC && $epinetCustomFilters.endTimeUTC) {
       baseMessage = `${prefix} ${formatCurrentUTCRange()}`;
     } else {
       baseMessage = `${prefix} from last 7 days`;
@@ -339,22 +350,20 @@ const EpinetDurationSelector = () => {
     const userInfo = needsApply
       ? localFilters.selectedUserId
         ? ` for individual user ${localFilters.selectedUserId}`
-        : ` for ${
-            localFilters.visitorType === 'all'
-              ? 'all visitors'
-              : localFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`
+        : ` for ${localFilters.visitorType === 'all'
+          ? 'all visitors'
+          : localFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`
       : $epinetCustomFilters.selectedUserId
         ? ` for individual user ${$epinetCustomFilters.selectedUserId}`
-        : ` for ${
-            $epinetCustomFilters.visitorType === 'all'
-              ? 'all visitors'
-              : $epinetCustomFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`;
+        : ` for ${$epinetCustomFilters.visitorType === 'all'
+          ? 'all visitors'
+          : $epinetCustomFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`;
 
     return baseMessage + userInfo;
   };
@@ -690,9 +699,8 @@ const EpinetDurationSelector = () => {
 
           {$epinetCustomFilters.enabled && (
             <div
-              className={`p-2 ${
-                hasLocalChanges ? `bg-cyan-50` : `font-bold`
-              } rounded-md text-sm text-cyan-800`}
+              className={`p-2 ${hasLocalChanges ? `bg-cyan-50` : `font-bold`
+                } rounded-md text-sm text-cyan-800`}
             >
               <p>{getFilterStatusMessage()}</p>
               {hasLocalChanges && (

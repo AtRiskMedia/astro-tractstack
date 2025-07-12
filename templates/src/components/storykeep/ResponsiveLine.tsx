@@ -26,6 +26,11 @@ interface DataProps {
   data: Series[];
 }
 
+interface RechartsDataPoint {
+  name: number;
+  [key: string]: number | undefined;
+}
+
 const MOBILE_BREAKPOINT = 768;
 
 const ResponsiveLine = ({ data }: DataProps) => {
@@ -41,91 +46,127 @@ const ResponsiveLine = ({ data }: DataProps) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calculate time context from epinetCustomFilters using UTC timestamps
+  // Calculate time context from epinetCustomFilters using actual data length
   const timeContext = useMemo(() => {
     const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
 
-    if (!startTimeUTC || !endTimeUTC) {
+    // Get actual number of data points
+    const dataLength = data?.[0]?.data?.length || 0;
+
+    if (!startTimeUTC || !endTimeUTC || dataLength === 0) {
       // Default fallback
       return {
-        totalHours: 168,
         xTickValues: [0, 1, 2, 3, 4, 5, 6, 7],
-        xAxisLegend: 'Days ago',
-        formatXAxisTick: (value: number) => `${value}d`,
+        xAxisLegend: 'Time ago',
+        formatXAxisTick: (value: number) => `${value}`,
       };
     }
 
     const startTime = new Date(startTimeUTC);
     const endTime = new Date(endTimeUTC);
-    const totalMs = endTime.getTime() - startTime.getTime();
+    const totalMs = Math.abs(endTime.getTime() - startTime.getTime());
     const totalHours = totalMs / (1000 * 60 * 60);
 
-    if (totalHours <= 2) {
-      // Very short range - show minutes
-      const totalMinutes = totalMs / (1000 * 60);
-      const minuteTicks = [];
-      const stepSize = Math.max(1, Math.floor(totalMinutes / 8));
-      for (let i = 0; i <= totalMinutes; i += stepSize) {
-        minuteTicks.push(i);
+    // For small datasets (≤8 bins), label each bin individually
+    // For larger datasets, generate max 8 evenly spaced tick positions
+    let tickPositions = [];
+
+    if (dataLength <= 8) {
+      // Label every data point for small datasets
+      tickPositions = Array.from({ length: dataLength }, (_, i) => i);
+    } else {
+      // Generate max 8 evenly spaced positions for larger datasets
+      const maxTicks = 8;
+      for (let i = 0; i < maxTicks; i++) {
+        const position = Math.floor((i * (dataLength - 1)) / (maxTicks - 1));
+        tickPositions.push(position);
       }
-      return {
-        totalHours,
-        xTickValues: minuteTicks,
-        xAxisLegend: 'Minutes ago',
-        formatXAxisTick: (value: number) =>
-          `${Math.round(totalMinutes - value)}m`,
+    }
+
+    if (totalHours <= 48) {
+      // Hours: Backend data is reverse chronological (newest first)
+      const formatTick = (value: number) => {
+        // Handle single data point edge case
+        if (dataLength <= 1) {
+          return '0h';
+        }
+        const hoursAgo = Math.round((value / (dataLength - 1)) * totalHours);
+        return `${hoursAgo}h`;
       };
-    } else if (totalHours <= 48) {
-      // Show as hours
-      const hourTicks = [];
-      const stepSize = Math.max(1, Math.floor(totalHours / 8));
-      for (let i = 0; i <= totalHours; i += stepSize) {
-        hourTicks.push(i);
-      }
+
+      // Remove duplicates
+      const uniqueLabels = new Set();
+      const uniqueTicks = tickPositions.filter((pos) => {
+        const label = formatTick(pos);
+        if (uniqueLabels.has(label)) return false;
+        uniqueLabels.add(label);
+        return true;
+      });
+
       return {
-        totalHours,
-        xTickValues: hourTicks,
+        xTickValues: uniqueTicks,
         xAxisLegend: 'Hours ago',
-        formatXAxisTick: (value: number) =>
-          `${Math.round(totalHours - value)}h`,
+        formatXAxisTick: formatTick,
       };
     } else if (totalHours <= 336) {
       // <= 14 days
-      // Show as days
+      // Days: Backend data is reverse chronological (newest first)
       const totalDays = totalHours / 24;
-      const dayTicks = [];
-      const stepSize = Math.max(1, Math.floor(totalDays / 7));
-      for (let i = 0; i <= totalDays; i += stepSize) {
-        dayTicks.push(i);
-      }
+      const formatTick = (value: number) => {
+        // Handle single data point edge case
+        if (dataLength <= 1) {
+          return '0d';
+        }
+        const daysAgo = Math.round((value / (dataLength - 1)) * totalDays);
+        return `${daysAgo}d`;
+      };
+
+      // Remove duplicates
+      const uniqueLabels = new Set();
+      const uniqueTicks = tickPositions.filter((pos) => {
+        const label = formatTick(pos);
+        if (uniqueLabels.has(label)) return false;
+        uniqueLabels.add(label);
+        return true;
+      });
+
       return {
-        totalHours,
-        xTickValues: dayTicks,
+        xTickValues: uniqueTicks,
         xAxisLegend: 'Days ago',
-        formatXAxisTick: (value: number) => `${Math.round(totalDays - value)}d`,
+        formatXAxisTick: formatTick,
       };
     } else {
-      // Show as weeks for longer ranges
+      // Weeks: Backend data is reverse chronological (newest first)
       const totalWeeks = totalHours / 168;
-      const weekTicks = [];
-      const stepSize = Math.max(1, Math.floor(totalWeeks / 6));
-      for (let i = 0; i <= totalWeeks; i += stepSize) {
-        weekTicks.push(i);
-      }
+      const formatTick = (value: number) => {
+        // Handle single data point edge case
+        if (dataLength <= 1) {
+          return '0w';
+        }
+        const weeksAgo = Math.round((value / (dataLength - 1)) * totalWeeks);
+        return `${weeksAgo}w`;
+      };
+
+      // Remove duplicates
+      const uniqueLabels = new Set();
+      const uniqueTicks = tickPositions.filter((pos) => {
+        const label = formatTick(pos);
+        if (uniqueLabels.has(label)) return false;
+        uniqueLabels.add(label);
+        return true;
+      });
+
       return {
-        totalHours,
-        xTickValues: weekTicks,
+        xTickValues: uniqueTicks,
         xAxisLegend: 'Weeks ago',
-        formatXAxisTick: (value: number) =>
-          `${Math.round(totalWeeks - value)}w`,
+        formatXAxisTick: formatTick,
       };
     }
-  }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
-
-  interface RechartsDataPoint {
-    name: number;
-    [key: string]: number | undefined;
-  }
+  }, [
+    $epinetCustomFilters.startTimeUTC,
+    $epinetCustomFilters.endTimeUTC,
+    data,
+  ]);
 
   const rechartsData: RechartsDataPoint[] = data
     .map((series) => {
