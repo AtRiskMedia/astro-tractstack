@@ -15,7 +15,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch {}
+  } catch { }
 
   return 'pnpm';
 }
@@ -32,8 +32,8 @@ async function main() {
 `)
   );
 
-  console.log(kleur.white().bold('  build dynamic websites with HTMX and Go'));
-  console.log(kleur.reset('  by At Risk Media\n'));
+  console.log(kleur.white().bold('  build your own adaptive website'));
+  console.log(kleur.reset('  made by At Risk Media\n'));
 
   // Check if we're in an Astro project
   if (!existsSync('./astro.config.mjs') && !existsSync('./astro.config.ts')) {
