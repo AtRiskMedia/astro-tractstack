@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import PageViewStats from '@/components/storykeep/PageViewStats';
 import { requireAdminOrEditor } from '@/utils/auth';
 
 // Check for privileged authentication - redirect if not authenticated
@@ -19,6 +20,9 @@ const title = 'Dashboard | StoryKeep';
     <div class="p-8">
       <h2 class="mb-4 text-xl font-semibold">Dashboard</h2>
       <p class="text-gray-600">Welcome to the StoryKeep backend dashboard.</p>
+
+      <!-- Analytics Dashboard -->
+      <PageViewStats client:only="react" />
     </div>
   </main>
 
@@ -26,3 +30,4 @@ const title = 'Dashboard | StoryKeep';
     <p class="text-sm text-gray-600">Footer placeholder</p>
   </div>
 </Layout>
+

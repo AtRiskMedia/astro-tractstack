@@ -49,7 +49,8 @@
     "kleur": "^4.1.5",
     "nanostores": "^1.0.1",
     "player.js": "^0.1.0",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "recharts": "^3.1.0"
   },
   "devDependencies": {
     "@astrojs/react": "^3.0.0",

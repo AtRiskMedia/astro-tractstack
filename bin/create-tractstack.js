@@ -15,7 +15,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch {}
+  } catch { }
 
   return 'pnpm';
 }
@@ -106,54 +106,53 @@ PUBLIC_TENANTID="${responses.tenantId}"
   try {
     // Install React and Node adapter
     execSync(
-      `${addCommand} react@18.3.1 react-dom@18.3.1 @types/react@18.3.11 @types/react-dom@18.3.1`,
+      `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.3.0 @astrojs/node@^9.0.0`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ React and Node adapter installed'));
 
-    // Install analytics state management
-    execSync(`${addCommand} @nanostores/react nanostores`, {
+    // Install core dependencies
+    execSync(`${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1`, {
       stdio: 'inherit',
     });
-    console.log(kleur.green('✅ Analytics state management installed'));
+    console.log(kleur.green('✅ State management installed'));
 
-    // Install hero icons
-    execSync(`${addCommand} @ark-ui/react @heroicons/react`, {
+    // Install UI components
+    execSync(`${addCommand} @ark-ui/react@^5.9.0 @heroicons/react@^2.2.0`, {
       stdio: 'inherit',
     });
     console.log(kleur.green('✅ UI components installed'));
 
-    // Install Visalizations dependencies
-    execSync(`${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 player.js@^0.1.0`, {
-      stdio: 'inherit',
-    });
-    execSync(`${addCommand} -D @types/d3@^7.4.3 @types/d3-sankey@^0.12.3`, {
-      stdio: 'inherit',
-    });
-    console.log(kleur.green('✅ Visalizations dependencies installed'));
+    // Install visualization dependencies
+    execSync(
+      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0`,
+      {
+        stdio: 'inherit',
+      }
+    );
+    console.log(kleur.green('✅ Visualization dependencies installed'));
 
     // Install additional dependencies
-    execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });
+    execSync(`${addCommand} path-to-regexp@^8.0.0`, { stdio: 'inherit' });
     console.log(kleur.green('✅ Additional dependencies installed'));
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript @types/react @types/react-dom`,
+      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
   } catch (error) {
     console.log(kleur.red('❌ Failed to install dependencies'));
+    console.log('Please run manually:');
     console.log(
-      'Please run manually:',
       kleur.cyan(
-        `${addCommand} react react-dom @astrojs/react@4.3.0 @astrojs/node @ark-ui/react @heroicons/react path-to-regexp`
+        `${addCommand} react react-dom @astrojs/react @astrojs/node @ark-ui/react @heroicons/react d3 d3-sankey recharts player.js path-to-regexp @nanostores/react nanostores`
       )
     );
     console.log(
-      'And:',
-      kolor.cyan(
-        `${addCommand} -D prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript @types/react @types/react-dom`
+      kleur.cyan(
+        `${addCommand} -D @types/react @types/react-dom @types/d3 @types/d3-sankey prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
       )
     );
     process.exit(1);
