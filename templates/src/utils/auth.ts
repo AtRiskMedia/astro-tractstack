@@ -1,8 +1,8 @@
-import type { APIContext } from 'astro';
+import type { AstroGlobal } from 'astro';
 
 /**
  * Admin/Editor Authentication Utilities
- * Uses JWT tokens in Authorization headers for secure admin authentication
+ * Uses role-specific cookies for secure admin authentication
  */
 
 export interface AdminAuthClaims {
@@ -16,143 +16,112 @@ export interface AdminAuthClaims {
 /**
  * Check if user is authenticated (either admin or editor)
  */
-export function isAuthenticated(context: APIContext): boolean {
-  const authHeader = context.request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+export function isAuthenticated(astro: AstroGlobal): boolean {
+  const adminCookie = astro.cookies.get('admin_auth');
+  const editorCookie = astro.cookies.get('editor_auth');
 
-  const token = authHeader.substring(7);
-  try {
-    const claims = validateAdminToken(token);
-    return claims !== null;
-  } catch {
-    return false;
+  if (adminCookie?.value) {
+    const claims = validateAdminToken(adminCookie.value);
+    if (claims && claims.role === 'admin') return true;
   }
+
+  if (editorCookie?.value) {
+    const claims = validateAdminToken(editorCookie.value);
+    if (claims && claims.role === 'editor') return true;
+  }
+
+  return false;
 }
 
 /**
  * Check if user has admin role
  */
-export function isAdmin(context: APIContext): boolean {
-  const authHeader = context.request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+export function isAdmin(astro: AstroGlobal): boolean {
+  const adminCookie = astro.cookies.get('admin_auth');
+  if (!adminCookie?.value) return false;
 
-  const token = authHeader.substring(7);
-  try {
-    const claims = validateAdminToken(token);
-    return claims?.role === 'admin';
-  } catch {
-    return false;
-  }
+  const claims = validateAdminToken(adminCookie.value);
+  return claims?.role === 'admin';
 }
 
 /**
  * Check if user has editor role
  */
-export function isEditor(context: APIContext): boolean {
-  const authHeader = context.request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+export function isEditor(astro: AstroGlobal): boolean {
+  const editorCookie = astro.cookies.get('editor_auth');
+  if (!editorCookie?.value) return false;
 
-  const token = authHeader.substring(7);
-  try {
-    const claims = validateAdminToken(token);
-    return claims?.role === 'editor';
-  } catch {
-    return false;
-  }
+  const claims = validateAdminToken(editorCookie.value);
+  return claims?.role === 'editor';
 }
 
 /**
  * Get user role (admin, editor, or null)
  */
-export function getUserRole(context: APIContext): 'admin' | 'editor' | null {
-  const authHeader = context.request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-
-  const token = authHeader.substring(7);
-  try {
-    const claims = validateAdminToken(token);
-    return claims?.role || null;
-  } catch {
-    return null;
+export function getUserRole(astro: AstroGlobal): 'admin' | 'editor' | null {
+  const adminCookie = astro.cookies.get('admin_auth');
+  if (adminCookie?.value) {
+    const claims = validateAdminToken(adminCookie.value);
+    if (claims?.role === 'admin') return 'admin';
   }
+
+  const editorCookie = astro.cookies.get('editor_auth');
+  if (editorCookie?.value) {
+    const claims = validateAdminToken(editorCookie.value);
+    if (claims?.role === 'editor') return 'editor';
+  }
+
+  return null;
 }
 
 /**
  * Page-level protection: Require admin role
- * Redirects to login if unauthorized
+ * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireAdmin(context: APIContext): void {
-  if (!isAdmin(context)) {
-    throw new Response(null, {
-      status: 302,
-      headers: { Location: '/storykeep/login' },
-    });
+export function requireAdmin(astro: AstroGlobal): Response | undefined {
+  if (!isAdmin(astro)) {
+    return astro.redirect('/storykeep/login');
   }
 }
 
 /**
  * Page-level protection: Require editor role
- * Redirects to login if unauthorized
+ * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireEditor(context: APIContext): void {
-  if (!isEditor(context)) {
-    throw new Response(null, {
-      status: 302,
-      headers: { Location: '/storykeep/login' },
-    });
+export function requireEditor(astro: AstroGlobal): Response | undefined {
+  if (!isEditor(astro)) {
+    return astro.redirect('/storykeep/login');
   }
 }
 
 /**
  * Page-level protection: Require admin OR editor role
- * Redirects to login if unauthorized
+ * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireAdminOrEditor(context: APIContext): void {
-  if (!isAuthenticated(context)) {
-    throw new Response(null, {
-      status: 302,
-      headers: { Location: '/storykeep/login' },
-    });
+export function requireAdminOrEditor(astro: AstroGlobal): Response | undefined {
+  if (!isAuthenticated(astro)) {
+    return astro.redirect('/storykeep/login');
   }
 }
 
 /**
- * API-level protection: Require admin role
- * Returns 401 JSON response if unauthorized
+ * Get admin token for API requests
+ * Returns the JWT token from the appropriate cookie
  */
-export function requireAdminAPI(context: APIContext): void {
-  if (!isAdmin(context)) {
-    throw new Response(JSON.stringify({ error: 'Admin access required' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+export function getAdminToken(astro: AstroGlobal): string | null {
+  const adminCookie = astro.cookies.get('admin_auth');
+  if (adminCookie?.value) {
+    const claims = validateAdminToken(adminCookie.value);
+    if (claims?.role === 'admin') return adminCookie.value;
   }
-}
 
-/**
- * API-level protection: Require editor role
- * Returns 401 JSON response if unauthorized
- */
-export function requireEditorAPI(context: APIContext): void {
-  if (!isEditor(context)) {
-    throw new Response(JSON.stringify({ error: 'Editor access required' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const editorCookie = astro.cookies.get('editor_auth');
+  if (editorCookie?.value) {
+    const claims = validateAdminToken(editorCookie.value);
+    if (claims?.role === 'editor') return editorCookie.value;
   }
-}
 
-/**
- * API-level protection: Require admin OR editor role
- * Returns 401 JSON response if unauthorized
- */
-export function requireAdminOrEditorAPI(context: APIContext): void {
-  if (!isAuthenticated(context)) {
-    throw new Response(JSON.stringify({ error: 'Authentication required' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  return null;
 }
 
 /**

@@ -32,6 +32,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/[...slug].astro',
     },
     {
+      src: resolve('templates/src/pages/storykeep.astro'),
+      dest: 'src/pages/storykeep.astro',
+    },
+    {
       src: resolve('templates/src/pages/maint.astro'),
       dest: 'src/pages/maint.astro',
     },
@@ -152,6 +156,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/pages/api/auth/login.ts'),
       dest: 'src/pages/api/auth/login.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/logout.ts'),
+      dest: 'src/pages/api/auth/logout.ts',
     },
     // Framework CodeHook components (always added)
     {

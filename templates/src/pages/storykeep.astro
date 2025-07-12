@@ -1,0 +1,28 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { requireAdminOrEditor } from '@/utils/auth';
+
+// Check for privileged authentication - redirect if not authenticated
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) return authCheck;
+
+const title = 'Dashboard | StoryKeep';
+---
+
+<Layout title={title} storykeep={true}>
+  <div class="border-b bg-gray-100 p-4">
+    <h1 class="text-2xl font-bold">StoryKeep Dashboard</h1>
+    <p class="text-sm text-gray-600">Backend management interface</p>
+  </div>
+
+  <main id="main-content" class="min-h-screen w-full">
+    <div class="p-8">
+      <h2 class="mb-4 text-xl font-semibold">Dashboard</h2>
+      <p class="text-gray-600">Welcome to the StoryKeep backend dashboard.</p>
+    </div>
+  </main>
+
+  <div class="border-t bg-gray-100 p-4">
+    <p class="text-sm text-gray-600">Footer placeholder</p>
+  </div>
+</Layout>

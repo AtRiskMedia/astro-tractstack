@@ -1,6 +1,6 @@
 ---
-// JWT-based logout - client-side token removal
-// No server-side state to clear since we use stateless JWT tokens
+// Cookie-based logout - server-side cookie removal
+// Clears HTTP-only admin/editor auth cookies
 ---
 
 <!doctype html>
@@ -35,17 +35,26 @@
     </div>
 
     <script>
-      // Clear all authentication data
-      function logout() {
+      // Clear authentication data
+      async function logout() {
         try {
-          // Clear admin/editor JWT tokens (if any)
-          // These would be stored by the login system
-          localStorage.removeItem('admin_token');
-          localStorage.removeItem('editor_token');
-          sessionStorage.removeItem('admin_token');
-          sessionStorage.removeItem('editor_token');
+          // Call server-side logout API to clear HTTP-only cookies
+          const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
-          // Clear all TractStack data
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('StoryKeep: Admin logout successful');
+          } else {
+            console.error('StoryKeep: Admin logout failed:', result.error);
+          }
+
+          // Also clear any remaining TractStack user profile data
           const tractStackKeys = [];
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -60,15 +69,15 @@
             window.tractStackSessionId = undefined;
           }
 
-          console.log('TractStack: Logout completed - all tokens cleared');
+          console.log('TractStack: Complete logout finished');
 
-          // Redirect to home page after clearing data
+          // Redirect to home page
           setTimeout(() => {
             window.location.href = '/';
           }, 1000);
         } catch (error) {
           console.error('Logout error:', error);
-          // Still redirect even if cleanup fails
+          // Still redirect even if logout API fails
           window.location.href = '/';
         }
       }
