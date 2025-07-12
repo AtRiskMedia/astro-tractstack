@@ -100,7 +100,6 @@ export default function PageViewStats() {
     | 'weekly'
     | 'monthly'
     | 'custom' => {
-
     const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
 
     if (startTimeUTC && endTimeUTC) {
@@ -121,8 +120,11 @@ export default function PageViewStats() {
   // UI helper functions to set standard ranges (UTC)
   const setStandardDuration = (newValue: 'daily' | 'weekly' | 'monthly') => {
     const nowUTC = new Date();
-    const hoursBack = newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
-    const startTimeUTC = new Date(nowUTC.getTime() - hoursBack * 60 * 60 * 1000);
+    const hoursBack =
+      newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
+    const startTimeUTC = new Date(
+      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+    );
 
     epinetCustomFilters.set({
       ...$epinetCustomFilters,
@@ -144,8 +146,20 @@ export default function PageViewStats() {
       const url = new URL(`${goBackend}/api/v1/analytics/all`);
 
       if (startTimeUTC && endTimeUTC) {
-        url.searchParams.append('startTime', startTimeUTC);
-        url.searchParams.append('endTime', endTimeUTC);
+        // Convert UTC timestamps to hours-back integers (what backend expects)
+        const now = new Date();
+        const startTime = new Date(startTimeUTC);
+        const endTime = new Date(endTimeUTC);
+
+        const startHour = Math.ceil(
+          (now.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+        );
+        const endHour = Math.floor(
+          (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
+        );
+
+        url.searchParams.append('startHour', startHour.toString());
+        url.searchParams.append('endHour', endHour.toString());
       }
 
       if (visitorType) url.searchParams.append('visitorType', visitorType);
@@ -401,8 +415,8 @@ export default function PageViewStats() {
 
           {/* Dashboard Activity Chart */}
           {analytics.dashboard &&
-            analytics.dashboard.line &&
-            analytics.dashboard.line.length > 0 ? (
+          analytics.dashboard.line &&
+          analytics.dashboard.line.length > 0 ? (
             <DashboardActivity data={analytics.dashboard.line} />
           ) : (
             <div className="mb-6 flex h-64 w-full items-center justify-center rounded-lg bg-gray-100">
@@ -437,7 +451,7 @@ export default function PageViewStats() {
             analytics.epinet.nodes &&
             analytics.epinet.links ? (
             analytics.epinet.nodes.length > 0 &&
-              analytics.epinet.links.length > 0 ? (
+            analytics.epinet.links.length > 0 ? (
               <ErrorBoundary
                 fallback={
                   <div className="rounded-lg bg-red-50 p-4 text-red-800">

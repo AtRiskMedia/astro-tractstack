@@ -72,7 +72,8 @@ const ResponsiveLine = ({ data }: DataProps) => {
         totalHours,
         xTickValues: minuteTicks,
         xAxisLegend: 'Minutes ago',
-        formatXAxisTick: (value: number) => `${Math.round(totalMinutes - value)}m`,
+        formatXAxisTick: (value: number) =>
+          `${Math.round(totalMinutes - value)}m`,
       };
     } else if (totalHours <= 48) {
       // Show as hours
@@ -85,9 +86,11 @@ const ResponsiveLine = ({ data }: DataProps) => {
         totalHours,
         xTickValues: hourTicks,
         xAxisLegend: 'Hours ago',
-        formatXAxisTick: (value: number) => `${Math.round(totalHours - value)}h`,
+        formatXAxisTick: (value: number) =>
+          `${Math.round(totalHours - value)}h`,
       };
-    } else if (totalHours <= 336) { // <= 14 days
+    } else if (totalHours <= 336) {
+      // <= 14 days
       // Show as days
       const totalDays = totalHours / 24;
       const dayTicks = [];
@@ -113,7 +116,8 @@ const ResponsiveLine = ({ data }: DataProps) => {
         totalHours,
         xTickValues: weekTicks,
         xAxisLegend: 'Weeks ago',
-        formatXAxisTick: (value: number) => `${Math.round(totalWeeks - value)}w`,
+        formatXAxisTick: (value: number) =>
+          `${Math.round(totalWeeks - value)}w`,
       };
     }
   }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
@@ -193,11 +197,11 @@ const ResponsiveLine = ({ data }: DataProps) => {
             label={
               !isMobile
                 ? {
-                  value: timeContext.xAxisLegend,
-                  position: 'bottom',
-                  offset: 20,
-                  style: { fill: '#ABB2BF' },
-                }
+                    value: timeContext.xAxisLegend,
+                    position: 'bottom',
+                    offset: 20,
+                    style: { fill: '#ABB2BF' },
+                  }
                 : undefined
             }
             padding={{ left: 10, right: 10 }}
@@ -210,13 +214,13 @@ const ResponsiveLine = ({ data }: DataProps) => {
             label={
               !isMobile
                 ? {
-                  value: 'Events',
-                  angle: -90,
-                  position: 'insideLeft',
-                  offset: 10,
-                  dy: 10,
-                  style: { fill: '#ABB2BF' },
-                }
+                    value: 'Events',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 10,
+                    dy: 10,
+                    style: { fill: '#ABB2BF' },
+                  }
                 : undefined
             }
             padding={{ top: 10, bottom: 10 }}

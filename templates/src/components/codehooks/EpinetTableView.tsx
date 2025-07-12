@@ -114,8 +114,12 @@ const EpinetTableView = ({
       const [year, month, day, hour] = hourKey.split('-').map(Number);
 
       // Create exact UTC hour boundaries
-      const startTimeUTC = new Date(Date.UTC(year, month - 1, day, hour, 0, 0, 0));
-      const endTimeUTC = new Date(Date.UTC(year, month - 1, day, hour, 59, 59, 999));
+      const startTimeUTC = new Date(
+        Date.UTC(year, month - 1, day, hour, 0, 0, 0)
+      );
+      const endTimeUTC = new Date(
+        Date.UTC(year, month - 1, day, hour, 59, 59, 999)
+      );
 
       epinetCustomFilters.set({
         ...$epinetCustomFilters,
@@ -196,7 +200,8 @@ const EpinetTableView = ({
     const activityByLocalHour: Record<number, ProcessedHourData> = {};
 
     Object.entries(hourlyActivity).forEach(([hourKey, contentItems]) => {
-      const { localDay, localHour, localHourDisplay } = getLocalDisplayTime(hourKey);
+      const { localDay, localHour, localHourDisplay } =
+        getLocalDisplayTime(hourKey);
       if (localDay === currentDay) {
         let hourlyTotal = 0;
         const hourlyUniqueVisitors = new Set<string>();
@@ -439,7 +444,10 @@ const EpinetTableView = ({
                       {item.hourDisplay}
                     </span>
                     <span className="text-xs text-gray-600">
-                      {item.hourlyTotal} event{item.hourlyTotal !== 1 ? 's' : ''} / {item.hourlyVisitors} visitor{item.hourlyVisitors !== 1 ? 's' : ''}
+                      {item.hourlyTotal} event
+                      {item.hourlyTotal !== 1 ? 's' : ''} /{' '}
+                      {item.hourlyVisitors} visitor
+                      {item.hourlyVisitors !== 1 ? 's' : ''}
                     </span>
                     <div className="relative h-2 w-full max-w-48 rounded bg-gray-200">
                       <div
