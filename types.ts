@@ -8,6 +8,9 @@ export interface TractStackConfig {
 
   /** Development configuration */
   dev?: DevConfig;
+
+  /** Include CodeHook examples and Collections route */
+  includeExamples?: boolean;
 }
 
 export interface ThemeConfig {

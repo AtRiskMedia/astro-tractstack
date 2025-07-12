@@ -69,6 +69,13 @@ async function main() {
       initial: 'default',
       validate: (value) => value.length > 0 || 'Tenant ID is required',
     },
+    {
+      type: 'confirm',
+      name: 'includeExamples',
+      message:
+        'Include CodeHook examples? (custom components, collections route)',
+      initial: true,
+    },
   ]);
 
   if (!responses.goBackend || !responses.tenantId) {
@@ -113,6 +120,15 @@ PUBLIC_TENANTID="${responses.tenantId}"
       stdio: 'inherit',
     });
     console.log(kleur.green('✅ UI components installed'));
+
+    // Install Visalizations dependencies
+    execSync(`${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 player.js@^0.1.0`, {
+      stdio: 'inherit',
+    });
+    execSync(`${addCommand} -D @types/d3@^7.4.3 @types/d3-sankey@^0.12.3`, {
+      stdio: 'inherit',
+    });
+    console.log(kleur.green('✅ Visalizations dependencies installed'));
 
     // Install additional dependencies
     execSync(`${addCommand} path-to-regexp`, { stdio: 'inherit' });

@@ -1,0 +1,39 @@
+---
+// V2 Custom Routes - With Examples
+// Full Collections implementation included
+
+import Collections from './pages/Collections.astro';
+
+export interface Props {
+  route: string;
+  slug: string;
+  resources: any[];
+  variation?: string;
+}
+
+const { route, slug, resources } = Astro.props;
+
+export const routes = {
+  collections: true,
+};
+
+// V2: Resources are already filtered by backend, no client-side extraction needed
+const payload = resources;
+---
+
+{
+  route === 'collections' ? (
+    <Collections route={route} slug={slug} resources={payload} />
+  ) : (
+    <div class="rounded-lg bg-gray-50 p-8 text-center">
+      <p class="text-gray-600">Custom route "{route}" not found</p>
+      <p class="mt-2 text-sm text-gray-500">Available routes: collections</p>
+      <div class="mt-4 rounded border bg-white p-4 text-left text-xs">
+        <p class="mb-2 font-semibold">Route Data:</p>
+        <p>Route: {route}</p>
+        <p>Slug: {slug}</p>
+        <p>Resources: {resources.length} items</p>
+      </div>
+    </div>
+  )
+}

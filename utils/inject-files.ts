@@ -5,7 +5,8 @@ import type { AstroIntegrationLogger } from 'astro';
 
 export async function injectTemplateFiles(
   resolve: (...paths: string[]) => string,
-  logger: AstroIntegrationLogger
+  logger: AstroIntegrationLogger,
+  config?: any
 ): Promise<void> {
   logger.info('TractStack: injectTemplateFiles called');
 
@@ -120,17 +121,14 @@ export async function injectTemplateFiles(
       src: resolve('templates/tailwind.config.cjs'),
       dest: 'tailwind.config.cjs',
     },
-    // Existing auth utility (keeping the path that's already used)
     {
       src: resolve('templates/src/utils/auth.ts'),
       dest: 'src/utils/auth.ts',
     },
-    // NEW: Enhanced auth utilities
     {
       src: resolve('templates/src/utils/core/auth.ts'),
       dest: 'src/utils/core/auth.ts',
     },
-    // NEW: Brand assets
     {
       src: resolve('templates/brand/logo.svg'),
       dest: 'public/brand/logo.svg',
@@ -139,7 +137,6 @@ export async function injectTemplateFiles(
       src: resolve('templates/brand/wordmark.svg'),
       dest: 'public/brand/wordmark.svg',
     },
-    // NEW: Admin auth pages
     {
       src: resolve('templates/src/pages/storykeep/login.astro'),
       dest: 'src/pages/storykeep/login.astro',
@@ -152,6 +149,74 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/pages/api/auth/login.ts'),
       dest: 'src/pages/api/auth/login.ts',
     },
+    // Framework CodeHook components (always added)
+    {
+      src: resolve('templates/src/components/codehooks/EpinetWrapper.tsx'),
+      dest: 'src/components/codehooks/EpinetWrapper.tsx',
+    },
+    {
+      src: resolve('templates/src/components/codehooks/SankeyDiagram.tsx'),
+      dest: 'src/components/codehooks/SankeyDiagram.tsx',
+    },
+    {
+      src: resolve('templates/src/components/codehooks/FeaturedContent.astro'),
+      dest: 'src/components/codehooks/FeaturedContent.astro',
+    },
+    {
+      src: resolve('templates/src/components/codehooks/ListContent.astro'),
+      dest: 'src/components/codehooks/ListContent.astro',
+    },
+    {
+      src: resolve(
+        'templates/src/components/codehooks/BunnyVideoWrapper.astro'
+      ),
+      dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
+    },
+    {
+      src: resolve('templates/src/components/widgets/BunnyVideo.astro'),
+      dest: 'src/components/widgets/BunnyVideo.astro',
+    },
+    // Custom components (conditional)
+    {
+      src: resolve(
+        config?.includeExamples
+          ? 'templates/custom/with-examples/CodeHook.astro'
+          : 'templates/custom/minimal/CodeHook.astro'
+      ),
+      dest: 'src/custom/CodeHook.astro',
+      protected: true,
+    },
+    {
+      src: resolve(
+        config?.includeExamples
+          ? 'templates/custom/with-examples/CustomRoutes.astro'
+          : 'templates/custom/minimal/CustomRoutes.astro'
+      ),
+      dest: 'src/custom/CustomRoutes.astro',
+      protected: true,
+    },
+    // Example components (only with examples)
+    ...(config?.includeExamples
+      ? [
+          {
+            src: resolve('templates/custom/with-examples/CustomHero.astro'),
+            dest: 'src/custom/CustomHero.astro',
+            protected: true,
+          },
+          {
+            src: resolve(
+              'templates/custom/with-examples/pages/Collections.astro'
+            ),
+            dest: 'src/custom/pages/Collections.astro',
+            protected: true,
+          },
+          {
+            src: resolve('templates/src/pages/collections/[param1].astro'),
+            dest: 'src/pages/collections/[param1].astro',
+            protected: true,
+          },
+        ]
+      : []),
   ];
 
   for (const file of templateFiles) {
@@ -162,9 +227,12 @@ export async function injectTemplateFiles(
       }
 
       const shouldOverwrite =
-        file.dest === 'tailwind.config.cjs' ||
-        file.dest.startsWith('src/') ||
-        file.dest === '.gitignore';
+        !file.protected &&
+        (file.dest === 'tailwind.config.cjs' ||
+          file.dest.startsWith('src/components/codehooks/') ||
+          file.dest.startsWith('src/components/widgets/') ||
+          file.dest.startsWith('src/') ||
+          file.dest === '.gitignore');
 
       if (!existsSync(file.dest) || shouldOverwrite) {
         if (existsSync(file.src)) {
@@ -175,6 +243,8 @@ export async function injectTemplateFiles(
           writeFileSync(file.dest, placeholder);
           logger.info(`Created placeholder ${file.dest}`);
         }
+      } else if (file.protected) {
+        logger.info(`Protected: ${file.dest} (won't overwrite)`);
       } else {
         logger.info(`Skipped existing ${file.dest}`);
       }

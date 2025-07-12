@@ -1,0 +1,556 @@
+---
+export interface Props {
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+  contentMap: any[];
+  hotContent?: Array<{ id: string; total_events: number; type?: string }>;
+}
+
+const { options, contentMap, hotContent = [] } = Astro.props;
+
+let parsedOptions;
+try {
+  parsedOptions = JSON.parse(options?.params?.options || '{}');
+} catch (e) {
+  console.error('Invalid options', e);
+  parsedOptions = {
+    defaultMode: 'recent',
+    topics: '',
+    excludedIds: '',
+    pageSize: 10,
+  };
+}
+
+const hasHotContent = hotContent && hotContent.length > 0;
+const defaultMode = !hasHotContent
+  ? 'recent'
+  : parsedOptions.defaultMode || 'recent';
+const excludedIdsArray = parsedOptions.excludedIds
+  ? parsedOptions.excludedIds.split(',')
+  : [];
+const topicsArray = parsedOptions.topics ? parsedOptions.topics.split(',') : [];
+const pageSize = parseInt(parsedOptions.pageSize || '10');
+
+let filteredStories: any[] = [];
+
+const validPages = contentMap.filter(
+  (item): boolean =>
+    item.type === 'StoryFragment' &&
+    typeof item.description === 'string' &&
+    typeof item.thumbSrc === 'string' &&
+    typeof item.thumbSrcSet === 'string' &&
+    typeof item.changed === 'string' &&
+    !excludedIdsArray.includes(item.id)
+);
+
+if (topicsArray.length > 0) {
+  filteredStories = validPages.filter(
+    (item) =>
+      item.topics &&
+      item.topics.some((topic: string) => topicsArray.includes(topic))
+  );
+} else {
+  filteredStories = validPages;
+}
+
+const viewsMap = new Map();
+if (hasHotContent) {
+  hotContent.forEach((item) => {
+    viewsMap.set(item.id, item.total_events);
+  });
+}
+
+const sortedByRecent = [...filteredStories].sort((a, b) => {
+  const dateA = a.changed ? new Date(a.changed).getTime() : 0;
+  const dateB = b.changed ? new Date(b.changed).getTime() : 0;
+  return dateB - dateA;
+});
+
+const sortedByPopular = hasHotContent
+  ? [...filteredStories].sort((a, b) => {
+      const aViews = viewsMap.get(a.id) || 0;
+      const bViews = viewsMap.get(b.id) || 0;
+
+      if (bViews === aViews) {
+        const dateA = a.changed ? new Date(a.changed).getTime() : 0;
+        const dateB = b.changed ? new Date(b.changed).getTime() : 0;
+        return dateB - dateA;
+      }
+
+      return bViews - aViews;
+    })
+  : sortedByRecent;
+
+let displayStories =
+  defaultMode === 'recent' ? sortedByRecent : sortedByPopular;
+
+const initialStories = displayStories.slice(0, pageSize);
+
+function formatDate(dateString: string | null): string {
+  if (!dateString) return 'Unknown';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
+
+const totalPages = Math.ceil(displayStories.length / pageSize);
+---
+
+<div class="mx-auto max-w-7xl p-4 py-12">
+  {
+    hasHotContent && (
+      <div class="mb-4 flex justify-center">
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+          <button
+            id="recent-toggle"
+            class={`px-4 py-2 text-sm font-bold ${defaultMode === 'recent' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'} rounded-l-md border border-cyan-600 transition-colors`}
+          >
+            Newest
+          </button>
+          <button
+            id="popular-toggle"
+            class={`px-4 py-2 text-sm font-bold ${defaultMode === 'popular' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'} rounded-r-md border border-cyan-600 transition-colors`}
+          >
+            Most Active
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    filteredStories.length === 0 && (
+      <div class="rounded-lg bg-gray-50 px-4 py-12 text-center">
+        <p class="text-lg italic text-cyan-600">No stories available.</p>
+      </div>
+    )
+  }
+
+  <div id="mobile-content" class="block space-y-6 p-4 md:hidden">
+    {
+      initialStories.map((story) => (
+        <a href={`/${story.slug}`} class="group block">
+          <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
+            {story.thumbSrc && (
+              <img
+                src={story.thumbSrc}
+                alt={story.title}
+                style="width: 100px; height: auto;"
+                class="rounded-md"
+              />
+            )}
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                {story.title}
+              </h3>
+              {story.description && (
+                <p class="line-clamp-2 text-sm text-gray-800">
+                  {story.description}
+                </p>
+              )}
+              {story.topics && story.topics.length > 0 && (
+                <div class="mt-1 flex flex-wrap gap-1">
+                  {story.topics.slice(0, 3).map((topic: string) => (
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p class="mt-1 text-xs text-gray-600">
+                {story.changed && formatDate(story.changed)}
+              </p>
+            </div>
+          </div>
+        </a>
+      ))
+    }
+  </div>
+
+  <div id="desktop-content" class="hidden p-4 md:flex md:space-x-6">
+    <div class="space-y-6 md:w-1/2">
+      {
+        initialStories
+          .slice(0, Math.ceil(initialStories.length / 2))
+          .map((story) => (
+            <a href={`/${story.slug}`} class="group block">
+              <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
+                {story.thumbSrc && (
+                  <img
+                    src={story.thumbSrc}
+                    alt={story.title}
+                    style="width: 100px; height: auto;"
+                    class="rounded-md"
+                  />
+                )}
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                    {story.title}
+                  </h3>
+                  {story.description && (
+                    <p class="line-clamp-2 text-sm text-gray-800">
+                      {story.description}
+                    </p>
+                  )}
+                  {story.topics && story.topics.length > 0 && (
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      {story.topics.slice(0, 3).map((topic: string) => (
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p class="mt-1 text-xs text-gray-600">
+                    {story.changed && formatDate(story.changed)}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))
+      }
+    </div>
+
+    <div class="space-y-6 md:w-1/2">
+      {
+        initialStories
+          .slice(Math.ceil(initialStories.length / 2))
+          .map((story) => (
+            <a href={`/${story.slug}`} class="group block">
+              <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
+                {story.thumbSrc && (
+                  <img
+                    src={story.thumbSrc}
+                    alt={story.title}
+                    style="width: 100px; height: auto;"
+                    class="rounded-md"
+                  />
+                )}
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                    {story.title}
+                  </h3>
+                  {story.description && (
+                    <p class="line-clamp-2 text-sm text-gray-800">
+                      {story.description}
+                    </p>
+                  )}
+                  {story.topics && story.topics.length > 0 && (
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      {story.topics.slice(0, 3).map((topic: string) => (
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p class="mt-1 text-xs text-gray-600">
+                    {story.changed && formatDate(story.changed)}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))
+      }
+    </div>
+  </div>
+
+  {
+    filteredStories.length > pageSize && (
+      <div class="mt-8 flex items-center justify-center">
+        <div id="page-info" class="mr-4 text-sm text-gray-700">
+          Page <span id="current-page-num">1</span> of{' '}
+          <span id="total-pages-num">{totalPages}</span>
+        </div>
+        <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+          <button
+            id="prev-page"
+            class="rounded-l-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled
+            aria-label="Previous page"
+          >
+            Previous
+          </button>
+          <button
+            id="next-page"
+            class="rounded-r-md border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Next page"
+            disabled={totalPages <= 1}
+          >
+            Next
+          </button>
+        </nav>
+      </div>
+    )
+  }
+</div>
+
+<script
+  is:inline
+  define:vars={{
+    sortedByRecent,
+    sortedByPopular,
+    pageSize,
+    defaultMode,
+    hasHotContent,
+    totalPages,
+  }}
+>
+  let currentMode = defaultMode;
+  let currentPage = 1;
+  let currentData = currentMode === 'recent' ? sortedByRecent : sortedByPopular;
+
+  function formatDate(dateString) {
+    if (!dateString) return 'Unknown';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!hasHotContent) return;
+
+    const recentToggle = document.getElementById('recent-toggle');
+    const popularToggle = document.getElementById('popular-toggle');
+
+    if (currentMode === 'recent' && recentToggle && popularToggle) {
+      recentToggle.classList.add('bg-cyan-600', 'text-white');
+      recentToggle.classList.remove(
+        'bg-white',
+        'text-gray-800',
+        'hover:bg-gray-100'
+      );
+      popularToggle.classList.remove('bg-cyan-600', 'text-white');
+      popularToggle.classList.add(
+        'bg-white',
+        'text-gray-800',
+        'hover:bg-gray-100'
+      );
+    } else if (currentMode === 'popular' && recentToggle && popularToggle) {
+      popularToggle.classList.add('bg-cyan-600', 'text-white');
+      popularToggle.classList.remove(
+        'bg-white',
+        'text-gray-800',
+        'hover:bg-gray-100'
+      );
+      recentToggle.classList.remove('bg-cyan-600', 'text-white');
+      recentToggle.classList.add(
+        'bg-white',
+        'text-gray-800',
+        'hover:bg-gray-100'
+      );
+    }
+
+    updatePageInfo();
+  });
+
+  const getTotalPages = () => Math.ceil(currentData.length / pageSize);
+
+  function updatePageInfo() {
+    const currentPageNum = document.getElementById('current-page-num');
+    const totalPagesNum = document.getElementById('total-pages-num');
+
+    if (currentPageNum) {
+      currentPageNum.textContent = currentPage.toString();
+    }
+
+    if (totalPagesNum) {
+      totalPagesNum.textContent = getTotalPages().toString();
+    }
+  }
+
+  const recentToggle = document.getElementById('recent-toggle');
+  const popularToggle = document.getElementById('popular-toggle');
+  const prevPageBtn = document.getElementById('prev-page');
+  const nextPageBtn = document.getElementById('next-page');
+  const mobileContainer = document.getElementById('mobile-content');
+  const desktopContainer = document.getElementById('desktop-content');
+
+  function createStoryItem(story) {
+    const topicsHtml =
+      story.topics && story.topics.length > 0
+        ? `<div class="mt-1 flex flex-wrap gap-1">
+          ${story.topics
+            .slice(0, 3)
+            .map(
+              (topic) =>
+                `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
+              ${topic}
+            </span>`
+            )
+            .join('')}
+        </div>`
+        : '';
+
+    const metaInfo = `
+      <p class="text-gray-600 text-xs mt-1">
+        ${story.changed ? formatDate(story.changed) : 'Unknown date'}
+      </p>
+    `;
+
+    return `
+      <a href="/${story.slug}" class="block group">
+        <div class="flex items-start space-x-4 group-hover:bg-slate-200/20 p-2 rounded-md">
+          ${
+            story.thumbSrc
+              ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width:100px;height:auto;" class="rounded-md">`
+              : ''
+          }
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-black group-hover:text-gray-900 transition-colors">${story.title}</h3>
+            ${story.description ? `<p class="text-gray-800 text-sm line-clamp-2">${story.description}</p>` : ''}
+            ${topicsHtml}
+            ${metaInfo}
+          </div>
+        </div>
+      </a>
+    `;
+  }
+
+  function updateDisplayedContent() {
+    currentData = currentMode === 'recent' ? sortedByRecent : sortedByPopular;
+
+    const totalPages = getTotalPages();
+    if (currentPage > totalPages && totalPages > 0) {
+      currentPage = 1;
+    }
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = Math.min(startIdx + pageSize, currentData.length);
+    const currentPageData = currentData.slice(startIdx, endIdx);
+
+    if (mobileContainer) {
+      mobileContainer.innerHTML = '';
+      if (currentPageData.length === 0) {
+        mobileContainer.innerHTML = `
+          <div class="p-8 text-center">
+            <p class="text-lg text-cyan-600 italic">No stories available matching your criteria.</p>
+          </div>
+        `;
+      } else {
+        currentPageData.forEach((story) => {
+          mobileContainer.innerHTML += createStoryItem(story);
+        });
+      }
+    }
+
+    if (desktopContainer) {
+      const midpoint = Math.ceil(currentPageData.length / 2);
+      const leftColumnData = currentPageData.slice(0, midpoint);
+      const rightColumnData = currentPageData.slice(midpoint);
+
+      if (currentPageData.length === 0) {
+        desktopContainer.innerHTML = `
+          <div class="w-full p-8 text-center">
+            <p class="text-lg text-cyan-600 italic">No stories available matching your criteria.</p>
+          </div>
+        `;
+      } else {
+        desktopContainer.innerHTML = `
+          <div class="md:w-1/2 space-y-6">
+            ${leftColumnData.map((story) => createStoryItem(story)).join('')}
+          </div>
+          <div class="md:w-1/2 space-y-6">
+            ${rightColumnData.map((story) => createStoryItem(story)).join('')}
+          </div>
+        `;
+      }
+    }
+
+    if (prevPageBtn) {
+      prevPageBtn.disabled = currentPage <= 1;
+    }
+
+    if (nextPageBtn) {
+      nextPageBtn.disabled = currentPage >= totalPages;
+    }
+
+    updatePageInfo();
+  }
+
+  if (hasHotContent && recentToggle) {
+    recentToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentMode !== 'recent') {
+        currentMode = 'recent';
+        currentPage = 1;
+        updateDisplayedContent();
+
+        recentToggle.classList.add('bg-cyan-600', 'text-white');
+        recentToggle.classList.remove(
+          'bg-white',
+          'text-gray-800',
+          'hover:bg-gray-100'
+        );
+
+        if (popularToggle) {
+          popularToggle.classList.remove('bg-cyan-600', 'text-white');
+          popularToggle.classList.add(
+            'bg-white',
+            'text-gray-800',
+            'hover:bg-gray-100'
+          );
+        }
+      }
+    });
+  }
+
+  if (hasHotContent && popularToggle) {
+    popularToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentMode !== 'popular') {
+        currentMode = 'popular';
+        currentPage = 1;
+        updateDisplayedContent();
+
+        popularToggle.classList.add('bg-cyan-600', 'text-white');
+        popularToggle.classList.remove(
+          'bg-white',
+          'text-gray-800',
+          'hover:bg-gray-100'
+        );
+
+        if (recentToggle) {
+          recentToggle.classList.remove('bg-cyan-600', 'text-white');
+          recentToggle.classList.add(
+            'bg-white',
+            'text-gray-800',
+            'hover:bg-gray-100'
+          );
+        }
+      }
+    });
+  }
+
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentPage > 1) {
+        currentPage--;
+        updateDisplayedContent();
+      }
+    });
+  }
+
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const totalPages = getTotalPages();
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateDisplayedContent();
+      }
+    });
+  }
+
+  updateDisplayedContent();
+</script>

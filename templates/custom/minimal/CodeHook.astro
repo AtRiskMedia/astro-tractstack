@@ -1,0 +1,64 @@
+---
+// V2 CodeHook Dispatcher - Minimal Version
+// Framework components are always available, custom components are commented for guidance
+
+import FeaturedContent from '@/components/codehooks/FeaturedContent.astro';
+import ListContent from '@/components/codehooks/ListContent.astro';
+import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
+import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
+// import CustomHero from './CustomHero.astro';  // Uncomment to add custom components
+
+export interface Props {
+  target: string;
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+}
+
+const { target, options } = Astro.props;
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const contentMap = await fetch(`${goBackend}/api/v1/content/full-map`).then(
+  (r) => r.json()
+);
+const dashboardData = await fetch(
+  `${goBackend}/api/v1/analytics/dashboard?duration=weekly`
+).then((r) => r.json());
+const hotContent = dashboardData?.hot_content || [];
+
+export const components = {
+  'featured-content': true,
+  'list-content': true,
+  'bunny-video': true,
+  epinet: true,
+  // "custom-hero": true,  // Uncomment when you create CustomHero.astro
+};
+---
+
+{
+  target === 'list-content' ? (
+    <ListContent
+      options={options}
+      contentMap={contentMap}
+      hotContent={hotContent}
+    />
+  ) : target === 'featured-content' ? (
+    <FeaturedContent options={options} contentMap={contentMap} />
+  ) : target === 'bunny-video' ? (
+    <BunnyVideoWrapper options={options} />
+  ) : target === 'epinet' ? (
+    <EpinetWrapper fullContentMap={contentMap} client:only="react" /> /* 
+  : target === "custom-hero" ? (
+    <CustomHero />
+  ) */
+  ) : (
+    <div class="rounded-lg bg-gray-50 p-8 text-center">
+      <p class="text-gray-600">CodeHook target "{target}" not found</p>
+      <p class="mt-2 text-sm text-gray-500">
+        Available: list-content, featured-content, bunny-video, epinet
+      </p>
+    </div>
+  )
+}

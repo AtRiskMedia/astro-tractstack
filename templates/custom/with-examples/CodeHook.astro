@@ -1,0 +1,64 @@
+---
+// V2 CodeHook Dispatcher - With Examples
+// Framework components and custom examples are available
+
+import CustomHero from './CustomHero.astro';
+import FeaturedContent from '@/components/codehooks/FeaturedContent.astro';
+import ListContent from '@/components/codehooks/ListContent.astro';
+import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
+import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
+
+export interface Props {
+  target: string;
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+}
+
+const { target, options } = Astro.props;
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const contentMap = await fetch(`${goBackend}/api/v1/content/full-map`).then(
+  (r) => r.json()
+);
+const dashboardData = await fetch(
+  `${goBackend}/api/v1/analytics/dashboard?duration=weekly`
+).then((r) => r.json());
+const hotContent = dashboardData?.hot_content || [];
+
+export const components = {
+  'custom-hero': true,
+  'featured-content': true,
+  'list-content': true,
+  'bunny-video': true,
+  epinet: true,
+};
+---
+
+{
+  target === 'list-content' ? (
+    <ListContent
+      options={options}
+      contentMap={contentMap}
+      hotContent={hotContent}
+    />
+  ) : target === 'featured-content' ? (
+    <FeaturedContent options={options} contentMap={contentMap} />
+  ) : target === 'bunny-video' ? (
+    <BunnyVideoWrapper options={options} />
+  ) : target === 'custom-hero' ? (
+    <CustomHero />
+  ) : target === 'epinet' ? (
+    <EpinetWrapper fullContentMap={contentMap} client:only="react" />
+  ) : (
+    <div class="rounded-lg bg-gray-50 p-8 text-center">
+      <p class="text-gray-600">CodeHook target "{target}" not found</p>
+      <p class="mt-2 text-sm text-gray-500">
+        Available: custom-hero, list-content, featured-content, bunny-video,
+        epinet
+      </p>
+    </div>
+  )
+}

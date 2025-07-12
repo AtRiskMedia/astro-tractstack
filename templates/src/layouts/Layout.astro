@@ -81,12 +81,6 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
     >
     </div>
 
-    <!-- Main content wrapper -->
-    <div id="content" class="transition-opacity duration-300">
-      <SessionInit />
-      <slot />
-    </div>
-
     <!-- TractStack Configuration -->
     <script define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
     >
@@ -155,5 +149,11 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
         }
       });
     </script>
+
+    <!-- Main content wrapper -->
+    <div id="content" class="transition-opacity duration-300">
+      <SessionInit />
+      <slot />
+    </div>
   </body>
 </html>

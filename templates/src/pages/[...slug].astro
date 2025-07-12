@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import CodeHook from '@/custom/CodeHook.astro';
 import type { AuthStatus } from '@/types.ts';
 import { handleFailedResponse } from '@/utils/backend';
 
@@ -51,6 +52,7 @@ try {
 const storyfragmentId = storyData.id;
 const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
+const codeHookTargets = storyData.codeHookTargets || {};
 
 let fragmentsData = {};
 try {
@@ -131,8 +133,13 @@ if (VERBOSE) {
             hx-get={`${goBackend}/api/v1/fragments/panes/${paneId}`}
             hx-trigger="refresh"
             hx-swap="innerHTML"
-            set:html={fragmentsData[paneId]}
-          />
+          >
+            {codeHookTargets[paneId] ? (
+              <CodeHook target={codeHookTargets[paneId]} paneId={paneId} />
+            ) : (
+              <Fragment set:html={fragmentsData[paneId]} />
+            )}
+          </div>
         ))
       }
     </div>
@@ -338,7 +345,7 @@ if (VERBOSE) {
                     `✅ SSE: Found element for pane ${paneId}, triggering refresh`
                   );
 
-                if (typeof htmx !== 'undefined') {
+                if (typeof window.htmx !== 'undefined' && window.htmx) {
                   if (VERBOSE)
                     console.log(
                       `🔄 SSE: HTMX available, triggering refresh for pane ${paneId}`
@@ -348,8 +355,9 @@ if (VERBOSE) {
                     console.log(`✅ SSE: Refresh triggered for pane ${paneId}`);
                 } else {
                   console.error(
-                    `🔴 SSE: HTMX not available! Cannot trigger refresh for pane ${paneId}`
+                    `🔴 SSE: HTMX not available! Cannot trigger refresh for pane ${paneId}. Reloading page!`
                   );
+                  window.location.reload();
                 }
               } else {
                 console.warn(`❌ SSE: Element not found for pane: ${paneId}`);

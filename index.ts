@@ -17,7 +17,9 @@ export default function tractstack(
         const tractStackConfig = validateConfig(userConfig, logger);
 
         logger.info('TractStack: Starting file injection...');
-        await injectTemplateFiles(resolveTemplate, logger);
+        await injectTemplateFiles(resolveTemplate, logger, {
+          includeExamples: userConfig.includeExamples,
+        });
         logger.info('TractStack: File injection complete.');
 
         if (config.output !== 'server') {

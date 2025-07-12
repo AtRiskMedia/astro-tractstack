@@ -1,0 +1,146 @@
+---
+export interface Props {
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+  contentMap: any[];
+}
+
+const { options, contentMap } = Astro.props;
+
+// Parse the options from the CodeHookPayload
+let parsedOptions;
+try {
+  parsedOptions = JSON.parse(options?.params?.options || '{}');
+} catch (e) {
+  console.error('Invalid options', e);
+  parsedOptions = {
+    defaultMode: 'ordered',
+    featuredId: '',
+    storyfragmentIds: '',
+  };
+}
+
+const defaultMode = parsedOptions.defaultMode || 'ordered';
+const featuredId = parsedOptions.featuredId || '';
+const storyfragmentIdsArray = parsedOptions.storyfragmentIds
+  ? parsedOptions.storyfragmentIds.split(',')
+  : [];
+
+// Find the featured story from the contentMap
+const featuredStory = contentMap.find(
+  (item) => item.id === featuredId && item.type === 'StoryFragment'
+);
+
+// Filter and sort the included stories, excluding the featured story
+let includedStories = contentMap.filter(
+  (item) =>
+    storyfragmentIdsArray.includes(item.id) &&
+    item.type === 'StoryFragment' &&
+    item.id !== featuredId
+);
+
+// Sort included stories based on defaultMode
+if (defaultMode === 'ordered') {
+  includedStories.sort(
+    (a, b) =>
+      storyfragmentIdsArray.indexOf(a.id) - storyfragmentIdsArray.indexOf(b.id)
+  );
+} else if (defaultMode === 'recent') {
+  includedStories.sort((a, b) => {
+    const dateA = a.changed ? new Date(a.changed).getTime() : 0;
+    const dateB = b.changed ? new Date(b.changed).getTime() : 0;
+    return dateB - dateA;
+  });
+}
+
+// Limit to 5 stories for display
+const displayedStories = includedStories.slice(0, 5);
+
+// Function to format dates in a human-readable way
+function formatDate(dateString: string | null): string {
+  if (!dateString) return 'Unknown';
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
+---
+
+<!-- Main container with responsive flex layout -->
+<div class="mx-auto flex max-w-7xl flex-col gap-4 py-12 md:flex-row">
+  <!-- Left column (Featured Story) -->
+  <div class="p-4 md:w-3/5">
+    {
+      featuredStory ? (
+        <a href={`/${featuredStory.slug}`} class="group block">
+          <div class="space-y-6 p-2 group-hover:bg-slate-50">
+            {featuredStory.thumbSrc && (
+              <img
+                src={featuredStory.thumbSrc}
+                alt={featuredStory.title}
+                class="h-auto w-full rounded-lg object-cover"
+              />
+            )}
+            <h2 class="text-2xl font-bold text-black transition-colors group-hover:text-gray-900">
+              {featuredStory.title}
+            </h2>
+            {featuredStory.description && (
+              <p class="text-base text-gray-800">{featuredStory.description}</p>
+            )}
+            <p class="text-sm text-gray-600">
+              {featuredStory.changed && formatDate(featuredStory.changed)}
+            </p>
+          </div>
+        </a>
+      ) : (
+        <p class="italic text-cyan-600">No featured story selected.</p>
+      )
+    }
+  </div>
+
+  <!-- Right column (Included Stories) -->
+  <div
+    class="border-t-2 border-slate-100 p-4 md:w-2/5 md:border-l-2 md:border-t-0"
+  >
+    {
+      displayedStories.length > 0 ? (
+        <div class="space-y-4">
+          {displayedStories.map((story) => (
+            <a href={`/${story.slug}`} class="group block">
+              <div class="flex items-start space-x-4 p-1 group-hover:bg-slate-50">
+                {story.thumbSrc && (
+                  <img
+                    src={story.thumbSrc}
+                    alt={story.title}
+                    style="width: 100px; height: auto;"
+                    class="rounded-md"
+                  />
+                )}
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                    {story.title}
+                  </h3>
+                  {story.description && (
+                    <p class="line-clamp-2 text-sm text-gray-800">
+                      {story.description}
+                    </p>
+                  )}
+                  <p class="mt-1 text-xs text-gray-600">
+                    {story.changed && formatDate(story.changed)}
+                  </p>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="italic text-cyan-600">Check back soon for more stories.</p>
+      )
+    }
+  </div>
+</div>
