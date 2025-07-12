@@ -1,15 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
-import ResponsiveLine from "./ResponsiveLine";
+import { useState, useEffect, useMemo } from 'react';
+import ResponsiveLine from './ResponsiveLine';
 
 interface DashboardActivityProps {
   data: Array<{
     id: string;
     data: Array<{ x: any; y: number }>;
   }>;
-  duration: "daily" | "weekly" | "monthly";
 }
 
-const DashboardActivity = ({ data, duration }: DashboardActivityProps) => {
+const DashboardActivity = ({ data }: DashboardActivityProps) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -23,8 +22,16 @@ const DashboardActivity = ({ data, duration }: DashboardActivityProps) => {
     const processed = data.map((series) => ({
       ...series,
       data: series.data
-        .filter((point) => point.x !== null && point.y !== null && point.y !== 0)
-        .sort((a, b) => Number(a.x) - Number(b.x)),
+        .filter(
+          (point) => point.x !== null && point.y !== null && point.y !== 0
+        )
+        .sort((a, b) => {
+          // Sort by UTC timestamp if x is a date string, otherwise by number
+          if (typeof a.x === 'string' && typeof b.x === 'string') {
+            return new Date(a.x).getTime() - new Date(b.x).getTime();
+          }
+          return Number(a.x) - Number(b.x);
+        }),
     }));
     return processed;
   }, [data]);
@@ -39,8 +46,8 @@ const DashboardActivity = ({ data, duration }: DashboardActivityProps) => {
 
   return (
     <>
-      <div style={{ height: "400px" }}>
-        <ResponsiveLine data={processedData} duration={duration} />
+      <div style={{ height: '400px' }}>
+        <ResponsiveLine data={processedData} />
       </div>
     </>
   );

@@ -179,7 +179,9 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/ResponsiveLine.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/PullDashboardAnalytics.tsx'),
+      src: resolve(
+        'templates/src/components/storykeep/PullDashboardAnalytics.tsx'
+      ),
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
     {
@@ -240,24 +242,24 @@ export async function injectTemplateFiles(
     // Example components (only with examples)
     ...(config?.includeExamples
       ? [
-        {
-          src: resolve('templates/custom/with-examples/CustomHero.astro'),
-          dest: 'src/custom/CustomHero.astro',
-          protected: true,
-        },
-        {
-          src: resolve(
-            'templates/custom/with-examples/pages/Collections.astro'
-          ),
-          dest: 'src/custom/pages/Collections.astro',
-          protected: true,
-        },
-        {
-          src: resolve('templates/src/pages/collections/[param1].astro'),
-          dest: 'src/pages/collections/[param1].astro',
-          protected: true,
-        },
-      ]
+          {
+            src: resolve('templates/custom/with-examples/CustomHero.astro'),
+            dest: 'src/custom/CustomHero.astro',
+            protected: true,
+          },
+          {
+            src: resolve(
+              'templates/custom/with-examples/pages/Collections.astro'
+            ),
+            dest: 'src/custom/pages/Collections.astro',
+            protected: true,
+          },
+          {
+            src: resolve('templates/src/pages/collections/[param1].astro'),
+            dest: 'src/pages/collections/[param1].astro',
+            protected: true,
+          },
+        ]
       : []),
   ];
 

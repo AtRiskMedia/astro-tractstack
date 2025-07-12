@@ -9,6 +9,7 @@ import NewspaperIcon from '@heroicons/react/24/outline/NewspaperIcon';
 import DocumentCheckIcon from '@heroicons/react/24/outline/DocumentCheckIcon';
 import DocumentPlusIcon from '@heroicons/react/24/outline/DocumentPlusIcon';
 import UserGroupIcon from '@heroicons/react/24/outline/UserGroupIcon';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 
 interface ContentEvent {
   verb: string;
@@ -77,28 +78,54 @@ const EpinetTableView = ({
     };
   };
 
-  const getLocalDateTime = (
+  // Parse UTC hourKey and convert to local timezone for display
+  const getLocalDisplayTime = (
     hourKey: string
-  ): { localDay: string; localHour: number } => {
+  ): { localDay: string; localHour: number; localHourDisplay: string } => {
     try {
       const [year, month, day, hour] = hourKey.split('-').map(Number);
       const utcDate = new Date(Date.UTC(year, month - 1, day, hour));
-      const localDay = `${utcDate.getFullYear()}-${String(
-        utcDate.getMonth() + 1
-      ).padStart(2, '0')}-${String(utcDate.getDate()).padStart(2, '0')}`;
-      const localHour = utcDate.getHours();
-      return { localDay, localHour };
+
+      // Convert UTC to local timezone for display
+      const localDate = new Date(utcDate.toLocaleString());
+
+      const localDay = `${localDate.getFullYear()}-${String(
+        localDate.getMonth() + 1
+      ).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+
+      const localHour = localDate.getHours();
+      const localHourDisplay = `${localHour.toString().padStart(2, '0')}:00`;
+
+      return { localDay, localHour, localHourDisplay };
     } catch (e) {
       console.warn(`Failed to parse hourKey: ${hourKey}`, e);
+      // Fallback to treating as already local
       const [year, month, day] = hourKey.split('-').slice(0, 3).map(Number);
       const localDay = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const localHour = Number(hourKey.split('-')[3]) || 0;
-      return { localDay, localHour };
+      const localHourDisplay = `${localHour.toString().padStart(2, '0')}:00`;
+      return { localDay, localHour, localHourDisplay };
     }
   };
 
-  const formatLocalHourDisplay = (localHour: number): string => {
-    return `${localHour.toString().padStart(2, '0')}:00`;
+  // Convert hourKey (UTC) to exact UTC time range for focusing
+  const focusOnThisHour = (hourKey: string) => {
+    try {
+      const [year, month, day, hour] = hourKey.split('-').map(Number);
+
+      // Create exact UTC hour boundaries
+      const startTimeUTC = new Date(Date.UTC(year, month - 1, day, hour, 0, 0, 0));
+      const endTimeUTC = new Date(Date.UTC(year, month - 1, day, hour, 59, 59, 999));
+
+      epinetCustomFilters.set({
+        ...$epinetCustomFilters,
+        startTimeUTC: startTimeUTC.toISOString(),
+        endTimeUTC: endTimeUTC.toISOString(),
+      });
+    } catch (e) {
+      console.warn(`Failed to focus on hour: ${hourKey}`, e);
+      // Fallback - do nothing rather than use legacy system
+    }
   };
 
   useEffect(() => {
@@ -112,7 +139,7 @@ const EpinetTableView = ({
     }
 
     const days = Array.from(
-      new Set(hourKeys.map((key) => getLocalDateTime(key).localDay))
+      new Set(hourKeys.map((key) => getLocalDisplayTime(key).localDay))
     )
       .sort()
       .reverse();
@@ -149,6 +176,7 @@ const EpinetTableView = ({
 
     const dailyUniqueVisitors = new Set<string>();
 
+    // Get current local time for "future" detection
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
       now.getDate()
@@ -161,12 +189,14 @@ const EpinetTableView = ({
       data: Record<string, ContentItem>;
       hourlyTotal: number;
       hourlyVisitors: number;
+      localHour: number;
+      localHourDisplay: string;
     };
 
     const activityByLocalHour: Record<number, ProcessedHourData> = {};
 
     Object.entries(hourlyActivity).forEach(([hourKey, contentItems]) => {
-      const { localDay, localHour } = getLocalDateTime(hourKey);
+      const { localDay, localHour, localHourDisplay } = getLocalDisplayTime(hourKey);
       if (localDay === currentDay) {
         let hourlyTotal = 0;
         const hourlyUniqueVisitors = new Set<string>();
@@ -205,6 +235,8 @@ const EpinetTableView = ({
           data: processedData,
           hourlyTotal,
           hourlyVisitors: hourlyUniqueVisitors.size,
+          localHour,
+          localHourDisplay,
         };
       }
     });
@@ -223,10 +255,8 @@ const EpinetTableView = ({
             endHour: localEmptyEnd,
             display:
               emptyRangeStart === localEmptyEnd
-                ? formatLocalHourDisplay(emptyRangeStart)
-                : `${formatLocalHourDisplay(emptyRangeStart)} - ${formatLocalHourDisplay(
-                    localEmptyEnd
-                  )}:59`,
+                ? `${emptyRangeStart.toString().padStart(2, '0')}:00`
+                : `${emptyRangeStart.toString().padStart(2, '0')}:00 - ${localEmptyEnd.toString().padStart(2, '0')}:59`,
             isFuture,
           });
           emptyRangeStart = null;
@@ -243,7 +273,7 @@ const EpinetTableView = ({
           type: 'active',
           hourKey: activity.hourKey,
           hourNum: localHour,
-          hourDisplay: formatLocalHourDisplay(localHour),
+          hourDisplay: activity.localHourDisplay,
           contentItems,
           hourlyTotal: activity.hourlyTotal,
           hourlyVisitors: activity.hourlyVisitors,
@@ -265,10 +295,8 @@ const EpinetTableView = ({
         endHour: localEmptyEnd,
         display:
           emptyRangeStart === localEmptyEnd
-            ? formatLocalHourDisplay(emptyRangeStart)
-            : `${formatLocalHourDisplay(emptyRangeStart)} - ${formatLocalHourDisplay(
-                localEmptyEnd
-              )}:59`,
+            ? `${emptyRangeStart.toString().padStart(2, '0')}:00`
+            : `${emptyRangeStart.toString().padStart(2, '0')}:00 - ${localEmptyEnd.toString().padStart(2, '0')}:59`,
         isFuture,
       });
     }
@@ -397,47 +425,22 @@ const EpinetTableView = ({
           </div>
         </div>
 
-        <Accordion.Root multiple className="divide-y divide-gray-100">
-          {dayData.map((item) => (
+        <Accordion.Root multiple className="w-full">
+          {dayData.map((item, index) => (
             <Accordion.Item
-              key={
-                item.type === 'active'
-                  ? `active-${item.hourKey}`
-                  : `empty-${item.startHour}-${item.endHour}`
-              }
-              value={
-                item.type === 'active'
-                  ? `active-${item.hourKey}`
-                  : `empty-${item.startHour}-${item.endHour}`
-              }
-              className="p-3"
+              key={item.type === 'active' ? item.hourKey : `empty-${index}`}
+              value={item.type === 'active' ? item.hourKey : `empty-${index}`}
+              className="border-b border-gray-100 last:border-b-0"
             >
-              <Accordion.ItemTrigger className="flex w-full items-center text-left transition-colors duration-200 hover:bg-gray-50 focus:outline-none">
+              <Accordion.ItemTrigger className="flex w-full items-center justify-between p-3 text-left transition-colors duration-200 hover:bg-gray-50">
                 {item.type === 'active' ? (
-                  <div className="flex flex-grow items-center space-x-4">
-                    <span className="min-w-[60px] text-sm font-bold text-gray-700">
+                  <div className="flex flex-grow items-center space-x-3">
+                    <span className="text-sm font-bold text-gray-700">
                       {item.hourDisplay}
                     </span>
-                    <div className="flex items-center space-x-2">
-                      <span className="min-w-[90px] text-xs font-bold text-cyan-600">
-                        {item.hourlyTotal}{' '}
-                        {item.hourlyTotal === 1 ? 'event' : 'events'}
-                      </span>
-                      <span
-                        className="flex items-center text-xs font-bold text-gray-600"
-                        title={Array.from(
-                          new Set(
-                            item.contentItems.flatMap(
-                              (content) => content.visitorIds
-                            )
-                          )
-                        ).join(', ')}
-                      >
-                        <UserGroupIcon className="mr-1 h-3 w-3" />
-                        {item.hourlyVisitors} visitor
-                        {item.hourlyVisitors !== 1 ? 's' : ''}
-                      </span>
-                    </div>
+                    <span className="text-xs text-gray-600">
+                      {item.hourlyTotal} event{item.hourlyTotal !== 1 ? 's' : ''} / {item.hourlyVisitors} visitor{item.hourlyVisitors !== 1 ? 's' : ''}
+                    </span>
                     <div className="relative h-2 w-full max-w-48 rounded bg-gray-200">
                       <div
                         className="absolute left-0 top-0 h-2 rounded bg-cyan-600"
@@ -447,6 +450,17 @@ const EpinetTableView = ({
                         title={`${item.hourlyTotal} events (${(item.relativeToMax * 100).toFixed(1)}% of busiest hour)`}
                       />
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion toggle
+                        focusOnThisHour(item.hourKey);
+                      }}
+                      className="flex items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800 transition-colors duration-200 hover:bg-orange-200"
+                      title="Focus analytics dashboard on this hour's user journeys"
+                    >
+                      <MagnifyingGlassIcon className="mr-1 h-3 w-3" />
+                      Journeys this Hour
+                    </button>
                   </div>
                 ) : (
                   <div className="flex flex-grow items-center">

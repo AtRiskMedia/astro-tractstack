@@ -108,12 +108,15 @@ const EpinetWrapper = ({
 
   // Initialize epinet custom filters with default values on mount
   useEffect(() => {
+    const nowUTC = new Date();
+    const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
+
     epinetCustomFilters.set({
       enabled: true,
       visitorType: 'all',
       selectedUserId: null,
-      startHour: 168, // Default to one week
-      endHour: 0, // Current hour
+      startTimeUTC: oneWeekAgoUTC.toISOString(),
+      endTimeUTC: nowUTC.toISOString(),
       userCounts: [],
       hourlyNodeActivity: {},
     });
@@ -132,8 +135,8 @@ const EpinetWrapper = ({
       epinetId &&
       $epinetCustomFilters.enabled &&
       $epinetCustomFilters.visitorType !== null &&
-      $epinetCustomFilters.startHour !== null &&
-      $epinetCustomFilters.endHour !== null
+      $epinetCustomFilters.startTimeUTC !== null &&
+      $epinetCustomFilters.endTimeUTC !== null
     ) {
       setPollingAttempts(0);
       fetchEpinetData();
@@ -143,8 +146,8 @@ const EpinetWrapper = ({
     $epinetCustomFilters.enabled,
     $epinetCustomFilters.visitorType,
     $epinetCustomFilters.selectedUserId,
-    $epinetCustomFilters.startHour,
-    $epinetCustomFilters.endHour,
+    $epinetCustomFilters.startTimeUTC,
+    $epinetCustomFilters.endTimeUTC,
   ]);
 
   const fetchEpinetData = useCallback(async () => {
@@ -171,17 +174,11 @@ const EpinetWrapper = ({
       if ($epinetCustomFilters.selectedUserId) {
         url.searchParams.append('userId', $epinetCustomFilters.selectedUserId);
       }
-      if ($epinetCustomFilters.startHour !== null) {
-        url.searchParams.append(
-          'startHour',
-          $epinetCustomFilters.startHour.toString()
-        );
+      if ($epinetCustomFilters.startTimeUTC) {
+        url.searchParams.append('startTime', $epinetCustomFilters.startTimeUTC);
       }
-      if ($epinetCustomFilters.endHour !== null) {
-        url.searchParams.append(
-          'endHour',
-          $epinetCustomFilters.endHour.toString()
-        );
+      if ($epinetCustomFilters.endTimeUTC) {
+        url.searchParams.append('endTime', $epinetCustomFilters.endTimeUTC);
       }
 
       const response = await fetch(url.toString(), {

@@ -95,26 +95,15 @@ const EpinetDurationSelector = () => {
     setErrorMessage(null);
   };
 
-  const getLocalDateTime = (date: Date, hourStr: string) => {
-    const result = new Date(date);
+  // Create UTC datetime from local date and hour selection
+  const createUTCDateTime = (date: Date, hourStr: string): Date => {
+    const localDateTime = new Date(date);
     const hour = hourStr === '24' ? 23 : parseInt(hourStr);
     const minute = hourStr === '24' ? 59 : 0;
-    result.setHours(hour, minute, 0, 0);
-    return result;
-  };
+    localDateTime.setHours(hour, minute, 0, 0);
 
-  const getUtcDateTime = (localDate: Date) => {
-    return new Date(
-      Date.UTC(
-        localDate.getFullYear(),
-        localDate.getMonth(),
-        localDate.getDate(),
-        localDate.getHours(),
-        localDate.getMinutes(),
-        localDate.getSeconds(),
-        localDate.getMilliseconds()
-      )
-    );
+    // Convert to UTC by creating new Date with UTC values
+    return new Date(localDateTime.getTime());
   };
 
   const updateDateRange = () => {
@@ -123,35 +112,36 @@ const EpinetDurationSelector = () => {
       return;
     }
 
-    const startLocalTime = getLocalDateTime(startDate, localFilters.startHour);
-    const endLocalTime = getLocalDateTime(endDate, localFilters.endHour);
+    const startUTCTime = createUTCDateTime(startDate, localFilters.startHour);
+    const endUTCTime = createUTCDateTime(endDate, localFilters.endHour);
 
-    if (endLocalTime < startLocalTime) {
-      setErrorMessage('End time cannot be earlier than start time.');
+    if (endUTCTime <= startUTCTime) {
+      setErrorMessage('End time must be after start time.');
       return;
     }
 
-    const startUtcTime = getUtcDateTime(startLocalTime);
-    const endUtcTime = getUtcDateTime(endLocalTime);
+    const nowUTC = new Date();
+    const maxPastTime = new Date(nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000);
 
-    const nowUtc = new Date();
+    if (startUTCTime < maxPastTime) {
+      setErrorMessage(
+        `Start time cannot be more than ${MAX_ANALYTICS_HOURS} hours in the past.`
+      );
+      return;
+    }
 
-    let startHoursHence = Math.round(
-      (nowUtc.getTime() - startUtcTime.getTime()) / (1000 * 60 * 60)
-    );
-    let endHoursHence = Math.round(
-      (nowUtc.getTime() - endUtcTime.getTime()) / (1000 * 60 * 60)
-    );
+    if (endUTCTime > nowUTC) {
+      setErrorMessage('End time cannot be in the future.');
+      return;
+    }
 
-    startHoursHence = Math.min(startHoursHence, MAX_ANALYTICS_HOURS);
-    endHoursHence = Math.max(0, Math.min(endHoursHence, MAX_ANALYTICS_HOURS));
-
+    // Update with UTC timestamps
     epinetCustomFilters.set({
       ...$epinetCustomFilters,
       visitorType: localFilters.visitorType,
       selectedUserId: localFilters.selectedUserId,
-      startHour: startHoursHence,
-      endHour: endHoursHence,
+      startTimeUTC: startUTCTime.toISOString(),
+      endTimeUTC: endUTCTime.toISOString(),
     });
 
     setHasLocalChanges(false);
@@ -173,12 +163,10 @@ const EpinetDurationSelector = () => {
       parseInt(dateValue.split('-')[2])
     );
 
-    const nowUtc = new Date();
-    const hoursSince = Math.round(
-      (nowUtc.getTime() - newDate.getTime()) / (1000 * 60 * 60)
-    );
+    const nowUTC = new Date();
+    const maxPastTime = new Date(nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000);
 
-    if (hoursSince > MAX_ANALYTICS_HOURS) {
+    if (newDate < maxPastTime) {
       setErrorMessage(
         `Date cannot be more than ${MAX_ANALYTICS_HOURS} hours in the past.`
       );
@@ -207,7 +195,7 @@ const EpinetDurationSelector = () => {
   const formatDateHourDisplay = (date: Date, hourStr: string) => {
     if (!date) return '';
 
-    const localDateTime = getLocalDateTime(date, hourStr);
+    const localDateTime = createUTCDateTime(date, hourStr);
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     return (
@@ -221,6 +209,28 @@ const EpinetDurationSelector = () => {
         timeZone,
       }) + ` (${timeZone})`
     );
+  };
+
+  // Display current UTC range in local timezone
+  const formatCurrentUTCRange = () => {
+    const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
+    if (!startTimeUTC || !endTimeUTC) return '';
+
+    const startLocal = new Date(startTimeUTC);
+    const endLocal = new Date(endTimeUTC);
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const formatTime = (date: Date) => date.toLocaleString(undefined, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone,
+    });
+
+    return `${formatTime(startLocal)} to ${formatTime(endLocal)} (${timeZone})`;
   };
 
   const paginatedUserCounts = ($epinetCustomFilters.userCounts || []).slice(
@@ -307,34 +317,33 @@ const EpinetDurationSelector = () => {
   const getFilterStatusMessage = () => {
     const needsApply = hasLocalChanges;
     const prefix = needsApply ? 'Press Apply Filters to load' : 'Showing';
-    let baseMessage =
-      startDate && endDate
-        ? `${prefix} from ${formatDateHourDisplay(startDate, localFilters.startHour)} to ${formatDateHourDisplay(endDate, localFilters.endHour)}`
-        : `${prefix} from last 7 days`;
 
-    if (!startDate || !endDate) {
-      baseMessage = 'Apply date filter for visualization';
+    let baseMessage: string;
+    if (needsApply && startDate && endDate) {
+      baseMessage = `${prefix} from ${formatDateHourDisplay(startDate, localFilters.startHour)} to ${formatDateHourDisplay(endDate, localFilters.endHour)}`;
+    } else if (!needsApply && $epinetCustomFilters.startTimeUTC && $epinetCustomFilters.endTimeUTC) {
+      baseMessage = `${prefix} ${formatCurrentUTCRange()}`;
+    } else {
+      baseMessage = `${prefix} from last 7 days`;
     }
 
     const userInfo = needsApply
       ? localFilters.selectedUserId
         ? ` for individual user ${localFilters.selectedUserId}`
-        : ` for ${
-            localFilters.visitorType === 'all'
-              ? 'all visitors'
-              : localFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`
+        : ` for ${localFilters.visitorType === 'all'
+          ? 'all visitors'
+          : localFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`
       : $epinetCustomFilters.selectedUserId
         ? ` for individual user ${$epinetCustomFilters.selectedUserId}`
-        : ` for ${
-            $epinetCustomFilters.visitorType === 'all'
-              ? 'all visitors'
-              : $epinetCustomFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`;
+        : ` for ${$epinetCustomFilters.visitorType === 'all'
+          ? 'all visitors'
+          : $epinetCustomFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`;
 
     return baseMessage + userInfo;
   };
@@ -394,7 +403,7 @@ const EpinetDurationSelector = () => {
 
             <div className="space-y-1">
               <div className="block text-sm font-bold text-gray-700">
-                Date Range
+                Date Range (Local Time)
               </div>
               <div className="relative">
                 <button
@@ -502,7 +511,7 @@ const EpinetDurationSelector = () => {
 
             <div className="space-y-1">
               <div className="block text-sm font-bold text-gray-700">
-                Hour Range
+                Hour Range (Local Time)
               </div>
               <div className="flex flex-row gap-4">
                 <div className="flex flex-row gap-4">
@@ -670,9 +679,8 @@ const EpinetDurationSelector = () => {
 
           {$epinetCustomFilters.enabled && (
             <div
-              className={`p-2 ${
-                hasLocalChanges ? `bg-cyan-50` : `font-bold`
-              } rounded-md text-sm text-cyan-800`}
+              className={`p-2 ${hasLocalChanges ? `bg-cyan-50` : `font-bold`
+                } rounded-md text-sm text-cyan-800`}
             >
               <p>{getFilterStatusMessage()}</p>
               {hasLocalChanges && (

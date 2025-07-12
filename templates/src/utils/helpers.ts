@@ -23,8 +23,8 @@ export function debounce<T extends (...args: any[]) => void>(
 
 export function formatDateToYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -39,14 +39,14 @@ export function cloneDeep<T>(obj: T): T {
 // UTC date helpers for analytics
 export function formatUTCHourKey(date: Date): string {
   const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hour = String(date.getUTCHours()).padStart(2, '0');
   return `${year}-${month}-${day}-${hour}`;
 }
 
 export function parseHourKeyToUTCDate(hourKey: string): Date {
-  const [year, month, day, hour] = hourKey.split("-").map(Number);
+  const [year, month, day, hour] = hourKey.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, day, hour));
 }
 

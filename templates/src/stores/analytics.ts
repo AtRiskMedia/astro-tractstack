@@ -4,8 +4,9 @@ export const epinetCustomFilters = atom<{
   enabled: boolean;
   visitorType: 'all' | 'anonymous' | 'known';
   selectedUserId: string | null;
-  startHour: number | null;
-  endHour: number | null;
+  // UTC timestamp fields only
+  startTimeUTC: string | null;
+  endTimeUTC: string | null;
   userCounts: Array<{ id: string; count: number; isKnown: boolean }>;
   hourlyNodeActivity: Record<
     string,
@@ -21,8 +22,8 @@ export const epinetCustomFilters = atom<{
   enabled: false,
   visitorType: 'all',
   selectedUserId: null,
-  startHour: null,
-  endHour: null,
+  startTimeUTC: null,
+  endTimeUTC: null,
   userCounts: [],
   hourlyNodeActivity: {},
 });
