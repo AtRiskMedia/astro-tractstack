@@ -43,9 +43,11 @@
     "@ark-ui/react": "^5.9.0",
     "@astrojs/node": "^9.0.0",
     "@heroicons/react": "^2.1.1",
+    "@nanostores/react": "^1.0.0",
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "kleur": "^4.1.5",
+    "nanostores": "^1.0.1",
     "player.js": "^0.1.0",
     "prompts": "^2.4.2"
   },

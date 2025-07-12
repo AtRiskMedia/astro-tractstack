@@ -16,6 +16,10 @@ export async function injectTemplateFiles(
       dest: 'src/constants.ts',
     },
     {
+      src: resolve('templates/src/stores/analytics.ts'),
+      dest: 'src/stores/analytics.ts',
+    },
+    {
       src: resolve('templates/src/utils/backend.ts'),
       dest: 'src/utils/backend.ts',
     },
@@ -153,6 +157,16 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/components/codehooks/EpinetWrapper.tsx'),
       dest: 'src/components/codehooks/EpinetWrapper.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/codehooks/EpinetDurationSelector.tsx'
+      ),
+      dest: 'src/components/codehooks/EpinetDurationSelector.tsx',
+    },
+    {
+      src: resolve('templates/src/components/codehooks/EpinetTableView.tsx'),
+      dest: 'src/components/codehooks/EpinetTableView.tsx',
     },
     {
       src: resolve('templates/src/components/codehooks/SankeyDiagram.tsx'),

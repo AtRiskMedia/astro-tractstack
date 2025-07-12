@@ -1,5 +1,9 @@
 import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useStore } from '@nanostores/react';
+import { epinetCustomFilters } from '../../stores/analytics';
 import SankeyDiagram from './SankeyDiagram';
+import EpinetDurationSelector from './EpinetDurationSelector';
+import EpinetTableView from './EpinetTableView';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -31,6 +35,9 @@ const EpinetWrapper = ({
 }: {
   fullContentMap: FullContentMapItem[];
 }) => {
+  // Use the global store instead of local state
+  const $epinetCustomFilters = useStore(epinetCustomFilters);
+
   const [analytics, setAnalytics] = useState<{
     epinet: any;
     isLoading: boolean;
@@ -43,16 +50,6 @@ const EpinetWrapper = ({
     error: null,
   });
 
-  const [epinetCustomFilters, setEpinetCustomFilters] = useState({
-    enabled: true,
-    visitorType: 'all' as 'all' | 'anonymous' | 'known',
-    selectedUserId: null as string | null,
-    startHour: 168, // Default to one week
-    endHour: 0, // Current hour
-    userCounts: [] as any[],
-    hourlyNodeActivity: {} as any,
-  });
-
   const [pollingTimer, setPollingTimer] = useState<NodeJS.Timeout | null>(null);
   const [pollingAttempts, setPollingAttempts] = useState(0);
   const [epinetId, setEpinetId] = useState<string | null>(null);
@@ -61,7 +58,8 @@ const EpinetWrapper = ({
   const POLLING_DELAYS = [2000, 5000, 10000]; // 2s, 5s, 10s
 
   // Get backend URL
-  const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
   // Clear polling timer on unmount
   useEffect(() => {
@@ -110,14 +108,15 @@ const EpinetWrapper = ({
 
   // Initialize epinet custom filters with default values on mount
   useEffect(() => {
-    setEpinetCustomFilters((prev) => ({
-      ...prev,
+    epinetCustomFilters.set({
       enabled: true,
       visitorType: 'all',
       selectedUserId: null,
-      startHour: 168,
-      endHour: 0,
-    }));
+      startHour: 168, // Default to one week
+      endHour: 0, // Current hour
+      userCounts: [],
+      hourlyNodeActivity: {},
+    });
   }, []);
 
   // Fetch data when epinet ID is available
@@ -127,24 +126,25 @@ const EpinetWrapper = ({
     }
   }, [epinetId]);
 
+  // Watch for changes in the global filters and refetch data
   useEffect(() => {
     if (
       epinetId &&
-      epinetCustomFilters.enabled &&
-      epinetCustomFilters.visitorType !== null &&
-      epinetCustomFilters.startHour !== null &&
-      epinetCustomFilters.endHour !== null
+      $epinetCustomFilters.enabled &&
+      $epinetCustomFilters.visitorType !== null &&
+      $epinetCustomFilters.startHour !== null &&
+      $epinetCustomFilters.endHour !== null
     ) {
       setPollingAttempts(0);
       fetchEpinetData();
     }
   }, [
     epinetId,
-    epinetCustomFilters.enabled,
-    epinetCustomFilters.visitorType,
-    epinetCustomFilters.selectedUserId,
-    epinetCustomFilters.startHour,
-    epinetCustomFilters.endHour,
+    $epinetCustomFilters.enabled,
+    $epinetCustomFilters.visitorType,
+    $epinetCustomFilters.selectedUserId,
+    $epinetCustomFilters.startHour,
+    $epinetCustomFilters.endHour,
   ]);
 
   const fetchEpinetData = useCallback(async () => {
@@ -166,21 +166,21 @@ const EpinetWrapper = ({
 
       url.searchParams.append(
         'visitorType',
-        epinetCustomFilters.visitorType || 'all'
+        $epinetCustomFilters.visitorType || 'all'
       );
-      if (epinetCustomFilters.selectedUserId) {
-        url.searchParams.append('userId', epinetCustomFilters.selectedUserId);
+      if ($epinetCustomFilters.selectedUserId) {
+        url.searchParams.append('userId', $epinetCustomFilters.selectedUserId);
       }
-      if (epinetCustomFilters.startHour !== null) {
+      if ($epinetCustomFilters.startHour !== null) {
         url.searchParams.append(
           'startHour',
-          epinetCustomFilters.startHour.toString()
+          $epinetCustomFilters.startHour.toString()
         );
       }
-      if (epinetCustomFilters.endHour !== null) {
+      if ($epinetCustomFilters.endHour !== null) {
         url.searchParams.append(
           'endHour',
-          epinetCustomFilters.endHour.toString()
+          $epinetCustomFilters.endHour.toString()
         );
       }
 
@@ -199,7 +199,7 @@ const EpinetWrapper = ({
 
       if (result.success !== false) {
         // Check if data is still loading
-        const epinetData = result;
+        const epinetData = result.epinet;
 
         if (
           epinetData &&
@@ -224,16 +224,17 @@ const EpinetWrapper = ({
 
         setAnalytics((prev) => ({
           ...prev,
-          epinet: result,
+          epinet: result.epinet,
           status: 'complete',
           error: null,
         }));
 
-        setEpinetCustomFilters((prev) => ({
-          ...prev,
+        // Update the global store with additional data from API response
+        epinetCustomFilters.set({
+          ...$epinetCustomFilters,
           userCounts: result.userCounts || [],
           hourlyNodeActivity: result.hourlyNodeActivity || {},
-        }));
+        });
 
         setPollingAttempts(0);
       } else {
@@ -262,7 +263,7 @@ const EpinetWrapper = ({
     } finally {
       setAnalytics((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [epinetId, epinetCustomFilters, pollingAttempts, goBackend]);
+  }, [epinetId, $epinetCustomFilters, pollingAttempts, goBackend]);
 
   const { epinet, isLoading, status, error } = analytics;
 
@@ -345,6 +346,8 @@ const EpinetWrapper = ({
             </div>
           )}
           <SankeyDiagram data={{ nodes: epinet.nodes, links: epinet.links }} />
+          <EpinetDurationSelector />
+          <EpinetTableView fullContentMap={fullContentMap} />
         </div>
       </ErrorBoundary>
     </div>

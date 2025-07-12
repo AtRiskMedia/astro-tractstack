@@ -15,7 +15,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch { }
+  } catch {}
 
   return 'pnpm';
 }
@@ -111,9 +111,11 @@ PUBLIC_TENANTID="${responses.tenantId}"
     );
     console.log(kleur.green('✅ React and Node adapter installed'));
 
-    // Install UI components
-    execSync(`${addCommand} @ark-ui/react`, { stdio: 'inherit' });
-    console.log(kleur.green('✅ UI components installed'));
+    // Install analytics state management
+    execSync(`${addCommand} @nanostores/react nanostores`, {
+      stdio: 'inherit',
+    });
+    console.log(kleur.green('✅ Analytics state management installed'));
 
     // Install hero icons
     execSync(`${addCommand} @ark-ui/react @heroicons/react`, {
