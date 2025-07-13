@@ -211,7 +211,7 @@ export default function PageViewStats() {
     $epinetCustomFilters.endTimeUTC,
     $epinetCustomFilters.visitorType,
     $epinetCustomFilters.selectedUserId,
-    goBackend
+    goBackend,
   ]);
 
   // Fetch analytics when epinetCustomFilters change OR on initial load
@@ -422,8 +422,8 @@ export default function PageViewStats() {
 
           {/* Dashboard Activity Chart */}
           {analytics.dashboard &&
-            analytics.dashboard.line &&
-            analytics.dashboard.line.length > 0 ? (
+          analytics.dashboard.line &&
+          analytics.dashboard.line.length > 0 ? (
             <DashboardActivity data={analytics.dashboard.line} />
           ) : (
             <div className="mb-6 flex h-64 w-full items-center justify-center rounded-lg bg-gray-100">
@@ -458,7 +458,7 @@ export default function PageViewStats() {
             analytics.epinet.nodes &&
             analytics.epinet.links ? (
             analytics.epinet.nodes.length > 0 &&
-              analytics.epinet.links.length > 0 ? (
+            analytics.epinet.links.length > 0 ? (
               <ErrorBoundary
                 fallback={
                   <div className="rounded-lg bg-red-50 p-4 text-red-800">

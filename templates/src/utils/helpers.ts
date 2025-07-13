@@ -1,4 +1,4 @@
-// V2 Helper Utilities - Essential functions for analytics components
+import type { MenuNode } from '../types/tractstack';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(` `);
@@ -68,4 +68,50 @@ export function getUTCHourKeysForTimeRange(hours: number): string[] {
     keys.push(key);
   }
   return keys;
+}
+
+export function createStoryKeepMenu(params: {
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+}): MenuNode {
+  const { isAuthenticated, isAdmin } = params;
+
+  const links = [];
+
+  // Add Advanced Setup link for authenticated admins
+  if (isAuthenticated && isAdmin) {
+    links.unshift({
+      name: 'Advanced Setup',
+      description: 'Your Story Keep Settings',
+      featured: true,
+      actionLisp: '(goto (storykeep settings))',
+    });
+  }
+
+  // Add Login link for unauthenticated users
+  if (!isAuthenticated) {
+    links.unshift({
+      name: 'Login',
+      description: 'Enter your Story Keep',
+      featured: true,
+      actionLisp: '(goto (storykeep login))',
+    });
+  }
+
+  // Add Logout link for authenticated users
+  if (isAuthenticated) {
+    links.unshift({
+      name: 'Logout',
+      description: 'Close this session',
+      featured: true,
+      actionLisp: '(goto (storykeep logout))',
+    });
+  }
+
+  return {
+    id: `storykeep`,
+    title: 'Story Keep Menu',
+    theme: 'default',
+    optionsPayload: links,
+  };
 }

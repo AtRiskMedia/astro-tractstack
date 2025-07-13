@@ -1,6 +1,7 @@
 ---
 import Menu from './Menu';
 import { isAuthenticated, isAdmin, getUserRole } from '../utils/auth';
+import type { MenuNode } from '@/types/tractstack';
 
 export interface Props {
   title: string;
@@ -9,7 +10,7 @@ export interface Props {
   isContext?: boolean;
   isStoryKeep?: boolean;
   isEditable?: boolean;
-  menuId?: string | null;
+  menu?: MenuNode | null;
   impressions?: any[]; // TODO: Implement when backend ready
 }
 
@@ -20,7 +21,7 @@ const {
   isContext = false,
   isStoryKeep = false,
   isEditable = false,
-  menuId,
+  menu,
   impressions = [], // TODO: Remove when backend implemented
 } = Astro.props;
 
@@ -43,23 +44,6 @@ const wordmarkMode =
   brandConfig?.WORDMARK_MODE && brandConfig.WORDMARK_MODE !== ''
     ? brandConfig.WORDMARK_MODE
     : 'default';
-
-// Get menu data if menuId provided
-let menuPayload = null;
-if (menuId) {
-  try {
-    const goBackend =
-      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-    const menuResponse = await fetch(
-      `${goBackend}/api/v1/nodes/menus/${menuId}`
-    );
-    if (menuResponse.ok) {
-      menuPayload = await menuResponse.json();
-    }
-  } catch (error) {
-    console.error('Error fetching menu:', error);
-  }
-}
 
 // Auth status
 const authStatus = {
@@ -100,9 +84,9 @@ const authStatus = {
       </div>
     </a>
     {
-      !!menuPayload ? (
+      !!menu ? (
         <Menu
-          payload={menuPayload}
+          payload={menu}
           slug={slug}
           isContext={isContext}
           brandConfig={brandConfig}

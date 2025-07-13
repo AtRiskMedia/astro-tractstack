@@ -1,11 +1,12 @@
 ---
 import { preParseAction, lispLexer } from '../utils/actions';
+import type { MenuNode } from '@/types/tractstack';
 
 export interface Props {
   slug: string;
   brandConfig: any;
   isContext?: boolean;
-  menuId?: string | null;
+  menu?: MenuNode | null;
   backToTop?: boolean;
   created?: string; // RFC3339 timestamp from V2 storyfragment
 }
@@ -14,7 +15,7 @@ const {
   slug,
   brandConfig,
   isContext = false,
-  menuId,
+  menu,
   backToTop = false,
   created,
 } = Astro.props;
@@ -23,27 +24,10 @@ const footer = brandConfig?.FOOTER || ``;
 const socials =
   typeof brandConfig?.SOCIALS === 'string' ? brandConfig.SOCIALS : '';
 
-// Get menu data if menuId provided
-let menuPayload = null;
-if (menuId) {
-  try {
-    const goBackend =
-      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-    const menuResponse = await fetch(
-      `${goBackend}/api/v1/nodes/menus/${menuId}`
-    );
-    if (menuResponse.ok) {
-      menuPayload = await menuResponse.json();
-    }
-  } catch (error) {
-    console.error('Error fetching menu:', error);
-  }
-}
-
 // Process menu links for footer
 let allLinks: any[] = [];
-if (menuPayload?.optionsPayload) {
-  const additionalLinks = menuPayload.optionsPayload
+if (menu?.optionsPayload) {
+  const additionalLinks = menu.optionsPayload
     .filter((e: any) => !e.featured)
     .map((e: any) => {
       const item = { ...e };
@@ -58,7 +42,7 @@ if (menuPayload?.optionsPayload) {
       return item;
     });
 
-  const featuredLinks = menuPayload.optionsPayload
+  const featuredLinks = menu.optionsPayload
     .filter((e: any) => e.featured)
     .map((e: any) => {
       const item = { ...e };
@@ -258,4 +242,3 @@ const createdDate = created ? new Date(created) : new Date();
     createBackToTopButton();
   }
 </script>
-

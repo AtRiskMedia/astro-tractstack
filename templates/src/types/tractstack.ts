@@ -120,3 +120,17 @@ export interface CodeHookData {
   target: string;
   payload?: Record<string, string>;
 }
+
+export interface MenuLink {
+  name: string;
+  description: string;
+  featured: boolean;
+  actionLisp: string;
+}
+
+export interface MenuNode {
+  id: string;
+  title: string;
+  theme: string;
+  optionsPayload: MenuLink[];
+}

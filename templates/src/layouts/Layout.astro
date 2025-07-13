@@ -6,6 +6,7 @@ import SessionInit from '@/components/auth/SessionInit.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/stores/brand';
+import type { MenuNode } from '@/types/tractstack';
 
 export interface Props {
   title: string;
@@ -13,7 +14,7 @@ export interface Props {
   storykeep?: boolean;
   // Header/Footer props
   slug?: string;
-  menuId?: string | null;
+  menu?: MenuNode | null;
   created?: string;
   isContext?: boolean;
   isStoryKeep?: boolean;
@@ -24,9 +25,8 @@ const {
   title,
   description = 'TractStack dynamic website',
   storykeep = false,
-  // Header/Footer props
   slug = '',
-  menuId = null,
+  menu = null,
   created,
   isContext = false,
   isStoryKeep = false,
@@ -101,7 +101,7 @@ const brandConfig = await getBrandConfig(goBackend);
       isContext={isContext}
       isStoryKeep={isStoryKeep}
       isEditable={isEditable}
-      menuId={menuId}
+      menu={menu}
     />
 
     <!-- Loading indicator -->
@@ -190,7 +190,7 @@ const brandConfig = await getBrandConfig(goBackend);
       slug={slug}
       brandConfig={brandConfig}
       isContext={isContext}
-      menuId={menuId}
+      menu={menu}
       created={created}
       backToTop={true}
     />
