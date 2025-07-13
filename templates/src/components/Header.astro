@@ -1,0 +1,265 @@
+---
+import Menu from './Menu';
+import { isAuthenticated, isAdmin, getUserRole } from '../utils/auth';
+
+export interface Props {
+  title: string;
+  slug: string;
+  brandConfig: any;
+  isContext?: boolean;
+  isStoryKeep?: boolean;
+  isEditable?: boolean;
+  menuId?: string | null;
+  impressions?: any[]; // TODO: Implement when backend ready
+}
+
+const {
+  title,
+  slug,
+  brandConfig,
+  isContext = false,
+  isStoryKeep = false,
+  isEditable = false,
+  menuId,
+  impressions = [], // TODO: Remove when backend implemented
+} = Astro.props;
+
+const isHome = slug === brandConfig?.HOME_SLUG;
+
+// Environment-aware brand asset paths (same as login.astro)
+const isDev = import.meta.env.DEV;
+const brandBasePath = isDev ? '/brand' : '/media/brand';
+const logo =
+  brandConfig?.LOGO && brandConfig.LOGO !== ''
+    ? brandConfig.LOGO
+    : `${brandBasePath}/logo.svg`;
+const wordmark =
+  brandConfig?.WORDMARK && brandConfig.WORDMARK !== ''
+    ? brandConfig.WORDMARK
+    : `${brandBasePath}/wordmark.svg`;
+
+// Handle empty WORDMARK_MODE by defaulting to "default"
+const wordmarkMode =
+  brandConfig?.WORDMARK_MODE && brandConfig.WORDMARK_MODE !== ''
+    ? brandConfig.WORDMARK_MODE
+    : 'default';
+
+// Get menu data if menuId provided
+let menuPayload = null;
+if (menuId) {
+  try {
+    const goBackend =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    const menuResponse = await fetch(
+      `${goBackend}/api/v1/nodes/menus/${menuId}`
+    );
+    if (menuResponse.ok) {
+      menuPayload = await menuResponse.json();
+    }
+  } catch (error) {
+    console.error('Error fetching menu:', error);
+  }
+}
+
+// Auth status
+const authStatus = {
+  isAuthenticated: isAuthenticated(Astro),
+  isAdmin: isAdmin(Astro),
+  userRole: getUserRole(Astro),
+};
+---
+
+<header class="relative shadow-inner">
+  <!-- TOP ROW: Logo/Wordmark + Menu -->
+  <div
+    class="flex flex-row flex-nowrap items-center justify-between px-4 py-3 md:px-8"
+  >
+    <a href="/" title="Home page">
+      <div class="flex h-auto flex-row flex-nowrap items-center">
+        {
+          [`default`, `logo`].includes(wordmarkMode) ? (
+            <>
+              <img
+                src={logo}
+                alt="Logo"
+                class="pointer-events-none h-8 w-auto"
+              />
+              <span class="w-2" />
+            </>
+          ) : null
+        }
+        {
+          [`default`, `wordmark`].includes(wordmarkMode) ? (
+            <img
+              src={wordmark}
+              alt="Wordmark"
+              class="pointer-events-none h-14 w-auto max-w-48 md:max-w-72"
+            />
+          ) : null
+        }
+      </div>
+    </a>
+    {
+      !!menuPayload ? (
+        <Menu
+          payload={menuPayload}
+          slug={slug}
+          isContext={isContext}
+          brandConfig={brandConfig}
+          client:load
+        />
+      ) : null
+    }
+  </div>
+
+  <!-- BOTTOM ROW: Title + Action Icons -->
+  <div
+    class="bg-mywhite flex flex-row flex-nowrap justify-between px-4 pb-3 pt-4 shadow-inner md:px-8"
+  >
+    <h1 class="text-mydarkgrey truncate text-xl">{title}</h1>
+    <div class="flex flex-row flex-nowrap gap-x-2">
+      {/* Home Icon */}
+      {
+        !isHome ? (
+          <a
+            href="/"
+            class="text-myblue/80 hover:text-myblue hover:rotate-6"
+            title="Go to home page"
+          >
+            <svg
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+              />
+            </svg>
+          </a>
+        ) : null
+      }
+
+      {/* StoryKeep Dashboard Icon */}
+      {
+        slug !== `storykeep` && authStatus.isAdmin ? (
+          <a
+            href="/storykeep"
+            class="hover:text-myblue hover:rotate-6"
+            title="Your Story Keep Dashboard"
+          >
+            <svg
+              class="text-myblue/80 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 0 1-1.125-1.125v-3.75ZM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-8.25ZM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25A1.125 1.125 0 0 1 2.625 18.375v-2.25Z"
+              />
+            </svg>
+          </a>
+        ) : authStatus.isAdmin ? (
+          <a
+            href="/storykeep/settings"
+            class="hover:text-myblue hover:rotate-6"
+            title="Your Story Keep Settings"
+          >
+            <svg
+              class="text-myblue/80 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 13.5V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 010 3m0-3a1.5 1.5 0 000 3m0 9.75V10.5"
+              />
+            </svg>
+          </a>
+        ) : null
+      }
+
+      {/* Edit Icon */}
+      {
+        isEditable ? (
+          <a
+            data-astro-reload
+            href={!isContext ? `/${slug}/edit` : `/context/${slug}/edit`}
+            class="hover:text-myblue hover:rotate-6"
+            title="Modify this page"
+          >
+            <svg
+              class="text-myblue/80 h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 16a9.065 9.065 0 0 1-6.23-.693L5 14.5m14.8.8-.128 1.287a1.5 1.5 0 0 1-1.49 1.313H5.318c-.825 0-1.495-.532-1.49-1.313L4.956 15.5M5 14.5l1.57.393A9.065 9.065 0 0 0 12 16a9.065 9.065 0 0 0 6.23-.693"
+              />
+            </svg>
+          </a>
+        ) : null
+      }
+
+      {/* Remember Me Icon */}
+      <script>
+        function initRememberMe() {
+          const sessionId = localStorage.getItem('tractstack_session_id');
+          const consent = localStorage.getItem('tractstack_consent') === '1';
+          const hasProfile =
+            localStorage.getItem('tractstack_has_profile') === '1';
+
+          if (!sessionId) return;
+
+          const rememberMeContainer = document.getElementById(
+            'remember-me-container'
+          );
+          if (rememberMeContainer) {
+            const title =
+              consent || hasProfile
+                ? 'Configure your Session'
+                : 'Session and Profile options';
+            const iconSvg =
+              consent || hasProfile
+                ? '<svg class="h-6 w-6 text-myblue/80" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>'
+                : '<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.412 15.655 9.75 21.75l3.745-4.012M9.257 13.5H3.75l2.659-2.849m2.048-2.194L14.25 2.25 12 10.5h8.25l-7.9 8.196" /></svg>';
+
+            rememberMeContainer.innerHTML = `
+        <a href="/storykeep/profile" 
+           class="hover:text-myblue hover:rotate-6" 
+           title="${title}">
+          ${iconSvg}
+        </a>
+      `;
+          }
+        }
+
+        // Single event listener that handles DOMContentLoaded, view transitions, and HTMX
+        document.addEventListener('astro:page-load', initRememberMe);
+      </script>
+      <div id="remember-me-container"></div>
+
+      {/* Impressions placeholder */}
+      {
+        impressions?.length ? (
+          <div class="text-myblue/80 hover:text-myblue">
+            <span class="text-xs">📬 {impressions.length}</span>
+          </div>
+        ) : null
+      }
+    </div>
+  </div>
+</header>

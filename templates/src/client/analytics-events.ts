@@ -1,6 +1,6 @@
 import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '../constants';
 
-const VERBOSE = false;
+const VERBOSE = true;
 
 interface AnalyticsEvent {
   contentId: string;

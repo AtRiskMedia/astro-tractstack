@@ -4,7 +4,7 @@ import CodeHook from '@/custom/CodeHook.astro';
 import type { AuthStatus } from '@/types.ts';
 import { handleFailedResponse } from '@/utils/backend';
 
-const VERBOSE = false;
+const VERBOSE = true;
 const user = Astro.locals.user as AuthStatus;
 const tenantId = Astro.locals.tenant?.id || 'default';
 
@@ -114,14 +114,16 @@ if (VERBOSE) {
 }
 ---
 
-<Layout title={storyfragmentTitle}>
-  <div class="border-b bg-gray-100 p-4">
-    <h1 class="text-2xl font-bold">{storyfragmentTitle}</h1>
-    <p class="text-sm text-gray-600">
-      Header placeholder - slug: {lookup || 'home'}
-    </p>
-  </div>
-
+<Layout
+  title={storyfragmentTitle}
+  description={description}
+  slug={lookup}
+  menuId={storyData.menuId || null}
+  created={storyData.created}
+  isContext={false}
+  isStoryKeep={false}
+  isEditable={false}
+>
   <main id="main-content" class="min-h-screen w-full">
     <div class="panes-container">
       {
@@ -144,10 +146,6 @@ if (VERBOSE) {
       }
     </div>
   </main>
-
-  <div class="border-t bg-gray-100 p-4">
-    <p class="text-sm text-gray-600">Footer placeholder</p>
-  </div>
 </Layout>
 
 <script

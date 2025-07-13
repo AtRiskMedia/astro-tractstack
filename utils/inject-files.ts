@@ -16,6 +16,14 @@ export async function injectTemplateFiles(
       dest: 'src/constants.ts',
     },
     {
+      src: resolve('templates/src/stores/brand.ts'),
+      dest: 'src/stores/brand.ts',
+    },
+    {
+      src: resolve('templates/src/utils/actions.ts'),
+      dest: 'src/utils/actions.ts',
+    },
+    {
       src: resolve('templates/src/stores/analytics.ts'),
       dest: 'src/stores/analytics.ts',
     },
@@ -30,6 +38,18 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/pages/[...slug].astro'),
       dest: 'src/pages/[...slug].astro',
+    },
+    {
+      src: resolve('templates/src/components/Header.astro'),
+      dest: 'src/components/Header.astro',
+    },
+    {
+      src: resolve('templates/src/components/Footer.astro'),
+      dest: 'src/components/Footer.astro',
+    },
+    {
+      src: resolve('templates/src/components/Menu.tsx'),
+      dest: 'src/components/Menu.tsx',
     },
     {
       src: resolve('templates/src/pages/storykeep.astro'),
@@ -72,6 +92,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/pages/api/auth/decode.ts'),
       dest: 'src/pages/api/auth/decode.ts',
+    },
+    {
+      src: resolve('templates/src/components/profile/ProfileConsent.tsx'),
+      dest: 'src/components/profile/ProfileConsent.tsx',
     },
     {
       src: resolve('templates/src/components/profile/ProfileSwitch.tsx'),
@@ -261,6 +285,59 @@ export async function injectTemplateFiles(
           },
         ]
       : []),
+    // Social icons
+    {
+      src: resolve('templates/socials/codepen.svg'),
+      dest: 'public/socials/codepen.svg',
+    },
+    {
+      src: resolve('templates/socials/discord.svg'),
+      dest: 'public/socials/discord.svg',
+    },
+    {
+      src: resolve('templates/socials/facebook.svg'),
+      dest: 'public/socials/facebook.svg',
+    },
+    {
+      src: resolve('templates/socials/github.svg'),
+      dest: 'public/socials/github.svg',
+    },
+    {
+      src: resolve('templates/socials/instagram.svg'),
+      dest: 'public/socials/instagram.svg',
+    },
+    {
+      src: resolve('templates/socials/linkedin.svg'),
+      dest: 'public/socials/linkedin.svg',
+    },
+    {
+      src: resolve('templates/socials/mail.svg'),
+      dest: 'public/socials/mail.svg',
+    },
+    {
+      src: resolve('templates/socials/rumble.svg'),
+      dest: 'public/socials/rumble.svg',
+    },
+    {
+      src: resolve('templates/socials/tiktok.svg'),
+      dest: 'public/socials/tiktok.svg',
+    },
+    {
+      src: resolve('templates/socials/twitch.svg'),
+      dest: 'public/socials/twitch.svg',
+    },
+    {
+      src: resolve('templates/socials/twitter.svg'),
+      dest: 'public/socials/twitter.svg',
+    },
+    {
+      src: resolve('templates/socials/x.svg'),
+      dest: 'public/socials/x.svg',
+    },
+    {
+      src: resolve('templates/socials/youtube.svg'),
+      dest: 'public/socials/youtube.svg',
+    },
   ];
 
   for (const file of templateFiles) {

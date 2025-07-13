@@ -3,17 +3,34 @@
 
 import { ClientRouter } from 'astro:transitions';
 import SessionInit from '@/components/auth/SessionInit.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import { getBrandConfig } from '@/stores/brand';
 
 export interface Props {
   title: string;
   description?: string;
   storykeep?: boolean;
+  // Header/Footer props
+  slug?: string;
+  menuId?: string | null;
+  created?: string;
+  isContext?: boolean;
+  isStoryKeep?: boolean;
+  isEditable?: boolean;
 }
 
 const {
   title,
   description = 'TractStack dynamic website',
   storykeep = false,
+  // Header/Footer props
+  slug = '',
+  menuId = null,
+  created,
+  isContext = false,
+  isStoryKeep = false,
+  isEditable = false,
 } = Astro.props;
 
 // Get context from middleware
@@ -39,6 +56,9 @@ const mainStylesUrl = storykeep
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
+
+// Get cached brand config (server-side cache)
+const brandConfig = await getBrandConfig(goBackend);
 ---
 
 <!doctype html>
@@ -74,6 +94,16 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
   </head>
 
   <body class="font-main w-full">
+    <Header
+      title={title}
+      slug={slug}
+      brandConfig={brandConfig}
+      isContext={isContext}
+      isStoryKeep={isStoryKeep}
+      isEditable={isEditable}
+      menuId={menuId}
+    />
+
     <!-- Loading indicator -->
     <div
       id="loading-indicator"
@@ -155,5 +185,14 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
       <SessionInit />
       <slot />
     </div>
+
+    <Footer
+      slug={slug}
+      brandConfig={brandConfig}
+      isContext={isContext}
+      menuId={menuId}
+      created={created}
+      backToTop={true}
+    />
   </body>
 </html>

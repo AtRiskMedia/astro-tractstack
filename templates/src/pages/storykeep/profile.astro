@@ -4,29 +4,24 @@
 
 import Layout from '@/layouts/Layout.astro';
 import { ProfileSwitch } from '@/components/profile/ProfileSwitch';
+import { ProfileConsent } from '@/components/profile/ProfileConsent';
 
 const config = {
   title: 'Configure your Session',
   description: 'Manage your TractStack profile and session preferences',
 };
-
-const gtag = import.meta.env.PUBLIC_GTAG || false;
 ---
 
-<Layout title={config.title} description={config.description}>
-  <header class="bg-white shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between py-6">
-        <div class="flex items-center">
-          <h1 class="text-2xl font-bold text-gray-900">{config.title}</h1>
-        </div>
-        <nav class="flex space-x-4">
-          <a href="/" class="text-gray-500 hover:text-gray-900">Home</a>
-        </nav>
-      </div>
-    </div>
-  </header>
-
+<Layout
+  title={config.title}
+  description={config.description}
+  slug="profile"
+  menuId={null}
+  created={null}
+  isContext={false}
+  isStoryKeep={false}
+  isEditable={false}
+>
   <main id="main-content">
     <div class="px-6 py-24 font-sans text-xl">
       <div class="mx-auto max-w-3xl">
@@ -53,6 +48,7 @@ const gtag = import.meta.env.PUBLIC_GTAG || false;
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
                 <path
                   stroke-linecap="round"
@@ -64,99 +60,38 @@ const gtag = import.meta.env.PUBLIC_GTAG || false;
             </span>
           </h3>
 
-          <!-- Consent Toggle (simplified for v2.0) -->
+          <!-- Consent Toggle using Ark UI -->
           <div class="py-4">
-            <label class="flex items-center">
-              <input
-                type="checkbox"
-                id="consent-toggle"
-                class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-blue-500"
-              />
-              <span class="ml-2 text-sm text-gray-700"
-                >Remember my preferences</span
-              >
-            </label>
+            <ProfileConsent client:load />
           </div>
 
           <!-- Profile Switch Component -->
-          <ProfileSwitch client:load />
+          <div class="pt-6">
+            <ProfileSwitch client:load />
+          </div>
 
-          {
-            gtag && (
-              <p class="pt-12 text-gray-600">
-                <em>This site uses Google Analytics.</em> Please refer to
-                <a
-                  class="text-blue-600 underline hover:text-black"
-                  href="https://policies.google.com/technologies/partner-sites"
-                  target="_blank"
-                >
-                  Google privacy policy
-                </a>
-                .
-              </p>
-            )
-          }
-        </div>
-
-        <div class="pt-6 text-center text-2xl md:text-3xl">
-          <a
-            href="/"
-            class="rounded-lg bg-black px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1 hover:bg-orange-500"
-          >
-            Close
-          </a>
+          <div class="pt-8 text-sm text-gray-600">
+            <p class="pb-4">
+              By enabling session memory, Tract Stack can provide a personalized
+              reading experience. This includes:
+            </p>
+            <ul class="space-y-2 pl-6 text-base">
+              <li class="list-disc">
+                Remembering your reading progress and preferences
+              </li>
+              <li class="list-disc">
+                Showing content tailored to your interests
+              </li>
+              <li class="list-disc">Maintaining your session across visits</li>
+            </ul>
+            <p class="pt-4 text-xs">
+              All data is stored locally in your browser. No personal
+              information is transmitted to external servers without your
+              explicit consent.
+            </p>
+          </div>
         </div>
       </div>
     </div>
   </main>
-
-  <footer class="border-t bg-gray-50">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div class="text-center text-sm text-gray-500">
-        <p>
-          Powered by <a
-            href="https://tractstack.org"
-            class="text-blue-600 hover:text-blue-800">Tract Stack</a
-          >
-        </p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Initialize TractStack -->
-  <script>
-    import { ProfileStorage } from '../../utils/profileStorage';
-
-    // Initialize consent toggle
-    const consentToggle = document.getElementById(
-      'consent-toggle'
-    ) as HTMLInputElement;
-    if (consentToggle) {
-      // Set initial state from storage
-      const currentConsent = ProfileStorage.getConsent();
-      consentToggle.checked = currentConsent === '1';
-
-      // Handle consent changes
-      consentToggle.addEventListener('change', (e) => {
-        const target = e.target as HTMLInputElement;
-        if (target.checked) {
-          ProfileStorage.storeConsent('1');
-        } else {
-          ProfileStorage.storeConsent('0');
-          // Clear all localStorage when consent is removed
-          ProfileStorage.clearSession();
-        }
-
-        // Trigger ProfileSwitch re-render by reloading
-        window.location.reload();
-      });
-    }
-
-    // Global debug helper
-    window.tractStackProfile = {
-      storage: ProfileStorage,
-      debug: () => ProfileStorage.debugProfile(),
-      clear: () => ProfileStorage.clearSession(),
-    };
-  </script>
 </Layout>
