@@ -18,8 +18,8 @@ export interface TractStackEvent {
 
 function getConfig() {
   return {
-    goBackend: process.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
-    tenantId: process.env.PUBLIC_TENANTID || 'default',
+    goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
+    tenantId: import.meta.env.PUBLIC_TENANTID || 'default',
   };
 }
 
@@ -131,6 +131,22 @@ export class TractStackAPI {
 
   setTenantId(tenantId: string): void {
     this.tenantId = tenantId;
+  }
+
+  async getContentMapWithTimestamp(
+    lastUpdated?: number
+  ): Promise<APIResponse<{ data: any[]; lastUpdated: number }>> {
+    let endpoint = 'api/v1/content/full-map';
+    if (lastUpdated) {
+      endpoint += `?lastUpdated=${lastUpdated}`;
+    }
+
+    // Use the raw request method to get the full response
+    const response = await this.request(endpoint);
+
+    // For this endpoint, the backend returns {data: [...], lastUpdated: 123} directly
+    // So response.data IS the {data: [...], lastUpdated: 123} object
+    return response as APIResponse<{ data: any[]; lastUpdated: number }>;
   }
 }
 

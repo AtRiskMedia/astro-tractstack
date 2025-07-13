@@ -82,7 +82,7 @@ export interface TractStackEvent {
 // Fragment component props
 export interface FragmentProps
   extends BaseComponentProps,
-    Partial<HTMXAttributes> {
+  Partial<HTMXAttributes> {
   /** Fragment ID */
   fragmentId?: string;
 
@@ -134,3 +134,32 @@ export interface MenuNode {
   theme: string;
   optionsPayload: MenuLink[];
 }
+
+export interface FullContentMapItem {
+  id: string;
+  title: string;
+  slug: string;
+  type: string;
+  // Epinet specific
+  promoted?: boolean;
+  // Menu specific  
+  theme?: string;
+  // Resource specific
+  categorySlug?: string;
+  // Pane specific
+  isContext?: boolean;
+  // StoryFragment specific
+  parentId?: string;
+  parentTitle?: string;
+  parentSlug?: string;
+  panes?: string[];
+  socialImagePath?: string;
+  thumbSrc?: string;
+  thumbSrcSet?: string;
+  description?: string;
+  topics?: string[];
+  changed?: string;
+  // Belief specific
+  scale?: string;
+}
+

@@ -458,17 +458,26 @@ const EpinetTableView = ({
                         title={`${item.hourlyTotal} events (${(item.relativeToMax * 100).toFixed(1)}% of busiest hour)`}
                       />
                     </div>
-                    <button
+                    <div
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent accordion toggle
                         focusOnThisHour(item.hourKey);
                       }}
-                      className="flex items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800 transition-colors duration-200 hover:bg-orange-200"
+                      className="flex cursor-pointer items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800 transition-colors duration-200 hover:bg-orange-200"
                       title="Focus analytics dashboard on this hour's user journeys"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          focusOnThisHour(item.hourKey);
+                        }
+                      }}
                     >
                       <MagnifyingGlassIcon className="mr-1 h-3 w-3" />
                       Journeys this Hour
-                    </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-grow items-center">

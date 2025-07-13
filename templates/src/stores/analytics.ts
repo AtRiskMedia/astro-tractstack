@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+import { TractStackAPI } from '../utils/api';
 
 export const epinetCustomFilters = atom<{
   enabled: boolean;
@@ -27,3 +28,35 @@ export const epinetCustomFilters = atom<{
   userCounts: [],
   hourlyNodeActivity: {},
 });
+
+export const fullContentMapStore = atom<{
+  data: any[];
+  lastUpdated: number;
+} | null>(null);
+
+export async function getFullContentMap(): Promise<any[]> {
+  const cached = fullContentMapStore.get();
+  const api = new TractStackAPI();
+
+  try {
+    const response = await api.getContentMapWithTimestamp(cached?.lastUpdated);
+
+    if (response.success && response.data) {
+      // response.data will be {data: [...], lastUpdated: 123}
+      fullContentMapStore.set({
+        data: response.data.data,
+        lastUpdated: response.data.lastUpdated,
+      });
+      return response.data.data;
+    } else {
+      const errorMsg = response.error || '';
+      if (errorMsg.includes('304')) {
+        return cached?.data || [];
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch content map:', error);
+  }
+
+  return cached?.data || [];
+}

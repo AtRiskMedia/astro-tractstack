@@ -20,9 +20,7 @@ export interface Props {
 const { target, options } = Astro.props;
 
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const contentMap = await fetch(`${goBackend}/api/v1/content/full-map`).then(
-  (r) => r.json()
-);
+const contentMap = Astro.locals.fullContentMap || [];
 const dashboardData = await fetch(
   `${goBackend}/api/v1/analytics/dashboard?duration=weekly`
 ).then((r) => r.json());
