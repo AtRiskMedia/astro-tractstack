@@ -4,7 +4,7 @@ import CodeHook from '@/custom/CodeHook.astro';
 import type { AuthStatus } from '@/types.ts';
 import { handleFailedResponse } from '@/utils/backend';
 
-const VERBOSE = true;
+const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
 const tenantId = Astro.locals.tenant?.id || 'default';
 
@@ -170,6 +170,11 @@ if (VERBOSE) {
       TENANT_ID,
     });
 
+  // Make these globally available
+  window.BACKEND_URL = BACKEND_URL;
+  window.STORYFRAGMENT_ID = STORYFRAGMENT_ID;
+  window.TENANT_ID = TENANT_ID;
+
   let sessionId = '';
   let eventSource = null;
   let sseReconnectAttempts = 0;
@@ -201,7 +206,10 @@ if (VERBOSE) {
       if (VERBOSE) console.log('🔵 INIT: SSE setup complete');
 
       if (VERBOSE) console.log('🔵 INIT: Initializing analytics tracking');
-      window.initAnalyticsTracking(storyfragmentId);
+      // Initialize analytics tracking for this page
+      if (window.initAnalyticsTracking) {
+        window.initAnalyticsTracking(storyfragmentId);
+      }
     } catch (error) {
       console.error('🔴 INIT ERROR:', error);
     }
@@ -256,14 +264,15 @@ if (VERBOSE) {
     if (VERBOSE)
       console.log('📋 HTMX: Found', paneContainers.length, 'pane containers');
 
-    paneContainers.forEach((container, index) => {
-      const paneId = container.getAttribute('data-pane-id');
-      const headers = JSON.stringify({
-        'X-TractStack-Session-ID': sessionId,
-        'X-StoryFragment-ID': STORYFRAGMENT_ID,
-        'X-Tenant-ID': TENANT_ID,
-      });
-      container.setAttribute('hx-headers', headers);
+    paneContainers.forEach((container) => {
+      container.setAttribute(
+        'hx-headers',
+        JSON.stringify({
+          'X-Tenant-ID': tenantId,
+          'X-StoryFragment-ID': storyfragmentId,
+          'X-TractStack-Session-ID': sessionId || '',
+        })
+      );
     });
 
     if (VERBOSE) console.log('📋 HTMX: Headers update complete');
@@ -272,19 +281,13 @@ if (VERBOSE) {
   function setupSSEConnection() {
     if (VERBOSE) console.log('🔌 SSE: Setting up connection');
 
-    // Clear any pending reconnect timeout
-    if (reconnectTimeout) {
-      if (VERBOSE) console.log('🔌 SSE: Clearing existing reconnect timeout');
-      clearTimeout(reconnectTimeout);
-      reconnectTimeout = null;
-    }
-
+    // Close existing connection if any
     if (eventSource) {
-      if (VERBOSE) console.log('🔌 SSE: Closing existing connection');
       eventSource.close();
+      eventSource = null;
     }
 
-    const sseUrl = `${BACKEND_URL}/api/v1/auth/sse?storyfragment=${STORYFRAGMENT_ID}&sessionId=${sessionId}`;
+    const sseUrl = `${goBackend}/api/v1/auth/sse?storyfragment=${storyfragmentId}&sessionId=${sessionId}`;
     if (VERBOSE) console.log('🔌 SSE: Creating EventSource with URL:', sseUrl);
 
     eventSource = new EventSource(sseUrl);
@@ -293,21 +296,63 @@ if (VERBOSE) {
       if (VERBOSE)
         console.log(
           '✅ SSE: Connection opened for storyfragment:',
-          STORYFRAGMENT_ID
+          storyfragmentId
         );
       if (VERBOSE) console.log('✅ SSE: Open event details:', event);
-      // Reset retry counter on successful connection
+
+      // Reset reconnect attempts on successful connection
       sseReconnectAttempts = 0;
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
     };
 
+    eventSource.addEventListener('connected', function (event) {
+      if (VERBOSE) console.log('🔗 SSE: Connected event received');
+      if (VERBOSE) console.log('🔗 SSE: Event data:', event.data);
+
+      try {
+        const data = JSON.parse(event.data);
+        if (VERBOSE)
+          console.log(
+            '🔗 SSE: Connected - Session:',
+            data.sessionId,
+            'Tenant:',
+            data.tenantId,
+            'Storyfragment:',
+            data.storyfragmentId
+          );
+      } catch (parseError) {
+        console.error('🔴 SSE: Error parsing connected event:', parseError);
+      }
+    });
+
+    eventSource.addEventListener('heartbeat', function (event) {
+      if (VERBOSE) console.log('💓 SSE: Heartbeat received');
+
+      try {
+        const data = JSON.parse(event.data);
+        if (VERBOSE)
+          console.log(
+            '💓 SSE: Heartbeat - Session:',
+            data.sessionId,
+            'Tenant:',
+            data.tenantId
+          );
+      } catch (parseError) {
+        console.error('🔴 SSE: Error parsing heartbeat:', parseError);
+      }
+    });
+
     eventSource.addEventListener('panes_updated', function (event) {
-      if (VERBOSE) console.log('📨 SSE: === PANES_UPDATED EVENT RECEIVED ===');
+      if (VERBOSE) console.log('📨 SSE: === PANES_UPDATED EVENT ===');
       if (VERBOSE) console.log('📨 SSE: Raw event data:', event.data);
 
       try {
         const data = JSON.parse(event.data);
+
         if (VERBOSE) {
-          console.log('📨 SSE: Parsed data:', data);
           console.log('📨 SSE: Current storyfragment:', STORYFRAGMENT_ID);
           console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
           console.log('📨 SSE: Affected panes:', data.affectedPanes);
@@ -488,87 +533,25 @@ if (VERBOSE) {
             const allPanes = document.querySelectorAll('[data-pane-id]');
             allPanes.forEach((el) => {
               console.log(
-                `  - ${el.getAttribute('data-pane-id')}: ${el.tagName}#${el.id || 'no-id'}.${el.className}`
+                `  - ${el.getAttribute('data-pane-id')} (${el.tagName})`
               );
             });
           }
         }
       };
 
-      // Start checking immediately
+      // Start the check and scroll process
       checkAndScroll();
     }
 
-    eventSource.addEventListener('connected', function (event) {
-      if (VERBOSE) {
-        console.log('🔗 SSE: Connected event received');
-        console.log('🔗 SSE: Event data:', event.data);
-      }
-
-      try {
-        const data = JSON.parse(event.data);
-        if (VERBOSE)
-          console.log(
-            '🔗 SSE: Connected - Session:',
-            data.sessionId,
-            'Tenant:',
-            data.tenantId,
-            'Storyfragment:',
-            data.storyfragmentId
-          );
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing connected event:', parseError);
-      }
-    });
-
-    eventSource.addEventListener('heartbeat', function (event) {
-      if (VERBOSE) console.log('💓 SSE: Heartbeat received');
-
-      try {
-        const data = JSON.parse(event.data);
-        if (VERBOSE)
-          console.log(
-            '💓 SSE: Heartbeat - Session:',
-            data.sessionId,
-            'Tenant:',
-            data.tenantId
-          );
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing heartbeat:', parseError);
-      }
-    });
-
-    eventSource.addEventListener('timeout', function (event) {
-      if (VERBOSE) console.log('⏰ SSE: Timeout event received');
-
-      try {
-        const data = JSON.parse(event.data);
-        if (data.reason === 'max_duration' && data.action === 'reconnect') {
-          if (VERBOSE)
-            console.log(
-              '⏰ SSE: Connection reached 30-minute limit, reconnecting immediately...'
-            );
-          eventSource.close(); // Close current connection
-          setupSSEConnection(); // Immediate reconnect
-        } else if (data.reason === 'inactivity') {
-          if (VERBOSE)
-            console.log('⏰ SSE: Connection closed due to inactivity');
-          // Could show user a message about inactivity
-        }
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing timeout event:', parseError);
-      }
-    });
-
     eventSource.onerror = function (event) {
-      if (VERBOSE) console.error('🔴 SSE: Error event received:', event);
+      console.error('🔴 SSE: Connection error:', event);
 
-      eventSource.close();
       sseReconnectAttempts++;
 
-      if (sseReconnectAttempts >= 5) {
+      if (sseReconnectAttempts > maxReconnectAttempts) {
         console.error(
-          '🔴 SSE: Backend appears unavailable after 5 attempts. Redirecting to maintenance page...'
+          '🔴 SSE: Max reconnection attempts reached. Redirecting to maintenance page...'
         );
         const currentPath = window.location.pathname;
         window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
@@ -616,6 +599,15 @@ if (VERBOSE) {
       );
     initializeSessionAndSSE();
   }
+
+  // Set up analytics initialization on astro:page-load for return navigations
+  document.addEventListener('astro:page-load', () => {
+    if (VERBOSE)
+      console.log('🔄 ASTRO: page-load event fired, initializing analytics');
+    if (window.initAnalyticsTracking && window.STORYFRAGMENT_ID) {
+      window.initAnalyticsTracking(window.STORYFRAGMENT_ID);
+    }
+  });
 
   window.addEventListener('beforeunload', function () {
     if (VERBOSE) console.log('👋 SCRIPT: Page unloading, cleaning up');

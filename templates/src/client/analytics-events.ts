@@ -1,6 +1,6 @@
 import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '../constants';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 interface AnalyticsEvent {
   contentId: string;
@@ -21,6 +21,9 @@ let currentStoryfragmentId: string | null = null;
 // Initialization tracking to prevent duplicates
 let isInitialized = false;
 
+// Track if this is the very first initialization of the session
+let hasBeenInitializedBefore = false;
+
 // Intersection Observer instance for cleanup
 let globalObserver: IntersectionObserver | null = null;
 
@@ -31,8 +34,13 @@ export function initAnalyticsTracking(storyfragmentId?: string) {
     return;
   }
 
+  const isFirstTimeInit = !hasBeenInitializedBefore;
+
   if (VERBOSE) {
-    console.log('📊 ANALYTICS: Initializing tracking system');
+    console.log('📊 ANALYTICS: Initializing tracking system', {
+      isFirstTimeInit,
+      hasBeenInitializedBefore,
+    });
   }
 
   // Store the passed storyfragment ID
@@ -46,6 +54,7 @@ export function initAnalyticsTracking(storyfragmentId?: string) {
   }
 
   isInitialized = true;
+  hasBeenInitializedBefore = true;
 
   // Track ENTERED event on first page load
   trackEnteredEvent();
@@ -54,7 +63,7 @@ export function initAnalyticsTracking(storyfragmentId?: string) {
   trackPageViewedEvent();
 
   // Set up pane visibility tracking
-  initPaneVisibilityTracking();
+  initPaneVisibilityTracking(isFirstTimeInit);
 
   // Set up navigation integration for page transitions
   setupNavigationIntegration();
@@ -104,7 +113,7 @@ function trackPageViewedEvent() {
 }
 
 // Initialize pane visibility tracking using native Intersection Observer
-function initPaneVisibilityTracking() {
+function initPaneVisibilityTracking(isFirstTimeInit: boolean = true) {
   // Clean up existing observer
   if (globalObserver) {
     globalObserver.disconnect();
@@ -139,14 +148,22 @@ function initPaneVisibilityTracking() {
               );
             }
           } else if (wasInitiallyVisible) {
-            // Remove the flag now that we've processed the initial state
+            // Start tracking the initially visible pane
+            const startTime = Date.now();
+            paneViewTimes.set(paneId, startTime);
+
+            // Remove the flag now that we've processed it
             (entry.target as HTMLElement).removeAttribute(
               'data-was-initially-visible'
             );
 
             if (VERBOSE) {
               console.log(
-                `🚫 SKIP INITIAL: ${paneId} was already visible, skipping initial enter event`
+                `🟢 INITIAL VISIBLE: ${paneId} was visible on load, starting tracking at ${new Date(startTime).toISOString()}`
+              );
+              console.log(
+                `📊 TRACKING MAP: Now tracking ${paneViewTimes.size} panes:`,
+                Array.from(paneViewTimes.keys())
               );
             }
           } else if (wasAlreadyTracked) {
@@ -224,11 +241,11 @@ function initPaneVisibilityTracking() {
   );
 
   // Observe all current panes
-  observeAllPanes();
+  observeAllPanes(isFirstTimeInit);
 }
 
 // Find and observe pane elements using V2 DOM structure
-function observeAllPanes() {
+function observeAllPanes(isInitialSetup: boolean = true) {
   if (!globalObserver) return;
 
   // V2 uses [data-pane-id] attributes (confirmed from [...slug].astro analysis)
@@ -240,25 +257,36 @@ function observeAllPanes() {
   panes.forEach((pane) => {
     const paneId = getPaneIdFromElement(pane as HTMLElement);
     if (paneId) {
-      // Check if pane is already visible to prevent false entry events
-      const rect = pane.getBoundingClientRect();
-      const isCurrentlyVisible =
-        rect.top < window.innerHeight &&
-        rect.bottom > 0 &&
-        rect.left < window.innerWidth &&
-        rect.right > 0;
+      // Only skip already-visible panes on initial page setup, not after navigation
+      if (isInitialSetup) {
+        // Check if pane is already visible to prevent false entry events
+        const rect = pane.getBoundingClientRect();
+        const isCurrentlyVisible =
+          rect.top < window.innerHeight &&
+          rect.bottom > 0 &&
+          rect.left < window.innerWidth &&
+          rect.right > 0;
 
-      if (isCurrentlyVisible) {
-        // Mark as already visible to skip initial intersection event
-        (pane as HTMLElement).dataset.wasInitiallyVisible = 'true';
-        if (VERBOSE) {
-          console.log(
-            `👁️  ALREADY VISIBLE: Pane ${paneId} is already in viewport, will skip initial enter event`
-          );
+        if (isCurrentlyVisible) {
+          // Mark as already visible to skip initial intersection event
+          (pane as HTMLElement).dataset.wasInitiallyVisible = 'true';
+          if (VERBOSE) {
+            console.log(
+              `👁️  ALREADY VISIBLE: Pane ${paneId} is already in viewport, will skip initial enter event`
+            );
+          }
+        } else {
+          // Remove the flag if it exists
+          (pane as HTMLElement).removeAttribute('data-was-initially-visible');
         }
       } else {
-        // Remove the flag if it exists
+        // After navigation, always track panes regardless of visibility
         (pane as HTMLElement).removeAttribute('data-was-initially-visible');
+        if (VERBOSE) {
+          console.log(
+            `🔄 POST-NAV SETUP: Pane ${paneId} will be tracked regardless of current visibility`
+          );
+        }
       }
 
       globalObserver!.observe(pane);
@@ -269,40 +297,14 @@ function observeAllPanes() {
 
   if (VERBOSE) {
     console.log(
-      `🔍 OBSERVE SETUP: Found and observing ${observedCount} panes:`,
+      `🔍 OBSERVE SETUP: Found and observing ${observedCount} panes (${isInitialSetup ? 'initial' : 'post-navigation'}):`,
       paneIds
     );
   }
 }
 
-// Set up navigation integration for V2 page transitions
+// Set up navigation integration for page transitions
 function setupNavigationIntegration() {
-  // Before HTMX navigates away, flush pending events
-  document.addEventListener('htmx:beforeSwap', () => {
-    if (VERBOSE) {
-      console.log(
-        '🚀 HTMX BEFORE SWAP: Navigation starting, flushing pending events'
-      );
-      console.log(
-        `📊 PENDING PANES: ${paneViewTimes.size} panes still being tracked:`,
-        Array.from(paneViewTimes.keys())
-      );
-    }
-    flushPendingPaneEvents();
-  });
-
-  // After HTMX loads new content, re-observe panes (but don't re-initialize)
-  document.addEventListener('htmx:afterSwap', () => {
-    setTimeout(() => {
-      if (VERBOSE) {
-        console.log(
-          '🔄 HTMX AFTER SWAP: Re-observing panes after content swap'
-        );
-      }
-      observeAllPanes();
-    }, 100);
-  });
-
   // Handle Astro page transitions (these reload [...slug].astro completely)
   document.addEventListener('astro:before-preparation', () => {
     if (VERBOSE) {

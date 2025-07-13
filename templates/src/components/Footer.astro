@@ -111,23 +111,7 @@ const createdDate = created ? new Date(created) : new Date();
 <div class="h-6 w-full bg-gradient-to-b from-transparent to-white md:h-8"></div>
 <footer class="w-full bg-white">
   <div class="flex justify-end px-6">
-    {
-      backToTop ? (
-        <button
-          id="top"
-          title="Back to top"
-          class="motion-safe:animate-fadeInUp font-action border-mydarkgrey/20 hover:bg-myorange fixed bottom-4 rounded-md border-2 px-1.5 text-2xl font-bold text-black hover:text-white"
-          style={{
-            right: 'max(8px, calc(8px + env(safe-area-inset-right)))',
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(4px)',
-            zIndex: '10007',
-          }}
-        >
-          ↑
-        </button>
-      ) : null
-    }
+    {backToTop && <div id="back-to-top-container" />}
   </div>
   <div class="pb-6">
     {
@@ -216,11 +200,62 @@ const createdDate = created ? new Date(created) : new Date();
 </footer>
 
 <script>
-  // Back to top functionality
-  const topButton = document.getElementById('top');
-  if (topButton) {
-    topButton.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+  function createBackToTopButton() {
+    const container = document.getElementById('back-to-top-container');
+    if (!container) return;
+
+    let isVisible = false;
+    let ticking = false;
+
+    function toggleButton() {
+      const shouldShow = window.scrollY > 100;
+
+      if (shouldShow && !isVisible) {
+        isVisible = true;
+        container.innerHTML = `
+          <button
+            id="top"
+            title="Back to top"
+            class="motion-safe:animate-fadeInUp font-action border-mydarkgrey/20 hover:bg-myorange fixed bottom-4 rounded-md border-2 px-1.5 text-2xl font-bold text-black hover:text-white"
+            style="right:max(8px, calc(8px + env(safe-area-inset-right)));background:rgba(255, 255, 255, 0.8);backdrop-filter:blur(4px);z-index:10007"
+          >
+            ↑
+          </button>
+        `;
+
+        const topButton = document.getElementById('top');
+        if (topButton) {
+          topButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          });
+        }
+      } else if (!shouldShow && isVisible) {
+        isVisible = false;
+        container.innerHTML = '';
+      }
+    }
+
+    function requestTick() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          toggleButton();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    toggleButton();
+    window.addEventListener('scroll', requestTick, { passive: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createBackToTopButton);
+  } else {
+    createBackToTopButton();
   }
 </script>
+
