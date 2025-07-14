@@ -209,7 +209,7 @@ export default function StoryKeepDashboard_Analytics({
                 <button
                   onClick={onDownloadExcel}
                   disabled={isDownloading}
-                  className="inline-flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-xs font-medium text-white hover:bg-cyan-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-xs font-bold text-white hover:bg-cyan-700 disabled:opacity-50"
                 >
                   <ArrowDownTrayIcon className="h-3 w-3" />
                   {isDownloading ? 'Downloading...' : 'Download'}
@@ -238,7 +238,7 @@ export default function StoryKeepDashboard_Analytics({
 
       {/* Dashboard Activity Chart */}
       <div className="mb-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">
+        <h3 className="mb-4 text-lg font-bold text-gray-900">
           Activity Over Time
         </h3>
         {analytics.dashboard &&
@@ -268,7 +268,7 @@ export default function StoryKeepDashboard_Analytics({
 
       {/* User Journey Section */}
       <div className="mb-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-900">
+        <h3 className="mb-4 text-lg font-bold text-gray-900">
           User Journey Analytics
         </h3>
 

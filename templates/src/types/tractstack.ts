@@ -163,19 +163,109 @@ export interface FullContentMapItem {
   scale?: string;
 }
 
+// Complete BrandConfig interface for templates/src/types/tractstack.ts
+// This replaces the current partial BrandConfig interface
+
 export interface BrandConfig {
+  // Core site configuration
+  SITE_INIT: boolean;
+  WORDMARK_MODE: string;
+  OPEN_DEMO: boolean;
+  STYLES_VER: number;
+  HOME_SLUG: string;
+  TRACTSTACK_HOME_SLUG: string;
+  THEME: string; // e.g., "light-bold"
+
+  // Brand colors (comma-separated hex values)
+  BRAND_COLOURS: string; // e.g., "10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3"
+
+  // Social media links (pipe-separated format)
+  SOCIALS: string; // e.g., "github|https://github.com/user,twitter|https://twitter.com/user"
+
+  // Brand assets (file paths or base64 data)
   LOGO: string;
   WORDMARK: string;
-  WORDMARK_MODE: string;
-  FOOTER: string;
-  SOCIALS: string;
+  FAVICON: string;
+
+  // Site metadata
   SITE_URL: string;
   SLOGAN: string;
-  GTAG: string;
-  OGAUTHOR: string;
-  OGTITLE: string;
-  OGDESC: string;
+  FOOTER: string;
+
+  // Open Graph metadata
   OG: string;
   OGLOGO: string;
-  FAVICON: string;
+  OGTITLE: string;
+  OGAUTHOR: string;
+  OGDESC: string;
+  OG_VER: number;
+  OGLOGO_VER: number;
+
+  // Analytics
+  GTAG: string;
+}
+
+// Local state interface for form handling
+// Uses simplified types (arrays instead of CSV strings) for easier client-side manipulation
+export interface BrandConfigState {
+  // Core site configuration
+  siteInit: boolean;
+  wordmarkMode: string;
+  openDemo: boolean;
+  stylesVer: number;
+  homeSlug: string;
+  tractstackHomeSlug: string;
+  theme: string;
+
+  // Brand colors (as array for easier manipulation)
+  brandColours: string[]; // ["10120d", "fcfcfc", "f58333", "c8df8c", "293f58", "a7b1b7", "393d34", "e3e3e3"]
+
+  // Social media links (as array for easier manipulation)
+  socials: string[]; // ["github|https://github.com/user", "twitter|https://twitter.com/user"]
+
+  // Brand assets
+  logo: string;
+  wordmark: string;
+  favicon: string;
+
+  // Site metadata
+  siteUrl: string;
+  slogan: string;
+  footer: string;
+
+  // Open Graph metadata
+  og: string;
+  oglogo: string;
+  ogtitle: string;
+  ogauthor: string;
+  ogdesc: string;
+  ogVer: number;
+  oglogoVer: number;
+
+  // Analytics
+  gtag: string;
+}
+
+// Form validation types
+export interface FieldErrors {
+  [key: string]: string;
+}
+
+// Form state management types
+export interface FormStateConfig<T> {
+  initialData: T;
+  validator?: (state: T) => FieldErrors;
+  interceptor?: (newState: T, field: keyof T, value: any) => T;
+  onSave: (data: T) => void;
+}
+
+export interface FormStateReturn<T> {
+  state: T;
+  originalState: T;
+  updateField: (field: keyof T, value: any) => void;
+  save: () => void;
+  cancel: () => void;
+  isDirty: boolean;
+  isValid: boolean;
+  errors: FieldErrors;
 }

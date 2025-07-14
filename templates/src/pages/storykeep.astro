@@ -23,6 +23,14 @@ const title = 'Dashboard | StoryKeep';
 
 const fullContentMap = await getFullContentMap();
 const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
+
+// Get tab parameter from URL
+const urlPath = Astro.url.pathname + Astro.url.search;
+const tabMatch = urlPath.match(/\?(\w+)$/);
+const tabParam = tabMatch ? tabMatch[1] : null;
+const validTabs = ['analytics', 'content', 'branding', 'settings'];
+const initialTab =
+  tabParam && validTabs.includes(tabParam) ? tabParam : 'analytics';
 ---
 
 <Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
@@ -32,6 +40,7 @@ const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
         client:only="react"
         fullContentMap={fullContentMap}
         homeSlug={homeSlug}
+        initialTab={initialTab}
       />
     </div>
   </main>

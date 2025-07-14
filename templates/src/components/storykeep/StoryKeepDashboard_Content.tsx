@@ -187,14 +187,14 @@ const StoryKeepDashboard_Content = ({
       )}
 
       <div className="mb-6 space-y-4">
-        <div className="text-sm font-medium text-gray-700">
-          Show analytics for:
+        <div className="text-sm font-bold text-gray-700">
+          Showing events from:
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setStandardDuration(24)}
             className={classNames(
-              'rounded-md px-3 py-1 text-sm font-medium transition-colors',
+              'rounded-md px-3 py-1 text-sm font-bold transition-colors',
               currentPreset === '24h'
                 ? 'bg-cyan-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'
@@ -205,7 +205,7 @@ const StoryKeepDashboard_Content = ({
           <button
             onClick={() => setStandardDuration(7 * 24)}
             className={classNames(
-              'rounded-md px-3 py-1 text-sm font-medium transition-colors',
+              'rounded-md px-3 py-1 text-sm font-bold transition-colors',
               currentPreset === '7d'
                 ? 'bg-cyan-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'
@@ -216,7 +216,7 @@ const StoryKeepDashboard_Content = ({
           <button
             onClick={() => setStandardDuration(28 * 24)}
             className={classNames(
-              'rounded-md px-3 py-1 text-sm font-medium transition-colors',
+              'rounded-md px-3 py-1 text-sm font-bold transition-colors',
               currentPreset === '28d'
                 ? 'bg-cyan-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'

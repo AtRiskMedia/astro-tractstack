@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
-import type { FullContentMapItem } from 'templates/src/types/tractstack';
-
-// Import the analytics component
+import { brandConfigStore, getBrandConfig } from '../../stores/brand';
 import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
 import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
+import StoryKeepDashboard_Branding from './StoryKeepDashboard_Branding';
+import type { FullContentMapItem } from 'templates/src/types/tractstack';
 
-// Tab configuration
 interface Tab {
   id: string;
   name: string;
@@ -18,19 +17,22 @@ interface Tab {
 const tabs: Tab[] = [
   { id: 'analytics', name: 'Analytics', current: true },
   { id: 'content', name: 'Content', current: false },
+  { id: 'branding', name: 'Branding', current: false },
   { id: 'settings', name: 'Settings', current: false },
 ];
 
 export default function StoryKeepDashboard({
   fullContentMap,
   homeSlug,
+  initialTab = 'analytics',
 }: {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
+  initialTab?: string;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>('analytics');
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Use ref to track initialization state
   const isInitialized = useRef<boolean>(false);
@@ -58,6 +60,7 @@ export default function StoryKeepDashboard({
   });
 
   const $epinetCustomFilters = useStore(epinetCustomFilters);
+  const $brandConfig = useStore(brandConfigStore);
 
   // Get backend URL
   const goBackend =
@@ -190,7 +193,13 @@ export default function StoryKeepDashboard({
     goBackend,
   ]);
 
-  // CONSOLIDATED INITIALIZATION: Initialize filters once on mount
+  // Load brand config when branding tab is accessed
+  useEffect(() => {
+    if (activeTab === 'branding' && !$brandConfig) {
+      getBrandConfig(goBackend);
+    }
+  }, [activeTab, $brandConfig, goBackend]);
+
   useEffect(() => {
     if (!isInitialized.current && !isInitializing.current) {
       isInitializing.current = true;
@@ -274,6 +283,16 @@ export default function StoryKeepDashboard({
             homeSlug={homeSlug}
           />
         );
+      case 'branding':
+        return $brandConfig ? (
+          <StoryKeepDashboard_Branding brandConfig={$brandConfig} />
+        ) : (
+          <div className="rounded-lg bg-white p-8 text-center shadow">
+            <div className="text-lg text-gray-600">
+              Loading brand configuration...
+            </div>
+          </div>
+        );
       case 'settings':
         return (
           <div className="rounded-lg bg-white p-8 text-center shadow">
@@ -320,7 +339,7 @@ export default function StoryKeepDashboard({
                   activeTab === tab.id
                     ? 'border-cyan-500 text-cyan-600'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                  'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium'
+                  'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold'
                 )}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
               >

@@ -11,34 +11,133 @@ export async function injectTemplateFiles(
   logger.info('TractStack: injectTemplateFiles called');
 
   const templateFiles = [
+    // Core files
     {
       src: resolve('templates/src/constants.ts'),
       dest: 'src/constants.ts',
     },
     {
+      src: resolve('templates/src/types/tractstack.ts'),
+      dest: 'src/types/tractstack.ts',
+    },
+    {
+      src: resolve('templates/.gitignore'),
+      dest: '.gitignore',
+    },
+    {
+      src: resolve('templates/tailwind.config.cjs'),
+      dest: 'tailwind.config.cjs',
+    },
+
+    // Stores
+    {
       src: resolve('templates/src/stores/brand.ts'),
       dest: 'src/stores/brand.ts',
     },
     {
-      src: resolve('templates/src/utils/actions.ts'),
-      dest: 'src/utils/actions.ts',
-    },
-    {
       src: resolve('templates/src/stores/analytics.ts'),
       dest: 'src/stores/analytics.ts',
+    },
+
+    // Utils
+    {
+      src: resolve('templates/src/utils/actions.ts'),
+      dest: 'src/utils/actions.ts',
     },
     {
       src: resolve('templates/src/utils/backend.ts'),
       dest: 'src/utils/backend.ts',
     },
     {
+      src: resolve('templates/src/utils/api.ts'),
+      dest: 'src/utils/api.ts',
+    },
+    {
+      src: resolve('templates/src/utils/sessionSync.ts'),
+      dest: 'src/utils/sessionSync.ts',
+    },
+    {
+      src: resolve('templates/src/utils/auth.ts'),
+      dest: 'src/utils/auth.ts',
+    },
+    {
+      src: resolve('templates/src/utils/core/auth.ts'),
+      dest: 'src/utils/core/auth.ts',
+    },
+    {
+      src: resolve('templates/src/utils/helpers.ts'),
+      dest: 'src/utils/helpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/profileStorage.ts'),
+      dest: 'src/utils/profileStorage.ts',
+    },
+    {
+      src: resolve('templates/src/utils/fileHelpers.ts'),
+      dest: 'src/utils/fileHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/brandHelpers.ts'),
+      dest: 'src/utils/brandHelpers.ts',
+    },
+
+    // Layouts
+    {
       src: resolve('templates/src/layouts/Layout.astro'),
       dest: 'src/layouts/Layout.astro',
     },
+
+    // Pages
     {
       src: resolve('templates/src/pages/[...slug].astro'),
       dest: 'src/pages/[...slug].astro',
     },
+    {
+      src: resolve('templates/src/pages/storykeep.astro'),
+      dest: 'src/pages/storykeep.astro',
+    },
+    {
+      src: resolve('templates/src/pages/maint.astro'),
+      dest: 'src/pages/maint.astro',
+    },
+
+    // Auth pages
+    {
+      src: resolve('templates/src/pages/storykeep/login.astro'),
+      dest: 'src/pages/storykeep/login.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/logout.astro'),
+      dest: 'src/pages/storykeep/logout.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/profile.astro'),
+      dest: 'src/pages/storykeep/profile.astro',
+    },
+
+    // API routes
+    {
+      src: resolve('templates/src/pages/api/auth/visit.ts'),
+      dest: 'src/pages/api/auth/visit.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/profile.ts'),
+      dest: 'src/pages/api/auth/profile.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/decode.ts'),
+      dest: 'src/pages/api/auth/decode.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/login.ts'),
+      dest: 'src/pages/api/auth/login.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/auth/logout.ts'),
+      dest: 'src/pages/api/auth/logout.ts',
+    },
+
+    // Base components
     {
       src: resolve('templates/src/components/Header.astro'),
       dest: 'src/components/Header.astro',
@@ -52,47 +151,17 @@ export async function injectTemplateFiles(
       dest: 'src/components/Menu.tsx',
     },
     {
-      src: resolve('templates/src/pages/storykeep.astro'),
-      dest: 'src/pages/storykeep.astro',
-    },
-    {
-      src: resolve('templates/src/pages/maint.astro'),
-      dest: 'src/pages/maint.astro',
-    },
-    {
-      src: resolve('templates/src/pages/api/auth/visit.ts'),
-      dest: 'src/pages/api/auth/visit.ts',
-    },
-    {
       src: resolve('templates/src/components/Fragment.astro'),
       dest: 'src/components/Fragment.astro',
     },
+
+    // Auth components
     {
       src: resolve('templates/src/components/auth/SessionInit.astro'),
       dest: 'src/components/auth/SessionInit.astro',
     },
-    {
-      src: resolve('templates/src/utils/sessionSync.ts'),
-      dest: 'src/utils/sessionSync.ts',
-    },
-    {
-      src: resolve('templates/src/types/tractstack.ts'),
-      dest: 'src/types/tractstack.ts',
-    },
-    { src: resolve('templates/src/utils/api.ts'), dest: 'src/utils/api.ts' },
-    { src: resolve('templates/.gitignore'), dest: '.gitignore' },
-    {
-      src: resolve('templates/src/pages/storykeep/profile.astro'),
-      dest: 'src/pages/storykeep/profile.astro',
-    },
-    {
-      src: resolve('templates/src/pages/api/auth/profile.ts'),
-      dest: 'src/pages/api/auth/profile.ts',
-    },
-    {
-      src: resolve('templates/src/pages/api/auth/decode.ts'),
-      dest: 'src/pages/api/auth/decode.ts',
-    },
+
+    // Profile components
     {
       src: resolve('templates/src/components/profile/ProfileConsent.tsx'),
       dest: 'src/components/profile/ProfileConsent.tsx',
@@ -113,83 +182,98 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/components/profile/ProfileUnlock.tsx'),
       dest: 'src/components/profile/ProfileUnlock.tsx',
     },
+
+    // Form system
     {
-      src: resolve('templates/src/utils/profileStorage.ts'),
-      dest: 'src/utils/profileStorage.ts',
+      src: resolve('templates/src/hooks/useFormState.ts'),
+      dest: 'src/hooks/useFormState.ts',
     },
     {
-      src: resolve('templates/css/custom.css'),
-      dest: 'public/styles/custom.css',
+      src: resolve('templates/src/constants/brandThemes.ts'),
+      dest: 'src/constants/brandThemes.ts',
     },
     {
-      src: resolve('templates/css/frontend.css'),
-      dest: 'public/styles/frontend.css',
+      src: resolve('templates/src/types/formTypes.ts'),
+      dest: 'src/types/formTypes.ts',
+    },
+
+    // Atomic form components
+    {
+      src: resolve('templates/src/components/storykeep/form/StringInput.tsx'),
+      dest: 'src/components/storykeep/form/StringInput.tsx',
     },
     {
-      src: resolve('templates/css/storykeep.css'),
-      dest: 'public/styles/storykeep.css',
+      src: resolve(
+        'templates/src/components/storykeep/form/StringArrayInput.tsx'
+      ),
+      dest: 'src/components/storykeep/form/StringArrayInput.tsx',
     },
     {
-      src: resolve('templates/src/client/belief-events.ts'),
-      dest: 'src/client/belief-events.ts',
+      src: resolve('templates/src/components/storykeep/form/BooleanToggle.tsx'),
+      dest: 'src/components/storykeep/form/BooleanToggle.tsx',
     },
     {
-      src: resolve('templates/src/client/analytics-events.ts'),
-      dest: 'src/client/analytics-events.ts',
+      src: resolve('templates/src/components/storykeep/form/EnumSelect.tsx'),
+      dest: 'src/components/storykeep/form/EnumSelect.tsx',
     },
     {
-      src: resolve('templates/fonts/Inter-Black.woff2'),
-      dest: 'public/fonts/Inter-Black.woff2',
+      src: resolve('templates/src/components/storykeep/form/ColorPicker.tsx'),
+      dest: 'src/components/storykeep/form/ColorPicker.tsx',
     },
     {
-      src: resolve('templates/fonts/Inter-Bold.woff2'),
-      dest: 'public/fonts/Inter-Bold.woff2',
+      src: resolve('templates/src/components/storykeep/form/FileUpload.tsx'),
+      dest: 'src/components/storykeep/form/FileUpload.tsx',
     },
     {
-      src: resolve('templates/fonts/Inter-Regular.woff2'),
-      dest: 'public/fonts/Inter-Regular.woff2',
+      src: resolve('templates/src/components/storykeep/form/NumberInput.tsx'),
+      dest: 'src/components/storykeep/form/NumberInput.tsx',
+    },
+
+    // Brand form components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/UnsavedChangesBar.tsx'
+      ),
+      dest: 'src/components/storykeep/form/UnsavedChangesBar.tsx',
     },
     {
-      src: resolve('templates/tailwind.config.cjs'),
-      dest: 'tailwind.config.cjs',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/BrandColorsSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/BrandColorsSection.tsx',
     },
     {
-      src: resolve('templates/src/utils/auth.ts'),
-      dest: 'src/utils/auth.ts',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/BrandAssetsSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/BrandAssetsSection.tsx',
     },
     {
-      src: resolve('templates/src/utils/core/auth.ts'),
-      dest: 'src/utils/core/auth.ts',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/SiteConfigSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/SiteConfigSection.tsx',
     },
     {
-      src: resolve('templates/brand/logo.svg'),
-      dest: 'public/brand/logo.svg',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/SocialLinksSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/SocialLinksSection.tsx',
     },
     {
-      src: resolve('templates/brand/wordmark.svg'),
-      dest: 'public/brand/wordmark.svg',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/SEOSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/SEOSection.tsx',
     },
     {
-      src: resolve('templates/src/pages/storykeep/login.astro'),
-      dest: 'src/pages/storykeep/login.astro',
+      src: resolve(
+        'templates/src/components/storykeep/form/brand/FormActions.tsx'
+      ),
+      dest: 'src/components/storykeep/form/brand/FormActions.tsx',
     },
-    {
-      src: resolve('templates/src/pages/storykeep/logout.astro'),
-      dest: 'src/pages/storykeep/logout.astro',
-    },
-    {
-      src: resolve('templates/src/pages/api/auth/login.ts'),
-      dest: 'src/pages/api/auth/login.ts',
-    },
-    {
-      src: resolve('templates/src/pages/api/auth/logout.ts'),
-      dest: 'src/pages/api/auth/logout.ts',
-    },
-    {
-      src: resolve('templates/src/utils/helpers.ts'),
-      dest: 'src/utils/helpers.ts',
-    },
-    // Framework CodeHook components (always added)
+
+    // StoryKeep dashboard components
     {
       src: resolve('templates/src/components/storykeep/StoryKeepDashboard.tsx'),
       dest: 'src/components/storykeep/StoryKeepDashboard.tsx',
@@ -199,6 +283,12 @@ export async function injectTemplateFiles(
         'templates/src/components/storykeep/StoryKeepDashboard_Analytics.tsx'
       ),
       dest: 'src/components/storykeep/StoryKeepDashboard_Analytics.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/StoryKeepDashboard_Branding.tsx'
+      ),
+      dest: 'src/components/storykeep/StoryKeepDashboard_Branding.tsx',
     },
     {
       src: resolve(
@@ -220,6 +310,8 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
+
+    // CodeHooks components
     {
       src: resolve('templates/src/components/codehooks/EpinetWrapper.tsx'),
       dest: 'src/components/codehooks/EpinetWrapper.tsx',
@@ -252,51 +344,61 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
     },
+
+    // Widget components
     {
       src: resolve('templates/src/components/widgets/BunnyVideo.astro'),
       dest: 'src/components/widgets/BunnyVideo.astro',
     },
-    // Custom components (conditional)
+
+    // Client scripts
     {
-      src: resolve(
-        config?.includeExamples
-          ? 'templates/custom/with-examples/CodeHook.astro'
-          : 'templates/custom/minimal/CodeHook.astro'
-      ),
-      dest: 'src/custom/CodeHook.astro',
-      protected: true,
+      src: resolve('templates/src/client/belief-events.ts'),
+      dest: 'src/client/belief-events.ts',
     },
     {
-      src: resolve(
-        config?.includeExamples
-          ? 'templates/custom/with-examples/CustomRoutes.astro'
-          : 'templates/custom/minimal/CustomRoutes.astro'
-      ),
-      dest: 'src/custom/CustomRoutes.astro',
-      protected: true,
+      src: resolve('templates/src/client/analytics-events.ts'),
+      dest: 'src/client/analytics-events.ts',
     },
-    // Example components (only with examples)
-    ...(config?.includeExamples
-      ? [
-          {
-            src: resolve('templates/custom/with-examples/CustomHero.astro'),
-            dest: 'src/custom/CustomHero.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              'templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
-            protected: true,
-          },
-        ]
-      : []),
+
+    // Styles
+    {
+      src: resolve('templates/css/custom.css'),
+      dest: 'public/styles/custom.css',
+    },
+    {
+      src: resolve('templates/css/frontend.css'),
+      dest: 'public/styles/frontend.css',
+    },
+    {
+      src: resolve('templates/css/storykeep.css'),
+      dest: 'public/styles/storykeep.css',
+    },
+
+    // Fonts
+    {
+      src: resolve('templates/fonts/Inter-Black.woff2'),
+      dest: 'public/fonts/Inter-Black.woff2',
+    },
+    {
+      src: resolve('templates/fonts/Inter-Bold.woff2'),
+      dest: 'public/fonts/Inter-Bold.woff2',
+    },
+    {
+      src: resolve('templates/fonts/Inter-Regular.woff2'),
+      dest: 'public/fonts/Inter-Regular.woff2',
+    },
+
+    // Brand assets
+    {
+      src: resolve('templates/brand/logo.svg'),
+      dest: 'public/brand/logo.svg',
+    },
+    {
+      src: resolve('templates/brand/wordmark.svg'),
+      dest: 'public/brand/wordmark.svg',
+    },
+
     // Social icons
     {
       src: resolve('templates/socials/codepen.svg'),
@@ -350,6 +452,49 @@ export async function injectTemplateFiles(
       src: resolve('templates/socials/youtube.svg'),
       dest: 'public/socials/youtube.svg',
     },
+
+    // Custom components (conditional)
+    {
+      src: resolve(
+        config?.includeExamples
+          ? 'templates/custom/with-examples/CodeHook.astro'
+          : 'templates/custom/minimal/CodeHook.astro'
+      ),
+      dest: 'src/custom/CodeHook.astro',
+      protected: true,
+    },
+    {
+      src: resolve(
+        config?.includeExamples
+          ? 'templates/custom/with-examples/CustomRoutes.astro'
+          : 'templates/custom/minimal/CustomRoutes.astro'
+      ),
+      dest: 'src/custom/CustomRoutes.astro',
+      protected: true,
+    },
+
+    // Example components (only with examples)
+    ...(config?.includeExamples
+      ? [
+          {
+            src: resolve('templates/custom/with-examples/CustomHero.astro'),
+            dest: 'src/custom/CustomHero.astro',
+            protected: true,
+          },
+          {
+            src: resolve(
+              'templates/custom/with-examples/pages/Collections.astro'
+            ),
+            dest: 'src/custom/pages/Collections.astro',
+            protected: true,
+          },
+          {
+            src: resolve('templates/src/pages/collections/[param1].astro'),
+            dest: 'src/pages/collections/[param1].astro',
+            protected: true,
+          },
+        ]
+      : []),
   ];
 
   for (const file of templateFiles) {
