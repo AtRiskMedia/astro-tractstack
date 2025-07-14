@@ -82,7 +82,7 @@ export interface TractStackEvent {
 // Fragment component props
 export interface FragmentProps
   extends BaseComponentProps,
-  Partial<HTMXAttributes> {
+    Partial<HTMXAttributes> {
   /** Fragment ID */
   fragmentId?: string;
 
@@ -142,7 +142,7 @@ export interface FullContentMapItem {
   type: string;
   // Epinet specific
   promoted?: boolean;
-  // Menu specific  
+  // Menu specific
   theme?: string;
   // Resource specific
   categorySlug?: string;
@@ -162,4 +162,3 @@ export interface FullContentMapItem {
   // Belief specific
   scale?: string;
 }
-

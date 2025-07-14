@@ -4,6 +4,7 @@ import { epinetCustomFilters } from '../../stores/analytics';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
 import EpinetTableView from './EpinetTableView';
+import type { FullContentMapItem } from 'templates/src/types/tractstack';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -21,14 +22,6 @@ const ErrorBoundary = ({ children, fallback }: ErrorBoundaryProps) => {
 
   return <div onError={handleError}>{children}</div>;
 };
-
-interface FullContentMapItem {
-  id: string;
-  title: string;
-  slug: string;
-  type: string;
-  promoted?: boolean;
-}
 
 const EpinetWrapper = ({
   fullContentMap,

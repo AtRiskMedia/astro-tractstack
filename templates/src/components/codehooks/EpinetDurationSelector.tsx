@@ -302,7 +302,9 @@ const EpinetDurationSelector = () => {
       return;
     }
 
-    const startTimeUTC = new Date(nowUTC.getTime() - hoursBack * 60 * 60 * 1000);
+    const startTimeUTC = new Date(
+      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+    );
 
     // Set the store directly like setStandardDuration does
     epinetCustomFilters.set({
@@ -368,20 +370,22 @@ const EpinetDurationSelector = () => {
     const userInfo = needsApply
       ? localFilters.selectedUserId
         ? ` for individual user ${localFilters.selectedUserId}`
-        : ` for ${localFilters.visitorType === 'all'
-          ? 'all visitors'
-          : localFilters.visitorType === 'anonymous'
-            ? 'anonymous visitors'
-            : 'known leads'
-        }`
+        : ` for ${
+            localFilters.visitorType === 'all'
+              ? 'all visitors'
+              : localFilters.visitorType === 'anonymous'
+                ? 'anonymous visitors'
+                : 'known leads'
+          }`
       : $epinetCustomFilters.selectedUserId
         ? ` for individual user ${$epinetCustomFilters.selectedUserId}`
-        : ` for ${$epinetCustomFilters.visitorType === 'all'
-          ? 'all visitors'
-          : $epinetCustomFilters.visitorType === 'anonymous'
-            ? 'anonymous visitors'
-            : 'known leads'
-        }`;
+        : ` for ${
+            $epinetCustomFilters.visitorType === 'all'
+              ? 'all visitors'
+              : $epinetCustomFilters.visitorType === 'anonymous'
+                ? 'anonymous visitors'
+                : 'known leads'
+          }`;
 
     return baseMessage + userInfo;
   };
@@ -717,8 +721,9 @@ const EpinetDurationSelector = () => {
 
           {$epinetCustomFilters.enabled && (
             <div
-              className={`p-2 ${hasLocalChanges ? `bg-cyan-50` : `font-bold`
-                } rounded-md text-sm text-cyan-800`}
+              className={`p-2 ${
+                hasLocalChanges ? `bg-cyan-50` : `font-bold`
+              } rounded-md text-sm text-cyan-800`}
             >
               <p>{getFilterStatusMessage()}</p>
               {hasLocalChanges && (

@@ -6,13 +6,14 @@ import {
   type ReactNode,
 } from 'react';
 import { useStore } from '@nanostores/react';
+import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import DashboardActivity from './DashboardActivity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
 import EpinetTableView from '../codehooks/EpinetTableView';
-import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
+import type { FullContentMapItem } from 'templates/src/types/tractstack';
 
 interface Stat {
   name: string;
@@ -43,7 +44,14 @@ function formatNumber(num: number): string {
   return (num / 1000000).toFixed(2) + 'M';
 }
 
-export default function StoryKeepDashboard() {
+export default function StoryKeepDashboard(
+  {
+    fullContentMap,
+  }: {
+    fullContentMap: FullContentMapItem[];
+  }
+
+) {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
@@ -480,7 +488,7 @@ export default function StoryKeepDashboard() {
                     }}
                   />
                   <EpinetDurationSelector />
-                  <EpinetTableView fullContentMap={[]} />
+                  <EpinetTableView fullContentMap={fullContentMap} />
                 </div>
               </ErrorBoundary>
             ) : (

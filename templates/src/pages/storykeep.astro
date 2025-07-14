@@ -20,12 +20,14 @@ const menu = createStoryKeepMenu({
 });
 
 const title = 'Dashboard | StoryKeep';
+
+const contentMap = Astro.locals.fullContentMap || [];
 ---
 
 <Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
-      <StoryKeepDashboard client:only="react" />
+      <StoryKeepDashboard client:only="react" fullContentMap={contentMap} />
     </div>
   </main>
 </Layout>
