@@ -78,16 +78,6 @@ export function createStoryKeepMenu(params: {
 
   const links = [];
 
-  // Add Advanced Setup link for authenticated admins
-  if (isAuthenticated && isAdmin) {
-    links.unshift({
-      name: 'Advanced Setup',
-      description: 'Your Story Keep Settings',
-      featured: true,
-      actionLisp: '(goto (storykeep settings))',
-    });
-  }
-
   // Add Login link for unauthenticated users
   if (!isAuthenticated) {
     links.unshift({

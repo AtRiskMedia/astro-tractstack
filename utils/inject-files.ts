@@ -195,6 +195,18 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/StoryKeepDashboard.tsx',
     },
     {
+      src: resolve(
+        'templates/src/components/storykeep/StoryKeepDashboard_Analytics.tsx'
+      ),
+      dest: 'src/components/storykeep/StoryKeepDashboard_Analytics.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/StoryKeepDashboard_Content.tsx'
+      ),
+      dest: 'src/components/storykeep/StoryKeepDashboard_Content.tsx',
+    },
+    {
       src: resolve('templates/src/components/storykeep/DashboardActivity.tsx'),
       dest: 'src/components/storykeep/DashboardActivity.tsx',
     },

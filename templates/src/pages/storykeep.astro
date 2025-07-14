@@ -22,12 +22,17 @@ const menu = createStoryKeepMenu({
 const title = 'Dashboard | StoryKeep';
 
 const fullContentMap = await getFullContentMap();
+const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 ---
 
 <Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
-      <StoryKeepDashboard client:only="react" fullContentMap={fullContentMap} />
+      <StoryKeepDashboard
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+      />
     </div>
   </main>
 </Layout>

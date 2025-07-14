@@ -162,3 +162,20 @@ export interface FullContentMapItem {
   // Belief specific
   scale?: string;
 }
+
+export interface BrandConfig {
+  LOGO: string;
+  WORDMARK: string;
+  WORDMARK_MODE: string;
+  FOOTER: string;
+  SOCIALS: string;
+  SITE_URL: string;
+  SLOGAN: string;
+  GTAG: string;
+  OGAUTHOR: string;
+  OGTITLE: string;
+  OGDESC: string;
+  OG: string;
+  OGLOGO: string;
+  FAVICON: string;
+}

@@ -3,7 +3,7 @@ import Layout from '@/layouts/Layout.astro';
 import CodeHook from '@/custom/CodeHook.astro';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
-import type { AuthStatus } from '@/types.ts';
+import type { AuthStatus } from '@/types';
 
 const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
