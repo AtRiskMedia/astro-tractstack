@@ -1,6 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import PageViewStats from '@/components/storykeep/PageViewStats';
+import StoryKeepDashboard from '@/components/storykeep/StoryKeepDashboard';
 import { requireAdminOrEditor } from '@/utils/auth';
 import { isAuthenticated, isAdmin } from '@/utils/auth';
 import { createStoryKeepMenu } from '@/utils/helpers';
@@ -25,11 +25,7 @@ const title = 'Dashboard | StoryKeep';
 <Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
-      <h2 class="mb-4 text-xl font-semibold">Dashboard</h2>
-      <p class="text-gray-600">Welcome to the StoryKeep backend dashboard.</p>
-
-      <!-- Analytics Dashboard -->
-      <PageViewStats client:only="react" />
+      <StoryKeepDashboard client:only="react" />
     </div>
   </main>
 </Layout>
