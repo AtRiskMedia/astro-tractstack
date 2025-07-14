@@ -27,8 +27,29 @@ let hasBeenInitializedBefore = false;
 // Intersection Observer instance for cleanup
 let globalObserver: IntersectionObserver | null = null;
 
+function waitForSessionReady() {
+  if (VERBOSE) console.log('⏳ SESSION: Checking if session is ready');
+
+  return new Promise((resolve) => {
+    if (window.TRACTSTACK_CONFIG?.session?.isReady) {
+      if (VERBOSE) console.log('✅ SESSION: Already ready');
+      resolve(undefined);
+    } else {
+      if (VERBOSE) console.log('⏳ SESSION: Waiting for session-ready event');
+      window.addEventListener(
+        'tractstack:session-ready',
+        () => {
+          if (VERBOSE) console.log('✅ SESSION: Ready event received');
+          resolve(undefined);
+        },
+        { once: true }
+      );
+    }
+  });
+}
+
 // Initialize analytics tracking with storyfragment ID
-export function initAnalyticsTracking(storyfragmentId?: string) {
+export async function initAnalyticsTracking(storyfragmentId?: string) {
   if (isInitialized) {
     if (VERBOSE) console.log('📊 ANALYTICS: Already initialized, skipping');
     return;
@@ -56,17 +77,20 @@ export function initAnalyticsTracking(storyfragmentId?: string) {
   isInitialized = true;
   hasBeenInitializedBefore = true;
 
-  // Track ENTERED event on first page load
-  trackEnteredEvent();
-
-  // Track PAGEVIEWED on every page load
-  trackPageViewedEvent();
-
   // Set up pane visibility tracking
   initPaneVisibilityTracking(isFirstTimeInit);
 
   // Set up navigation integration for page transitions
   setupNavigationIntegration();
+
+  // Wait for session to be ready before tracking events
+  await waitForSessionReady();
+
+  // Track ENTERED event on first page load
+  trackEnteredEvent();
+
+  // Track PAGEVIEWED on every page load
+  trackPageViewedEvent();
 }
 
 // Track site entry (once per session) using localStorage state
@@ -224,12 +248,12 @@ function initPaneVisibilityTracking(isFirstTimeInit: boolean = true) {
                 );
               }
             }
-          } else {
-            if (VERBOSE) {
-              console.log(
-                `⚠️  PANE EXIT ERROR: ${paneId} exited but was not being tracked`
-              );
-            }
+            //} else {
+            //  if (VERBOSE) {
+            //    console.log(
+            //      `⚠️  PANE EXIT ERROR: ${paneId} exited but was not being tracked`
+            //    );
+            //  }
           }
         }
       });

@@ -21,12 +21,6 @@ export interface Props {
 
 const { target, options, fullContentMap } = Astro.props;
 
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const dashboardData = await fetch(
-  `${goBackend}/api/v1/analytics/dashboard?duration=monthly`
-).then((r) => r.json());
-const hotContent = dashboardData?.hot_content || [];
-
 export const components = {
   'custom-hero': true,
   'featured-content': true,
@@ -38,11 +32,7 @@ export const components = {
 
 {
   target === 'list-content' ? (
-    <ListContent
-      options={options}
-      contentMap={fullContentMap}
-      hotContent={hotContent}
-    />
+    <ListContent options={options} contentMap={fullContentMap} />
   ) : target === 'featured-content' ? (
     <FeaturedContent options={options} contentMap={fullContentMap} />
   ) : target === 'bunny-video' ? (

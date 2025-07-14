@@ -6,10 +6,9 @@ export interface Props {
     };
   };
   contentMap: any[];
-  hotContent?: Array<{ id: string; total_events: number; type?: string }>;
 }
 
-const { options, contentMap, hotContent = [] } = Astro.props;
+const { options, contentMap } = Astro.props;
 
 let parsedOptions;
 try {
@@ -23,6 +22,12 @@ try {
     pageSize: 10,
   };
 }
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const dashboardData = await fetch(
+  `${goBackend}/api/v1/analytics/dashboard?duration=monthly`
+).then((r) => r.json());
+const hotContent = dashboardData?.hot_content || [];
 
 const hasHotContent = hotContent && hotContent.length > 0;
 const defaultMode = !hasHotContent
