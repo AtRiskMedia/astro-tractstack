@@ -1,4 +1,10 @@
-import { useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
@@ -168,21 +174,24 @@ const EpinetWrapper = ({
   ]);
 
   // Handle filter preset changes
-  const handleFilterChange = useCallback((newValue: string) => {
-    const nowUTC = new Date();
-    const hoursBack: number =
-      newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
-    const startTimeUTC = new Date(
-      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
-    );
+  const handleFilterChange = useCallback(
+    (newValue: string) => {
+      const nowUTC = new Date();
+      const hoursBack: number =
+        newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
+      const startTimeUTC = new Date(
+        nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+      );
 
-    epinetCustomFilters.set({
-      ...$epinetCustomFilters,
-      enabled: true,
-      startTimeUTC: startTimeUTC.toISOString(),
-      endTimeUTC: nowUTC.toISOString(),
-    });
-  }, [$epinetCustomFilters]);
+      epinetCustomFilters.set({
+        ...$epinetCustomFilters,
+        enabled: true,
+        startTimeUTC: startTimeUTC.toISOString(),
+        endTimeUTC: nowUTC.toISOString(),
+      });
+    },
+    [$epinetCustomFilters]
+  );
 
   const fetchEpinetData = useCallback(async () => {
     if (!epinetId) return;
@@ -202,7 +211,10 @@ const EpinetWrapper = ({
       );
 
       // Convert UTC timestamps to hours-back integers (what backend expects)
-      if ($epinetCustomFilters.startTimeUTC && $epinetCustomFilters.endTimeUTC) {
+      if (
+        $epinetCustomFilters.startTimeUTC &&
+        $epinetCustomFilters.endTimeUTC
+      ) {
         const now = new Date();
         const startTime = new Date($epinetCustomFilters.startTimeUTC);
         const endTime = new Date($epinetCustomFilters.endTimeUTC);
@@ -418,7 +430,9 @@ const EpinetWrapper = ({
                 Updating...
               </div>
             )}
-            <SankeyDiagram data={{ nodes: epinet.nodes, links: epinet.links }} />
+            <SankeyDiagram
+              data={{ nodes: epinet.nodes, links: epinet.links }}
+            />
             <EpinetDurationSelector />
             <EpinetTableView fullContentMap={fullContentMap} />
           </div>
