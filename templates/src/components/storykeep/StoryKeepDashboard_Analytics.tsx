@@ -147,12 +147,12 @@ export default function StoryKeepDashboard_Analytics({
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         {stats.map((item) => {
           const period = item.period;
-          const firstTimeValue = analytics.leads?.[`first_time_${period}`] ?? 0;
+          const firstTimeValue = analytics.leads?.[`firstTime${period}`] ?? 0;
           const returningValue = analytics.leads?.[`returning_${period}`] ?? 0;
           const firstTimePercentage =
-            analytics.leads?.[`first_time_${period}_percentage`] ?? 0;
+            analytics.leads?.[`firstTime${period}Percentage`] ?? 0;
           const returningPercentage =
-            analytics.leads?.[`returning_${period}_percentage`] ?? 0;
+            analytics.leads?.[`returning_${period}Percentage`] ?? 0;
 
           return (
             <div
@@ -219,9 +219,9 @@ export default function StoryKeepDashboard_Analytics({
           </div>
           <dd className="mt-2">
             <div className="text-2xl font-bold tracking-tight text-cyan-700">
-              {analytics.leads?.total_leads === 0
+              {analytics.leads?.totalLeads === 0
                 ? '-'
-                : formatNumber(analytics.leads?.total_leads || 0)}
+                : formatNumber(analytics.leads?.totalLeads || 0)}
             </div>
             <div className="mt-1 text-sm text-gray-600">
               Registered leads (emails collected)
