@@ -1,8 +1,9 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import CodeHook from '@/custom/CodeHook.astro';
-import type { AuthStatus } from '@/types.ts';
 import { handleFailedResponse } from '@/utils/backend';
+import { getFullContentMap } from '@/stores/analytics';
+import type { AuthStatus } from '@/types.ts';
 
 const VERBOSE = false;
 const user = Astro.locals.user as AuthStatus;
@@ -101,6 +102,8 @@ if (!fragmentsData) {
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
+const fullContentMap = await getFullContentMap();
+
 const title = storyfragmentTitle;
 const description = storyData.description || 'Dynamic content from TractStack';
 
@@ -137,7 +140,11 @@ if (VERBOSE) {
             hx-swap="innerHTML"
           >
             {codeHookTargets[paneId] ? (
-              <CodeHook target={codeHookTargets[paneId]} paneId={paneId} />
+              <CodeHook
+                target={codeHookTargets[paneId]}
+                paneId={paneId}
+                fullContentMap={fullContentMap}
+              />
             ) : (
               <Fragment set:html={fragmentsData[paneId]} />
             )}

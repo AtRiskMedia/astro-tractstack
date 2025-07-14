@@ -1,9 +1,9 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import StoryKeepDashboard from '@/components/storykeep/StoryKeepDashboard';
-import { requireAdminOrEditor } from '@/utils/auth';
-import { isAuthenticated, isAdmin } from '@/utils/auth';
+import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { createStoryKeepMenu } from '@/utils/helpers';
+import { getFullContentMap } from '@/stores/analytics';
 
 // Check for privileged authentication - redirect if not authenticated
 const authCheck = requireAdminOrEditor(Astro);
@@ -21,13 +21,13 @@ const menu = createStoryKeepMenu({
 
 const title = 'Dashboard | StoryKeep';
 
-const contentMap = Astro.locals.fullContentMap || [];
+const fullContentMap = await getFullContentMap();
 ---
 
 <Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
-      <StoryKeepDashboard client:only="react" fullContentMap={contentMap} />
+      <StoryKeepDashboard client:only="react" fullContentMap={fullContentMap} />
     </div>
   </main>
 </Layout>

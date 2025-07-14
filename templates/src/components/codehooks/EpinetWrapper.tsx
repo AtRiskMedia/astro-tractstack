@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '../../stores/analytics';
+import { classNames } from '../../utils/helpers';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
 import EpinetTableView from './EpinetTableView';
@@ -115,6 +116,29 @@ const EpinetWrapper = ({
     });
   }, []);
 
+  // Detect current duration type from epinetCustomFilters (for UI helpers only)
+  const currentDurationHelper = useMemo(():
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'custom' => {
+    const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
+
+    if (startTimeUTC && endTimeUTC) {
+      const startTime = new Date(startTimeUTC);
+      const endTime = new Date(endTimeUTC);
+      const diffMs = endTime.getTime() - startTime.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+
+      if (Math.abs(diffHours - 24) <= 1) return 'daily';
+      if (Math.abs(diffHours - 168) <= 1) return 'weekly';
+      if (Math.abs(diffHours - 672) <= 1) return 'monthly';
+      return 'custom';
+    }
+
+    return 'weekly'; // default
+  }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
+
   // Fetch data when epinet ID is available
   useEffect(() => {
     if (epinetId) {
@@ -143,6 +167,23 @@ const EpinetWrapper = ({
     $epinetCustomFilters.endTimeUTC,
   ]);
 
+  // Handle filter preset changes
+  const handleFilterChange = useCallback((newValue: string) => {
+    const nowUTC = new Date();
+    const hoursBack: number =
+      newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
+    const startTimeUTC = new Date(
+      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+    );
+
+    epinetCustomFilters.set({
+      ...$epinetCustomFilters,
+      enabled: true,
+      startTimeUTC: startTimeUTC.toISOString(),
+      endTimeUTC: nowUTC.toISOString(),
+    });
+  }, [$epinetCustomFilters]);
+
   const fetchEpinetData = useCallback(async () => {
     if (!epinetId) return;
 
@@ -160,18 +201,29 @@ const EpinetWrapper = ({
         window.location.origin
       );
 
+      // Convert UTC timestamps to hours-back integers (what backend expects)
+      if ($epinetCustomFilters.startTimeUTC && $epinetCustomFilters.endTimeUTC) {
+        const now = new Date();
+        const startTime = new Date($epinetCustomFilters.startTimeUTC);
+        const endTime = new Date($epinetCustomFilters.endTimeUTC);
+
+        const startHour = Math.ceil(
+          (now.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+        );
+        const endHour = Math.floor(
+          (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
+        );
+
+        url.searchParams.append('startHour', startHour.toString());
+        url.searchParams.append('endHour', endHour.toString());
+      }
+
       url.searchParams.append(
         'visitorType',
         $epinetCustomFilters.visitorType || 'all'
       );
       if ($epinetCustomFilters.selectedUserId) {
         url.searchParams.append('userId', $epinetCustomFilters.selectedUserId);
-      }
-      if ($epinetCustomFilters.startTimeUTC) {
-        url.searchParams.append('startTime', $epinetCustomFilters.startTimeUTC);
-      }
-      if ($epinetCustomFilters.endTimeUTC) {
-        url.searchParams.append('endTime', $epinetCustomFilters.endTimeUTC);
       }
 
       const response = await fetch(url.toString(), {
@@ -320,27 +372,59 @@ const EpinetWrapper = ({
   }
 
   return (
-    <div className="epinet-wrapper rounded-lg bg-white p-4 shadow">
-      <ErrorBoundary
-        fallback={
-          <div className="rounded-lg bg-red-50 p-4 text-red-800">
-            Error rendering user flow diagram. Please check the data and try
-            again.
-          </div>
-        }
-      >
-        <div className="relative">
-          {(isLoading || status === 'loading' || status === 'refreshing') && (
-            <div className="absolute right-0 top-0 rounded bg-white px-2 py-1 text-xs text-gray-500 shadow-sm">
-              Updating...
+    <>
+      {/* Quick Filter Presets */}
+      <div className="mb-4 mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+        <span className="font-action font-bold text-gray-800">
+          Filter analytics:
+        </span>
+        {[
+          { label: '24 hours', value: 'daily' },
+          { label: '7 days', value: 'weekly' },
+          { label: '4 weeks', value: 'monthly' },
+        ].map((period) => (
+          <button
+            key={period.value}
+            onClick={() => handleFilterChange(period.value)}
+            className={classNames(
+              'rounded-full px-3 py-1 transition-all duration-200 ease-in-out',
+              currentDurationHelper === period.value
+                ? 'bg-cyan-600 font-bold text-white shadow-sm'
+                : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'
+            )}
+          >
+            {period.label}
+          </button>
+        ))}
+        {currentDurationHelper === 'custom' && (
+          <span className="px-3 py-1 text-sm italic text-gray-600">
+            Custom range active
+          </span>
+        )}
+      </div>
+
+      <div className="epinet-wrapper rounded-lg bg-white p-4 shadow">
+        <ErrorBoundary
+          fallback={
+            <div className="rounded-lg bg-red-50 p-4 text-red-800">
+              Error rendering user flow diagram. Please check the data and try
+              again.
             </div>
-          )}
-          <SankeyDiagram data={{ nodes: epinet.nodes, links: epinet.links }} />
-          <EpinetDurationSelector />
-          <EpinetTableView fullContentMap={fullContentMap} />
-        </div>
-      </ErrorBoundary>
-    </div>
+          }
+        >
+          <div className="relative">
+            {(isLoading || status === 'loading' || status === 'refreshing') && (
+              <div className="absolute right-0 top-0 rounded bg-white px-2 py-1 text-xs text-gray-500 shadow-sm">
+                Updating...
+              </div>
+            )}
+            <SankeyDiagram data={{ nodes: epinet.nodes, links: epinet.links }} />
+            <EpinetDurationSelector />
+            <EpinetTableView fullContentMap={fullContentMap} />
+          </div>
+        </ErrorBoundary>
+      </div>
+    </>
   );
 };
 

@@ -4,7 +4,6 @@ import SessionInit from '@/components/auth/SessionInit.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/stores/brand';
-import { getFullContentMap } from '@/stores/analytics';
 import type { MenuNode } from '@/types/tractstack';
 
 export interface Props {
@@ -58,9 +57,6 @@ const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
 
 // Get cached brand config (server-side cache)
 const brandConfig = await getBrandConfig(goBackend);
-
-const fullContentMap = await getFullContentMap();
-Astro.locals.fullContentMap = fullContentMap;
 ---
 
 <!doctype html>
