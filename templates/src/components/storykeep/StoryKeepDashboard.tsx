@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  type ReactNode,
-} from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
@@ -13,6 +6,7 @@ import type { FullContentMapItem } from 'templates/src/types/tractstack';
 
 // Import the analytics component
 import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
+import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
 
 // Tab configuration
 interface Tab {
@@ -24,14 +18,15 @@ interface Tab {
 const tabs: Tab[] = [
   { id: 'analytics', name: 'Analytics', current: true },
   { id: 'content', name: 'Content', current: false },
-  { id: 'users', name: 'Users', current: false },
   { id: 'settings', name: 'Settings', current: false },
 ];
 
 export default function StoryKeepDashboard({
   fullContentMap,
+  homeSlug,
 }: {
   fullContentMap: FullContentMapItem[];
+  homeSlug: string;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -273,25 +268,11 @@ export default function StoryKeepDashboard({
         );
       case 'content':
         return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Content Management
-            </h2>
-            <p className="mt-4 text-gray-600">
-              Content management features will be available here soon.
-            </p>
-          </div>
-        );
-      case 'users':
-        return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <h2 className="text-2xl font-bold text-gray-900">
-              User Management
-            </h2>
-            <p className="mt-4 text-gray-600">
-              User management features will be available here soon.
-            </p>
-          </div>
+          <StoryKeepDashboard_Content
+            analytics={analytics}
+            fullContentMap={fullContentMap}
+            homeSlug={homeSlug}
+          />
         );
       case 'settings':
         return (
@@ -330,7 +311,7 @@ export default function StoryKeepDashboard({
       {/* Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <nav className="-mb-px flex gap-x-4" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
