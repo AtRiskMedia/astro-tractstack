@@ -376,6 +376,21 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
 
+    // Orphan analysis system
+    {
+      src: resolve('templates/src/stores/orphanAnalysis.ts'),
+      dest: 'src/stores/orphanAnalysis.ts',
+    },
+    {
+      src: resolve('templates/src/pages/api/orphan-analysis.ts'),
+      dest: 'src/pages/api/orphan-analysis.ts',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/form/content/ContentSummary.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/form/content/ContentSummary.tsx',
+    },
     // CodeHooks components
     {
       src: resolve('templates/src/components/codehooks/EpinetWrapper.tsx'),

@@ -1,3 +1,10 @@
+import { useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import {
+  orphanAnalysisStore,
+  loadOrphanAnalysis,
+  countOrphans,
+} from '../../../../stores/orphanAnalysis';
 import type { FullContentMapItem } from '../../../../types/tractstack';
 
 interface ContentSummaryProps {
@@ -5,6 +12,12 @@ interface ContentSummaryProps {
 }
 
 const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
+  const orphanState = useStore(orphanAnalysisStore);
+
+  useEffect(() => {
+    loadOrphanAnalysis();
+  }, []);
+
   // Calculate content statistics from fullContentMap
   const contentStats = {
     storyfragments: fullContentMap.filter(
@@ -16,14 +29,16 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
     beliefs: fullContentMap.filter((item) => item.type === 'Belief').length,
     epinets: fullContentMap.filter((item) => item.type === 'Epinet').length,
     files: fullContentMap.filter((item) => item.type === 'File').length,
-    tractstacks: fullContentMap.filter((item) => item.type === 'TractStack')
-      .length,
   };
 
   const totalContent = Object.values(contentStats).reduce(
     (sum, count) => sum + count,
     0
   );
+
+  const orphanCount = countOrphans(orphanState.data);
+  const isOrphanDataLoading =
+    orphanState.isLoading || orphanState.data?.status === 'loading';
 
   return (
     <div className="space-y-6">
@@ -75,30 +90,11 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
             </div>
             <div className="text-sm text-gray-600">Files</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-600">
-              {contentStats.tractstacks}
-            </div>
-            <div className="text-sm text-gray-600">TractStacks</div>
-          </div>
         </div>
         <div className="mt-4 text-center">
           <div className="text-lg font-medium text-gray-900">
             Total Content Items: {totalContent}
           </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-semibold text-gray-900">
-          Recent Activity
-        </h2>
-        <div className="rounded-lg bg-gray-50 p-4 text-gray-600">
-          <p>Recent changes and activity tracking will be displayed here.</p>
-          <p className="mt-2 text-sm">
-            This feature requires change tracking implementation.
-          </p>
         </div>
       </div>
 
@@ -135,18 +131,29 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
         <h2 className="mb-4 text-xl font-semibold text-gray-900">
           System Health
         </h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Broken Relationships</span>
-            <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-              0 Found
-            </span>
-          </div>
+        <div className="flex flex-col gap-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-700">Orphaned Content</span>
-            <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-              0 Found
-            </span>
+            {isOrphanDataLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
+                <span className="text-sm text-gray-500">Analyzing...</span>
+              </div>
+            ) : orphanState.error ? (
+              <span className="text-sm text-gray-500">
+                Analysis unavailable
+              </span>
+            ) : (
+              <span
+                className={`rounded-full px-3 py-1 text-sm font-medium ${
+                  orphanCount === 0
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-amber-100 text-amber-800'
+                }`}
+              >
+                {orphanCount === 0 ? '0 Found' : `${orphanCount} Found`}
+              </span>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-gray-700">Cache Status</span>
