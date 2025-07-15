@@ -313,7 +313,31 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/brand/FormActions.tsx',
     },
-
+    // Manage Content
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ManageContent.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ManageContent.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ContentSummary.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ContentSummary.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/StoryFragmentTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/StoryFragmentTable.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ContentBrowser.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ContentBrowser.tsx',
+    },
     // StoryKeep dashboard components
     {
       src: resolve('templates/src/components/storykeep/StoryKeepDashboard.tsx'),
