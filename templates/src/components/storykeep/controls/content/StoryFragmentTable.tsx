@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import { classNames } from '../../../../utils/helpers';
+import { orphanAnalysisStore, loadOrphanAnalysis } from '../../../../stores/orphanAnalysis';
 import type { FullContentMapItem } from '../../../../types/tractstack';
 
 interface StoryFragmentTableProps {
@@ -14,8 +16,17 @@ const StoryFragmentTable = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [hoveredUsage, setHoveredUsage] = useState<string | null>(null);
 
   const itemsPerPage = 20;
+
+  // Subscribe to orphan analysis store
+  const orphanState = useStore(orphanAnalysisStore);
+
+  // Load orphan analysis on component mount
+  useEffect(() => {
+    loadOrphanAnalysis();
+  }, []);
 
   // Filter story fragments from fullContentMap
   const storyFragments = useMemo(() => {
@@ -42,6 +53,53 @@ const StoryFragmentTable = ({
     startIndex + itemsPerPage
   );
 
+  // Helper function to get usage information for a story fragment
+  const getUsageInfo = (storyFragmentId: string) => {
+    if (!orphanState.data || !orphanState.data.storyFragments) {
+      return { isUsed: false, usedBy: [] };
+    }
+
+    const dependencies = orphanState.data.storyFragments[storyFragmentId] || [];
+    return {
+      isUsed: dependencies.length > 0,
+      usedBy: dependencies,
+    };
+  };
+
+  // Helper function to check if item is home page
+  const isHomePage = (slug: string) => {
+    return slug === homeSlug;
+  };
+
+  // Helper function to determine if delete should be disabled
+  const shouldDisableDelete = (item: FullContentMapItem) => {
+    if (isHomePage(item.slug)) return true; // Home page can't be deleted
+
+    const usage = getUsageInfo(item.id);
+    return usage.isUsed; // In-use items can't be deleted
+  };
+
+  // Helper function to get delete button tooltip
+  const getDeleteTooltip = (item: FullContentMapItem) => {
+    if (isHomePage(item.slug)) {
+      return "Cannot delete the home page";
+    }
+
+    const usage = getUsageInfo(item.id);
+    if (usage.isUsed) {
+      return `Cannot delete - used by: ${usage.usedBy.join(', ')}`;
+    }
+
+    return undefined;
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   // Handle navigation
   const handleCreate = () => {
     window.location.href = '/create/edit';
@@ -65,66 +123,68 @@ const StoryFragmentTable = ({
       // TODO: Implement delete API call
       console.log('Deleting Story Fragment:', id);
       // await api.delete(`/api/v1/nodes/storyfragments/${id}`);
+
+      // After successful deletion, reload orphan analysis
+      // await loadOrphanAnalysis();
     } catch (error) {
-      console.error('Failed to delete Story Fragment:', error);
+      console.error('Error deleting story fragment:', error);
+      alert('Failed to delete story fragment. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page when searching
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Search and Create */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Story Fragments
-          </h2>
-          <p className="text-sm text-gray-600">
-            All web pages ({filteredFragments.length}{' '}
-            total)
-          </p>
+        <div className="flex-1 max-w-lg">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <svg
+                className="h-5 w-5 text-gray-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search story fragments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm placeholder-gray-500 focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
+            />
+          </div>
         </div>
         <button
           onClick={handleCreate}
-          disabled={isLoading}
-          className={classNames(
-            'rounded-md px-4 py-2 text-sm font-medium text-white',
-            isLoading
-              ? 'cursor-not-allowed bg-gray-400'
-              : 'bg-cyan-600 hover:bg-cyan-700'
-          )}
+          className="ml-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
         >
-          + Create Story Fragment
+          Create Story Fragment
         </button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="max-w-md flex-1">
-          <input
-            type="text"
-            placeholder="Search by title or slug..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-          />
-        </div>
+      {/* Results Count */}
+      <div className="text-sm text-gray-600">
+        {filteredFragments.length === storyFragments.length ? (
+          <>Showing {filteredFragments.length} story fragments</>
+        ) : (
+          <>
+            Showing {filteredFragments.length} of {storyFragments.length} story
+            fragments
+          </>
+        )}
       </div>
 
-      {/* Table */}
+      {/* Table or Empty State */}
       <div className="rounded-lg bg-white shadow">
-        {filteredFragments.length === 0 ? (
+        {paginatedFragments.length === 0 ? (
           <div className="p-8 text-center">
             {searchTerm ? (
               <>
@@ -142,8 +202,7 @@ const StoryFragmentTable = ({
                   No results found
                 </h3>
                 <p className="mt-2 text-gray-500">
-                  No story fragments match "{searchTerm}". Try a different
-                  search term.
+                  Try a different search term.
                 </p>
               </>
             ) : (
@@ -174,76 +233,183 @@ const StoryFragmentTable = ({
             )}
           </div>
         ) : (
-          <div className="overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Slug
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Status
                   </th>
-                  <th className="relative px-6 py-3">
+                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Usage
+                  </th>
+                  <th className="px-3 sm:px-6 py-3 text-right">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {paginatedFragments.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="flex items-center">
-                        <div>
+                {paginatedFragments.map((item) => {
+                  const usage = getUsageInfo(item.id);
+                  const canDelete = !shouldDisableDelete(item);
+                  const deleteTooltip = getDeleteTooltip(item);
+
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-3 sm:px-6 py-4">
+                        <div className="flex flex-col">
                           <div className="text-sm font-medium text-gray-900">
                             {item.title}
                           </div>
-                          {item.slug === homeSlug && (
+                          {isHomePage(item.slug) && (
                             <div className="text-xs font-medium text-cyan-600">
                               Home Page
                             </div>
                           )}
+                          {/* Show slug on mobile */}
+                          <div className="sm:hidden text-sm text-gray-500 mt-1">
+                            /{item.slug}
+                          </div>
+                          {/* Show status on mobile */}
+                          <div className="md:hidden mt-1">
+                            <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                              Published
+                            </span>
+                          </div>
+                          {/* Show usage on mobile */}
+                          <div className="md:hidden mt-1">
+                            {orphanState.isLoading ? (
+                              <div className="text-xs text-gray-400">Loading...</div>
+                            ) : usage.isUsed ? (
+                              <div
+                                className="relative"
+                                onMouseEnter={() => setHoveredUsage(item.id)}
+                                onMouseLeave={() => setHoveredUsage(null)}
+                              >
+                                <div className="flex items-center text-xs text-blue-600">
+                                  <svg
+                                    className="h-4 w-4 mr-1"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Used ({usage.usedBy.length})
+                                </div>
+                                {/* Tooltip for mobile */}
+                                {hoveredUsage === item.id && (
+                                  <div className="absolute z-10 bottom-full left-0 mb-2 w-48 sm:w-64 p-2 text-xs text-white bg-gray-900 rounded shadow-lg">
+                                    <div className="font-medium mb-1">Used by:</div>
+                                    <div className="space-y-1">
+                                      {usage.usedBy.map((dependency, index) => (
+                                        <div key={index} className="text-gray-300">
+                                          {dependency}
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-gray-400">Orphan</div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div className="text-sm text-gray-500">/{item.slug}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                        Published
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleView(item.slug)}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleEdit(item.slug)}
-                          className="text-cyan-600 hover:text-cyan-900"
-                        >
-                          Edit
-                        </button>
-                        {item.slug !== homeSlug && (
-                          <button
-                            onClick={() => handleDelete(item.id, item.title)}
-                            className="text-red-600 hover:text-red-900"
-                            disabled={isLoading}
+                      </td>
+                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4 text-sm text-gray-500">
+                        /{item.slug}
+                      </td>
+                      <td className="hidden md:table-cell px-3 sm:px-6 py-4">
+                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                          Published
+                        </span>
+                      </td>
+                      <td className="hidden md:table-cell px-3 sm:px-6 py-4">
+                        {orphanState.isLoading ? (
+                          <div className="text-xs text-gray-400">Loading...</div>
+                        ) : usage.isUsed ? (
+                          <div
+                            className="relative"
+                            onMouseEnter={() => setHoveredUsage(item.id)}
+                            onMouseLeave={() => setHoveredUsage(null)}
                           >
-                            Delete
-                          </button>
+                            <div className="flex items-center text-xs text-blue-600">
+                              <svg
+                                className="h-4 w-4 mr-1"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Used ({usage.usedBy.length})
+                            </div>
+                            {hoveredUsage === item.id && (
+                              <div className="absolute z-10 bottom-full left-0 mb-2 w-64 p-2 text-xs text-white bg-gray-900 rounded shadow-lg">
+                                <div className="font-medium mb-1">Used by:</div>
+                                <div className="space-y-1">
+                                  {usage.usedBy.map((dependency, index) => (
+                                    <div key={index} className="text-gray-300">
+                                      {dependency}
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400">Orphan</div>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-3 sm:px-6 py-4 text-right text-sm font-medium">
+                        <div className="flex justify-end gap-2 flex-wrap">
+                          <button
+                            onClick={() => handleView(item.slug)}
+                            className="text-gray-600 hover:text-gray-900"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEdit(item.slug)}
+                            className="text-cyan-600 hover:text-cyan-900"
+                          >
+                            Edit
+                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={() => canDelete && handleDelete(item.id, item.title)}
+                              disabled={!canDelete}
+                              title={deleteTooltip}
+                              className={classNames(
+                                canDelete
+                                  ? 'text-red-600 hover:text-red-900'
+                                  : 'text-gray-300 cursor-not-allowed',
+                                'transition-colors'
+                              )}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 
@@ -321,24 +487,23 @@ const StoryFragmentTable = ({
                           </svg>
                         </button>
 
-                        {/* Page Numbers */}
-                        {Array.from(
-                          { length: totalPages },
-                          (_, i) => i + 1
-                        ).map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={classNames(
-                              'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0',
-                              currentPage === page
-                                ? 'bg-cyan-600 text-white'
-                                : 'text-gray-900'
-                            )}
-                          >
-                            {page}
-                          </button>
-                        ))}
+                        {/* Page numbers */}
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                          (page) => (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={classNames(
+                                'relative inline-flex items-center px-4 py-2 text-sm font-semibold',
+                                page === currentPage
+                                  ? 'z-10 bg-cyan-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600'
+                                  : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                              )}
+                            >
+                              {page}
+                            </button>
+                          )
+                        )}
 
                         <button
                           onClick={() => handlePageChange(currentPage + 1)}

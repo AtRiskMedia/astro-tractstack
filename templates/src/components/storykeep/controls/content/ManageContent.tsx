@@ -127,7 +127,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
       <div className="mb-6">
         <div className="border-b border-gray-200">
           <nav
-            className="-mb-px flex flex-wrap gap-x-6"
+            className="flex flex-wrap gap-2"
             aria-label="Content management tabs"
           >
             {contentManagementTabs.map((tab) => (
@@ -136,9 +136,9 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
                 onClick={() => handleManageTabChange(tab.id)}
                 className={classNames(
                   activeTab === tab.id
-                    ? 'border-cyan-500 text-cyan-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                  'whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium'
+                    ? 'bg-cyan-100 text-cyan-700 border-cyan-500'
+                    : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200',
+                  'rounded-xl px-4 py-1.5 text-sm font-medium border-2 transition-colors duration-200'
                 )}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
               >
