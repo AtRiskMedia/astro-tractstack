@@ -27,8 +27,8 @@ export default function BrandAssetsSection({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Logo - SVG preferred for scalability */}
           <FileUpload
-            value={state.logo}
-            onChange={(value) => updateField('logo', value)}
+            value={state.logoBase64 || state.logo}
+            onChange={(value) => updateField('logoBase64', value)}
             label="Logo"
             allowedFormats={['svg', 'png', 'jpg', 'jpeg']}
             maxSizeKB={512}
@@ -39,8 +39,8 @@ export default function BrandAssetsSection({
 
           {/* Wordmark - SVG preferred for scalability */}
           <FileUpload
-            value={state.wordmark}
-            onChange={(value) => updateField('wordmark', value)}
+            value={state.wordmarkBase64 || state.wordmark}
+            onChange={(value) => updateField('wordmarkBase64', value)}
             label="Wordmark"
             allowedFormats={['svg', 'png', 'jpg', 'jpeg']}
             maxSizeKB={512}
@@ -53,8 +53,8 @@ export default function BrandAssetsSection({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Favicon - ICO or SVG only */}
           <FileUpload
-            value={state.favicon}
-            onChange={(value) => updateField('favicon', value)}
+            value={state.faviconBase64 || state.favicon}
+            onChange={(value) => updateField('faviconBase64', value)}
             label="Favicon"
             allowedFormats={['ico', 'svg']}
             maxSizeKB={100}
@@ -64,8 +64,8 @@ export default function BrandAssetsSection({
 
           {/* OG Logo - Auto-resized to 1200x630 */}
           <FileUpload
-            value={state.oglogo}
-            onChange={(value) => updateField('oglogo', value)}
+            value={state.oglogoBase64 || state.oglogo}
+            onChange={(value) => updateField('oglogoBase64', value)}
             label="Open Graph Logo"
             autoResize={{ width: 1200, height: 630 }}
             allowAnyImageWithWarning={true}

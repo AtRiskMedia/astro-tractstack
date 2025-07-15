@@ -36,8 +36,6 @@ export function convertToLocalState(
     ogdesc: brandConfig.OGDESC ?? '',
     gtag: brandConfig.GTAG ?? '',
     stylesVer: brandConfig.STYLES_VER ?? 1,
-    ogVer: brandConfig.OG_VER ?? 1,
-    oglogoVer: brandConfig.OGLOGO_VER ?? 1,
   };
 }
 
@@ -70,8 +68,6 @@ export function convertToBackendFormat(
     OGAUTHOR: localState.ogauthor,
     OGDESC: localState.ogdesc,
     GTAG: localState.gtag,
-    OG_VER: localState.ogVer,
-    OGLOGO_VER: localState.oglogoVer,
     LOGO_BASE64: localState.logoBase64,
     WORDMARK_BASE64: localState.wordmarkBase64,
     OG_BASE64: localState.ogBase64,
@@ -129,6 +125,9 @@ export function validateBrandConfig(state: BrandConfigState): FieldErrors {
   if (!state.slogan?.trim()) {
     errors.slogan = 'Site slogan is required';
   }
+  if (!state.footer?.trim()) {
+    errors.footer = 'Site footer is required';
+  }
 
   // Validate brand colors (must have exactly 8)
   if (!state.brandColours || state.brandColours.length !== 8) {
@@ -153,19 +152,6 @@ export function validateBrandConfig(state: BrandConfigState): FieldErrors {
     if (invalidSocials.length > 0) {
       errors.socials = 'Social links must be in format "platform|url"';
     }
-  }
-
-  // Validate version numbers are positive
-  if (state.stylesVer < 0) {
-    errors.stylesVer = 'Styles version must be non-negative';
-  }
-
-  if (state.ogVer < 0) {
-    errors.ogVer = 'OG version must be non-negative';
-  }
-
-  if (state.oglogoVer < 0) {
-    errors.oglogoVer = 'OG logo version must be non-negative';
   }
 
   return errors;

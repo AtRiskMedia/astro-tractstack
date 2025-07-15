@@ -44,8 +44,8 @@ export default function SEOSection({ formState }: SEOSectionProps) {
 
         {/* OG Image - Auto-resized to 1200x630 for optimal social sharing */}
         <FileUpload
-          value={state.og}
-          onChange={(value) => updateField('og', value)}
+          value={state.ogBase64 || state.og}
+          onChange={(value) => updateField('ogBase64', value)}
           label="Open Graph Image"
           autoResize={{ width: 1200, height: 630 }}
           allowAnyImageWithWarning={true}
@@ -67,28 +67,27 @@ export default function SEOSection({ formState }: SEOSectionProps) {
             >
               <path
                 fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                 clipRule="evenodd"
               />
             </svg>
           </div>
           <div className="ml-3">
-            <h4 className="text-sm font-bold text-green-800">
-              Open Graph Optimization
-            </h4>
+            <h3 className="text-sm font-medium text-green-800">
+              SEO Best Practices
+            </h3>
             <div className="mt-2 text-sm text-green-700">
-              <ul className="list-inside list-disc space-y-1">
+              <ul className="list-disc space-y-1 pl-5">
                 <li>
-                  <strong>Image:</strong> Automatically resized to 1200x630px
-                  for optimal social media display
+                  Keep titles under 60 characters for optimal display in search
+                  results
                 </li>
                 <li>
-                  <strong>Title:</strong> Keep under 60 characters for best
-                  display across platforms
+                  Descriptions should be 150-160 characters for best social
+                  sharing
                 </li>
                 <li>
-                  <strong>Description:</strong> Aim for 150-160 characters for
-                  optimal visibility
+                  Open Graph images work best at 1200x630 pixels (1.91:1 ratio)
                 </li>
               </ul>
             </div>

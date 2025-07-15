@@ -82,7 +82,7 @@ export interface TractStackEvent {
 // Fragment component props
 export interface FragmentProps
   extends BaseComponentProps,
-    Partial<HTMXAttributes> {
+  Partial<HTMXAttributes> {
   /** Fragment ID */
   fragmentId?: string;
 
@@ -188,8 +188,6 @@ export interface BrandConfig {
   OGTITLE: string;
   OGAUTHOR: string;
   OGDESC: string;
-  OG_VER: number;
-  OGLOGO_VER: number;
   LOGO_BASE64?: string;
   WORDMARK_BASE64?: string;
   OG_BASE64?: string;
@@ -222,8 +220,6 @@ export interface BrandConfigState {
   ogtitle: string;
   ogauthor: string;
   ogdesc: string;
-  ogVer: number;
-  oglogoVer: number;
   logoBase64?: string;
   wordmarkBase64?: string;
   ogBase64?: string;

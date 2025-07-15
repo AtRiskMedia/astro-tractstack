@@ -34,17 +34,43 @@ export default function StoryKeepDashboard_Branding({
         const originalBackendFormat = convertToBackendFormat(
           formState.originalState
         );
-
-        // Filter to only changed fields
+        // Backend-controlled fields that should not be sent
+        const backendControlledFields = new Set([
+          'STYLES_VER',
+          'LOGO',
+          'WORDMARK',
+          'FAVICON',
+          'OG',
+          'OGLOGO'
+        ]);
+        // Base64 upload fields - always include if they have content
+        const base64Fields = [
+          'LOGO_BASE64',
+          'WORDMARK_BASE64',
+          'OG_BASE64',
+          'OGLOGO_BASE64',
+          'FAVICON_BASE64'
+        ];
         const changedFields: Partial<BrandConfig> = {};
-
         Object.keys(backendFormat).forEach((key) => {
           const typedKey = key as keyof BrandConfig;
-          if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
-            (changedFields as any)[typedKey] = backendFormat[typedKey];
+          const value = backendFormat[typedKey];
+          if (backendControlledFields.has(key)) {
+            // Skip backend-controlled fields
+            return;
+          }
+          if (base64Fields.includes(key)) {
+            // Include Base64 fields if they have content
+            if (value && typeof value === 'string' && value.trim() !== '') {
+              (changedFields as any)[typedKey] = value;
+            }
+          } else {
+            // Include other fields if they changed
+            if (value !== originalBackendFormat[typedKey]) {
+              (changedFields as any)[typedKey] = value;
+            }
           }
         });
-
         // Only send if there are actual changes
         if (Object.keys(changedFields).length > 0) {
           await saveBrandConfig('', changedFields as BrandConfig);
