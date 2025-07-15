@@ -19,31 +19,30 @@ export default function SEOSection({ formState }: SEOSectionProps) {
       <h3 className="mb-4 text-lg font-bold text-gray-900">SEO & Open Graph</h3>
 
       <div className="space-y-6">
-        {/* OG Basic Info */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <StringInput
-            value={state.ogtitle}
-            onChange={(value) => updateField('ogtitle', value)}
-            label="Open Graph Title"
-            placeholder="Page title for social sharing"
-            error={errors.ogtitle}
-          />
+        <StringInput
+          value={state.ogtitle}
+          onChange={(value) => updateField('ogtitle', value)}
+          label="Open Graph Title"
+          placeholder="Page title for social sharing"
+          maxLength={142}
+          error={errors.ogtitle}
+        />
 
-          <StringInput
-            value={state.ogauthor}
-            onChange={(value) => updateField('ogauthor', value)}
-            label="Open Graph Author"
-            placeholder="Author name"
-            error={errors.ogauthor}
-          />
-        </div>
+        <StringInput
+          value={state.ogauthor}
+          onChange={(value) => updateField('ogauthor', value)}
+          label="Open Graph Author"
+          placeholder="Author name"
+          maxLength={142}
+          error={errors.ogauthor}
+        />
 
-        {/* OG Description */}
         <StringInput
           value={state.ogdesc}
           onChange={(value) => updateField('ogdesc', value)}
           label="Open Graph Description"
           placeholder="Description for social sharing"
+          maxLength={284}
           error={errors.ogdesc}
         />
 

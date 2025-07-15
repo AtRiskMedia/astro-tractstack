@@ -80,7 +80,11 @@ export default function UnsavedChangesBar<T>({
               type="button"
               onClick={save}
               disabled={!isValid}
-              className="rounded-md border border-transparent bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-amber-400 disabled:hover:bg-amber-400"
+              className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed ${
+                isValid
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-amber-400 opacity-50 hover:bg-amber-300'
+              }`}
             >
               {saveLabel}
             </button>

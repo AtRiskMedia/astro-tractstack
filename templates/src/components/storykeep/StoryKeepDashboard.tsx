@@ -317,16 +317,6 @@ export default function StoryKeepDashboard({
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="font-action text-3xl font-bold tracking-tight text-gray-900">
-          StoryKeep Dashboard
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Manage your content, users, and analytics in one place
-        </p>
-      </div>
-
       {/* Tab Navigation */}
       <div className="mb-8">
         <div className="border-b border-gray-200">

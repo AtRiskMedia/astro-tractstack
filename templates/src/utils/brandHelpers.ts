@@ -48,7 +48,7 @@ export function convertToLocalState(
     tractstackHomeSlug: brandConfig.TRACTSTACK_HOME_SLUG ?? 'tractstack',
     theme: brandConfig.THEME ?? 'Default',
     socials: brandConfig.SOCIALS
-      ? brandConfig.SOCIALS.split('|').filter((social) => social.trim())
+      ? brandConfig.SOCIALS.split(',').filter((social) => social.trim())
       : [],
     logo: brandConfig.LOGO ?? '',
     wordmark: brandConfig.WORDMARK ?? '',
@@ -84,7 +84,7 @@ export function convertToBackendFormat(
     HOME_SLUG: localState.homeSlug,
     TRACTSTACK_HOME_SLUG: localState.tractstackHomeSlug,
     THEME: localState.theme,
-    SOCIALS: localState.socials.join('|'),
+    SOCIALS: localState.socials.join(','),
     LOGO: localState.logo,
     WORDMARK: localState.wordmark,
     OG: localState.og,

@@ -10,6 +10,7 @@ interface StringInputProps {
   placeholder?: string;
   required?: boolean;
   type?: 'text' | 'email' | 'url' | 'password';
+  maxLength?: number;
   className?: string;
   id?: string; // Allow custom ID override
   name?: string; // Allow custom name override
@@ -26,6 +27,7 @@ const StringInput = forwardRef<HTMLInputElement, StringInputProps>(
       placeholder,
       required = false,
       type = 'text',
+      maxLength,
       className,
       id: customId,
       name: customName,
@@ -59,6 +61,7 @@ const StringInput = forwardRef<HTMLInputElement, StringInputProps>(
           disabled={disabled}
           placeholder={placeholder}
           required={required}
+          maxLength={maxLength}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
           className={classNames(

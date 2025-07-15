@@ -54,7 +54,7 @@ const EnumSelect = ({
         required={required}
         aria-required={required ? 'true' : undefined} // Explicitly indicate required state
         className={classNames(
-          'block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset',
+          'block w-fit min-w-48 rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset',
           error ? 'ring-red-300 focus:ring-red-500' : 'focus:ring-cyan-600',
           disabled ? 'cursor-not-allowed bg-gray-50 text-gray-500' : 'bg-white',
           'sm:text-sm sm:leading-6'
