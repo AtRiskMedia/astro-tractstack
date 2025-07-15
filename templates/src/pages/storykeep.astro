@@ -24,11 +24,14 @@ const title = 'Dashboard | StoryKeep';
 const fullContentMap = await getFullContentMap();
 const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 
-// Get tab parameter from URL
+// Enhanced tab parameter handling for the new navigation system
 const urlPath = Astro.url.pathname + Astro.url.search;
-const tabMatch = urlPath.match(/\?(\w+)$/);
+const tabMatch = urlPath.match(/[?&]tab=([^&]+)/);
 const tabParam = tabMatch ? tabMatch[1] : null;
+
+// Valid tabs from the actual project data
 const validTabs = ['analytics', 'content', 'branding', 'advanced'];
+// Determine initial tab with better fallback handling
 const initialTab =
   tabParam && validTabs.includes(tabParam) ? tabParam : 'analytics';
 ---

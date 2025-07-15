@@ -91,7 +91,7 @@ const StoryFragmentTable = ({
             Story Fragments
           </h2>
           <p className="text-sm text-gray-600">
-            Manage your story fragments and pages ({filteredFragments.length}{' '}
+            All web pages ({filteredFragments.length}{' '}
             total)
           </p>
         </div>

@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import { classNames } from '../../utils/helpers';
+import { navigationStore } from '../../stores/navigation';
+import {
+  handleContentSubtabChange,
+  restoreTabNavigation,
+} from '../../utils/navigationHelpers';
 import ContentBrowser from './controls/content/ContentBrowser';
 import ManageContent from './controls/content/ManageContent';
 import type { FullContentMapItem } from 'templates/src/types/tractstack';
@@ -38,6 +44,26 @@ const StoryKeepDashboard_Content = ({
   homeSlug,
 }: StoryKeepDashboardContentProps) => {
   const [activeContentTab, setActiveContentTab] = useState('webpages');
+  const [navigationRestored, setNavigationRestored] = useState(false);
+
+  // Subscribe to navigation store
+  const navigationState = useStore(navigationStore);
+
+  // Restore navigation state when component mounts or when returning to Content tab
+  useEffect(() => {
+    if (!navigationRestored) {
+      const contentNavigation = restoreTabNavigation('content');
+      if (contentNavigation) {
+        setActiveContentTab(contentNavigation.subtab);
+      }
+      setNavigationRestored(true);
+    }
+  }, [navigationRestored]);
+
+  // Enhanced content tab change with navigation tracking
+  const handleContentTabChange = (tabId: string) => {
+    handleContentSubtabChange(tabId as any, setActiveContentTab);
+  };
 
   const renderContentTabContent = () => {
     switch (activeContentTab) {
@@ -67,7 +93,7 @@ const StoryKeepDashboard_Content = ({
             {contentTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveContentTab(tab.id)}
+                onClick={() => handleContentTabChange(tab.id)}
                 className={classNames(
                   activeContentTab === tab.id
                     ? 'border-cyan-500 text-cyan-600'

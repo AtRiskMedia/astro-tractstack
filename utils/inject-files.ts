@@ -375,7 +375,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
-
     // Orphan analysis system
     {
       src: resolve('templates/src/stores/orphanAnalysis.ts'),
@@ -390,6 +389,15 @@ export async function injectTemplateFiles(
         'templates/src/components/storykeep/controls/form/content/ContentSummary.tsx'
       ),
       dest: 'src/components/storykeep/controls/form/content/ContentSummary.tsx',
+    },
+    // Navigation system files
+    {
+      src: resolve('templates/src/stores/navigation.ts'),
+      dest: 'src/stores/navigation.ts',
+    },
+    {
+      src: resolve('templates/src/utils/navigationHelpers.ts'),
+      dest: 'src/utils/navigationHelpers.ts',
     },
     // CodeHooks components
     {
@@ -556,24 +564,24 @@ export async function injectTemplateFiles(
     // Example components (only with examples)
     ...(config?.includeExamples
       ? [
-          {
-            src: resolve('templates/custom/with-examples/CustomHero.astro'),
-            dest: 'src/custom/CustomHero.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              'templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
-            protected: true,
-          },
-        ]
+        {
+          src: resolve('templates/custom/with-examples/CustomHero.astro'),
+          dest: 'src/custom/CustomHero.astro',
+          protected: true,
+        },
+        {
+          src: resolve(
+            'templates/custom/with-examples/pages/Collections.astro'
+          ),
+          dest: 'src/custom/pages/Collections.astro',
+          protected: true,
+        },
+        {
+          src: resolve('templates/src/pages/collections/[param1].astro'),
+          dest: 'src/pages/collections/[param1].astro',
+          protected: true,
+        },
+      ]
       : []),
   ];
 

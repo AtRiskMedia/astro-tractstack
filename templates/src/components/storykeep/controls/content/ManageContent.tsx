@@ -1,5 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import { classNames } from '../../../../utils/helpers';
+import { navigationStore } from '../../../../stores/navigation';
+import {
+  handleManageSubtabChange,
+  restoreTabNavigation,
+} from '../../../../utils/navigationHelpers';
 import ContentSummary from './ContentSummary';
 import StoryFragmentTable from './StoryFragmentTable';
 import type { FullContentMapItem } from '../../../../types/tractstack';
@@ -27,6 +33,29 @@ const contentManagementTabs: ContentManagementTab[] = [
 
 const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
   const [activeTab, setActiveTab] = useState('summary');
+  const [navigationRestored, setNavigationRestored] = useState(false);
+
+  // Subscribe to navigation store
+  const navigationState = useStore(navigationStore);
+
+  // Restore navigation state when component mounts (when entering Manage Content)
+  useEffect(() => {
+    if (!navigationRestored) {
+      const contentNavigation = restoreTabNavigation('content');
+      if (
+        contentNavigation &&
+        navigationState.tabPaths.content.subtab === 'manage'
+      ) {
+        setActiveTab(contentNavigation.manageSubtab);
+      }
+      setNavigationRestored(true);
+    }
+  }, [navigationRestored, navigationState.tabPaths.content.subtab]);
+
+  // Enhanced manage tab change with navigation tracking
+  const handleManageTabChange = (tabId: string) => {
+    handleManageSubtabChange(tabId as any, setActiveTab);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -104,7 +133,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
             {contentManagementTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleManageTabChange(tab.id)}
                 className={classNames(
                   activeTab === tab.id
                     ? 'border-cyan-500 text-cyan-600'

@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
 import { brandConfigStore, getBrandConfig } from '../../stores/brand';
+import { navigationActions } from '../../stores/navigation';
 import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
 import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
 import StoryKeepDashboard_Branding from './StoryKeepDashboard_Branding';
@@ -114,7 +115,7 @@ export default function StoryKeepDashboard({
     [$epinetCustomFilters]
   );
 
-  // Fetch all analytics data from V2 /analytics/all endpoint
+  // Fetch all analytics data from V2 /analytics/all endpoint - EXACTLY as original
   const fetchAllAnalytics = useCallback(async () => {
     try {
       setAnalytics((prev) => ({ ...prev, isLoading: true, status: 'loading' }));
@@ -194,16 +195,29 @@ export default function StoryKeepDashboard({
     goBackend,
   ]);
 
-  // Load brand config when branding tab is accessed
+  // Load brand config when branding tab is accessed - EXACTLY as original
   useEffect(() => {
     if (activeTab === 'branding' && !$brandConfig) {
       getBrandConfig(goBackend);
     }
   }, [activeTab, $brandConfig, goBackend]);
 
+  // EXACTLY as original initialization + URL restoration
   useEffect(() => {
     if (!isInitialized.current && !isInitializing.current) {
       isInitializing.current = true;
+
+      // Check URL for initial tab and update navigation store
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTab = Array.from(urlParams.keys())[0]; // Get first param key (analytics, content, etc.)
+        const validTabs = ['analytics', 'content', 'branding', 'advanced'];
+
+        if (urlTab && validTabs.includes(urlTab)) {
+          setActiveTab(urlTab);
+          navigationActions.setMainTab(urlTab as any, false);
+        }
+      }
 
       const nowUTC = new Date();
       const oneWeekAgoUTC = new Date(
@@ -225,7 +239,7 @@ export default function StoryKeepDashboard({
     }
   }, []);
 
-  // REACTIVE FETCH: Only fetch when filters change AFTER initialization
+  // REACTIVE FETCH: Only fetch when filters change AFTER initialization - EXACTLY as original
   useEffect(() => {
     const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
 
@@ -241,7 +255,7 @@ export default function StoryKeepDashboard({
     fetchAllAnalytics,
   ]);
 
-  // Download leads CSV (placeholder - adapt to V2 endpoint)
+  // Download leads CSV (placeholder - adapt to V2 endpoint) - EXACTLY as original
   const downloadLeadsCSV = async () => {
     if (isDownloading) return;
 
@@ -257,12 +271,22 @@ export default function StoryKeepDashboard({
     }
   };
 
-  // Handle tab switching
+  // Handle tab switching - ONLY CHANGE: Add URL update and navigation tracking
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
+
+    // Add URL update - preserve original ?content pattern
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.search = `?${tabId}`;
+      window.history.pushState({}, '', url.toString());
+    }
+
+    // Add navigation tracking
+    navigationActions.setMainTab(tabId as any, false);
   };
 
-  // Render placeholder content for other tabs
+  // Render placeholder content for other tabs - EXACTLY as original
   const renderTabContent = () => {
     switch (activeTab) {
       case 'analytics':
