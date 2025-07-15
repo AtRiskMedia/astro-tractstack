@@ -4,9 +4,8 @@ import {
   convertToBackendFormat,
   brandStateIntercept,
   validateBrandConfig,
-  type BrandConfigState,
 } from '../../utils/brandHelpers';
-import type { BrandConfig } from '../../types/tractstack';
+import { saveBrandConfig } from '../../stores/brand';
 import BrandColorsSection from './form/brand/BrandColorsSection';
 import BrandAssetsSection from './form/brand/BrandAssetsSection';
 import SiteConfigSection from './form/brand/SiteConfigSection';
@@ -14,6 +13,7 @@ import SocialLinksSection from './form/brand/SocialLinksSection';
 import SEOSection from './form/brand/SEOSection';
 import FormActions from './form/brand/FormActions';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
+import type { BrandConfig, BrandConfigState } from '../../types/tractstack';
 
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;
@@ -28,10 +28,30 @@ export default function StoryKeepDashboard_Branding({
     initialData: initialState,
     interceptor: brandStateIntercept,
     validator: validateBrandConfig,
-    onSave: (data) => {
-      const backendFormat = convertToBackendFormat(data);
-      console.log('Saving brand config:', backendFormat);
-      console.log('Local state before save:', data);
+    onSave: async (data) => {
+      try {
+        const backendFormat = convertToBackendFormat(data);
+        const originalBackendFormat = convertToBackendFormat(
+          formState.originalState
+        );
+
+        // Filter to only changed fields
+        const changedFields: Partial<BrandConfig> = {};
+
+        Object.keys(backendFormat).forEach((key) => {
+          const typedKey = key as keyof BrandConfig;
+          if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
+            (changedFields as any)[typedKey] = backendFormat[typedKey];
+          }
+        });
+
+        // Only send if there are actual changes
+        if (Object.keys(changedFields).length > 0) {
+          await saveBrandConfig('', changedFields as BrandConfig);
+        }
+      } catch (error) {
+        console.error('Failed to save brand config:', error);
+      }
     },
     unsavedChanges: {
       enableBrowserWarning: true,

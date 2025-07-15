@@ -1,6 +1,5 @@
 import StringInput from '../StringInput';
-import BooleanToggle from '../BooleanToggle';
-import type { BrandConfigState } from '../../../../utils/brandHelpers';
+import type { BrandConfigState } from '../../../../types/tractstack';
 import type { FormStateReturn } from '../../../../hooks/useFormState';
 
 interface SiteConfigSectionProps {

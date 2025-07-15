@@ -1,33 +1,6 @@
-import type { BrandConfig } from '../types/tractstack';
 import { getThemeColors, isCustomTheme } from '../constants/brandThemes';
 import type { FieldErrors } from '../hooks/useFormState';
-
-// Local state type for simplified client-side handling
-export interface BrandConfigState {
-  siteInit: boolean;
-  wordmarkMode: string;
-  brandColours: string[]; // Split into array for easy editing
-  openDemo: boolean;
-  stylesVer: number;
-  homeSlug: string;
-  tractstackHomeSlug: string;
-  theme: string;
-  socials: string[]; // Split into array for easy editing
-  logo: string;
-  wordmark: string;
-  og: string;
-  oglogo: string;
-  favicon: string;
-  siteUrl: string;
-  slogan: string;
-  footer: string;
-  ogtitle: string;
-  ogauthor: string;
-  ogdesc: string;
-  gtag: string;
-  ogVer: number;
-  oglogoVer: number;
-}
+import type { BrandConfig, BrandConfigState } from '../types/tractstack';
 
 /**
  * Convert backend BrandConfig to local state format
@@ -99,6 +72,11 @@ export function convertToBackendFormat(
     GTAG: localState.gtag,
     OG_VER: localState.ogVer,
     OGLOGO_VER: localState.oglogoVer,
+    LOGO_BASE64: localState.logoBase64,
+    WORDMARK_BASE64: localState.wordmarkBase64,
+    OG_BASE64: localState.ogBase64,
+    OGLOGO_BASE64: localState.oglogoBase64,
+    FAVICON_BASE64: localState.faviconBase64,
   };
 }
 

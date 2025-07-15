@@ -1,10 +1,6 @@
-// Enhanced SEOSection with Open Graph image auto-resize
-// File: templates/src/components/storykeep/form/brand/SEOSection.tsx
-
 import StringInput from '../StringInput';
 import FileUpload from '../FileUpload';
-import NumberInput from '../NumberInput';
-import type { BrandConfigState } from '../../../../utils/brandHelpers';
+import type { BrandConfigState } from '../../../../types/tractstack';
 import type { FormStateReturn } from '../../../../hooks/useFormState';
 
 interface SEOSectionProps {

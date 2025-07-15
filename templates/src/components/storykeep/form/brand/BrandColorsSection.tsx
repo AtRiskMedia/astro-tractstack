@@ -1,7 +1,7 @@
 import EnumSelect from '../EnumSelect';
 import ColorPicker from '../ColorPicker';
 import { THEME_OPTIONS } from '../../../../constants/brandThemes';
-import type { BrandConfigState } from '../../../../utils/brandHelpers';
+import type { BrandConfigState } from '../../../../types/tractstack';
 import type { FormStateReturn } from '../../../../hooks/useFormState';
 
 interface BrandColorsSectionProps {

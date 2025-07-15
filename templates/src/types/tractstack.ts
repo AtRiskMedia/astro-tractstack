@@ -175,24 +175,14 @@ export interface BrandConfig {
   HOME_SLUG: string;
   TRACTSTACK_HOME_SLUG: string;
   THEME: string; // e.g., "light-bold"
-
-  // Brand colors (comma-separated hex values)
   BRAND_COLOURS: string; // e.g., "10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3"
-
-  // Social media links (pipe-separated format)
   SOCIALS: string; // e.g., "github|https://github.com/user,twitter|https://twitter.com/user"
-
-  // Brand assets (file paths or base64 data)
   LOGO: string;
   WORDMARK: string;
   FAVICON: string;
-
-  // Site metadata
   SITE_URL: string;
   SLOGAN: string;
   FOOTER: string;
-
-  // Open Graph metadata
   OG: string;
   OGLOGO: string;
   OGTITLE: string;
@@ -200,8 +190,11 @@ export interface BrandConfig {
   OGDESC: string;
   OG_VER: number;
   OGLOGO_VER: number;
-
-  // Analytics
+  LOGO_BASE64?: string;
+  WORDMARK_BASE64?: string;
+  OG_BASE64?: string;
+  OGLOGO_BASE64?: string;
+  FAVICON_BASE64?: string;
   GTAG: string;
 }
 
@@ -216,24 +209,14 @@ export interface BrandConfigState {
   homeSlug: string;
   tractstackHomeSlug: string;
   theme: string;
-
-  // Brand colors (as array for easier manipulation)
   brandColours: string[]; // ["10120d", "fcfcfc", "f58333", "c8df8c", "293f58", "a7b1b7", "393d34", "e3e3e3"]
-
-  // Social media links (as array for easier manipulation)
   socials: string[]; // ["github|https://github.com/user", "twitter|https://twitter.com/user"]
-
-  // Brand assets
   logo: string;
   wordmark: string;
   favicon: string;
-
-  // Site metadata
   siteUrl: string;
   slogan: string;
   footer: string;
-
-  // Open Graph metadata
   og: string;
   oglogo: string;
   ogtitle: string;
@@ -241,8 +224,11 @@ export interface BrandConfigState {
   ogdesc: string;
   ogVer: number;
   oglogoVer: number;
-
-  // Analytics
+  logoBase64?: string;
+  wordmarkBase64?: string;
+  ogBase64?: string;
+  oglogoBase64?: string;
+  faviconBase64?: string;
   gtag: string;
 }
 

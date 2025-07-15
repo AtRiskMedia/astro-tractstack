@@ -6,8 +6,8 @@ import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
-import type { BrandConfigState } from '../../../../utils/brandHelpers';
 import type { FormStateReturn } from '../../../../hooks/useFormState';
+import type { BrandConfigState } from '../../../../types/tractstack';
 
 // Available social platforms matching the icons in public/socials/
 const SOCIAL_PLATFORMS = [

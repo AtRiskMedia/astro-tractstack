@@ -110,6 +110,13 @@ export class TractStackAPI {
     });
   }
 
+  async put<T = any>(endpoint: string, data?: any): Promise<APIResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   async trackEvent(event: TractStackEvent): Promise<APIResponse> {
     return this.post('/api/v1/events', {
       ...event,
