@@ -6,6 +6,7 @@ import { brandConfigStore, getBrandConfig } from '../../stores/brand';
 import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
 import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
 import StoryKeepDashboard_Branding from './StoryKeepDashboard_Branding';
+import StoryKeepDashboard_Advanced from './StoryKeepDashboard_Advanced';
 import type { FullContentMapItem } from 'templates/src/types/tractstack';
 
 interface Tab {
@@ -18,7 +19,7 @@ const tabs: Tab[] = [
   { id: 'analytics', name: 'Analytics', current: true },
   { id: 'content', name: 'Content', current: false },
   { id: 'branding', name: 'Branding', current: false },
-  { id: 'settings', name: 'Settings', current: false },
+  { id: 'advanced', name: 'Advanced', current: false },
 ];
 
 export default function StoryKeepDashboard({
@@ -293,15 +294,8 @@ export default function StoryKeepDashboard({
             </div>
           </div>
         );
-      case 'settings':
-        return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-            <p className="mt-4 text-gray-600">
-              Settings panel will be available here soon.
-            </p>
-          </div>
-        );
+      case 'advanced':
+        return <StoryKeepDashboard_Advanced />;
       default:
         return null;
     }

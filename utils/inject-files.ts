@@ -84,7 +84,14 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/utils/brandHelpers.ts'),
       dest: 'src/utils/brandHelpers.ts',
     },
-
+    {
+      src: resolve('templates/src/utils/api/advancedConfig.ts'),
+      dest: 'src/utils/api/advancedConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/advancedHelpers.ts'),
+      dest: 'src/utils/advancedHelpers.ts',
+    },
     // Layouts
     {
       src: resolve('templates/src/layouts/Layout.astro'),
@@ -232,7 +239,37 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/components/storykeep/form/NumberInput.tsx'),
       dest: 'src/components/storykeep/form/NumberInput.tsx',
     },
-
+    // Advanced Configuration Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/StoryKeepDashboard_Advanced.tsx'
+      ),
+      dest: 'src/components/storykeep/StoryKeepDashboard_Advanced.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/advanced/DatabaseConfigSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/advanced/DatabaseConfigSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/advanced/AuthConfigSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/advanced/AuthConfigSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/advanced/APIConfigSection.tsx'
+      ),
+      dest: 'src/components/storykeep/form/advanced/APIConfigSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/advanced/FormActions.tsx'
+      ),
+      dest: 'src/components/storykeep/form/advanced/FormActions.tsx',
+    },
     // Brand form components
     {
       src: resolve(

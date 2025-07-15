@@ -28,7 +28,7 @@ const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 const urlPath = Astro.url.pathname + Astro.url.search;
 const tabMatch = urlPath.match(/\?(\w+)$/);
 const tabParam = tabMatch ? tabMatch[1] : null;
-const validTabs = ['analytics', 'content', 'branding', 'settings'];
+const validTabs = ['analytics', 'content', 'branding', 'advanced'];
 const initialTab =
   tabParam && validTabs.includes(tabParam) ? tabParam : 'analytics';
 ---

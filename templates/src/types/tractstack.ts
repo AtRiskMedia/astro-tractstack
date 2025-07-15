@@ -251,3 +251,29 @@ export interface FormStateReturn<T> {
   isValid: boolean;
   errors: FieldErrors;
 }
+
+export interface AdvancedConfigStatus {
+  tursoConfigured: boolean;
+  tursoTokenSet: boolean;
+  adminPasswordSet: boolean;
+  editorPasswordSet: boolean;
+  aaiAPIKeySet: boolean;
+}
+
+export interface AdvancedConfigState {
+  tursoUrl: string;
+  tursoToken: string;
+  adminPassword: string;
+  editorPassword: string;
+  aaiApiKey: string;
+}
+
+export interface AdvancedConfigUpdateRequest {
+  TURSO_DATABASE_URL?: string;
+  TURSO_AUTH_TOKEN?: string;
+  ADMIN_PASSWORD?: string;
+  EDITOR_PASSWORD?: string;
+  AAI_API_KEY?: string;
+  HOME_SLUG?: string;
+  TRACTSTACK_HOME_SLUG?: string;
+}
