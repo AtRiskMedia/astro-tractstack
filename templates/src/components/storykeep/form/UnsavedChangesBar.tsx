@@ -36,9 +36,8 @@ export default function UnsavedChangesBar<T>({
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 transform transition-all duration-300 ease-in-out ${
-        isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-      } ${className}`}
+      className={`fixed bottom-0 left-0 right-0 z-50 transform pr-12 transition-all duration-300 ease-in-out ${isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+        } ${className}`}
     >
       {/* Backdrop blur overlay */}
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
@@ -80,11 +79,10 @@ export default function UnsavedChangesBar<T>({
               type="button"
               onClick={save}
               disabled={!isValid}
-              className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed ${
-                isValid
+              className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed ${isValid
                   ? 'bg-amber-600 hover:bg-amber-700'
                   : 'bg-amber-400 opacity-50 hover:bg-amber-300'
-              }`}
+                }`}
             >
               {saveLabel}
             </button>

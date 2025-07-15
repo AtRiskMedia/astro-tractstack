@@ -375,13 +375,23 @@ const FileUpload = ({
       </div>
 
       {/* Preview */}
-      {showPreview && hasValue && isImage && value.startsWith('data:image') && (
+      {showPreview && hasValue && isImage && (
         <div className="mt-3">
           <img
             src={value}
             alt={previewAlt}
             className="h-32 max-w-full rounded-md border border-gray-200 object-contain"
+            onError={(e) => {
+              // Hide image if it fails to load
+              e.currentTarget.style.display = 'none';
+            }}
           />
+          {/* Show file info for URL paths */}
+          {!value.startsWith('data:') && (
+            <p className="mt-1 text-xs text-gray-500">
+              Current: {value.split('/').pop()}
+            </p>
+          )}
         </div>
       )}
 

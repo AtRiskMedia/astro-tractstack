@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useFormState } from '../../hooks/useFormState';
 import {
   convertToLocalState,
@@ -5,7 +6,7 @@ import {
   brandStateIntercept,
   validateBrandConfig,
 } from '../../utils/brandHelpers';
-import { saveBrandConfig } from '../../stores/brand';
+import { saveBrandConfigWithStateUpdate } from '../../utils/api/brandConfig';
 import BrandColorsSection from './form/brand/BrandColorsSection';
 import BrandAssetsSection from './form/brand/BrandAssetsSection';
 import SiteConfigSection from './form/brand/SiteConfigSection';
@@ -15,6 +16,8 @@ import FormActions from './form/brand/FormActions';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '../../types/tractstack';
 
+const VERBOSE = true;
+
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;
 }
@@ -22,7 +25,9 @@ interface StoryKeepDashboardBrandingProps {
 export default function StoryKeepDashboard_Branding({
   brandConfig,
 }: StoryKeepDashboardBrandingProps) {
-  const initialState: BrandConfigState = convertToLocalState(brandConfig);
+  const [currentBrandConfig, setCurrentBrandConfig] = useState(brandConfig);
+  const initialState: BrandConfigState =
+    convertToLocalState(currentBrandConfig);
 
   const formState = useFormState({
     initialData: initialState,
@@ -30,53 +35,18 @@ export default function StoryKeepDashboard_Branding({
     validator: validateBrandConfig,
     onSave: async (data) => {
       try {
-        const backendFormat = convertToBackendFormat(data);
-        const originalBackendFormat = convertToBackendFormat(
+        const updatedState = await saveBrandConfigWithStateUpdate(
+          data,
           formState.originalState
         );
-        // Backend-controlled fields that should not be sent
-        const backendControlledFields = new Set([
-          'STYLES_VER',
-          'LOGO',
-          'WORDMARK',
-          'FAVICON',
-          'OG',
-          'OGLOGO'
-        ]);
-        // Base64 upload fields - always include if they have content
-        const base64Fields = [
-          'LOGO_BASE64',
-          'WORDMARK_BASE64',
-          'OG_BASE64',
-          'OGLOGO_BASE64',
-          'FAVICON_BASE64'
-        ];
-        const changedFields: Partial<BrandConfig> = {};
-        Object.keys(backendFormat).forEach((key) => {
-          const typedKey = key as keyof BrandConfig;
-          const value = backendFormat[typedKey];
-          if (backendControlledFields.has(key)) {
-            // Skip backend-controlled fields
-            return;
-          }
-          if (base64Fields.includes(key)) {
-            // Include Base64 fields if they have content
-            if (value && typeof value === 'string' && value.trim() !== '') {
-              (changedFields as any)[typedKey] = value;
-            }
-          } else {
-            // Include other fields if they changed
-            if (value !== originalBackendFormat[typedKey]) {
-              (changedFields as any)[typedKey] = value;
-            }
-          }
-        });
-        // Only send if there are actual changes
-        if (Object.keys(changedFields).length > 0) {
-          await saveBrandConfig('', changedFields as BrandConfig);
-        }
+
+        // After successful save, update the brand config state
+        // This will cause the component to re-render with fresh form state
+        const updatedBrandConfig = convertToBackendFormat(updatedState);
+        setCurrentBrandConfig(updatedBrandConfig);
       } catch (error) {
-        console.error('Failed to save brand config:', error);
+        if (VERBOSE) console.error('Save failed:', error);
+        alert('Failed to save brand configuration. Please try again.');
       }
     },
     unsavedChanges: {
@@ -97,15 +67,10 @@ export default function StoryKeepDashboard_Branding({
       </div>
 
       <SiteConfigSection formState={formState} />
-
       <BrandColorsSection formState={formState} />
-
       <BrandAssetsSection formState={formState} />
-
       <SEOSection formState={formState} />
-
       <SocialLinksSection formState={formState} />
-
       <FormActions formState={formState} />
 
       <UnsavedChangesBar
@@ -115,7 +80,7 @@ export default function StoryKeepDashboard_Branding({
         cancelLabel="Discard Changes"
       />
 
-      {process.env.NODE_ENV === 'development' && (
+      {VERBOSE && (
         <div className="rounded-lg bg-gray-100 p-4 text-xs">
           <h4 className="mb-2 font-bold">Debug Info:</h4>
           <p>
