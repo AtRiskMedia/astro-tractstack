@@ -128,35 +128,6 @@ export default function BeliefTable({
         />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {beliefs.length}
-          </div>
-          <div className="text-sm text-gray-600">Total Beliefs</div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {orphanState.data
-              ? beliefs.filter((belief) => getBeliefUsage(belief.id).length > 0)
-                  .length
-              : '...'}
-          </div>
-          <div className="text-sm text-gray-600">In Use</div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {orphanState.data
-              ? beliefs.filter(
-                  (belief) => getBeliefUsage(belief.id).length === 0
-                ).length
-              : '...'}
-          </div>
-          <div className="text-sm text-gray-600">Orphaned</div>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
         {filteredBeliefs.length === 0 ? (
