@@ -23,6 +23,12 @@ const StoryFragmentTable = ({
 
   const itemsPerPage = 20;
 
+  // Helper function to get title from ID
+  const getTitleFromId = (id: string) => {
+    const item = fullContentMap.find((content) => content.id === id);
+    return item ? `${item.title} (${item.type})` : id; // Fallback to ID if title not found
+  };
+
   // Subscribe to orphan analysis store
   const orphanState = useStore(orphanAnalysisStore);
 
@@ -311,7 +317,6 @@ const StoryFragmentTable = ({
                                   </svg>
                                   Used ({usage.usedBy.length})
                                 </div>
-                                {/* Tooltip for mobile */}
                                 {hoveredUsage === item.id && (
                                   <div className="absolute bottom-full left-0 z-10 mb-2 w-48 rounded bg-gray-900 p-2 text-xs text-white shadow-lg sm:w-64">
                                     <div className="mb-1 font-bold">
@@ -323,7 +328,7 @@ const StoryFragmentTable = ({
                                           key={index}
                                           className="text-gray-300"
                                         >
-                                          {dependency}
+                                          {getTitleFromId(dependency)}
                                         </div>
                                       ))}
                                     </div>
@@ -378,7 +383,7 @@ const StoryFragmentTable = ({
                                 <div className="space-y-1">
                                   {usage.usedBy.map((dependency, index) => (
                                     <div key={index} className="text-gray-300">
-                                      {dependency}
+                                      {getTitleFromId(dependency)}
                                     </div>
                                   ))}
                                 </div>
