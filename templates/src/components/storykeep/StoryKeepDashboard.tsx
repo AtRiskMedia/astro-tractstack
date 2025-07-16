@@ -70,12 +70,12 @@ export default function StoryKeepDashboard({
     { id: 'branding', name: 'Branding', current: initialTab === 'branding' },
     ...(role === 'admin'
       ? [
-          {
-            id: 'advanced',
-            name: 'Advanced',
-            current: initialTab === 'advanced',
-          },
-        ]
+        {
+          id: 'advanced',
+          name: 'Advanced',
+          current: initialTab === 'advanced',
+        },
+      ]
       : []),
   ];
 
@@ -375,7 +375,9 @@ export default function StoryKeepDashboard({
       </div>
 
       {/* Tab Content */}
-      {renderTabContent()}
+      <div className="xl:max-w-5xl">
+        {renderTabContent()}
+      </div>
     </div>
   );
 }

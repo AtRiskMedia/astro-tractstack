@@ -143,34 +143,6 @@ export default function MenuTable({
         />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {menuItems.length}
-          </div>
-          <div className="text-sm text-gray-600">Total Menus</div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {orphanState.data
-              ? menuItems.filter((menu) => getMenuUsage(menu.id).length > 0)
-                  .length
-              : '...'}
-          </div>
-          <div className="text-sm text-gray-600">In Use</div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-2xl font-bold text-gray-900">
-            {orphanState.data
-              ? menuItems.filter((menu) => getMenuUsage(menu.id).length === 0)
-                  .length
-              : '...'}
-          </div>
-          <div className="text-sm text-gray-600">Unused</div>
-        </div>
-      </div>
-
       {/* Orphan Analysis Loading State */}
       {orphanState.isLoading && (
         <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
@@ -300,13 +272,12 @@ export default function MenuTable({
                             isDeleting === menu.id ||
                             !orphanState.data
                           }
-                          className={`${
-                            isInUse ||
-                            isDeleting === menu.id ||
-                            !orphanState.data
+                          className={`${isInUse ||
+                              isDeleting === menu.id ||
+                              !orphanState.data
                               ? 'cursor-not-allowed text-gray-400'
                               : 'text-red-600 hover:text-red-900'
-                          }`}
+                            }`}
                           title={
                             !orphanState.data
                               ? 'Loading usage analysis...'
