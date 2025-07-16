@@ -51,7 +51,7 @@ const pageTitle = `${route}=${slug}`;
       {
         slug ? (
           <div class="mx-auto max-w-4xl">
-            <h2 class="mb-4 text-xl font-semibold">
+            <h2 class="mb-4 text-xl font-bold">
               Collection: {route}={slug}
             </h2>
 
@@ -76,7 +76,7 @@ const pageTitle = `${route}=${slug}`;
             )}
 
             <div class="rounded-lg bg-gray-50 p-6">
-              <h3 class="mb-4 text-lg font-semibold">
+              <h3 class="mb-4 text-lg font-bold">
                 All Resources in Category ({categoryResources.length})
               </h3>
               {categoryResources.length > 0 ? (
@@ -105,7 +105,7 @@ const pageTitle = `${route}=${slug}`;
 
             {menuPayload && (
               <div class="mt-6 rounded-lg bg-green-50 p-6">
-                <h3 class="mb-4 text-lg font-semibold">Menu Data</h3>
+                <h3 class="mb-4 text-lg font-bold">Menu Data</h3>
                 <div class="text-sm">
                   <p>
                     <strong>Title:</strong> {menuPayload.title}

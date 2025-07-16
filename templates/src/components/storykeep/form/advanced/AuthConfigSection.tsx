@@ -22,7 +22,7 @@ export default function AuthConfigSection({
   return (
     <div className="bg-white shadow sm:rounded-lg">
       <div className="px-4 py-5 sm:p-6">
-        <h3 className="text-base font-semibold leading-6 text-gray-900">
+        <h3 className="text-base font-bold leading-6 text-gray-900">
           Authentication Configuration
         </h3>
         <div className="mt-2 max-w-xl text-sm text-gray-500">
@@ -34,15 +34,15 @@ export default function AuthConfigSection({
         <div className="mt-5 space-y-4">
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-bold text-gray-700">
                 Admin Password
               </label>
               {adminConfigured ? (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
                   ✓ Set
                 </span>
               ) : status !== null ? (
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
                   ! Not Set
                 </span>
               ) : null}
@@ -59,15 +59,15 @@ export default function AuthConfigSection({
           </div>
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-bold text-gray-700">
                 Editor Password
               </label>
               {editorConfigured ? (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
                   ✓ Set
                 </span>
               ) : status !== null ? (
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
                   ! Not Set
                 </span>
               ) : null}

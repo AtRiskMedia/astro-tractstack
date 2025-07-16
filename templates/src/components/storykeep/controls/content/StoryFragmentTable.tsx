@@ -1,7 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '../../../../utils/helpers';
-import { orphanAnalysisStore, loadOrphanAnalysis } from '../../../../stores/orphanAnalysis';
+import {
+  orphanAnalysisStore,
+  loadOrphanAnalysis,
+} from '../../../../stores/orphanAnalysis';
 import type { FullContentMapItem } from '../../../../types/tractstack';
 
 interface StoryFragmentTableProps {
@@ -82,7 +85,7 @@ const StoryFragmentTable = ({
   // Helper function to get delete button tooltip
   const getDeleteTooltip = (item: FullContentMapItem) => {
     if (isHomePage(item.slug)) {
-      return "Cannot delete the home page";
+      return 'Cannot delete the home page';
     }
 
     const usage = getUsageInfo(item.id);
@@ -138,7 +141,7 @@ const StoryFragmentTable = ({
     <div className="space-y-6">
       {/* Header with Search and Create */}
       <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-lg">
+        <div className="max-w-lg flex-1">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
@@ -158,13 +161,13 @@ const StoryFragmentTable = ({
               placeholder="Search story fragments..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full rounded-md border-gray-300 pl-10 pr-3 py-2 text-sm placeholder-gray-500 focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
+              className="block w-full rounded-md border-gray-300 py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
             />
           </div>
         </div>
         <button
           onClick={handleCreate}
-          className="ml-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+          className="ml-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
         >
           Create Story Fragment
         </button>
@@ -198,7 +201,7 @@ const StoryFragmentTable = ({
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900">
                   No results found
                 </h3>
                 <p className="mt-2 text-gray-500">
@@ -217,7 +220,7 @@ const StoryFragmentTable = ({
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-bold text-gray-900">
                   No Story Fragments
                 </h3>
                 <p className="mt-2 text-gray-500">
@@ -225,7 +228,7 @@ const StoryFragmentTable = ({
                 </p>
                 <button
                   onClick={handleCreate}
-                  className="mt-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
+                  className="mt-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
                 >
                   Create Story Fragment
                 </button>
@@ -237,19 +240,19 @@ const StoryFragmentTable = ({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6">
                     Title
                   </th>
-                  <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6">
                     Slug
                   </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6 md:table-cell">
                     Status
                   </th>
-                  <th className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6 md:table-cell">
                     Usage
                   </th>
-                  <th className="px-3 sm:px-6 py-3 text-right">
+                  <th className="px-3 py-3 text-right sm:px-6">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -262,30 +265,32 @@ const StoryFragmentTable = ({
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-3 sm:px-6 py-4">
+                      <td className="px-3 py-4 sm:px-6">
                         <div className="flex flex-col">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-bold text-gray-900">
                             {item.title}
                           </div>
                           {isHomePage(item.slug) && (
-                            <div className="text-xs font-medium text-cyan-600">
+                            <div className="text-xs font-bold text-cyan-600">
                               Home Page
                             </div>
                           )}
                           {/* Show slug on mobile */}
-                          <div className="sm:hidden text-sm text-gray-500 mt-1">
+                          <div className="mt-1 text-sm text-gray-500 sm:hidden">
                             /{item.slug}
                           </div>
                           {/* Show status on mobile */}
-                          <div className="md:hidden mt-1">
-                            <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                          <div className="mt-1 md:hidden">
+                            <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-bold leading-5 text-green-800">
                               Published
                             </span>
                           </div>
                           {/* Show usage on mobile */}
-                          <div className="md:hidden mt-1">
+                          <div className="mt-1 md:hidden">
                             {orphanState.isLoading ? (
-                              <div className="text-xs text-gray-400">Loading...</div>
+                              <div className="text-xs text-gray-400">
+                                Loading...
+                              </div>
                             ) : usage.isUsed ? (
                               <div
                                 className="relative"
@@ -294,7 +299,7 @@ const StoryFragmentTable = ({
                               >
                                 <div className="flex items-center text-xs text-blue-600">
                                   <svg
-                                    className="h-4 w-4 mr-1"
+                                    className="mr-1 h-4 w-4"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                   >
@@ -308,36 +313,45 @@ const StoryFragmentTable = ({
                                 </div>
                                 {/* Tooltip for mobile */}
                                 {hoveredUsage === item.id && (
-                                  <div className="absolute z-10 bottom-full left-0 mb-2 w-48 sm:w-64 p-2 text-xs text-white bg-gray-900 rounded shadow-lg">
-                                    <div className="font-medium mb-1">Used by:</div>
+                                  <div className="absolute bottom-full left-0 z-10 mb-2 w-48 rounded bg-gray-900 p-2 text-xs text-white shadow-lg sm:w-64">
+                                    <div className="mb-1 font-bold">
+                                      Used by:
+                                    </div>
                                     <div className="space-y-1">
                                       {usage.usedBy.map((dependency, index) => (
-                                        <div key={index} className="text-gray-300">
+                                        <div
+                                          key={index}
+                                          className="text-gray-300"
+                                        >
                                           {dependency}
                                         </div>
                                       ))}
                                     </div>
-                                    <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                    <div className="absolute left-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <div className="text-xs text-gray-400">Orphan</div>
+                              <div className="text-xs text-gray-400">
+                                Orphan
+                              </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4 text-sm text-gray-500">
+                      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell sm:px-6">
                         /{item.slug}
                       </td>
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-4">
-                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                      <td className="hidden px-3 py-4 sm:px-6 md:table-cell">
+                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-bold leading-5 text-green-800">
                           Published
                         </span>
                       </td>
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-4">
+                      <td className="hidden px-3 py-4 sm:px-6 md:table-cell">
                         {orphanState.isLoading ? (
-                          <div className="text-xs text-gray-400">Loading...</div>
+                          <div className="text-xs text-gray-400">
+                            Loading...
+                          </div>
                         ) : usage.isUsed ? (
                           <div
                             className="relative"
@@ -346,7 +360,7 @@ const StoryFragmentTable = ({
                           >
                             <div className="flex items-center text-xs text-blue-600">
                               <svg
-                                className="h-4 w-4 mr-1"
+                                className="mr-1 h-4 w-4"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -359,8 +373,8 @@ const StoryFragmentTable = ({
                               Used ({usage.usedBy.length})
                             </div>
                             {hoveredUsage === item.id && (
-                              <div className="absolute z-10 bottom-full left-0 mb-2 w-64 p-2 text-xs text-white bg-gray-900 rounded shadow-lg">
-                                <div className="font-medium mb-1">Used by:</div>
+                              <div className="absolute bottom-full left-0 z-10 mb-2 w-64 rounded bg-gray-900 p-2 text-xs text-white shadow-lg">
+                                <div className="mb-1 font-bold">Used by:</div>
                                 <div className="space-y-1">
                                   {usage.usedBy.map((dependency, index) => (
                                     <div key={index} className="text-gray-300">
@@ -368,7 +382,7 @@ const StoryFragmentTable = ({
                                     </div>
                                   ))}
                                 </div>
-                                <div className="absolute top-full left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                                <div className="absolute left-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                               </div>
                             )}
                           </div>
@@ -376,8 +390,8 @@ const StoryFragmentTable = ({
                           <div className="text-xs text-gray-400">Orphan</div>
                         )}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2 flex-wrap">
+                      <td className="px-3 py-4 text-right text-sm font-bold sm:px-6">
+                        <div className="flex flex-wrap justify-end gap-2">
                           <button
                             onClick={() => handleView(item.slug)}
                             className="text-gray-600 hover:text-gray-900"
@@ -392,13 +406,15 @@ const StoryFragmentTable = ({
                           </button>
                           <div className="relative">
                             <button
-                              onClick={() => canDelete && handleDelete(item.id, item.title)}
+                              onClick={() =>
+                                canDelete && handleDelete(item.id, item.title)
+                              }
                               disabled={!canDelete}
                               title={deleteTooltip}
                               className={classNames(
                                 canDelete
                                   ? 'text-red-600 hover:text-red-900'
-                                  : 'text-gray-300 cursor-not-allowed',
+                                  : 'cursor-not-allowed text-gray-300',
                                 'transition-colors'
                               )}
                             >
@@ -422,7 +438,7 @@ const StoryFragmentTable = ({
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
                       className={classNames(
-                        'relative inline-flex items-center rounded-md px-4 py-2 text-sm font-medium',
+                        'relative inline-flex items-center rounded-md px-4 py-2 text-sm font-bold',
                         currentPage === 1
                           ? 'cursor-not-allowed bg-gray-100 text-gray-400'
                           : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -434,7 +450,7 @@ const StoryFragmentTable = ({
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
                       className={classNames(
-                        'relative ml-3 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium',
+                        'relative ml-3 inline-flex items-center rounded-md px-4 py-2 text-sm font-bold',
                         currentPage === totalPages
                           ? 'cursor-not-allowed bg-gray-100 text-gray-400'
                           : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -447,15 +463,15 @@ const StoryFragmentTable = ({
                     <div>
                       <p className="text-sm text-gray-700">
                         Showing{' '}
-                        <span className="font-medium">{startIndex + 1}</span> to{' '}
-                        <span className="font-medium">
+                        <span className="font-bold">{startIndex + 1}</span> to{' '}
+                        <span className="font-bold">
                           {Math.min(
                             startIndex + itemsPerPage,
                             filteredFragments.length
                           )}
                         </span>{' '}
                         of{' '}
-                        <span className="font-medium">
+                        <span className="font-bold">
                           {filteredFragments.length}
                         </span>{' '}
                         results
@@ -488,22 +504,23 @@ const StoryFragmentTable = ({
                         </button>
 
                         {/* Page numbers */}
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                          (page) => (
-                            <button
-                              key={page}
-                              onClick={() => handlePageChange(page)}
-                              className={classNames(
-                                'relative inline-flex items-center px-4 py-2 text-sm font-semibold',
-                                page === currentPage
-                                  ? 'z-10 bg-cyan-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600'
-                                  : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
-                              )}
-                            >
-                              {page}
-                            </button>
-                          )
-                        )}
+                        {Array.from(
+                          { length: totalPages },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={classNames(
+                              'relative inline-flex items-center px-4 py-2 text-sm font-bold',
+                              page === currentPage
+                                ? 'z-10 bg-cyan-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600'
+                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                            )}
+                          >
+                            {page}
+                          </button>
+                        ))}
 
                         <button
                           onClick={() => handlePageChange(currentPage + 1)}

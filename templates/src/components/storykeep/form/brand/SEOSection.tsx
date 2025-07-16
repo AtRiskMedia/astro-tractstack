@@ -73,7 +73,7 @@ export default function SEOSection({ formState }: SEOSectionProps) {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-green-800">
+            <h3 className="text-sm font-bold text-green-800">
               SEO Best Practices
             </h3>
             <div className="mt-2 text-sm text-green-700">

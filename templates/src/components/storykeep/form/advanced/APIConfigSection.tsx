@@ -22,20 +22,20 @@ export default function APIConfigSection({
     <div className="bg-white shadow sm:rounded-lg">
       <div className="px-4 py-5 sm:p-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold leading-6 text-gray-900">
+          <h3 className="text-base font-bold leading-6 text-gray-900">
             API Configuration
           </h3>
           <div className="flex items-center">
             {aaiConfigured ? (
-              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
                 ✓ Configured
               </span>
             ) : status !== null ? (
-              <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+              <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-bold text-yellow-800">
                 Optional
               </span>
             ) : (
-              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-800">
                 Loading...
               </span>
             )}

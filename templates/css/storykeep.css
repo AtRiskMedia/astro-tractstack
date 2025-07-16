@@ -13290,13 +13290,13 @@ video {
 .font-light {
   font-weight: 300;
 }
-.font-medium {
+.font-bold {
   font-weight: 500;
 }
 .font-normal {
   font-weight: 400;
 }
-.font-semibold {
+.font-bold {
   font-weight: 600;
 }
 .font-thin {
@@ -49464,13 +49464,13 @@ video {
   .xs\:font-light {
     font-weight: 300;
   }
-  .xs\:font-medium {
+  .xs\:font-bold {
     font-weight: 500;
   }
   .xs\:font-normal {
     font-weight: 400;
   }
-  .xs\:font-semibold {
+  .xs\:font-bold {
     font-weight: 600;
   }
   .xs\:font-thin {
@@ -68152,13 +68152,13 @@ video {
   .md\:font-light {
     font-weight: 300;
   }
-  .md\:font-medium {
+  .md\:font-bold {
     font-weight: 500;
   }
   .md\:font-normal {
     font-weight: 400;
   }
-  .md\:font-semibold {
+  .md\:font-bold {
     font-weight: 600;
   }
   .md\:font-thin {
@@ -86821,13 +86821,13 @@ video {
   .xl\:font-light {
     font-weight: 300;
   }
-  .xl\:font-medium {
+  .xl\:font-bold {
     font-weight: 500;
   }
   .xl\:font-normal {
     font-weight: 400;
   }
-  .xl\:font-semibold {
+  .xl\:font-bold {
     font-weight: 600;
   }
   .xl\:font-thin {

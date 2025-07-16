@@ -136,9 +136,9 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
                 onClick={() => handleManageTabChange(tab.id)}
                 className={classNames(
                   activeTab === tab.id
-                    ? 'bg-cyan-100 text-cyan-700 border-cyan-500'
-                    : 'bg-gray-100 text-gray-500 border-transparent hover:bg-gray-200',
-                  'rounded-xl px-4 py-1.5 text-sm font-medium border-2 transition-colors duration-200'
+                    ? 'border-cyan-500 bg-cyan-100 text-cyan-700'
+                    : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200',
+                  'rounded-xl border-2 px-4 py-1.5 text-sm font-bold transition-colors duration-200'
                 )}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
               >
