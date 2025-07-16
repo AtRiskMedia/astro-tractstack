@@ -16,21 +16,16 @@ interface Tab {
   current: boolean;
 }
 
-const tabs: Tab[] = [
-  { id: 'analytics', name: 'Analytics', current: true },
-  { id: 'content', name: 'Content', current: false },
-  { id: 'branding', name: 'Branding', current: false },
-  { id: 'advanced', name: 'Advanced', current: false },
-];
-
 export default function StoryKeepDashboard({
   fullContentMap,
   homeSlug,
   initialTab = 'analytics',
+  role,
 }: {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
   initialTab?: string;
+  role?: string | null;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
@@ -67,6 +62,22 @@ export default function StoryKeepDashboard({
   // Get backend URL
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+  // Define tabs, including Advanced only for admin role
+  const tabs: Tab[] = [
+    { id: 'analytics', name: 'Analytics', current: initialTab === 'analytics' },
+    { id: 'content', name: 'Content', current: initialTab === 'content' },
+    { id: 'branding', name: 'Branding', current: initialTab === 'branding' },
+    ...(role === 'admin'
+      ? [
+          {
+            id: 'advanced',
+            name: 'Advanced',
+            current: initialTab === 'advanced',
+          },
+        ]
+      : []),
+  ];
 
   useEffect(() => {
     setIsClient(true);
@@ -211,7 +222,12 @@ export default function StoryKeepDashboard({
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
         const urlTab = Array.from(urlParams.keys())[0]; // Get first param key (analytics, content, etc.)
-        const validTabs = ['analytics', 'content', 'branding', 'advanced'];
+        const validTabs = [
+          'analytics',
+          'content',
+          'branding',
+          ...(role === 'admin' ? ['advanced'] : []),
+        ];
 
         if (urlTab && validTabs.includes(urlTab)) {
           setActiveTab(urlTab);
@@ -237,7 +253,7 @@ export default function StoryKeepDashboard({
       isInitialized.current = true;
       isInitializing.current = false;
     }
-  }, []);
+  }, [role]);
 
   // REACTIVE FETCH: Only fetch when filters change AFTER initialization - EXACTLY as original
   useEffect(() => {
@@ -261,7 +277,7 @@ export default function StoryKeepDashboard({
 
     try {
       setIsDownloading(true);
-      // TODO: Implement V2 leads download endpoint
+      // TODO: Implement V at 2 leads download endpoint
       alert('Leads download not yet implemented for V2');
     } catch (error) {
       console.error('Error downloading leads:', error);
@@ -319,7 +335,7 @@ export default function StoryKeepDashboard({
           </div>
         );
       case 'advanced':
-        return <StoryKeepDashboard_Advanced />;
+        return role === 'admin' ? <StoryKeepDashboard_Advanced /> : null;
       default:
         return null;
     }

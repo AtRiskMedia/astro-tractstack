@@ -12,6 +12,7 @@ if (authCheck) return authCheck;
 // Get authentication state
 const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
+const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 
 // Create the menu using the helper
 const menu = createStoryKeepMenu({
@@ -44,6 +45,7 @@ const initialTab =
         fullContentMap={fullContentMap}
         homeSlug={homeSlug}
         initialTab={initialTab}
+        role={role}
       />
     </div>
   </main>
