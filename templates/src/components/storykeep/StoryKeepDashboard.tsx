@@ -92,7 +92,7 @@ export default function StoryKeepDashboard({
       return 'custom';
     }
 
-    return 'weekly'; // default
+    return 'monthly'; // default
   }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
 
   // Standard duration setter helper - EXACTLY as original
@@ -220,15 +220,15 @@ export default function StoryKeepDashboard({
       }
 
       const nowUTC = new Date();
-      const oneWeekAgoUTC = new Date(
-        nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000
+      const oneMonthAgoUTC = new Date(
+        nowUTC.getTime() - 28 * 24 * 60 * 60 * 1000
       );
 
       epinetCustomFilters.set({
         enabled: true,
         visitorType: 'all',
         selectedUserId: null,
-        startTimeUTC: oneWeekAgoUTC.toISOString(),
+        startTimeUTC: oneMonthAgoUTC.toISOString(),
         endTimeUTC: nowUTC.toISOString(),
         userCounts: [],
         hourlyNodeActivity: {},

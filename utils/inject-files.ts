@@ -375,6 +375,46 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
+    // Menu Management Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/MenuTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/MenuTable.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/MenuForm.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/MenuForm.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/ActionBuilderField.tsx'
+      ),
+      dest: 'src/components/storykeep/form/ActionBuilderField.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/ActionBuilderSlugSelector.tsx'
+      ),
+      dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/menu/FormActions.tsx'
+      ),
+      dest: 'src/components/storykeep/form/menu/FormActions.tsx',
+    },
+    // Menu Utilities
+    {
+      src: resolve('templates/src/utils/menuHelpers.ts'),
+      dest: 'src/utils/menuHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/menuConfig.ts'),
+      dest: 'src/utils/api/menuConfig.ts',
+    },
     // Orphan analysis system
     {
       src: resolve('templates/src/stores/orphanAnalysis.ts'),
@@ -386,9 +426,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/controls/form/content/ContentSummary.tsx'
+        'templates/src/components/storykeep/form/content/ContentSummary.tsx'
       ),
-      dest: 'src/components/storykeep/controls/form/content/ContentSummary.tsx',
+      dest: 'src/components/storykeep/form/content/ContentSummary.tsx',
     },
     // Navigation system files
     {

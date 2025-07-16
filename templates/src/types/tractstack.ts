@@ -277,3 +277,84 @@ export interface AdvancedConfigUpdateRequest {
   HOME_SLUG?: string;
   TRACTSTACK_HOME_SLUG?: string;
 }
+
+export interface MenuNodeState {
+  id: string;
+  title: string;
+  theme: string;
+  menuLinks: MenuLinkState[];
+}
+
+export interface MenuLinkState {
+  name: string;
+  description: string;
+  featured: boolean;
+  actionLisp: string;
+}
+
+interface BaseTarget {
+  name: string;
+  description: string;
+}
+
+interface SimpleTarget extends BaseTarget {
+  subcommands?: never;
+  requiresParam?: never;
+  paramLabel?: never;
+  requiresSecondParam?: never;
+  param2Label?: never;
+  placeholder?: never;
+}
+
+interface SubcommandTarget extends BaseTarget {
+  subcommands: string[];
+  requiresParam?: never;
+  paramLabel?: never;
+  requiresSecondParam?: never;
+  param2Label?: never;
+  placeholder?: never;
+}
+
+interface SingleParamTarget extends BaseTarget {
+  subcommands?: never;
+  requiresParam: true;
+  paramLabel: string;
+  requiresSecondParam?: never;
+  param2Label?: never;
+  requiresThirdParam?: never;
+  param3Label?: never;
+  placeholder?: string;
+}
+
+interface DoubleParamTarget extends BaseTarget {
+  subcommands?: never;
+  requiresParam: true;
+  paramLabel: string;
+  requiresSecondParam: true;
+  param2Label: string;
+  requiresThirdParam?: boolean;
+  param3Label?: string;
+  placeholder?: never;
+}
+
+interface TripleParamTarget extends BaseTarget {
+  subcommands?: never;
+  requiresParam: true;
+  paramLabel: string;
+  requiresSecondParam: true;
+  param2Label: string;
+  requiresThirdParam: true;
+  param3Label: string;
+  placeholder?: never;
+}
+
+type TargetConfig =
+  | SimpleTarget
+  | SubcommandTarget
+  | SingleParamTarget
+  | DoubleParamTarget
+  | TripleParamTarget;
+
+export type GotoTargets = {
+  [key: string]: TargetConfig;
+};

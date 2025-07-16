@@ -6,9 +6,15 @@ import {
   handleManageSubtabChange,
   restoreTabNavigation,
 } from '../../../../utils/navigationHelpers';
+import { getMenuById } from '../../../../utils/api/menuConfig';
 import ContentSummary from './ContentSummary';
 import StoryFragmentTable from './StoryFragmentTable';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+import MenuTable from './MenuTable';
+import MenuForm from './MenuForm';
+import type {
+  FullContentMapItem,
+  MenuNode,
+} from '../../../../types/tractstack';
 
 interface ManageContentProps {
   fullContentMap: FullContentMapItem[];
@@ -35,6 +41,13 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
   const [activeTab, setActiveTab] = useState('summary');
   const [navigationRestored, setNavigationRestored] = useState(false);
 
+  // Menu form state
+  const [showMenuForm, setShowMenuForm] = useState(false);
+  const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
+  const [editingMenu, setEditingMenu] = useState<MenuNode | null>(null);
+  const [isCreatingMenu, setIsCreatingMenu] = useState(false);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
+
   // Subscribe to navigation store
   const navigationState = useStore(navigationStore);
 
@@ -55,9 +68,79 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
   // Enhanced manage tab change with navigation tracking
   const handleManageTabChange = (tabId: string) => {
     handleManageSubtabChange(tabId as any, setActiveTab);
+
+    // Close menu form when switching tabs
+    if (showMenuForm) {
+      setShowMenuForm(false);
+      setEditingMenuId(null);
+      setEditingMenu(null);
+      setIsCreatingMenu(false);
+    }
+  };
+
+  // Handle create menu
+  const handleCreateMenu = () => {
+    setIsCreatingMenu(true);
+    setEditingMenuId(null);
+    setEditingMenu(null);
+    setShowMenuForm(true);
+  };
+
+  // Handle edit menu
+  const handleEditMenu = async (menuId: string) => {
+    setIsLoadingMenu(true);
+    try {
+      const menu = await getMenuById(menuId);
+      setEditingMenuId(menuId);
+      setEditingMenu(menu);
+      setIsCreatingMenu(false);
+      setShowMenuForm(true);
+    } catch (error) {
+      console.error('Failed to load menu for editing:', error);
+      alert('Failed to load menu. Please try again.');
+    } finally {
+      setIsLoadingMenu(false);
+    }
+  };
+
+  // Handle menu form success (save/create)
+  const handleMenuFormSuccess = () => {
+    setShowMenuForm(false);
+    setEditingMenuId(null);
+    setEditingMenu(null);
+    setIsCreatingMenu(false);
+
+    // Refresh the page to get updated fullContentMap
+    window.location.reload();
+  };
+
+  // Handle menu form cancel
+  const handleMenuFormCancel = () => {
+    setShowMenuForm(false);
+    setEditingMenuId(null);
+    setEditingMenu(null);
+    setIsCreatingMenu(false);
+  };
+
+  // Handle refresh after delete
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const renderTabContent = () => {
+    // Show menu form if active
+    if (showMenuForm && activeTab === 'menus') {
+      return (
+        <MenuForm
+          menu={editingMenu || undefined}
+          isCreate={isCreatingMenu}
+          contentMap={fullContentMap}
+          onSuccess={handleMenuFormSuccess}
+          onCancel={handleMenuFormCancel}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'summary':
         return <ContentSummary fullContentMap={fullContentMap} />;
@@ -78,11 +161,13 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
         );
       case 'menus':
         return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <div className="text-lg text-gray-600">
-              Menus management - Coming soon
-            </div>
-          </div>
+          <MenuTable
+            fullContentMap={fullContentMap}
+            onEdit={handleEditMenu}
+            onCreate={handleCreateMenu}
+            onRefresh={handleRefresh}
+            isLoading={isLoadingMenu}
+          />
         );
       case 'resources':
         return (
@@ -148,6 +233,18 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
           </nav>
         </div>
       </div>
+
+      {/* Loading overlay when loading menu for edit */}
+      {isLoadingMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="rounded-lg bg-white p-6 shadow-xl">
+            <div className="flex items-center space-x-3">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
+              <span className="text-gray-700">Loading menu...</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Content Management Tab Content */}
       {renderTabContent()}
