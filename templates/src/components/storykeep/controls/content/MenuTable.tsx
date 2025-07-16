@@ -272,12 +272,13 @@ export default function MenuTable({
                             isDeleting === menu.id ||
                             !orphanState.data
                           }
-                          className={`${isInUse ||
-                              isDeleting === menu.id ||
-                              !orphanState.data
+                          className={`${
+                            isInUse ||
+                            isDeleting === menu.id ||
+                            !orphanState.data
                               ? 'cursor-not-allowed text-gray-400'
                               : 'text-red-600 hover:text-red-900'
-                            }`}
+                          }`}
                           title={
                             !orphanState.data
                               ? 'Loading usage analysis...'

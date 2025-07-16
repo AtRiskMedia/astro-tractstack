@@ -430,6 +430,34 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/content/ContentSummary.tsx',
     },
+    // Belief Management Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/BeliefTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/BeliefTable.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/BeliefForm.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/BeliefForm.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/form/belief/FormActions.tsx'
+      ),
+      dest: 'src/components/storykeep/form/belief/FormActions.tsx',
+    },
+    // Belief Utilities
+    {
+      src: resolve('templates/src/utils/beliefHelpers.ts'),
+      dest: 'src/utils/beliefHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/beliefConfig.ts'),
+      dest: 'src/utils/api/beliefConfig.ts',
+    },
     // Navigation system files
     {
       src: resolve('templates/src/stores/navigation.ts'),

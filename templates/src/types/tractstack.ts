@@ -358,3 +358,19 @@ type TargetConfig =
 export type GotoTargets = {
   [key: string]: TargetConfig;
 };
+
+export interface BeliefNode {
+  id: string;
+  title: string;
+  slug: string;
+  scale: string;
+  customValues?: string[];
+}
+
+export interface BeliefNodeState {
+  id: string;
+  title: string;
+  slug: string;
+  scale: string;
+  customValues: string[];
+}
