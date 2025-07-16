@@ -12,7 +12,6 @@ import BrandAssetsSection from './form/brand/BrandAssetsSection';
 import SiteConfigSection from './form/brand/SiteConfigSection';
 import SocialLinksSection from './form/brand/SocialLinksSection';
 import SEOSection from './form/brand/SEOSection';
-import FormActions from './form/brand/FormActions';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '../../types/tractstack';
 
@@ -40,13 +39,15 @@ export default function StoryKeepDashboard_Branding({
           formState.originalState
         );
 
-        // After successful save, update the brand config state
-        // This will cause the component to re-render with fresh form state
+        // Reset form to new baseline state (clears isDirty)
+        formState.resetToState(updatedState);
+
+        // Update parent component state
         const updatedBrandConfig = convertToBackendFormat(updatedState);
         setCurrentBrandConfig(updatedBrandConfig);
       } catch (error) {
         if (VERBOSE) console.error('Save failed:', error);
-        alert('Failed to save brand configuration. Please try again.');
+        throw error; // Let UnsavedChangesBar handle error display
       }
     },
     unsavedChanges: {
@@ -71,7 +72,6 @@ export default function StoryKeepDashboard_Branding({
       <BrandAssetsSection formState={formState} />
       <SEOSection formState={formState} />
       <SocialLinksSection formState={formState} />
-      <FormActions formState={formState} />
 
       <UnsavedChangesBar
         formState={formState}

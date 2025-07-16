@@ -264,12 +264,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/advanced/APIConfigSection.tsx',
     },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/form/advanced/FormActions.tsx'
-      ),
-      dest: 'src/components/storykeep/form/advanced/FormActions.tsx',
-    },
     // Brand form components
     {
       src: resolve(
@@ -306,12 +300,6 @@ export async function injectTemplateFiles(
         'templates/src/components/storykeep/form/brand/SEOSection.tsx'
       ),
       dest: 'src/components/storykeep/form/brand/SEOSection.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/form/brand/FormActions.tsx'
-      ),
-      dest: 'src/components/storykeep/form/brand/FormActions.tsx',
     },
     // Manage Content
     {
@@ -400,12 +388,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
     },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/form/menu/FormActions.tsx'
-      ),
-      dest: 'src/components/storykeep/form/menu/FormActions.tsx',
-    },
     // Menu Utilities
     {
       src: resolve('templates/src/utils/menuHelpers.ts'),
@@ -430,6 +412,11 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/content/ContentSummary.tsx',
     },
+    //
+    {
+      src: resolve('templates/src/components/storykeep/controls/UsageCell.tsx'),
+      dest: 'src/components/storykeep/controls/UsageCell.tsx',
+    },
     // Belief Management Components
     {
       src: resolve(
@@ -442,12 +429,6 @@ export async function injectTemplateFiles(
         'templates/src/components/storykeep/controls/content/BeliefForm.tsx'
       ),
       dest: 'src/components/storykeep/controls/content/BeliefForm.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/form/belief/FormActions.tsx'
-      ),
-      dest: 'src/components/storykeep/form/belief/FormActions.tsx',
     },
     // Belief Utilities
     {

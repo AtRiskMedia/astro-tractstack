@@ -129,8 +129,7 @@ const authStatus = {
 
       {/* StoryKeep Dashboard Icon */}
       {
-        slug !== `storykeep` &&
-        (authStatus.isAdmin || authStatus.isAuthenticated) ? (
+        authStatus.isAdmin || authStatus.isAuthenticated ? (
           <a
             href="/storykeep"
             class="hover:text-myblue hover:rotate-6"

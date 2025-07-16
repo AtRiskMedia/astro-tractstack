@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import { classNames } from '../../../../utils/helpers';
 import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
 } from '../../../../stores/orphanAnalysis';
+import UsageCell from '../UsageCell';
 import type { FullContentMapItem } from '../../../../types/tractstack';
 
 interface StoryFragmentTableProps {
@@ -19,14 +22,13 @@ const StoryFragmentTable = ({
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [hoveredUsage, setHoveredUsage] = useState<string | null>(null);
 
   const itemsPerPage = 20;
 
-  // Helper function to get title from ID
-  const getTitleFromId = (id: string) => {
-    const item = fullContentMap.find((content) => content.id === id);
-    return item ? `${item.title} (${item.type})` : id; // Fallback to ID if title not found
+  // Helper function to get status display
+  const getStatus = (item: FullContentMapItem): string => {
+    if (item.slug === homeSlug) return 'Home';
+    return 'Published'; // Assuming all fragments are published for now
   };
 
   // Subscribe to orphan analysis store
@@ -62,81 +64,98 @@ const StoryFragmentTable = ({
     startIndex + itemsPerPage
   );
 
-  // Helper function to get usage information for a story fragment
-  const getUsageInfo = (storyFragmentId: string) => {
+  // Helper function to get usage information
+  const getUsageInfo = (storyFragmentId: string): string[] => {
+    if (!orphanState?.data || !orphanState.data.storyFragments) {
+      return [];
+    }
+    return orphanState.data.storyFragments[storyFragmentId] || [];
+  };
+
+  // Helper function to check if delete should be disabled
+  const shouldDisableDelete = (item: FullContentMapItem): boolean => {
+    // Always disable if orphan data hasn't loaded yet OR storyFragments data isn't available
     if (!orphanState.data || !orphanState.data.storyFragments) {
-      return { isUsed: false, usedBy: [] };
+      return true;
     }
 
-    const dependencies = orphanState.data.storyFragments[storyFragmentId] || [];
-    return {
-      isUsed: dependencies.length > 0,
-      usedBy: dependencies,
-    };
-  };
+    // Disable if item is home page
+    if (item.slug === homeSlug) {
+      return true;
+    }
 
-  // Helper function to check if item is home page
-  const isHomePage = (slug: string) => {
-    return slug === homeSlug;
-  };
-
-  // Helper function to determine if delete should be disabled
-  const shouldDisableDelete = (item: FullContentMapItem) => {
-    if (isHomePage(item.slug)) return true; // Home page can't be deleted
-
+    // Disable if item has usage dependencies
     const usage = getUsageInfo(item.id);
-    return usage.isUsed; // In-use items can't be deleted
+    return usage.length > 0;
   };
 
-  // Helper function to get delete button tooltip
-  const getDeleteTooltip = (item: FullContentMapItem) => {
-    if (isHomePage(item.slug)) {
+  // Helper function to get delete tooltip
+  const getDeleteTooltip = (item: FullContentMapItem): string => {
+    if (!orphanState.data || !orphanState.data.storyFragments) {
+      return 'Loading usage analysis...';
+    }
+
+    if (item.slug === homeSlug) {
       return 'Cannot delete the home page';
     }
 
     const usage = getUsageInfo(item.id);
-    if (usage.isUsed) {
-      return `Cannot delete - used by: ${usage.usedBy.join(', ')}`;
+    if (usage.length > 0) {
+      return `Cannot delete: story fragment has ${usage.length} dependent(s)`;
     }
 
-    return undefined;
+    return 'Delete story fragment';
   };
 
-  // Handle pagination
+  // Handle page change
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  // Handle navigation
+  // Handle create new story fragment
   const handleCreate = () => {
-    window.location.href = '/create/edit';
+    window.location.href = '/storykeep/edit';
   };
 
-  const handleEdit = (slug: string) => {
-    window.location.href = `/${slug}/edit`;
-  };
-
+  // Handle view story fragment
   const handleView = (slug: string) => {
-    window.location.href = `/${slug}`;
+    window.open(`/${slug}`, '_blank');
   };
 
+  // Handle edit story fragment
+  const handleEdit = (slug: string) => {
+    window.location.href = `/storykeep/edit/${slug}`;
+  };
+
+  // Handle delete story fragment
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${title}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
     setIsLoading(true);
     try {
-      // TODO: Implement delete API call
-      console.log('Deleting Story Fragment:', id);
-      // await api.delete(`/api/v1/nodes/storyfragments/${id}`);
+      const response = await fetch(`/api/storyfragments/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // After successful deletion, reload orphan analysis
-      // await loadOrphanAnalysis();
+      if (!response.ok) {
+        throw new Error('Failed to delete story fragment');
+      }
+
+      // Reload the page to refresh the data
+      window.location.reload();
     } catch (error) {
-      console.error('Error deleting story fragment:', error);
+      console.error('Delete failed:', error);
       alert('Failed to delete story fragment. Please try again.');
     } finally {
       setIsLoading(false);
@@ -145,92 +164,78 @@ const StoryFragmentTable = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with Search and Create */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="max-w-lg flex-1">
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg
-                className="h-5 w-5 text-gray-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search story fragments..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full rounded-md border-gray-300 py-2 pl-10 pr-3 text-sm placeholder-gray-500 focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
-            />
-          </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Story Fragments</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Manage pages and content on your site
+          </p>
         </div>
         <button
           onClick={handleCreate}
-          className="ml-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+          className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         >
+          <svg
+            className="mr-2 h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
           Create Story Fragment
         </button>
       </div>
 
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        {filteredFragments.length === storyFragments.length ? (
-          <>Showing {filteredFragments.length} story fragments</>
-        ) : (
-          <>
-            Showing {filteredFragments.length} of {storyFragments.length} story
-            fragments
-          </>
-        )}
+      {/* Search */}
+      <div className="max-w-md">
+        <input
+          type="text"
+          placeholder="Search story fragments..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-700 focus:ring-cyan-700"
+        />
       </div>
 
-      {/* Table or Empty State */}
-      <div className="rounded-lg bg-white shadow">
-        {paginatedFragments.length === 0 ? (
-          <div className="p-8 text-center">
-            {searchTerm ? (
+      {/* Table Container */}
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+        {filteredFragments.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {searchTerm
+                ? 'No matching story fragments found'
+                : 'No story fragments'}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {searchTerm
+                ? 'Try adjusting your search terms.'
+                : 'Get started by creating your first story fragment.'}
+            </p>
+            {!searchTerm && (
               <>
-                <div className="mx-auto mb-4 h-12 w-12 text-gray-400">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  No results found
-                </h3>
-                <p className="mt-2 text-gray-500">
-                  Try a different search term.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="mx-auto mb-4 h-12 w-12 text-gray-400">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  No Story Fragments
-                </h3>
-                <p className="mt-2 text-gray-500">
-                  Get started by creating your first story fragment.
+                <p className="mt-2 text-sm text-gray-500">
+                  Story fragments are the pages and content sections of your
+                  site.
                 </p>
                 <button
                   onClick={handleCreate}
@@ -246,186 +251,93 @@ const StoryFragmentTable = ({
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6">
+                  <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 md:px-6">
                     Title
                   </th>
-                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:table-cell sm:px-6">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 md:table-cell md:px-6">
                     Slug
                   </th>
-                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6 md:table-cell">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 md:table-cell md:px-6">
                     Status
                   </th>
-                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 sm:px-6 md:table-cell">
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 xl:table-cell xl:px-6">
                     Usage
                   </th>
-                  <th className="px-3 py-3 text-right sm:px-6">
+                  <th className="px-3 py-3 text-right md:px-6">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {paginatedFragments.map((item) => {
-                  const usage = getUsageInfo(item.id);
                   const canDelete = !shouldDisableDelete(item);
                   const deleteTooltip = getDeleteTooltip(item);
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-4 sm:px-6">
+                      <td className="px-3 py-4 md:px-6">
                         <div className="flex flex-col">
                           <div className="text-sm font-bold text-gray-900">
                             {item.title}
                           </div>
-                          {isHomePage(item.slug) && (
-                            <div className="text-xs font-bold text-cyan-600">
-                              Home Page
-                            </div>
-                          )}
-                          {/* Show slug on mobile */}
-                          <div className="mt-1 text-sm text-gray-500 sm:hidden">
+                          <div className="text-sm text-gray-500 md:hidden">
                             /{item.slug}
-                          </div>
-                          {/* Show status on mobile */}
-                          <div className="mt-1 md:hidden">
-                            <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-bold leading-5 text-green-800">
-                              Published
-                            </span>
-                          </div>
-                          {/* Show usage on mobile */}
-                          <div className="mt-1 md:hidden">
-                            {orphanState.isLoading ? (
-                              <div className="text-xs text-gray-400">
-                                Loading...
-                              </div>
-                            ) : usage.isUsed ? (
-                              <div
-                                className="relative"
-                                onMouseEnter={() => setHoveredUsage(item.id)}
-                                onMouseLeave={() => setHoveredUsage(null)}
-                              >
-                                <div className="flex items-center text-xs text-blue-600">
-                                  <svg
-                                    className="mr-1 h-4 w-4"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                  Used ({usage.usedBy.length})
-                                </div>
-                                {hoveredUsage === item.id && (
-                                  <div className="absolute bottom-full left-0 z-10 mb-2 w-48 rounded bg-gray-900 p-2 text-xs text-white shadow-lg sm:w-64">
-                                    <div className="mb-1 font-bold">
-                                      Used by:
-                                    </div>
-                                    <div className="space-y-1">
-                                      {usage.usedBy.map((dependency, index) => (
-                                        <div
-                                          key={index}
-                                          className="text-gray-300"
-                                        >
-                                          {getTitleFromId(dependency)}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <div className="absolute left-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="text-xs text-gray-400">
-                                Orphan
-                              </div>
-                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell sm:px-6">
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 md:table-cell md:px-6">
                         /{item.slug}
                       </td>
-                      <td className="hidden px-3 py-4 sm:px-6 md:table-cell">
-                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-bold leading-5 text-green-800">
-                          Published
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm md:table-cell md:px-6">
+                        <span
+                          className={classNames(
+                            'inline-flex rounded-full px-2 text-xs font-bold leading-5',
+                            item.slug === homeSlug
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-green-100 text-green-800'
+                          )}
+                        >
+                          {getStatus(item)}
                         </span>
                       </td>
-                      <td className="hidden px-3 py-4 sm:px-6 md:table-cell">
-                        {orphanState.isLoading ? (
-                          <div className="text-xs text-gray-400">
-                            Loading...
-                          </div>
-                        ) : usage.isUsed ? (
-                          <div
-                            className="relative"
-                            onMouseEnter={() => setHoveredUsage(item.id)}
-                            onMouseLeave={() => setHoveredUsage(null)}
-                          >
-                            <div className="flex items-center text-xs text-blue-600">
-                              <svg
-                                className="mr-1 h-4 w-4"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Used ({usage.usedBy.length})
-                            </div>
-                            {hoveredUsage === item.id && (
-                              <div className="absolute bottom-full left-0 z-10 mb-2 w-64 rounded bg-gray-900 p-2 text-xs text-white shadow-lg">
-                                <div className="mb-1 font-bold">Used by:</div>
-                                <div className="space-y-1">
-                                  {usage.usedBy.map((dependency, index) => (
-                                    <div key={index} className="text-gray-300">
-                                      {getTitleFromId(dependency)}
-                                    </div>
-                                  ))}
-                                </div>
-                                <div className="absolute left-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400">Orphan</div>
-                        )}
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 xl:table-cell xl:px-6">
+                        <UsageCell
+                          itemId={item.id}
+                          fullContentMap={fullContentMap}
+                          usageType="storyFragments"
+                        />
                       </td>
-                      <td className="px-3 py-4 text-right text-sm font-bold sm:px-6">
-                        <div className="flex flex-wrap justify-end gap-2">
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold md:px-6">
+                        <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => handleView(item.slug)}
                             className="text-gray-600 hover:text-gray-900"
+                            title="View story fragment"
                           >
                             View
                           </button>
                           <button
                             onClick={() => handleEdit(item.slug)}
                             className="text-cyan-600 hover:text-cyan-900"
+                            title="Edit story fragment"
                           >
-                            Edit
+                            <PencilIcon className="h-5 w-5" />
                           </button>
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                canDelete && handleDelete(item.id, item.title)
-                              }
-                              disabled={!canDelete}
-                              title={deleteTooltip}
-                              className={classNames(
-                                canDelete
-                                  ? 'text-red-600 hover:text-red-900'
-                                  : 'cursor-not-allowed text-gray-300',
-                                'transition-colors'
-                              )}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            onClick={() =>
+                              canDelete && handleDelete(item.id, item.title)
+                            }
+                            disabled={!canDelete}
+                            title={deleteTooltip}
+                            className={classNames(
+                              canDelete
+                                ? 'text-red-600 hover:text-red-900'
+                                : 'cursor-not-allowed text-gray-300',
+                              'transition-colors'
+                            )}
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -436,9 +348,9 @@ const StoryFragmentTable = ({
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <div className="border-t border-gray-200 bg-white px-4 py-3 md:px-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex flex-1 justify-between sm:hidden">
+                  <div className="flex flex-1 justify-between md:hidden">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -464,7 +376,7 @@ const StoryFragmentTable = ({
                       Next
                     </button>
                   </div>
-                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div className="hidden md:flex md:flex-1 md:items-center md:justify-between">
                     <div>
                       <p className="text-sm text-gray-700">
                         Showing{' '}
@@ -517,10 +429,10 @@ const StoryFragmentTable = ({
                             key={page}
                             onClick={() => handlePageChange(page)}
                             className={classNames(
-                              'relative inline-flex items-center px-4 py-2 text-sm font-bold',
+                              'relative inline-flex items-center px-4 py-2 text-sm font-bold focus:outline-offset-0',
                               page === currentPage
-                                ? 'z-10 bg-cyan-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600'
-                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                                ? 'z-10 bg-cyan-600 text-white focus:ring-2 focus:ring-cyan-500'
+                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
                             )}
                           >
                             {page}

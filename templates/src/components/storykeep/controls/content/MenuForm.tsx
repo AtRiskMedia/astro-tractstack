@@ -12,7 +12,6 @@ import { saveMenuWithStateUpdate } from '../../../../utils/api/menuConfig';
 import StringInput from '../../form/StringInput';
 import EnumSelect from '../../form/EnumSelect';
 import ActionBuilderField from '../../form/ActionBuilderField';
-import MenuFormActions from '../../form/menu/FormActions';
 import UnsavedChangesBar from '../../form/UnsavedChangesBar';
 import type {
   MenuNode,
@@ -37,8 +36,6 @@ export default function MenuForm({
   onSuccess,
   onCancel,
 }: MenuFormProps) {
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
   // Initialize form state
   const initialState: MenuNodeState = menu
     ? convertToLocalState(menu)
@@ -55,12 +52,11 @@ export default function MenuForm({
     validator: validateMenuNode,
     onSave: async (data) => {
       try {
-        await saveMenuWithStateUpdate(data, formState.originalState);
-        setSaveSuccess(true);
-        setTimeout(() => {
-          setSaveSuccess(false);
-          onSuccess?.();
-        }, 2000);
+        const updatedState = await saveMenuWithStateUpdate(
+          data,
+          formState.originalState
+        );
+        return updatedState;
       } catch (error) {
         console.error('Menu save failed:', error);
         throw error;
@@ -89,32 +85,6 @@ export default function MenuForm({
 
   return (
     <div className="space-y-8">
-      {/* Success Alert */}
-      {saveSuccess && (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-green-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-bold text-green-800">
-                Menu saved successfully!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -272,14 +242,6 @@ export default function MenuForm({
           </div>
         )}
       </div>
-
-      {/* Form Actions */}
-      <MenuFormActions
-        formState={formState}
-        isCreate={isCreate}
-        onSuccess={onSuccess}
-        onCancel={onCancel}
-      />
 
       {/* Unsaved Changes Bar */}
       <UnsavedChangesBar

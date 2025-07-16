@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import { useFormState } from '../../../../hooks/useFormState';
 import {
   convertToLocalState,
@@ -10,11 +11,18 @@ import {
   getScalePreview,
 } from '../../../../utils/beliefHelpers';
 import { saveBeliefWithStateUpdate } from '../../../../utils/api/beliefConfig';
+import {
+  orphanAnalysisStore,
+  loadOrphanAnalysis,
+} from '../../../../stores/orphanAnalysis';
 import StringInput from '../../form/StringInput';
 import EnumSelect from '../../form/EnumSelect';
-import BeliefFormActions from '../../form/belief/FormActions';
 import UnsavedChangesBar from '../../form/UnsavedChangesBar';
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+  PlusIcon,
+  XMarkIcon,
+  LockClosedIcon,
+} from '@heroicons/react/24/outline';
 import type { BeliefNode, BeliefNodeState } from '../../../../types/tractstack';
 
 interface BeliefFormProps {
@@ -30,8 +38,32 @@ export default function BeliefForm({
   onSuccess,
   onCancel,
 }: BeliefFormProps) {
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [customValue, setCustomValue] = useState('');
+
+  // Subscribe to orphan analysis store
+  const orphanState = useStore(orphanAnalysisStore);
+
+  // Load orphan analysis on component mount
+  useEffect(() => {
+    loadOrphanAnalysis();
+  }, []);
+
+  // Get usage information for this belief
+  const getBeliefUsage = (): string[] => {
+    if (!belief?.id || !orphanState.data || !orphanState.data.beliefs) {
+      return [];
+    }
+    return orphanState.data.beliefs[belief.id] || [];
+  };
+
+  // Check if belief is in use
+  const isBeliefInUse = (): boolean => {
+    if (isCreate || !belief?.id) return false;
+    return getBeliefUsage().length > 0;
+  };
+
+  const beliefInUse = isBeliefInUse();
+  const usageCount = getBeliefUsage().length;
 
   // Initialize form state
   const initialState: BeliefNodeState = belief
@@ -50,12 +82,11 @@ export default function BeliefForm({
     validator: validateBeliefNode,
     onSave: async (data) => {
       try {
-        await saveBeliefWithStateUpdate(data, formState.originalState);
-        setSaveSuccess(true);
-        setTimeout(() => {
-          setSaveSuccess(false);
-          onSuccess?.();
-        }, 2000);
+        const updatedState = await saveBeliefWithStateUpdate(
+          data,
+          formState.originalState
+        );
+        return updatedState;
       } catch (error) {
         console.error('Belief save failed:', error);
         throw error;
@@ -76,8 +107,18 @@ export default function BeliefForm({
   };
 
   const handleRemoveCustomValue = (index: number) => {
-    const newState = removeCustomValue(formState.state, index);
-    formState.updateField('customValues', newState.customValues);
+    // Check if this is a newly added value (not saved yet)
+    const currentValue = formState.state.customValues[index];
+    const originalValues = formState.originalState.customValues || [];
+    const isNewValue = !originalValues.includes(currentValue);
+
+    // Allow removal if:
+    // 1. Belief is not in use, OR
+    // 2. This is a new value that hasn't been saved yet
+    if (!beliefInUse || isNewValue) {
+      const newState = removeCustomValue(formState.state, index);
+      formState.updateField('customValues', newState.customValues);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -111,34 +152,47 @@ export default function BeliefForm({
     );
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Success Alert */}
-      {saveSuccess && (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-green-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-bold text-green-800">
-                Belief saved successfully!
+  const renderUsageWarning = () => {
+    if (!beliefInUse) return null;
+
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <LockClosedIcon className="h-5 w-5 text-amber-400" />
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-bold text-amber-800">
+              Belief In Use - Limited Editing
+            </h3>
+            <div className="mt-2 text-sm text-amber-700">
+              <p>
+                This belief is currently used by <strong>{usageCount}</strong>{' '}
+                item{usageCount !== 1 ? 's' : ''} and has restricted editing:
               </p>
+              <ul className="mt-2 list-inside list-disc space-y-1">
+                <li>
+                  <strong>Slug</strong> and <strong>Scale</strong> cannot be
+                  changed
+                </li>
+                <li>
+                  Existing <strong>Custom Values</strong> cannot be removed (new
+                  unsaved values can still be removed)
+                </li>
+                <li>
+                  You can still change the <strong>Title</strong> and add new{' '}
+                  <strong>Custom Values</strong>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  };
 
+  return (
+    <div className="space-y-8">
       {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -150,6 +204,9 @@ export default function BeliefForm({
             : 'Edit the belief configuration and scale options.'}
         </p>
       </div>
+
+      {/* Usage Warning */}
+      {renderUsageWarning()}
 
       {/* Info Box */}
       <div className="rounded-md bg-blue-50 p-4">
@@ -184,26 +241,42 @@ export default function BeliefForm({
           required
         />
 
-        <StringInput
-          value={formState.state.slug}
-          onChange={(value) => formState.updateField('slug', value)}
-          label="Slug"
-          placeholder="Enter belief slug"
-          error={formState.errors.slug}
-          required
-        />
+        <div className="relative">
+          <StringInput
+            value={formState.state.slug}
+            onChange={(value) => formState.updateField('slug', value)}
+            label="Slug"
+            placeholder="Enter belief slug"
+            error={formState.errors.slug}
+            disabled={beliefInUse}
+            required
+          />
+          {beliefInUse && (
+            <div className="absolute right-2 top-8 flex items-center">
+              <LockClosedIcon className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Scale Selection */}
       <div className="space-y-4">
-        <EnumSelect
-          value={formState.state.scale}
-          onChange={(value) => formState.updateField('scale', value)}
-          label="Scale Type"
-          options={SCALE_OPTIONS}
-          error={formState.errors.scale}
-          required
-        />
+        <div className="relative">
+          <EnumSelect
+            value={formState.state.scale}
+            onChange={(value) => formState.updateField('scale', value)}
+            label="Scale Type"
+            options={SCALE_OPTIONS}
+            error={formState.errors.scale}
+            disabled={beliefInUse}
+            required
+          />
+          {beliefInUse && (
+            <div className="absolute right-8 top-8 flex items-center">
+              <LockClosedIcon className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
+        </div>
 
         {renderScalePreview()}
       </div>
@@ -215,6 +288,12 @@ export default function BeliefForm({
             <h3 className="text-lg font-bold text-gray-900">Custom Values</h3>
             <p className="text-sm text-gray-600">
               Define custom options for this belief scale.
+              {beliefInUse && (
+                <span className="ml-1 font-medium text-amber-600">
+                  Saved values cannot be removed while belief is in use, but new
+                  unsaved values can be removed.
+                </span>
+              )}
             </p>
           </div>
 
@@ -256,34 +335,49 @@ export default function BeliefForm({
                 Current Values
               </label>
               <div className="space-y-2">
-                {formState.state.customValues.map((value, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
-                  >
-                    <span className="text-sm text-gray-900">{value}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCustomValue(index)}
-                      className="text-red-600 hover:text-red-800 focus:outline-none"
+                {formState.state.customValues.map((value, index) => {
+                  // Check if this value existed in the original state (saved) or is new
+                  const originalValues =
+                    formState.originalState.customValues || [];
+                  const isNewValue = !originalValues.includes(value);
+                  const canRemove = !beliefInUse || isNewValue;
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
                     >
-                      <XMarkIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-sm text-gray-900">{value}</span>
+                      <div className="flex items-center space-x-2">
+                        {beliefInUse && !isNewValue && (
+                          <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomValue(index)}
+                          disabled={!canRemove}
+                          className={`focus:outline-none ${
+                            canRemove
+                              ? 'text-red-600 hover:text-red-800'
+                              : 'cursor-not-allowed text-gray-300'
+                          }`}
+                          title={
+                            canRemove
+                              ? 'Remove value'
+                              : 'Cannot remove saved values while belief is in use'
+                          }
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
       )}
-
-      {/* Form Actions */}
-      <BeliefFormActions
-        formState={formState}
-        isCreate={isCreate}
-        onSuccess={onSuccess}
-        onCancel={onCancel}
-      />
 
       {/* Unsaved Changes Bar */}
       <UnsavedChangesBar

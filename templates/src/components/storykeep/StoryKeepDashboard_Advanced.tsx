@@ -14,7 +14,6 @@ import UnsavedChangesBar from './form/UnsavedChangesBar';
 import DatabaseConfigSection from './form/advanced/DatabaseConfigSection';
 import AuthConfigSection from './form/advanced/AuthConfigSection';
 import APIConfigSection from './form/advanced/APIConfigSection';
-import FormActions from './form/advanced/FormActions';
 import type {
   AdvancedConfigState,
   AdvancedConfigStatus,
@@ -52,11 +51,16 @@ export default function StoryKeepDashboard_Advanced() {
     onSave: async (state: AdvancedConfigState) => {
       const backendPayload = convertToBackendFormat(state);
       await saveAdvancedConfig(backendPayload);
+
       // Reload status after save
       const newStatus = await getAdvancedConfigStatus();
       setStatus(newStatus);
-      // Reset form to clear password fields
-      formState.cancel();
+
+      // Reset form to new state (clears password fields and isDirty)
+      const newState = convertToLocalState(newStatus);
+      formState.resetToState(newState);
+
+      return newState;
     },
   });
 
@@ -84,7 +88,6 @@ export default function StoryKeepDashboard_Advanced() {
         <DatabaseConfigSection formState={formState} status={status} />
         <AuthConfigSection formState={formState} status={status} />
         <APIConfigSection formState={formState} status={status} />
-        <FormActions formState={formState} />
       </div>
     </div>
   );

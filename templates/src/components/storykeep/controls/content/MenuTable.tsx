@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { deleteMenu } from '../../../../utils/api/menuConfig';
 import {
   orphanAnalysisStore,
@@ -67,6 +68,30 @@ export default function MenuTable({
       );
       return sf ? sf.title : `Unknown (${sfId})`;
     });
+  };
+
+  // Check if delete should be disabled
+  const shouldDisableDelete = (menu: FullContentMapItem): boolean => {
+    if (!orphanState.data) {
+      return true; // Disable if no orphan data loaded yet
+    }
+
+    const usage = getMenuUsage(menu.id);
+    return usage.length > 0;
+  };
+
+  // Helper function to get delete tooltip
+  const getDeleteTooltip = (menu: FullContentMapItem): string => {
+    if (!orphanState.data) {
+      return 'Loading usage analysis...';
+    }
+
+    const usage = getMenuUsage(menu.id);
+    if (usage.length > 0) {
+      return `Cannot delete: menu is used by ${usage.length} story fragment(s)`;
+    }
+
+    return 'Delete menu';
   };
 
   const handleDelete = async (menu: FullContentMapItem) => {
@@ -143,20 +168,10 @@ export default function MenuTable({
         />
       </div>
 
-      {/* Orphan Analysis Loading State */}
-      {orphanState.isLoading && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
-          <div className="flex items-center">
-            <div className="mr-3 h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
-            <p className="text-sm text-blue-700">Loading usage analysis...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      {/* Table Container */}
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
         {filteredMenus.length === 0 ? (
-          <div className="py-12 text-center">
+          <div className="px-6 py-12 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               fill="none"
@@ -178,140 +193,125 @@ export default function MenuTable({
                 ? 'Try adjusting your search terms.'
                 : 'Get started by creating your first menu.'}
             </p>
+            {!query && (
+              <button
+                onClick={onCreate}
+                className="mt-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
+              >
+                Create Menu
+              </button>
+            )}
           </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Menu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Theme
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Usage
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredMenus.map((menu) => {
-                const usage = getMenuUsage(menu.id);
-                const isInUse = usage.length > 0;
-                const usageDetails = getUsageDetails(menu.id);
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 md:px-6">
+                    Title
+                  </th>
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 md:table-cell md:px-6">
+                    Theme
+                  </th>
+                  <th className="hidden px-3 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 xl:table-cell xl:px-6">
+                    Usage
+                  </th>
+                  <th className="px-3 py-3 text-right md:px-6">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filteredMenus.map((menu) => {
+                  const usage = getMenuUsage(menu.id);
+                  const usageDetails = getUsageDetails(menu.id);
+                  const isInUse = usage.length > 0;
+                  const canDelete = !shouldDisableDelete(menu);
+                  const deleteTooltip = getDeleteTooltip(menu);
 
-                return (
-                  <tr key={menu.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {menu.title}
-                        </div>
-                        <div className="max-w-xs truncate text-sm text-gray-500">
-                          ID: {menu.id}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium capitalize text-gray-800">
-                        {menu.theme || 'default'}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      {isInUse ? (
-                        <div className="group relative">
-                          <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                            {usage.length} story fragment
-                            {usage.length !== 1 ? 's' : ''}
-                          </span>
-                          {/* Tooltip */}
-                          <div className="invisible absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg group-hover:visible">
-                            Used by: {usageDetails.slice(0, 3).join(', ')}
-                            {usageDetails.length > 3 &&
-                              ` +${usageDetails.length - 3} more`}
-                            <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-900"></div>
+                  return (
+                    <tr key={menu.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-4 md:px-6">
+                        <div className="flex flex-col">
+                          <div className="text-sm font-bold text-gray-900">
+                            {menu.title}
+                          </div>
+                          <div className="text-sm text-gray-500 md:hidden">
+                            {menu.theme || 'No theme'}
                           </div>
                         </div>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                          Unused
-                        </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => onEdit(menu.id)}
-                          disabled={isLoading}
-                          className="text-cyan-600 hover:text-cyan-900 disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Edit menu"
-                        >
-                          <svg
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      </td>
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 md:table-cell md:px-6">
+                        {menu.theme || 'No theme'}
+                      </td>
+                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm xl:table-cell xl:px-6">
+                        {!orphanState.data ? (
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="h-2 w-2 animate-pulse rounded-full bg-gray-400"
+                              style={{
+                                animationDuration: window.matchMedia(
+                                  '(prefers-reduced-motion: reduce)'
+                                ).matches
+                                  ? '2s'
+                                  : '1s',
+                              }}
                             />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(menu)}
-                          disabled={
-                            isInUse ||
-                            isDeleting === menu.id ||
-                            !orphanState.data
-                          }
-                          className={`${
-                            isInUse ||
-                            isDeleting === menu.id ||
-                            !orphanState.data
-                              ? 'cursor-not-allowed text-gray-400'
-                              : 'text-red-600 hover:text-red-900'
-                          }`}
-                          title={
-                            !orphanState.data
-                              ? 'Loading usage analysis...'
-                              : isInUse
-                                ? `Cannot delete: menu is used by ${usage.length} story fragment(s)`
-                                : 'Delete menu'
-                          }
-                        >
-                          {isDeleting === menu.id ? (
-                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
-                          ) : (
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          </div>
+                        ) : isInUse ? (
+                          <div className="group relative">
+                            <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                              {usage.length} usage
+                              {usage.length !== 1 ? 's' : ''}
+                            </span>
+                            {/* Tooltip */}
+                            <div className="invisible absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 transform whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg group-hover:visible">
+                              Used by: {usageDetails.slice(0, 3).join(', ')}
+                              {usageDetails.length > 3 &&
+                                ` +${usageDetails.length - 3} more`}
+                              <div className="absolute left-1/2 top-full -translate-x-1/2 transform border-4 border-transparent border-t-gray-900"></div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            Unused
+                          </span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold md:px-6">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => onEdit(menu.id)}
+                            disabled={isLoading}
+                            className="text-cyan-600 hover:text-cyan-900 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Edit menu"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => canDelete && handleDelete(menu)}
+                            disabled={!canDelete || isDeleting === menu.id}
+                            title={deleteTooltip}
+                            className={`transition-colors ${
+                              canDelete && isDeleting !== menu.id
+                                ? 'text-red-600 hover:text-red-900'
+                                : 'cursor-not-allowed text-gray-300'
+                            }`}
+                          >
+                            {isDeleting === menu.id ? (
+                              <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+                            ) : (
+                              <TrashIcon className="h-5 w-5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
