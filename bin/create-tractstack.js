@@ -118,9 +118,12 @@ PUBLIC_TENANTID="${responses.tenantId}"
     console.log(kleur.green('✅ State management installed'));
 
     // Install UI components
-    execSync(`${addCommand} @ark-ui/react@^5.9.0 @heroicons/react@^2.2.0`, {
-      stdio: 'inherit',
-    });
+    execSync(
+      `${addCommand} @ark-ui/react@^5.9.0 @heroicons/react@^2.2.0 @internationalized/date@^3.8.0`,
+      {
+        stdio: 'inherit',
+      }
+    );
     console.log(kleur.green('✅ UI components installed'));
 
     // Install visualization dependencies

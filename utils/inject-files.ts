@@ -239,6 +239,10 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/components/storykeep/form/NumberInput.tsx'),
       dest: 'src/components/storykeep/form/NumberInput.tsx',
     },
+    {
+      src: resolve('templates/src/components/storykeep/form/DateTimeInput.tsx'),
+      dest: 'src/components/storykeep/form/DateTimeInput.tsx',
+    },
     // Advanced Configuration Components
     {
       src: resolve(
@@ -388,6 +392,23 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
     },
+    // resources
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/KnownResourceTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/KnownResourceTable.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/KnownResourceForm.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/KnownResourceForm.tsx',
+    },
+    {
+      src: resolve('templates/src/utils/resourceHelpers.ts'),
+      dest: 'src/utils/resourceHelpers.ts',
+    },
     // Menu Utilities
     {
       src: resolve('templates/src/utils/menuHelpers.ts'),
@@ -396,6 +417,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/utils/api/menuConfig.ts'),
       dest: 'src/utils/api/menuConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/resourceConfig.ts'),
+      dest: 'src/utils/api/resourceConfig.ts',
     },
     // Orphan analysis system
     {

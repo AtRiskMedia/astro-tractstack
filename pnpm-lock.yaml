@@ -16,6 +16,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.1.1
         version: 2.2.0(react@19.1.0)
+      '@internationalized/date':
+        specifier: ^3.8.2
+        version: 3.8.2
       '@nanostores/react':
         specifier: ^1.0.0
         version: 1.0.0(nanostores@1.0.1)(react@19.1.0)

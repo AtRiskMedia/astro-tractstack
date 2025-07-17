@@ -163,9 +163,6 @@ export interface FullContentMapItem {
   scale?: string;
 }
 
-// Complete BrandConfig interface for templates/src/types/tractstack.ts
-// This replaces the current partial BrandConfig interface
-
 export interface BrandConfig {
   // Core site configuration
   SITE_INIT: boolean;
@@ -194,10 +191,9 @@ export interface BrandConfig {
   OGLOGO_BASE64?: string;
   FAVICON_BASE64?: string;
   GTAG: string;
+  KNOWN_RESOURCES?: KnownResourcesConfig;
 }
 
-// Local state interface for form handling
-// Uses simplified types (arrays instead of CSV strings) for easier client-side manipulation
 export interface BrandConfigState {
   // Core site configuration
   siteInit: boolean;
@@ -226,6 +222,7 @@ export interface BrandConfigState {
   oglogoBase64?: string;
   faviconBase64?: string;
   gtag: string;
+  knownResources: KnownResourcesConfig;
 }
 
 // Form validation types
@@ -373,4 +370,40 @@ export interface BeliefNodeState {
   slug: string;
   scale: string;
   customValues: string[];
+}
+
+// Known Resources types
+export interface FieldDefinition {
+  type: string;
+  optional: boolean;
+  defaultValue?: any;
+  belongsToCategory?: string;
+  minNumber?: number;
+  maxNumber?: number;
+}
+
+export interface KnownResourcesConfig {
+  [categoryName: string]: {
+    [fieldName: string]: FieldDefinition;
+  };
+}
+
+export interface ResourceConfig {
+  ID: string;
+  TITLE: string;
+  SLUG: string;
+  CATEGORY_SLUG: string;
+  ONELINER: string;
+  OPTIONS_PAYLOAD: string; // JSON string
+  ACTION_LISP?: string;
+}
+
+export interface ResourceState {
+  id: string;
+  title: string;
+  slug: string;
+  categorySlug: string;
+  oneliner: string;
+  optionsPayload: Record<string, any>;
+  actionLisp?: string;
 }

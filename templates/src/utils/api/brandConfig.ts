@@ -32,6 +32,10 @@ export async function saveBrandConfigWithStateUpdate(
   currentState: BrandConfigState,
   originalState: BrandConfigState
 ): Promise<BrandConfigState> {
+  console.log(
+    currentState.knownResources?.location,
+    originalState.knownResources?.location
+  );
   const backendFormat = convertToBackendFormat(currentState);
   const originalBackendFormat = convertToBackendFormat(originalState);
 
@@ -39,7 +43,11 @@ export async function saveBrandConfigWithStateUpdate(
   const changedFields: Partial<BrandConfig> = {};
   Object.keys(backendFormat).forEach((key) => {
     const typedKey = key as keyof BrandConfig;
-    if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
+    if (typedKey === 'KNOWN_RESOURCES') {
+      if (backendFormat[typedKey]) {
+        (changedFields as any)[typedKey] = backendFormat[typedKey];
+      }
+    } else if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
       (changedFields as any)[typedKey] = backendFormat[typedKey];
     }
   });

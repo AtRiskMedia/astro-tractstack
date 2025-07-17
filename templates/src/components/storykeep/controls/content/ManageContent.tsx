@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '../../../../utils/helpers';
 import { navigationStore } from '../../../../stores/navigation';
+import { brandConfigStore } from '../../../../stores/brand';
 import {
   handleManageSubtabChange,
   restoreTabNavigation,
@@ -14,6 +15,8 @@ import MenuTable from './MenuTable';
 import MenuForm from './MenuForm';
 import BeliefTable from './BeliefTable';
 import BeliefForm from './BeliefForm';
+import KnownResourceTable from './KnownResourceTable';
+import KnownResourceForm from './KnownResourceForm';
 import type {
   FullContentMapItem,
   MenuNode,
@@ -59,8 +62,15 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
   const [isCreatingBelief, setIsCreatingBelief] = useState(false);
   const [isLoadingBelief, setIsLoadingBelief] = useState(false);
 
-  // Subscribe to navigation store
+  // Known Resource form state
+  const [showKnownResourceForm, setShowKnownResourceForm] = useState(false);
+  const [editingCategorySlug, setEditingCategorySlug] = useState<string | null>(
+    null
+  );
+
+  // Subscribe to navigation store and brand config
   const navigationState = useStore(navigationStore);
+  const brandConfig = useStore(brandConfigStore);
 
   // Restore navigation state when component mounts (when entering Manage Content)
   useEffect(() => {
@@ -94,6 +104,12 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
       setEditingBeliefId(null);
       setEditingBelief(null);
       setIsCreatingBelief(false);
+    }
+
+    // Close known resource form when switching tabs
+    if (showKnownResourceForm) {
+      setShowKnownResourceForm(false);
+      setEditingCategorySlug(null);
     }
   };
 
@@ -180,6 +196,23 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     setIsCreatingBelief(false);
   };
 
+  // Known Resource handlers
+  const handleEditKnownResource = (categorySlug: string) => {
+    setEditingCategorySlug(categorySlug);
+    setShowKnownResourceForm(true);
+  };
+
+  const handleKnownResourceSaved = () => {
+    setShowKnownResourceForm(false);
+    setEditingCategorySlug(null);
+    window.location.reload();
+  };
+
+  const handleKnownResourceFormBack = () => {
+    setShowKnownResourceForm(false);
+    setEditingCategorySlug(null);
+  };
+
   // Handle refresh after delete
   const handleRefresh = () => {
     window.location.reload();
@@ -207,6 +240,18 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
           isCreate={isCreatingBelief}
           onSuccess={handleBeliefFormSuccess}
           onCancel={handleBeliefFormCancel}
+        />
+      );
+    }
+
+    // Show known resource form if active
+    if (showKnownResourceForm && activeTab === 'resources') {
+      return (
+        <KnownResourceForm
+          categorySlug={editingCategorySlug || 'new'}
+          contentMap={fullContentMap}
+          onBack={handleKnownResourceFormBack}
+          onSaved={handleKnownResourceSaved}
         />
       );
     }
@@ -245,11 +290,11 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
 
       case 'resources':
         return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <div className="text-lg text-gray-600">
-              Resources management - Coming soon
-            </div>
-          </div>
+          <KnownResourceTable
+            contentMap={fullContentMap}
+            onEdit={handleEditKnownResource}
+            onRefresh={handleRefresh}
+          />
         );
 
       case 'beliefs':

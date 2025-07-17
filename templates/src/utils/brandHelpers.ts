@@ -1,6 +1,10 @@
 import { getThemeColors, isCustomTheme } from '../constants/brandThemes';
 import type { FieldErrors } from '../hooks/useFormState';
-import type { BrandConfig, BrandConfigState } from '../types/tractstack';
+import type {
+  BrandConfig,
+  BrandConfigState,
+  KnownResourcesConfig,
+} from '../types/tractstack';
 
 /**
  * Convert backend BrandConfig to local state format
@@ -36,6 +40,7 @@ export function convertToLocalState(
     ogdesc: brandConfig.OGDESC ?? '',
     gtag: brandConfig.GTAG ?? '',
     stylesVer: brandConfig.STYLES_VER ?? 1,
+    knownResources: brandConfig.KNOWN_RESOURCES ?? {},
   };
 }
 
@@ -73,6 +78,7 @@ export function convertToBackendFormat(
     OG_BASE64: localState.ogBase64,
     OGLOGO_BASE64: localState.oglogoBase64,
     FAVICON_BASE64: localState.faviconBase64,
+    KNOWN_RESOURCES: localState.knownResources,
   };
 }
 
@@ -85,8 +91,6 @@ export function brandStateIntercept(
   field: keyof BrandConfigState,
   value: any
 ): BrandConfigState {
-  console.log('Brand state intercept:', field, value); // Debug log
-
   // When theme changes to a preset, override all brand colors
   if (field === 'theme' && value !== 'Custom' && !isCustomTheme(value)) {
     return {
