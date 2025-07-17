@@ -1,5 +1,6 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useState, useEffect } from 'react';
 import { DatePicker } from '@ark-ui/react/date-picker';
+import { NumberInput } from '@ark-ui/react/number-input';
 import { Portal } from '@ark-ui/react/portal';
 import {
   CalendarDate,
@@ -13,32 +14,10 @@ import { classNames } from '../../../utils/helpers';
 import type { BaseFormComponentProps } from '../../../types/formTypes';
 
 export interface DateTimeInputProps extends BaseFormComponentProps<number> {
-  /**
-   * Display format for the date picker
-   * - 'date': Date only
-   * - 'datetime': Date and time
-   * - 'time': Time only
-   */
   displayFormat?: 'date' | 'datetime' | 'time';
-
-  /**
-   * Minimum selectable date (Unix timestamp)
-   */
   min?: number;
-
-  /**
-   * Maximum selectable date (Unix timestamp)
-   */
   max?: number;
-
-  /**
-   * Whether to show the time picker
-   */
   withTime?: boolean;
-
-  /**
-   * Time step in minutes (for time picker)
-   */
   timeStep?: number;
 }
 
@@ -61,31 +40,97 @@ const DateTimeInput = ({
   const errorId = `${id}-error`;
   const helpTextId = `${id}-help`;
 
-  // Convert Unix timestamp to CalendarDate/CalendarDateTime for Ark UI
+  // Local state for time inputs - separate from DatePicker
+  const [localHour12, setLocalHour12] = useState(6); // Default 6 PM
+  const [localMinute, setLocalMinute] = useState(0);
+  const [localIsPM, setLocalIsPM] = useState(true);
+
+  // Sync local time state with the incoming value
+  useEffect(() => {
+    if (value && value > 0) {
+      const localDate = new Date(value * 1000);
+      const hour24 = localDate.getHours();
+      const minute = localDate.getMinutes();
+
+      setLocalHour12(hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24);
+      setLocalMinute(minute);
+      setLocalIsPM(hour24 >= 12);
+    }
+  }, [value]);
+
+  // Helper to convert local time to UTC timestamp and call onChange
+  const updateTimestamp = (
+    hour12: number,
+    minute: number,
+    isPM: boolean,
+    selectedDate?: DateValue
+  ) => {
+    // Convert 12-hour to 24-hour
+    let hour24 = hour12;
+    if (isPM && hour12 !== 12) {
+      hour24 += 12;
+    } else if (!isPM && hour12 === 12) {
+      hour24 = 0;
+    }
+
+    // Use the selected date or current date value
+    let targetDate: Date;
+    if (selectedDate) {
+      targetDate = new Date(
+        'year' in selectedDate ? selectedDate.year : new Date().getFullYear(),
+        'month' in selectedDate
+          ? selectedDate.month - 1
+          : new Date().getMonth(),
+        'day' in selectedDate ? selectedDate.day : new Date().getDate(),
+        hour24,
+        minute
+      );
+    } else if (value && value > 0) {
+      const existingDate = new Date(value * 1000);
+      targetDate = new Date(
+        existingDate.getFullYear(),
+        existingDate.getMonth(),
+        existingDate.getDate(),
+        hour24,
+        minute
+      );
+    } else {
+      // Default to today with the specified time
+      const today = new Date();
+      targetDate = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        hour24,
+        minute
+      );
+    }
+
+    const utcTimestamp = Math.floor(targetDate.getTime() / 1000);
+    onChange(utcTimestamp);
+  };
+
   const dateValue = useMemo((): DateValue | undefined => {
     if (!value || value === 0) return undefined;
 
-    // Create Date from UTC timestamp
-    const utcDate = new Date(value * 1000);
+    // Convert UTC timestamp to local time for display
+    const localDate = new Date(value * 1000);
 
     if (withTime && displayFormat !== 'date') {
-      // Use CalendarDateTime for date + time - show in local timezone
-      const year = utcDate.getFullYear();
-      const month = utcDate.getMonth() + 1;
-      const day = utcDate.getDate();
-      const hour = utcDate.getHours();
-      const minute = utcDate.getMinutes();
+      const year = localDate.getFullYear();
+      const month = localDate.getMonth() + 1;
+      const day = localDate.getDate();
+      const hour = localDate.getHours();
+      const minute = localDate.getMinutes();
       return new CalendarDateTime(year, month, day, hour, minute);
     } else {
-      // Use CalendarDate for date only - show in local timezone
-      const year = utcDate.getFullYear();
-      const month = utcDate.getMonth() + 1;
-      const day = utcDate.getDate();
+      const year = localDate.getFullYear();
+      const month = localDate.getMonth() + 1;
+      const day = localDate.getDate();
       return new CalendarDate(year, month, day);
     }
   }, [value, withTime, displayFormat]);
 
-  // Convert min/max timestamps to CalendarDate objects (local timezone for display)
   const minDate = useMemo((): DateValue | undefined => {
     if (!min) return undefined;
     const date = new Date(min * 1000);
@@ -106,7 +151,6 @@ const DateTimeInput = ({
     );
   }, [max]);
 
-  // Handle date change - convert DateValue back to UTC Unix timestamp
   const handleDateChange = (details: { value: DateValue[] }) => {
     if (!details.value || details.value.length === 0) {
       onChange(0);
@@ -115,20 +159,12 @@ const DateTimeInput = ({
 
     const selectedDate = details.value[0];
 
-    // Convert to Date object in local timezone, then get UTC timestamp
-    let localDate: Date;
-    if ('hour' in selectedDate && 'minute' in selectedDate) {
-      // CalendarDateTime or ZonedDateTime with time - treat as local time
-      localDate = new Date(
-        selectedDate.year,
-        selectedDate.month - 1,
-        selectedDate.day,
-        selectedDate.hour,
-        selectedDate.minute
-      );
+    if (withTime && displayFormat !== 'date') {
+      // Use current local time state with the new date
+      updateTimestamp(localHour12, localMinute, localIsPM, selectedDate);
     } else {
-      // CalendarDate - use noon local time to avoid timezone edge cases
-      localDate = new Date(
+      // For date-only, use noon local time
+      const localDate = new Date(
         selectedDate.year,
         selectedDate.month - 1,
         selectedDate.day,
@@ -136,21 +172,16 @@ const DateTimeInput = ({
         0,
         0
       );
+      const utcTimestamp = Math.floor(localDate.getTime() / 1000);
+      onChange(utcTimestamp);
     }
-
-    // Get UTC timestamp (getTime() returns UTC milliseconds)
-    const timestamp = Math.floor(localDate.getTime() / 1000);
-    onChange(timestamp);
   };
 
-  // Format display value
   const getDisplayValue = () => {
     if (!dateValue) return '';
 
-    // Convert DateValue to JS Date for formatting (already in local timezone)
     let localDate: Date;
     if ('hour' in dateValue && 'minute' in dateValue) {
-      // CalendarDateTime or ZonedDateTime
       localDate = new Date(
         dateValue.year,
         dateValue.month - 1,
@@ -159,7 +190,6 @@ const DateTimeInput = ({
         dateValue.minute
       );
     } else {
-      // CalendarDate
       localDate = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
     }
 
@@ -203,14 +233,15 @@ const DateTimeInput = ({
         min={minDate}
         max={maxDate}
         disabled={disabled}
+        closeOnSelect={false}
         positioning={{ sameWidth: true }}
       >
-        <DatePicker.Control className="relative">
+        <DatePicker.Control className="relative max-w-xs">
           <DatePicker.Input
             id={id}
             placeholder={placeholder}
             className={classNames(
-              'w-full rounded-md border px-3 py-2 text-sm shadow-sm transition-colors',
+              'w-full max-w-xs rounded-md border px-3 py-2 text-sm shadow-sm transition-colors',
               'focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
               error
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
@@ -241,32 +272,25 @@ const DateTimeInput = ({
         <Portal>
           <DatePicker.Positioner>
             <DatePicker.Content className="z-50 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
-              {/* Calendar View */}
               <DatePicker.View view="day">
                 <DatePicker.Context>
                   {(api) => (
                     <>
-                      {/* Month/Year Header */}
-                      <div className="mb-4 flex items-center justify-between">
+                      <DatePicker.ViewControl className="mb-4 flex items-center justify-between">
                         <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronLeftIcon className="h-4 w-4" />
                         </DatePicker.PrevTrigger>
-
-                        <div className="flex items-center space-x-2">
-                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
-                            {api.focusedValue.month}/{api.focusedValue.year}
-                          </DatePicker.ViewTrigger>
-                        </div>
-
+                        <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
+                          <DatePicker.RangeText />
+                        </DatePicker.ViewTrigger>
                         <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronRightIcon className="h-4 w-4" />
                         </DatePicker.NextTrigger>
-                      </div>
+                      </DatePicker.ViewControl>
 
-                      {/* Days Grid */}
                       <DatePicker.Table className="w-full">
                         <DatePicker.TableHead>
-                          <DatePicker.TableRow className="grid grid-cols-7 gap-1">
+                          <DatePicker.TableRow>
                             {api.weekDays.map((weekDay, id) => (
                               <DatePicker.TableHeader
                                 key={id}
@@ -279,10 +303,7 @@ const DateTimeInput = ({
                         </DatePicker.TableHead>
                         <DatePicker.TableBody>
                           {api.weeks.map((week, id) => (
-                            <DatePicker.TableRow
-                              key={id}
-                              className="grid grid-cols-7 gap-1"
-                            >
+                            <DatePicker.TableRow key={id}>
                               {week.map((day, id) => (
                                 <DatePicker.TableCell key={id} value={day}>
                                   <DatePicker.TableCellTrigger
@@ -306,157 +327,160 @@ const DateTimeInput = ({
                 </DatePicker.Context>
               </DatePicker.View>
 
-              {/* Month View */}
               <DatePicker.View view="month">
                 <DatePicker.Context>
                   {(api) => (
                     <>
-                      <div className="mb-4 flex items-center justify-between">
+                      <DatePicker.ViewControl className="mb-4 flex items-center justify-between">
                         <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronLeftIcon className="h-4 w-4" />
                         </DatePicker.PrevTrigger>
-
                         <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
-                          {api.focusedValue.year}
+                          <DatePicker.RangeText />
                         </DatePicker.ViewTrigger>
-
                         <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronRightIcon className="h-4 w-4" />
                         </DatePicker.NextTrigger>
-                      </div>
+                      </DatePicker.ViewControl>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        {api.getMonths().map((month, id) => (
-                          <DatePicker.TableCell key={id} value={month.value}>
-                            <DatePicker.TableCellTrigger
-                              className={classNames(
-                                'w-full rounded p-2 text-sm transition-colors hover:bg-blue-50',
-                                'data-[selected]:bg-blue-600 data-[selected]:text-white'
-                              )}
-                            >
-                              {month.label}
-                            </DatePicker.TableCellTrigger>
-                          </DatePicker.TableCell>
-                        ))}
-                      </div>
+                      <DatePicker.Table>
+                        <DatePicker.TableBody>
+                          {api
+                            .getMonthsGrid({ columns: 4, format: 'short' })
+                            .map((months, id) => (
+                              <DatePicker.TableRow key={id}>
+                                {months.map((month, id) => (
+                                  <DatePicker.TableCell
+                                    key={id}
+                                    value={month.value}
+                                  >
+                                    <DatePicker.TableCellTrigger
+                                      className={classNames(
+                                        'w-full rounded p-2 text-sm transition-colors hover:bg-blue-50',
+                                        'data-[selected]:bg-blue-600 data-[selected]:text-white'
+                                      )}
+                                    >
+                                      {month.label}
+                                    </DatePicker.TableCellTrigger>
+                                  </DatePicker.TableCell>
+                                ))}
+                              </DatePicker.TableRow>
+                            ))}
+                        </DatePicker.TableBody>
+                      </DatePicker.Table>
                     </>
                   )}
                 </DatePicker.Context>
               </DatePicker.View>
 
-              {/* Year View */}
               <DatePicker.View view="year">
                 <DatePicker.Context>
                   {(api) => (
                     <>
-                      <div className="mb-4 flex items-center justify-between">
+                      <DatePicker.ViewControl className="mb-4 flex items-center justify-between">
                         <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronLeftIcon className="h-4 w-4" />
                         </DatePicker.PrevTrigger>
-
-                        <span className="px-3 py-1 text-sm font-medium">
-                          {api.getDecade().start} - {api.getDecade().end}
-                        </span>
-
+                        <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
+                          <DatePicker.RangeText />
+                        </DatePicker.ViewTrigger>
                         <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
                           <ChevronRightIcon className="h-4 w-4" />
                         </DatePicker.NextTrigger>
-                      </div>
+                      </DatePicker.ViewControl>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        {api.getYears().map((year, id) => (
-                          <DatePicker.TableCell key={id} value={year.value}>
-                            <DatePicker.TableCellTrigger
-                              className={classNames(
-                                'w-full rounded p-2 text-sm transition-colors hover:bg-blue-50',
-                                'data-[selected]:bg-blue-600 data-[selected]:text-white'
-                              )}
-                            >
-                              {year.label}
-                            </DatePicker.TableCellTrigger>
-                          </DatePicker.TableCell>
-                        ))}
-                      </div>
+                      <DatePicker.Table>
+                        <DatePicker.TableBody>
+                          {api.getYearsGrid({ columns: 4 }).map((years, id) => (
+                            <DatePicker.TableRow key={id}>
+                              {years.map((year, id) => (
+                                <DatePicker.TableCell
+                                  key={id}
+                                  value={year.value}
+                                >
+                                  <DatePicker.TableCellTrigger
+                                    className={classNames(
+                                      'w-full rounded p-2 text-sm transition-colors hover:bg-blue-50',
+                                      'data-[selected]:bg-blue-600 data-[selected]:text-white'
+                                    )}
+                                  >
+                                    {year.label}
+                                  </DatePicker.TableCellTrigger>
+                                </DatePicker.TableCell>
+                              ))}
+                            </DatePicker.TableRow>
+                          ))}
+                        </DatePicker.TableBody>
+                      </DatePicker.Table>
                     </>
                   )}
                 </DatePicker.Context>
               </DatePicker.View>
 
-              {/* Time Picker (if enabled) */}
               {withTime && displayFormat !== 'date' && (
                 <div className="mt-4 border-t border-gray-200 pt-4">
                   <div className="mb-2 text-center text-xs text-gray-500">
-                    Time selection (use +/- buttons or type values)
+                    Time selection (local timezone)
                   </div>
-                  <DatePicker.Context>
-                    {(api) => (
-                      <div className="flex items-center justify-center space-x-2">
-                        <input
-                          type="number"
-                          min="0"
-                          max="23"
-                          value={
-                            api.value[0] && 'hour' in api.value[0]
-                              ? api.value[0].hour
-                              : 12
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="flex items-center space-x-1">
+                      <NumberInput.Root
+                        value={localHour12.toString()}
+                        onValueChange={(details) => {
+                          const newHour = parseInt(details.value, 10);
+                          if (
+                            !isNaN(newHour) &&
+                            newHour >= 1 &&
+                            newHour <= 12
+                          ) {
+                            setLocalHour12(newHour);
+                            updateTimestamp(newHour, localMinute, localIsPM);
                           }
-                          onChange={(e) => {
-                            const hour = parseInt(e.target.value, 10);
-                            if (
-                              api.value[0] &&
-                              'hour' in api.value[0] &&
-                              'minute' in api.value[0]
-                            ) {
-                              const current = api.value[0];
-                              const newDateTime = new CalendarDateTime(
-                                current.year,
-                                current.month,
-                                current.day,
-                                isNaN(hour)
-                                  ? 0
-                                  : Math.max(0, Math.min(23, hour)),
-                                current.minute
-                              );
-                              api.setValue([newDateTime] as any);
-                            }
-                          }}
-                          className="w-12 rounded border px-2 py-1 text-center text-sm"
-                        />
-                        <span className="text-gray-500">:</span>
-                        <input
-                          type="number"
-                          min="0"
-                          max="59"
-                          value={
-                            api.value[0] && 'minute' in api.value[0]
-                              ? api.value[0].minute
-                              : 0
+                        }}
+                        min={1}
+                        max={12}
+                        allowMouseWheel={false}
+                      >
+                        <NumberInput.Input className="w-14 rounded border px-2 py-1 text-center text-sm" />
+                      </NumberInput.Root>
+                      <span className="text-xs text-gray-500">hr</span>
+                    </div>
+                    <span className="text-gray-500">:</span>
+                    <div className="flex items-center space-x-1">
+                      <NumberInput.Root
+                        value={localMinute.toString().padStart(2, '0')}
+                        onValueChange={(details) => {
+                          const newMinute = parseInt(details.value, 10);
+                          if (
+                            !isNaN(newMinute) &&
+                            newMinute >= 0 &&
+                            newMinute <= 59
+                          ) {
+                            setLocalMinute(newMinute);
+                            updateTimestamp(localHour12, newMinute, localIsPM);
                           }
-                          onChange={(e) => {
-                            const minute = parseInt(e.target.value, 10);
-                            if (
-                              api.value[0] &&
-                              'hour' in api.value[0] &&
-                              'minute' in api.value[0]
-                            ) {
-                              const current = api.value[0];
-                              const newDateTime = new CalendarDateTime(
-                                current.year,
-                                current.month,
-                                current.day,
-                                current.hour,
-                                isNaN(minute)
-                                  ? 0
-                                  : Math.max(0, Math.min(59, minute))
-                              );
-                              api.setValue([newDateTime] as any);
-                            }
-                          }}
-                          className="w-12 rounded border px-2 py-1 text-center text-sm"
-                        />
-                      </div>
-                    )}
-                  </DatePicker.Context>
+                        }}
+                        min={0}
+                        max={59}
+                        allowMouseWheel={false}
+                      >
+                        <NumberInput.Input className="w-14 rounded border px-2 py-1 text-center text-sm" />
+                      </NumberInput.Root>
+                      <span className="text-xs text-gray-500">min</span>
+                    </div>
+                    <select
+                      value={localIsPM ? 'PM' : 'AM'}
+                      onChange={(e) => {
+                        const newIsPM = e.target.value === 'PM';
+                        setLocalIsPM(newIsPM);
+                        updateTimestamp(localHour12, localMinute, newIsPM);
+                      }}
+                      className="rounded border px-2 py-1 text-sm"
+                    >
+                      <option value="AM">AM</option>
+                      <option value="PM">PM</option>
+                    </select>
+                  </div>
                 </div>
               )}
             </DatePicker.Content>
@@ -464,20 +488,16 @@ const DateTimeInput = ({
         </Portal>
       </DatePicker.Root>
 
-      {/* Error Message */}
       {error && (
         <p id={errorId} className="text-sm text-red-600" role="alert">
           {error}
         </p>
       )}
 
-      {/* Help Text */}
       <p id={helpTextId} className="text-xs text-gray-500">
-        {displayFormat === 'date' && 'Select a date (displayed in local time)'}
-        {displayFormat === 'datetime' &&
-          'Select date and time (displayed in local time, stored as UTC)'}
-        {displayFormat === 'time' && 'Select a time (displayed in local time)'}
-        {value > 0 && ` (UTC Timestamp: ${value})`}
+        <strong>⚠️ Local Timezone Alert:</strong> All dates/times are displayed
+        in your local timezone but stored as UTC timestamps.
+        {value > 0 && ` Current UTC timestamp: ${value}`}
       </p>
     </div>
   );

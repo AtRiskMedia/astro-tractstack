@@ -36,7 +36,7 @@ const KnownResourceTable = ({
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
 
   const getResourceCount = (categorySlug: string): number => {
-    return contentMap.filter((item) => item.slug.startsWith(`${categorySlug}-`))
+    return contentMap.filter((item) => item.categorySlug === categorySlug)
       .length;
   };
 

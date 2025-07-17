@@ -53,8 +53,7 @@ const KnownResourceForm = ({
   const currentCategory = isCreate ? {} : knownResources[categorySlug] || {};
 
   const hasExistingResources =
-    !isCreate &&
-    contentMap.some((item) => item.slug.startsWith(`${categorySlug}-`));
+    !isCreate && contentMap.some((item) => item.categorySlug === categorySlug);
 
   const initialState: KnownResourceState = {
     categorySlug: isCreate ? '' : categorySlug,

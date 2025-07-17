@@ -392,6 +392,28 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
     },
+    // Resource Management Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ResourceForm.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ResourceForm.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ResourceTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ResourceTable.tsx',
+    },
+    // Resource utilities
+    {
+      src: resolve('templates/src/utils/api/resourceConfig.ts'),
+      dest: 'src/utils/api/resourceConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/resourceHelpers.ts'),
+      dest: 'src/utils/resourceHelpers.ts',
+    },
     // resources
     {
       src: resolve(

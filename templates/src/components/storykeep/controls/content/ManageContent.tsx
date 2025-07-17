@@ -3,12 +3,14 @@ import { useStore } from '@nanostores/react';
 import { classNames } from '../../../../utils/helpers';
 import { navigationStore } from '../../../../stores/navigation';
 import { brandConfigStore } from '../../../../stores/brand';
+import { getBrandConfig } from '../../../../utils/api/brandConfig';
 import {
   handleManageSubtabChange,
   restoreTabNavigation,
 } from '../../../../utils/navigationHelpers';
 import { getMenuById } from '../../../../utils/api/menuConfig';
 import { getBeliefById } from '../../../../utils/api/beliefConfig';
+import { getResource } from '../../../../utils/api/resourceConfig';
 import ContentSummary from './ContentSummary';
 import StoryFragmentTable from './StoryFragmentTable';
 import MenuTable from './MenuTable';
@@ -17,10 +19,13 @@ import BeliefTable from './BeliefTable';
 import BeliefForm from './BeliefForm';
 import KnownResourceTable from './KnownResourceTable';
 import KnownResourceForm from './KnownResourceForm';
+import ResourceTable from './ResourceTable';
+import ResourceForm from './ResourceForm';
 import type {
   FullContentMapItem,
   MenuNode,
   BeliefNode,
+  ResourceConfig,
 } from '../../../../types/tractstack';
 
 interface ManageContentProps {
@@ -31,9 +36,10 @@ interface ManageContentProps {
 interface ContentManagementTab {
   id: string;
   name: string;
+  isResourceCategory?: boolean;
 }
 
-const contentManagementTabs: ContentManagementTab[] = [
+const staticContentManagementTabs: ContentManagementTab[] = [
   { id: 'summary', name: 'Summary' },
   { id: 'storyfragments', name: 'Story Fragments' },
   { id: 'panes', name: 'Panes' },
@@ -68,9 +74,52 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     null
   );
 
+  // Resource form state
+  const [showResourceForm, setShowResourceForm] = useState(false);
+  const [editingResourceId, setEditingResourceId] = useState<string | null>(
+    null
+  );
+  const [editingResource, setEditingResource] = useState<ResourceConfig | null>(
+    null
+  );
+  const [isCreatingResource, setIsCreatingResource] = useState(false);
+  const [isLoadingResource, setIsLoadingResource] = useState(false);
+
+  // Resource management state
+  const [selectedResourceCategory, setSelectedResourceCategory] = useState<
+    string | null
+  >(null);
+
   // Subscribe to navigation store and brand config
   const navigationState = useStore(navigationStore);
   const brandConfig = useStore(brandConfigStore);
+
+  // Load brandConfig if not already loaded
+  useEffect(() => {
+    if (!brandConfig) {
+      getBrandConfig()
+        .then((config) => {
+          brandConfigStore.set(config);
+        })
+        .catch((error) => {
+          console.error('Failed to load brand config:', error);
+        });
+    }
+  }, [brandConfig]);
+
+  // Generate dynamic tabs including resource categories
+  const knownResources = brandConfig?.KNOWN_RESOURCES || {};
+  const resourceCategories = Object.keys(knownResources);
+
+  const contentManagementTabs: ContentManagementTab[] = [
+    ...staticContentManagementTabs.filter((tab) => tab.id !== 'resources'),
+    { id: 'resources', name: 'Resources' },
+    ...resourceCategories.map((category) => ({
+      id: category,
+      name: category.charAt(0).toUpperCase() + category.slice(1),
+      isResourceCategory: true,
+    })),
+  ];
 
   // Restore navigation state when component mounts (when entering Manage Content)
   useEffect(() => {
@@ -110,6 +159,19 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     if (showKnownResourceForm) {
       setShowKnownResourceForm(false);
       setEditingCategorySlug(null);
+    }
+
+    // Close resource form when switching tabs
+    if (showResourceForm) {
+      setShowResourceForm(false);
+      setEditingResourceId(null);
+      setEditingResource(null);
+      setIsCreatingResource(false);
+    }
+
+    // Reset resource category selection when switching tabs
+    if (selectedResourceCategory) {
+      setSelectedResourceCategory(null);
     }
   };
 
@@ -196,10 +258,15 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     setIsCreatingBelief(false);
   };
 
-  // Known Resource handlers
+  // Known resource handlers
   const handleEditKnownResource = (categorySlug: string) => {
     setEditingCategorySlug(categorySlug);
     setShowKnownResourceForm(true);
+  };
+
+  const handleKnownResourceFormBack = () => {
+    setShowKnownResourceForm(false);
+    setEditingCategorySlug(null);
   };
 
   const handleKnownResourceSaved = () => {
@@ -208,12 +275,51 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     window.location.reload();
   };
 
-  const handleKnownResourceFormBack = () => {
-    setShowKnownResourceForm(false);
-    setEditingCategorySlug(null);
+  // Resource handlers
+  const handleCreateResource = () => {
+    setIsCreatingResource(true);
+    setEditingResourceId(null);
+    setEditingResource(null);
+    setShowResourceForm(true);
   };
 
-  // Handle refresh after delete
+  const handleEditResource = async (resourceId: string) => {
+    setIsLoadingResource(true);
+    try {
+      const resource = await getResource(resourceId);
+      setEditingResourceId(resourceId);
+      setEditingResource(resource);
+      setIsCreatingResource(false);
+      setShowResourceForm(true);
+    } catch (error) {
+      console.error('Failed to load resource for editing:', error);
+      alert('Failed to load resource. Please try again.');
+    } finally {
+      setIsLoadingResource(false);
+    }
+  };
+
+  const handleResourceFormSuccess = () => {
+    setShowResourceForm(false);
+    setEditingResourceId(null);
+    setEditingResource(null);
+    setIsCreatingResource(false);
+    window.location.reload();
+  };
+
+  const handleResourceFormCancel = () => {
+    setShowResourceForm(false);
+    setEditingResourceId(null);
+    setEditingResource(null);
+    setIsCreatingResource(false);
+  };
+
+  // Resource category handlers
+  const handleResourceCategorySelect = (categorySlug: string) => {
+    setSelectedResourceCategory(categorySlug);
+  };
+
+  // Refresh handler
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -256,6 +362,34 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
       );
     }
 
+    // Show resource form if active for dynamic resource category tabs
+    if (showResourceForm && resourceCategories.includes(activeTab)) {
+      return (
+        <ResourceForm
+          resourceData={editingResource || undefined}
+          categorySlug={activeTab}
+          categorySchema={knownResources[activeTab] || {}}
+          isCreate={isCreatingResource}
+          onSuccess={handleResourceFormSuccess}
+          onCancel={handleResourceFormCancel}
+        />
+      );
+    }
+
+    // Handle dynamic resource category tabs
+    if (resourceCategories.includes(activeTab)) {
+      return (
+        <ResourceTable
+          categorySlug={activeTab}
+          fullContentMap={fullContentMap}
+          onEdit={handleEditResource}
+          onCreate={handleCreateResource}
+          onRefresh={handleRefresh}
+          isLoading={isLoadingResource}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'summary':
         return <ContentSummary fullContentMap={fullContentMap} />;
@@ -290,11 +424,18 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
 
       case 'resources':
         return (
-          <KnownResourceTable
-            contentMap={fullContentMap}
-            onEdit={handleEditKnownResource}
-            onRefresh={handleRefresh}
-          />
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-4 text-lg font-medium text-gray-900">
+                Resource Categories
+              </h3>
+              <KnownResourceTable
+                contentMap={fullContentMap}
+                onEdit={handleEditKnownResource}
+                onRefresh={handleRefresh}
+              />
+            </div>
+          </div>
         );
 
       case 'beliefs':
@@ -343,7 +484,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     <div className="w-full">
       {/* Content Management Sub-Navigation */}
       <div className="mb-6">
-        <div className="border-b border-gray-200 py-12">
+        <div className="border-b border-gray-200 pb-2.5">
           <nav
             className="flex flex-wrap gap-2"
             aria-label="Content management tabs"
@@ -354,44 +495,36 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
                 onClick={() => handleManageTabChange(tab.id)}
                 className={classNames(
                   activeTab === tab.id
-                    ? 'border-cyan-500 bg-cyan-100 text-cyan-700'
-                    : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200',
+                    ? tab.isResourceCategory
+                      ? 'text-mydarkgrey border-orange-500 bg-orange-100'
+                      : 'border-cyan-500 bg-cyan-100 text-cyan-700'
+                    : tab.isResourceCategory
+                      ? 'text-mydarkgrey border-transparent bg-orange-50 hover:bg-orange-100'
+                      : 'border-transparent bg-gray-100 text-gray-500 hover:bg-gray-200',
                   'rounded-xl border-2 px-4 py-1.5 text-sm font-bold transition-colors duration-200'
                 )}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
               >
                 {tab.name}
+                {tab.isResourceCategory && (
+                  <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                    {
+                      fullContentMap.filter(
+                        (item) =>
+                          item.type === 'Resource' &&
+                          item.categorySlug === tab.id
+                      ).length
+                    }
+                  </span>
+                )}
               </button>
             ))}
           </nav>
         </div>
       </div>
 
-      {/* Loading overlays */}
-      {isLoadingMenu && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-center space-x-3">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
-              <span className="text-gray-700">Loading menu...</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isLoadingBelief && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="rounded-lg bg-white p-6 shadow-xl">
-            <div className="flex items-center space-x-3">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
-              <span className="text-gray-700">Loading belief...</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Content Management Tab Content */}
-      {renderTabContent()}
+      {/* Tab Content */}
+      <div>{renderTabContent()}</div>
     </div>
   );
 };

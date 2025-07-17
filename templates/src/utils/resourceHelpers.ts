@@ -30,15 +30,15 @@ export function convertToLocalState(backend: ResourceConfig): ResourceState {
   };
 }
 
-export function convertToBackendFormat(local: ResourceState): ResourceConfig {
+export function convertToBackendFormat(local: ResourceState): any {
   return {
-    ID: local.id,
-    TITLE: local.title,
-    SLUG: local.slug,
-    CATEGORY_SLUG: local.categorySlug,
-    ONELINER: local.oneliner,
-    OPTIONS_PAYLOAD: JSON.stringify(local.optionsPayload || {}),
-    ACTION_LISP: local.actionLisp || undefined,
+    id: local.id,
+    title: local.title,
+    slug: local.slug,
+    categorySlug: local.categorySlug,
+    oneliner: local.oneliner,
+    optionsPayload: local.optionsPayload || {},
+    actionLisp: local.actionLisp || undefined,
   };
 }
 
@@ -58,18 +58,6 @@ export function validateResource(state: ResourceState): FieldErrors {
 
   if (!state.categorySlug?.trim()) {
     errors.categorySlug = 'Category is required';
-  }
-
-  if (!state.oneliner?.trim()) {
-    errors.oneliner = 'One-liner description is required';
-  }
-
-  if (
-    state.slug &&
-    state.categorySlug &&
-    !state.slug.startsWith(`${state.categorySlug}-`)
-  ) {
-    errors.slug = `Slug must start with "${state.categorySlug}-"`;
   }
 
   return errors;

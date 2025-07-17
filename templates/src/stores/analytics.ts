@@ -57,6 +57,5 @@ export async function getFullContentMap(): Promise<any[]> {
   } catch (error) {
     console.error('Failed to fetch content map:', error);
   }
-
   return cached?.data || [];
 }
