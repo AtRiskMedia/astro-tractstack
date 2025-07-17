@@ -4,6 +4,7 @@ import { classNames } from '../../../../utils/helpers';
 import { navigationStore } from '../../../../stores/navigation';
 import { brandConfigStore } from '../../../../stores/brand';
 import { getBrandConfig } from '../../../../utils/api/brandConfig';
+import { getFullContentMap } from '../../../../stores/analytics';
 import {
   handleManageSubtabChange,
   restoreTabNavigation,
@@ -50,49 +51,52 @@ const staticContentManagementTabs: ContentManagementTab[] = [
   { id: 'files', name: 'Files' },
 ];
 
-const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
+const ManageContent = ({
+  fullContentMap: initialContentMap,
+  homeSlug,
+}: ManageContentProps) => {
   const [activeTab, setActiveTab] = useState('summary');
   const [navigationRestored, setNavigationRestored] = useState(false);
+  const [currentContentMap, setCurrentContentMap] =
+    useState<FullContentMapItem[]>(initialContentMap);
 
-  // Menu form state
-  const [showMenuForm, setShowMenuForm] = useState(false);
-  const [editingMenuId, setEditingMenuId] = useState<string | null>(null);
-  const [editingMenu, setEditingMenu] = useState<MenuNode | null>(null);
-  const [isCreatingMenu, setIsCreatingMenu] = useState(false);
-  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
-
-  // Belief form state
-  const [showBeliefForm, setShowBeliefForm] = useState(false);
-  const [editingBeliefId, setEditingBeliefId] = useState<string | null>(null);
-  const [editingBelief, setEditingBelief] = useState<BeliefNode | null>(null);
-  const [isCreatingBelief, setIsCreatingBelief] = useState(false);
-  const [isLoadingBelief, setIsLoadingBelief] = useState(false);
-
-  // Known Resource form state
-  const [showKnownResourceForm, setShowKnownResourceForm] = useState(false);
-  const [editingCategorySlug, setEditingCategorySlug] = useState<string | null>(
-    null
-  );
-
-  // Resource form state
-  const [showResourceForm, setShowResourceForm] = useState(false);
-  const [editingResourceId, setEditingResourceId] = useState<string | null>(
-    null
-  );
-  const [editingResource, setEditingResource] = useState<ResourceConfig | null>(
-    null
-  );
-  const [isCreatingResource, setIsCreatingResource] = useState(false);
-  const [isLoadingResource, setIsLoadingResource] = useState(false);
-
-  // Resource management state
-  const [selectedResourceCategory, setSelectedResourceCategory] = useState<
+  const [activeMenuForm, setActiveMenuForm] = useState<
+    MenuNode | 'create' | null
+  >(null);
+  const [activeBeliefForm, setActiveBeliefForm] = useState<
+    BeliefNode | 'create' | null
+  >(null);
+  const [activeKnownResourceForm, setActiveKnownResourceForm] = useState<
     string | null
   >(null);
+  const [activeResourceForm, setActiveResourceForm] = useState<{
+    resource: ResourceConfig | null;
+    category: string;
+  } | null>(null);
+
+  // Loading states
+  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
+  const [isLoadingBelief, setIsLoadingBelief] = useState(false);
+  const [isLoadingResource, setIsLoadingResource] = useState(false);
 
   // Subscribe to navigation store and brand config
   const navigationState = useStore(navigationStore);
   const brandConfig = useStore(brandConfigStore);
+
+  // Data refresh function - uses EXISTING API functions
+  const refreshData = async () => {
+    try {
+      // Use existing getFullContentMap function from analytics store
+      const newContentMap = await getFullContentMap();
+      setCurrentContentMap(newContentMap);
+
+      // Use existing getBrandConfig function
+      const newBrandConfig = await getBrandConfig();
+      brandConfigStore.set(newBrandConfig);
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    }
+  };
 
   // Load brandConfig if not already loaded
   useEffect(() => {
@@ -106,6 +110,11 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
         });
     }
   }, [brandConfig]);
+
+  // Update content map when prop changes
+  useEffect(() => {
+    setCurrentContentMap(initialContentMap);
+  }, [initialContentMap]);
 
   // Generate dynamic tabs including resource categories
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
@@ -121,7 +130,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     })),
   ];
 
-  // Restore navigation state when component mounts (when entering Manage Content)
+  // Restore navigation state when component mounts
   useEffect(() => {
     if (!navigationRestored) {
       const contentNavigation = restoreTabNavigation('content');
@@ -139,58 +148,23 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
   const handleManageTabChange = (tabId: string) => {
     handleManageSubtabChange(tabId as any, setActiveTab);
 
-    // Close menu form when switching tabs
-    if (showMenuForm) {
-      setShowMenuForm(false);
-      setEditingMenuId(null);
-      setEditingMenu(null);
-      setIsCreatingMenu(false);
-    }
-
-    // Close belief form when switching tabs
-    if (showBeliefForm) {
-      setShowBeliefForm(false);
-      setEditingBeliefId(null);
-      setEditingBelief(null);
-      setIsCreatingBelief(false);
-    }
-
-    // Close known resource form when switching tabs
-    if (showKnownResourceForm) {
-      setShowKnownResourceForm(false);
-      setEditingCategorySlug(null);
-    }
-
-    // Close resource form when switching tabs
-    if (showResourceForm) {
-      setShowResourceForm(false);
-      setEditingResourceId(null);
-      setEditingResource(null);
-      setIsCreatingResource(false);
-    }
-
-    // Reset resource category selection when switching tabs
-    if (selectedResourceCategory) {
-      setSelectedResourceCategory(null);
-    }
+    // Close all forms when switching tabs
+    setActiveMenuForm(null);
+    setActiveBeliefForm(null);
+    setActiveKnownResourceForm(null);
+    setActiveResourceForm(null);
   };
 
-  // Menu handlers
+  // Menu handlers - simplified
   const handleCreateMenu = () => {
-    setIsCreatingMenu(true);
-    setEditingMenuId(null);
-    setEditingMenu(null);
-    setShowMenuForm(true);
+    setActiveMenuForm('create');
   };
 
   const handleEditMenu = async (menuId: string) => {
     setIsLoadingMenu(true);
     try {
       const menu = await getMenuById(menuId);
-      setEditingMenuId(menuId);
-      setEditingMenu(menu);
-      setIsCreatingMenu(false);
-      setShowMenuForm(true);
+      setActiveMenuForm(menu);
     } catch (error) {
       console.error('Failed to load menu for editing:', error);
       alert('Failed to load menu. Please try again.');
@@ -199,27 +173,9 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     }
   };
 
-  const handleMenuFormSuccess = () => {
-    setShowMenuForm(false);
-    setEditingMenuId(null);
-    setEditingMenu(null);
-    setIsCreatingMenu(false);
-    window.location.reload();
-  };
-
-  const handleMenuFormCancel = () => {
-    setShowMenuForm(false);
-    setEditingMenuId(null);
-    setEditingMenu(null);
-    setIsCreatingMenu(false);
-  };
-
-  // Belief handlers
+  // Belief handlers - simplified
   const handleCreateBelief = () => {
-    setIsCreatingBelief(true);
-    setEditingBeliefId(null);
-    setEditingBelief(null);
-    setShowBeliefForm(true);
+    setActiveBeliefForm('create');
   };
 
   const handleEditBelief = async (beliefId: string) => {
@@ -231,10 +187,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     setIsLoadingBelief(true);
     try {
       const belief = await getBeliefById(beliefId);
-      setEditingBeliefId(beliefId);
-      setEditingBelief(belief);
-      setIsCreatingBelief(false);
-      setShowBeliefForm(true);
+      setActiveBeliefForm(belief);
     } catch (error) {
       console.error('Failed to load belief for editing:', error);
       alert('Failed to load belief. Please try again.');
@@ -243,54 +196,27 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     }
   };
 
-  const handleBeliefFormSuccess = () => {
-    setShowBeliefForm(false);
-    setEditingBeliefId(null);
-    setEditingBelief(null);
-    setIsCreatingBelief(false);
-    window.location.reload();
-  };
-
-  const handleBeliefFormCancel = () => {
-    setShowBeliefForm(false);
-    setEditingBeliefId(null);
-    setEditingBelief(null);
-    setIsCreatingBelief(false);
-  };
-
-  // Known resource handlers
+  // Known resource handlers - simplified
   const handleEditKnownResource = (categorySlug: string) => {
-    setEditingCategorySlug(categorySlug);
-    setShowKnownResourceForm(true);
+    setActiveKnownResourceForm(categorySlug);
   };
 
-  const handleKnownResourceFormBack = () => {
-    setShowKnownResourceForm(false);
-    setEditingCategorySlug(null);
-  };
-
-  const handleKnownResourceSaved = () => {
-    setShowKnownResourceForm(false);
-    setEditingCategorySlug(null);
-    window.location.reload();
-  };
-
-  // Resource handlers
+  // Resource handlers - simplified
   const handleCreateResource = () => {
-    setIsCreatingResource(true);
-    setEditingResourceId(null);
-    setEditingResource(null);
-    setShowResourceForm(true);
+    setActiveResourceForm({
+      resource: null,
+      category: activeTab,
+    });
   };
 
   const handleEditResource = async (resourceId: string) => {
     setIsLoadingResource(true);
     try {
       const resource = await getResource(resourceId);
-      setEditingResourceId(resourceId);
-      setEditingResource(resource);
-      setIsCreatingResource(false);
-      setShowResourceForm(true);
+      setActiveResourceForm({
+        resource,
+        category: activeTab,
+      });
     } catch (error) {
       console.error('Failed to load resource for editing:', error);
       alert('Failed to load resource. Please try again.');
@@ -299,105 +225,87 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
     }
   };
 
-  const handleResourceFormSuccess = () => {
-    setShowResourceForm(false);
-    setEditingResourceId(null);
-    setEditingResource(null);
-    setIsCreatingResource(false);
-    window.location.reload();
-  };
-
-  const handleResourceFormCancel = () => {
-    setShowResourceForm(false);
-    setEditingResourceId(null);
-    setEditingResource(null);
-    setIsCreatingResource(false);
-  };
-
-  // Resource category handlers
-  const handleResourceCategorySelect = (categorySlug: string) => {
-    setSelectedResourceCategory(categorySlug);
-  };
-
-  // Refresh handler
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
   const renderTabContent = () => {
-    // Show menu form if active
-    if (showMenuForm && activeTab === 'menus') {
+    // Forms take precedence - simplified logic
+    if (activeTab === 'menus' && activeMenuForm) {
       return (
         <MenuForm
-          menu={editingMenu || undefined}
-          isCreate={isCreatingMenu}
-          contentMap={fullContentMap}
-          onSuccess={handleMenuFormSuccess}
-          onCancel={handleMenuFormCancel}
+          menu={activeMenuForm === 'create' ? undefined : activeMenuForm}
+          isCreate={activeMenuForm === 'create'}
+          contentMap={currentContentMap}
+          onClose={async (saved: boolean) => {
+            setActiveMenuForm(null);
+            if (saved) await refreshData();
+          }}
         />
       );
     }
 
-    // Show belief form if active
-    if (showBeliefForm && activeTab === 'beliefs') {
+    if (activeTab === 'beliefs' && activeBeliefForm) {
       return (
         <BeliefForm
-          belief={editingBelief || undefined}
-          isCreate={isCreatingBelief}
-          onSuccess={handleBeliefFormSuccess}
-          onCancel={handleBeliefFormCancel}
+          belief={activeBeliefForm === 'create' ? undefined : activeBeliefForm}
+          isCreate={activeBeliefForm === 'create'}
+          onClose={async (saved: boolean) => {
+            setActiveBeliefForm(null);
+            if (saved) await refreshData();
+          }}
         />
       );
     }
 
-    // Show known resource form if active
-    if (showKnownResourceForm && activeTab === 'resources') {
+    if (activeTab === 'resources' && activeKnownResourceForm) {
       return (
         <KnownResourceForm
-          categorySlug={editingCategorySlug || 'new'}
-          contentMap={fullContentMap}
-          onBack={handleKnownResourceFormBack}
-          onSaved={handleKnownResourceSaved}
+          categorySlug={activeKnownResourceForm}
+          contentMap={currentContentMap}
+          onClose={async (saved: boolean) => {
+            setActiveKnownResourceForm(null);
+            if (saved) await refreshData();
+          }}
         />
       );
     }
 
-    // Show resource form if active for dynamic resource category tabs
-    if (showResourceForm && resourceCategories.includes(activeTab)) {
+    // Resource form for dynamic category tabs
+    if (resourceCategories.includes(activeTab) && activeResourceForm) {
       return (
         <ResourceForm
-          resourceData={editingResource || undefined}
-          categorySlug={activeTab}
-          categorySchema={knownResources[activeTab] || {}}
-          isCreate={isCreatingResource}
-          onSuccess={handleResourceFormSuccess}
-          onCancel={handleResourceFormCancel}
+          resourceData={activeResourceForm.resource || undefined}
+          categorySlug={activeResourceForm.category}
+          categorySchema={knownResources[activeResourceForm.category] || {}}
+          isCreate={!activeResourceForm.resource}
+          onClose={async (saved: boolean) => {
+            setActiveResourceForm(null);
+            if (saved) await refreshData();
+          }}
         />
       );
     }
 
-    // Handle dynamic resource category tabs
+    // Handle dynamic resource category tabs - show table
     if (resourceCategories.includes(activeTab)) {
       return (
         <ResourceTable
           categorySlug={activeTab}
-          fullContentMap={fullContentMap}
+          fullContentMap={currentContentMap}
           onEdit={handleEditResource}
           onCreate={handleCreateResource}
-          onRefresh={handleRefresh}
+          onRefresh={refreshData}
           isLoading={isLoadingResource}
         />
       );
     }
 
+    // Static tab content
     switch (activeTab) {
       case 'summary':
-        return <ContentSummary fullContentMap={fullContentMap} />;
+        return <ContentSummary fullContentMap={currentContentMap} />;
 
       case 'storyfragments':
         return (
           <StoryFragmentTable
-            fullContentMap={fullContentMap}
+            fullContentMap={currentContentMap}
             homeSlug={homeSlug}
           />
         );
@@ -414,10 +322,10 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
       case 'menus':
         return (
           <MenuTable
-            fullContentMap={fullContentMap}
+            fullContentMap={currentContentMap}
             onEdit={handleEditMenu}
             onCreate={handleCreateMenu}
-            onRefresh={handleRefresh}
+            onRefresh={refreshData}
             isLoading={isLoadingMenu}
           />
         );
@@ -430,16 +338,16 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
                 Resource Categories
               </h3>
               <KnownResourceTable
-                contentMap={fullContentMap}
+                contentMap={currentContentMap}
                 onEdit={handleEditKnownResource}
-                onRefresh={handleRefresh}
+                onRefresh={refreshData}
               />
             </div>
           </div>
         );
 
       case 'beliefs':
-        const beliefs = fullContentMap
+        const beliefs = currentContentMap
           .filter((item) => item.type === 'Belief')
           .map((item) => ({
             id: item.id,
@@ -453,7 +361,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
           <BeliefTable
             beliefs={beliefs}
             onEdit={handleEditBelief}
-            onRefresh={handleRefresh}
+            onRefresh={refreshData}
           />
         );
 
@@ -509,7 +417,7 @@ const ManageContent = ({ fullContentMap, homeSlug }: ManageContentProps) => {
                 {tab.isResourceCategory && (
                   <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
                     {
-                      fullContentMap.filter(
+                      currentContentMap.filter(
                         (item) =>
                           item.type === 'Resource' &&
                           item.categorySlug === tab.id

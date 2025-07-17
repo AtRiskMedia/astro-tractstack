@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useFormState } from '../../../../hooks/useFormState';
 import {
   convertToLocalState,
@@ -23,8 +22,7 @@ interface MenuFormProps {
   menu?: MenuNode;
   isCreate?: boolean;
   contentMap: FullContentMapItem[];
-  onSuccess?: () => void;
-  onCancel?: () => void;
+  onClose?: (saved: boolean) => void;
 }
 
 const THEME_OPTIONS = [{ value: 'default', label: 'Default' }];
@@ -33,8 +31,7 @@ export default function MenuForm({
   menu,
   isCreate = false,
   contentMap,
-  onSuccess,
-  onCancel,
+  onClose,
 }: MenuFormProps) {
   // Initialize form state
   const initialState: MenuNodeState = menu
@@ -56,6 +53,12 @@ export default function MenuForm({
           data,
           formState.originalState
         );
+
+        // Call success callback after save (original pattern)
+        setTimeout(() => {
+          onClose?.(true);
+        }, 1000);
+
         return updatedState;
       } catch (error) {
         console.error('Menu save failed:', error);
@@ -83,6 +86,10 @@ export default function MenuForm({
     formState.updateField('menuLinks', newState.menuLinks);
   };
 
+  const handleCancel = () => {
+    onClose?.(false);
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -97,23 +104,23 @@ export default function MenuForm({
         </p>
       </div>
 
-      {/* Basic Fields */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      {/* Basic Menu Information */}
+      <div className="space-y-6">
         <StringInput
+          label="Menu Title"
           value={formState.state.title}
           onChange={(value) => formState.updateField('title', value)}
-          label="Menu Title"
-          placeholder="Enter menu title"
           error={formState.errors.title}
+          placeholder="Enter menu title"
           required
         />
 
         <EnumSelect
+          label="Theme"
           value={formState.state.theme}
           onChange={(value) => formState.updateField('theme', value)}
-          label="Theme"
-          options={THEME_OPTIONS}
           error={formState.errors.theme}
+          options={THEME_OPTIONS}
           required
         />
       </div>
@@ -121,106 +128,70 @@ export default function MenuForm({
       {/* Menu Links Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Menu Links</h3>
+          <h3 className="text-lg font-medium text-gray-900">Menu Links</h3>
           <button
             type="button"
             onClick={handleAddLink}
-            className="flex items-center rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm font-medium text-cyan-700 hover:bg-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
-            <svg
-              className="mr-2 h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
             Add Link
           </button>
         </div>
 
-        {formState.errors.menuLinks && (
-          <p className="text-sm text-red-600">{formState.errors.menuLinks}</p>
-        )}
-
         {formState.state.menuLinks.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 py-8 text-center">
-            <p className="text-gray-500">
-              No menu links yet. Click "Add Link" to get started.
-            </p>
+          <div className="py-6 text-center text-gray-500">
+            No menu links yet. Click "Add Link" to create your first link.
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {formState.state.menuLinks.map((link, index) => (
               <div
                 key={index}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-6"
+                className="space-y-4 rounded-lg border border-gray-200 p-4"
               >
-                <div className="mb-4 flex items-center justify-between">
-                  <h4 className="text-md font-bold text-gray-800">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-gray-900">
                     Link {index + 1}
                   </h4>
                   <button
                     type="button"
                     onClick={() => handleRemoveLink(index)}
-                    className="p-1 text-red-500 hover:text-red-700"
-                    title="Remove link"
+                    className="text-sm font-medium text-red-600 hover:text-red-800"
                   >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    Remove
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <StringInput
+                    label="Link Name"
                     value={link.name}
                     onChange={(value) => handleUpdateLink(index, 'name', value)}
-                    label="Link Name"
-                    placeholder="Enter link name"
-                    error={formState.errors[`menuLinks.${index}.name`]}
+                    placeholder="Enter link text"
                     required
                   />
 
                   <StringInput
+                    label="Description"
                     value={link.description}
                     onChange={(value) =>
                       handleUpdateLink(index, 'description', value)
                     }
-                    label="Description"
-                    placeholder="Enter link description"
-                    error={formState.errors[`menuLinks.${index}.description`]}
+                    placeholder="Brief description"
                   />
                 </div>
 
-                <div className="mt-4">
-                  <ActionBuilderField
-                    value={link.actionLisp}
-                    onChange={(value) =>
-                      handleUpdateLink(index, 'actionLisp', value)
-                    }
-                    contentMap={contentMap}
-                    label="Navigation Action"
-                    error={formState.errors[`menuLinks.${index}.actionLisp`]}
-                  />
-                </div>
+                <ActionBuilderField
+                  label="Link Action"
+                  value={link.actionLisp}
+                  onChange={(value) =>
+                    handleUpdateLink(index, 'actionLisp', value)
+                  }
+                  contentMap={contentMap}
+                  error={formState.errors[`menuLinks.${index}.actionLisp`]}
+                />
 
-                <div className="mt-4 flex items-center">
+                <div className="flex items-center">
                   <input
                     type="checkbox"
                     id={`featured-${index}`}
@@ -232,9 +203,9 @@ export default function MenuForm({
                   />
                   <label
                     htmlFor={`featured-${index}`}
-                    className="ml-2 text-sm text-gray-700"
+                    className="ml-2 block text-sm text-gray-900"
                   >
-                    Featured Link
+                    Featured link
                   </label>
                 </div>
               </div>
@@ -243,13 +214,24 @@ export default function MenuForm({
         )}
       </div>
 
-      {/* Unsaved Changes Bar */}
+      {/* Save/Cancel Bar */}
       <UnsavedChangesBar
         formState={formState}
         message="You have unsaved menu changes"
         saveLabel="Save Menu"
         cancelLabel="Discard Changes"
       />
+
+      {/* Cancel Navigation Button */}
+      <div className="flex justify-start">
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+        >
+          ← Back to Menu List
+        </button>
+      </div>
     </div>
   );
 }

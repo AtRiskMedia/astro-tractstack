@@ -28,15 +28,13 @@ import type { BeliefNode, BeliefNodeState } from '../../../../types/tractstack';
 interface BeliefFormProps {
   belief?: BeliefNode;
   isCreate?: boolean;
-  onSuccess?: () => void;
-  onCancel?: () => void;
+  onClose?: (saved: boolean) => void;
 }
 
 export default function BeliefForm({
   belief,
   isCreate = false,
-  onSuccess,
-  onCancel,
+  onClose,
 }: BeliefFormProps) {
   const [customValue, setCustomValue] = useState('');
 
@@ -86,6 +84,12 @@ export default function BeliefForm({
           data,
           formState.originalState
         );
+
+        // Call success callback after save (original pattern)
+        setTimeout(() => {
+          onClose?.(true);
+        }, 1000);
+
         return updatedState;
       } catch (error) {
         console.error('Belief save failed:', error);
@@ -128,6 +132,10 @@ export default function BeliefForm({
     }
   };
 
+  const handleCancel = () => {
+    onClose?.(false);
+  };
+
   const renderScalePreview = () => {
     if (!formState.state.scale || formState.state.scale === 'custom')
       return null;
@@ -168,22 +176,9 @@ export default function BeliefForm({
             <div className="mt-2 text-sm text-amber-700">
               <p>
                 This belief is currently used by <strong>{usageCount}</strong>{' '}
-                item{usageCount !== 1 ? 's' : ''} and has restricted editing:
+                item{usageCount !== 1 ? 's' : ''}. Some fields are locked to
+                prevent breaking existing content.
               </p>
-              <ul className="mt-2 list-inside list-disc space-y-1">
-                <li>
-                  <strong>Slug</strong> and <strong>Scale</strong> cannot be
-                  changed
-                </li>
-                <li>
-                  Existing <strong>Custom Values</strong> cannot be removed (new
-                  unsaved values can still be removed)
-                </li>
-                <li>
-                  You can still change the <strong>Title</strong> and add new{' '}
-                  <strong>Custom Values</strong>
-                </li>
-              </ul>
             </div>
           </div>
         </div>
@@ -200,7 +195,7 @@ export default function BeliefForm({
         </h2>
         <p className="mt-2 text-sm text-gray-600">
           {isCreate
-            ? 'Create a new belief for adaptive content and magic paths.'
+            ? 'Create a new belief to power adaptive content and magic paths.'
             : 'Edit the belief configuration and scale options.'}
         </p>
       </div>
@@ -288,104 +283,96 @@ export default function BeliefForm({
             <h3 className="text-lg font-bold text-gray-900">Custom Values</h3>
             <p className="text-sm text-gray-600">
               Define custom options for this belief scale.
-              {beliefInUse && (
-                <span className="ml-1 font-medium text-amber-600">
-                  Saved values cannot be removed while belief is in use, but new
-                  unsaved values can be removed.
-                </span>
-              )}
             </p>
           </div>
 
           {/* Add Custom Value */}
-          <div className="flex items-end space-x-2">
+          <div className="flex gap-2">
             <div className="flex-1">
-              <label className="mb-1 block text-sm font-bold text-gray-700">
-                Add Value
-              </label>
-              <input
-                type="text"
-                value={customValue}
-                onChange={(e) => setCustomValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter a custom value..."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-              />
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={customValue}
+                  onChange={(e) => setCustomValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter custom value"
+                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+                />
+              </div>
             </div>
             <button
               type="button"
               onClick={handleAddCustomValue}
               disabled={!customValue.trim()}
-              className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <PlusIcon className="h-4 w-4" />
             </button>
           </div>
 
-          {formState.errors.customValues && (
-            <p className="text-sm text-red-600">
-              {formState.errors.customValues}
-            </p>
-          )}
-
           {/* Custom Values List */}
           {formState.state.customValues.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-gray-700">
-                Current Values
-              </label>
-              <div className="space-y-2">
-                {formState.state.customValues.map((value, index) => {
-                  // Check if this value existed in the original state (saved) or is new
-                  const originalValues =
-                    formState.originalState.customValues || [];
-                  const isNewValue = !originalValues.includes(value);
-                  const canRemove = !beliefInUse || isNewValue;
+              {formState.state.customValues.map((value, index) => {
+                const originalValues =
+                  formState.originalState.customValues || [];
+                const isNewValue = !originalValues.includes(value);
+                const canRemove = !beliefInUse || isNewValue;
 
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
-                    >
-                      <span className="text-sm text-gray-900">{value}</span>
-                      <div className="flex items-center space-x-2">
-                        {beliefInUse && !isNewValue && (
-                          <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCustomValue(index)}
-                          disabled={!canRemove}
-                          className={`focus:outline-none ${
-                            canRemove
-                              ? 'text-red-600 hover:text-red-800'
-                              : 'cursor-not-allowed text-gray-300'
-                          }`}
-                          title={
-                            canRemove
-                              ? 'Remove value'
-                              : 'Cannot remove saved values while belief is in use'
-                          }
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
-                      </div>
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2"
+                  >
+                    <span className="text-sm text-gray-900">{value}</span>
+                    <div className="flex items-center gap-2">
+                      {beliefInUse && !isNewValue && (
+                        <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCustomValue(index)}
+                        disabled={!canRemove}
+                        className="text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:text-gray-400"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {beliefInUse && (
+            <div className="text-sm text-amber-700">
+              <p>
+                ⚠️ You can add new values, but cannot remove existing ones while
+                this belief is in use.
+              </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Unsaved Changes Bar */}
+      {/* Save/Cancel Bar */}
       <UnsavedChangesBar
         formState={formState}
         message="You have unsaved belief changes"
         saveLabel="Save Belief"
         cancelLabel="Discard Changes"
       />
+
+      {/* Cancel Navigation Button */}
+      <div className="flex justify-start">
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+        >
+          ← Back to Belief List
+        </button>
+      </div>
     </div>
   );
 }
