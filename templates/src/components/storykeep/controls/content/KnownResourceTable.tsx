@@ -11,6 +11,7 @@ import {
 import { convertToLocalState } from '@/utils/api/brandHelpers';
 import ResourceBulkIngest from './ResourceBulkIngest';
 import type { FullContentMapItem } from '@/types/tractstack';
+import type { MouseEvent } from 'react';
 
 interface KnownResourceTableProps {
   contentMap: FullContentMapItem[];
@@ -56,10 +57,7 @@ const KnownResourceTable = ({
     onEdit('new');
   };
 
-  const handleDelete = async (
-    categorySlug: string,
-    event: React.MouseEvent
-  ) => {
+  const handleDelete = async (categorySlug: string, event: MouseEvent) => {
     event.stopPropagation();
 
     const resourceCount = getResourceCount(categorySlug);

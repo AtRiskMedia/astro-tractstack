@@ -336,7 +336,12 @@ export default function ResourceBulkIngest({
 
       // If no errors for this specific resource, add to valid list
       const resourceErrors = errors.filter((e) => e.index === index);
-      if (resourceErrors.length === 0 && item.title && item.slug && categorySlug) {
+      if (
+        resourceErrors.length === 0 &&
+        item.title &&
+        item.slug &&
+        categorySlug
+      ) {
         // Process dates to timestamps if needed
         const processedOptionsPayload = { ...optionsPayload };
         if (knownResources[categorySlug]) {
@@ -362,7 +367,12 @@ export default function ResourceBulkIngest({
     });
 
     // Allow proceeding if we have valid resources, even if some have errors
-    const status = validResources.length > 0 ? 'valid' : errors.length > 0 ? 'invalid' : 'no-data';
+    const status =
+      validResources.length > 0
+        ? 'valid'
+        : errors.length > 0
+          ? 'invalid'
+          : 'no-data';
 
     return {
       status,
@@ -526,12 +536,13 @@ export default function ResourceBulkIngest({
                   {validationResult.resources.length} resources found
                 </span>
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${validationResult.status === 'valid'
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    validationResult.status === 'valid'
                       ? 'bg-green-100 text-green-800'
                       : validationResult.status === 'invalid'
                         ? 'bg-red-100 text-red-800'
                         : 'bg-gray-100 text-gray-600'
-                    }`}
+                  }`}
                 >
                   {validationResult.status === 'valid' && 'Ready to import'}
                   {validationResult.status === 'invalid' && 'Has errors'}
@@ -539,19 +550,23 @@ export default function ResourceBulkIngest({
                 </span>
               </div>
 
-              {validationResult.status === 'valid' && validationResult.errors.length === 0 && (
-                <p className="text-sm text-green-700">
-                  All {validationResult.validResources.length} resources are
-                  valid and ready to import.
-                </p>
-              )}
+              {validationResult.status === 'valid' &&
+                validationResult.errors.length === 0 && (
+                  <p className="text-sm text-green-700">
+                    All {validationResult.validResources.length} resources are
+                    valid and ready to import.
+                  </p>
+                )}
 
-              {validationResult.status === 'valid' && validationResult.errors.length > 0 && (
-                <p className="text-sm text-green-700">
-                  {validationResult.validResources.length} valid resources ready to import.
-                  {validationResult.errors.length} resources have errors and will be skipped.
-                </p>
-              )}
+              {validationResult.status === 'valid' &&
+                validationResult.errors.length > 0 && (
+                  <p className="text-sm text-green-700">
+                    {validationResult.validResources.length} valid resources
+                    ready to import.
+                    {validationResult.errors.length} resources have errors and
+                    will be skipped.
+                  </p>
+                )}
 
               {validationResult.errors.length > 0 && (
                 <div className="mt-2">

@@ -5,6 +5,7 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import { deleteResource } from '@/utils/api/resourceConfig';
 import ResourceBulkIngest from './ResourceBulkIngest';
 import type { FullContentMapItem } from '@/types/tractstack';
+import type { MouseEvent } from 'react';
 
 interface ResourceTableProps {
   categorySlug: string;
@@ -40,7 +41,7 @@ export default function ResourceTable({
   const handleDelete = async (
     resourceId: string,
     title: string,
-    event: React.MouseEvent
+    event: MouseEvent
   ) => {
     event.stopPropagation();
 
@@ -65,7 +66,7 @@ export default function ResourceTable({
   };
 
   // Handle edit resource
-  const handleEdit = (resourceId: string, event: React.MouseEvent) => {
+  const handleEdit = (resourceId: string, event: MouseEvent) => {
     event.stopPropagation();
     onEdit(resourceId);
   };
