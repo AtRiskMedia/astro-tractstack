@@ -569,6 +569,14 @@ export async function injectTemplateFiles(
 
     // Brand assets
     {
+      src: resolve('templates/brand/static.jpg'),
+      dest: 'public/static.jpg',
+    },
+    {
+      src: resolve('templates/brand/favicon.ico'),
+      dest: 'public/brand/favicon.ico',
+    },
+    {
       src: resolve('templates/brand/logo.svg'),
       dest: 'public/brand/logo.svg',
     },
@@ -654,24 +662,24 @@ export async function injectTemplateFiles(
     // Example components (only with examples)
     ...(config?.includeExamples
       ? [
-          {
-            src: resolve('templates/custom/with-examples/CustomHero.astro'),
-            dest: 'src/custom/CustomHero.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              'templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
-            protected: true,
-          },
-        ]
+        {
+          src: resolve('templates/custom/with-examples/CustomHero.astro'),
+          dest: 'src/custom/CustomHero.astro',
+          protected: true,
+        },
+        {
+          src: resolve(
+            'templates/custom/with-examples/pages/Collections.astro'
+          ),
+          dest: 'src/custom/pages/Collections.astro',
+          protected: true,
+        },
+        {
+          src: resolve('templates/src/pages/collections/[param1].astro'),
+          dest: 'src/pages/collections/[param1].astro',
+          protected: true,
+        },
+      ]
       : []),
   ];
 
