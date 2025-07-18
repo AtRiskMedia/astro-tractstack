@@ -252,12 +252,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/advanced/DatabaseConfigSection.tsx'
-      ),
-      dest: 'src/components/storykeep/form/advanced/DatabaseConfigSection.tsx',
-    },
-    {
-      src: resolve(
         'templates/src/components/storykeep/form/advanced/AuthConfigSection.tsx'
       ),
       dest: 'src/components/storykeep/form/advanced/AuthConfigSection.tsx',

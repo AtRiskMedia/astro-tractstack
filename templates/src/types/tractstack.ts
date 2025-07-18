@@ -255,6 +255,7 @@ export interface AdvancedConfigStatus {
   adminPasswordSet: boolean;
   editorPasswordSet: boolean;
   aaiAPIKeySet: boolean;
+  tursoEnabled: boolean;
 }
 
 export interface AdvancedConfigState {

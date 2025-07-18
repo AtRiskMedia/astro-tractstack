@@ -21,17 +21,26 @@ export default function StoryKeepDashboard({
   homeSlug,
   initialTab = 'analytics',
   role,
+  initializing = false,
 }: {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
   initialTab?: string;
   role?: string | null;
+  initializing?: boolean;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+  const $epinetCustomFilters = useStore(epinetCustomFilters);
+  const $brandConfig = useStore(brandConfigStore);
+
+  const isCurrentlyInitializing = initializing && !$brandConfig?.SITE_INIT;
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
-  // Use ref to track initialization state
+  // Override activeTab when in initialization mode
+  const currentActiveTab = isCurrentlyInitializing ? 'branding' : activeTab;
+
   const isInitialized = useRef<boolean>(false);
   const isInitializing = useRef<boolean>(false);
 
@@ -56,28 +65,39 @@ export default function StoryKeepDashboard({
     error: null,
   });
 
-  const $epinetCustomFilters = useStore(epinetCustomFilters);
-  const $brandConfig = useStore(brandConfigStore);
-
   // Get backend URL
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-  // Define tabs, including Advanced only for admin role
-  const tabs: Tab[] = [
-    { id: 'analytics', name: 'Analytics', current: initialTab === 'analytics' },
-    { id: 'content', name: 'Content', current: initialTab === 'content' },
-    { id: 'branding', name: 'Branding', current: initialTab === 'branding' },
-    ...(role === 'admin'
-      ? [
-          {
-            id: 'advanced',
-            name: 'Advanced',
-            current: initialTab === 'advanced',
-          },
-        ]
-      : []),
-  ];
+  // Define tabs - show only branding when initializing
+  const tabs: Tab[] = isCurrentlyInitializing
+    ? [{ id: 'branding', name: 'Welcome to your StoryKeep', current: true }]
+    : [
+        {
+          id: 'analytics',
+          name: 'Analytics',
+          current: currentActiveTab === 'analytics',
+        },
+        {
+          id: 'content',
+          name: 'Content',
+          current: currentActiveTab === 'content',
+        },
+        {
+          id: 'branding',
+          name: 'Branding',
+          current: currentActiveTab === 'branding',
+        },
+        ...(role === 'admin'
+          ? [
+              {
+                id: 'advanced',
+                name: 'Advanced',
+                current: currentActiveTab === 'advanced',
+              },
+            ]
+          : []),
+      ];
 
   useEffect(() => {
     setIsClient(true);
@@ -208,14 +228,18 @@ export default function StoryKeepDashboard({
 
   // Load brand config when branding tab is accessed - EXACTLY as original
   useEffect(() => {
-    if (activeTab === 'branding' && !$brandConfig) {
+    if (currentActiveTab === 'branding' && !$brandConfig) {
       getBrandConfig();
     }
-  }, [activeTab, $brandConfig, goBackend]);
+  }, [currentActiveTab, $brandConfig, goBackend]);
 
   // EXACTLY as original initialization + URL restoration
   useEffect(() => {
-    if (!isInitialized.current && !isInitializing.current) {
+    if (
+      !isInitialized.current &&
+      !isInitializing.current &&
+      !isCurrentlyInitializing
+    ) {
       isInitializing.current = true;
 
       // Check URL for initial tab and update navigation store
@@ -253,14 +277,19 @@ export default function StoryKeepDashboard({
       isInitialized.current = true;
       isInitializing.current = false;
     }
-  }, [role]);
+  }, [role, isCurrentlyInitializing]);
 
   // REACTIVE FETCH: Only fetch when filters change AFTER initialization - EXACTLY as original
   useEffect(() => {
     const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
 
     // Only fetch if we're initialized and have valid date range
-    if (isInitialized.current && startTimeUTC && endTimeUTC) {
+    if (
+      isInitialized.current &&
+      startTimeUTC &&
+      endTimeUTC &&
+      !isCurrentlyInitializing
+    ) {
       fetchAllAnalytics();
     }
   }, [
@@ -269,6 +298,7 @@ export default function StoryKeepDashboard({
     $epinetCustomFilters.visitorType,
     $epinetCustomFilters.selectedUserId,
     fetchAllAnalytics,
+    isCurrentlyInitializing,
   ]);
 
   // Download leads CSV (placeholder - adapt to V2 endpoint) - EXACTLY as original
@@ -289,6 +319,8 @@ export default function StoryKeepDashboard({
 
   // Handle tab switching - ONLY CHANGE: Add URL update and navigation tracking
   const handleTabChange = (tabId: string) => {
+    if (isCurrentlyInitializing) return; // Prevent tab changes during initialization
+
     setActiveTab(tabId);
 
     // Add URL update - preserve original ?content pattern
@@ -304,7 +336,7 @@ export default function StoryKeepDashboard({
 
   // Render placeholder content for other tabs - EXACTLY as original
   const renderTabContent = () => {
-    switch (activeTab) {
+    switch (currentActiveTab) {
       case 'analytics':
         return (
           <StoryKeepDashboard_Analytics
@@ -351,28 +383,53 @@ export default function StoryKeepDashboard({
 
   return (
     <div className="w-full">
-      {/* Tab Navigation */}
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex gap-x-4" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={classNames(
-                  activeTab === tab.id
-                    ? 'border-cyan-500 text-cyan-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                  'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold'
-                )}
-                aria-current={activeTab === tab.id ? 'page' : undefined}
-              >
-                {tab.name}
-              </button>
-            ))}
-          </nav>
+      {isCurrentlyInitializing && (
+        <div className="mb-8 rounded-md border border-dashed border-cyan-200 bg-cyan-50 p-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-2xl text-cyan-500">✨</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-bold text-black">
+                Welcome to your StoryKeep
+              </h3>
+              <div className="text-mydarkgrey mt-2 text-sm">
+                <p>
+                  Complete your site's branding configuration to get started.
+                  (And update as often as you like!)
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Tab Navigation */}
+      {!isCurrentlyInitializing && (
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex gap-x-4" aria-label="Tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={classNames(
+                    currentActiveTab === tab.id
+                      ? 'border-cyan-500 text-cyan-600'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                    'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold'
+                  )}
+                  aria-current={
+                    currentActiveTab === tab.id ? 'page' : undefined
+                  }
+                >
+                  {tab.name}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="xl:max-w-5xl">{renderTabContent()}</div>

@@ -327,7 +327,6 @@ const ManageContent = ({
               <KnownResourceTable
                 contentMap={currentContentMap}
                 onEdit={handleEditKnownResource}
-                onRefresh={refreshData}
               />
             </div>
           </div>
@@ -352,23 +351,23 @@ const ManageContent = ({
           />
         );
 
-      case 'epinets':
-        return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <div className="text-lg text-gray-600">
-              Epinets management - Coming soon
-            </div>
-          </div>
-        );
+      //case 'epinets':
+      //  return (
+      //    <div className="rounded-lg bg-white p-8 text-center shadow">
+      //      <div className="text-lg text-gray-600">
+      //        Epinets management - Coming soon
+      //      </div>
+      //    </div>
+      //  );
 
-      case 'files':
-        return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <div className="text-lg text-gray-600">
-              Files management - Coming soon
-            </div>
-          </div>
-        );
+      //case 'files':
+      //  return (
+      //    <div className="rounded-lg bg-white p-8 text-center shadow">
+      //      <div className="text-lg text-gray-600">
+      //        Files management - Coming soon
+      //      </div>
+      //    </div>
+      //  );
 
       default:
         return null;

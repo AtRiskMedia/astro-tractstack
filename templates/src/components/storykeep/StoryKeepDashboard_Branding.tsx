@@ -79,18 +79,6 @@ export default function StoryKeepDashboard_Branding({
         saveLabel="Save Brand Config"
         cancelLabel="Discard Changes"
       />
-
-      {VERBOSE && (
-        <div className="rounded-lg bg-gray-100 p-4 text-xs">
-          <h4 className="mb-2 font-bold">Debug Info:</h4>
-          <p>
-            <strong>Is Dirty:</strong> {formState.isDirty ? 'Yes' : 'No'}
-          </p>
-          <p>
-            <strong>Is Valid:</strong> {formState.isValid ? 'Yes' : 'No'}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

@@ -78,18 +78,6 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
             </div>
             <div className="text-sm text-gray-600">Beliefs</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-600">
-              {contentStats.epinets}
-            </div>
-            <div className="text-sm text-gray-600">Epinets</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-cyan-600">
-              {contentStats.files}
-            </div>
-            <div className="text-sm text-gray-600">Files</div>
-          </div>
         </div>
         <div className="mt-4 text-center">
           <div className="text-lg font-bold text-gray-900">

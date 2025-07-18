@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import CodeHook from '@/custom/CodeHook.astro';
+import { getBrandConfig } from '@/stores/brand';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 import type { AuthStatus } from '@/types';
@@ -115,6 +116,11 @@ if (VERBOSE) {
     fragmentsCount: Object.keys(fragmentsData).length,
   });
 }
+
+const brandConfig = await getBrandConfig(goBackend);
+if (!brandConfig.SITE_INIT) {
+  return Astro.redirect('/storykeep');
+}
 ---
 
 <Layout
@@ -126,6 +132,7 @@ if (VERBOSE) {
   isContext={false}
   isStoryKeep={false}
   isEditable={false}
+  brandConfig={brandConfig}
 >
   <main id="main-content" class="min-h-screen w-full">
     <div class="panes-container">

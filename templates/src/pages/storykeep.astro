@@ -4,17 +4,56 @@ import StoryKeepDashboard from '@/components/storykeep/StoryKeepDashboard';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { createStoryKeepMenu } from '@/utils/helpers';
 import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/stores/brand';
+
+// DEBUG: Check auth status
+const adminCookie = Astro.cookies.get('admin_auth');
+const editorCookie = Astro.cookies.get('editor_auth');
+const authResult = isAuthenticated(Astro);
+const adminResult = isAdmin(Astro);
+
+console.log('=== STORYKEEP AUTH DEBUG ===');
+console.log('Admin cookie exists:', !!adminCookie?.value);
+console.log('Editor cookie exists:', !!editorCookie?.value);
+console.log('isAuthenticated():', authResult);
+console.log('isAdmin():', adminResult);
 
 // Check for privileged authentication - redirect if not authenticated
 const authCheck = requireAdminOrEditor(Astro);
-if (authCheck) return authCheck;
+console.log('Auth check result:', !!authCheck);
+if (authCheck) {
+  console.log('REDIRECTING TO LOGIN');
+  return authCheck;
+}
 
-// Get authentication state
+// Get backend URL and tenant info
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const tenantId = Astro.locals.tenant?.id || 'default';
+
+try {
+  const statusResponse = await fetch(`${goBackend}/api/v1/health`, {
+    headers: {
+      'X-Tenant-ID': tenantId,
+    },
+    signal: AbortSignal.timeout(5000),
+  });
+
+  if (!statusResponse.ok) {
+    const currentPath = Astro.url.pathname;
+    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  }
+} catch (error) {
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
 const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 
-// Create the menu using the helper
+const brandConfig = await getBrandConfig(goBackend);
+const initializing = !brandConfig.SITE_INIT;
+
 const menu = createStoryKeepMenu({
   isAuthenticated: userIsAuthenticated,
   isAdmin: userIsAdmin,
@@ -22,17 +61,22 @@ const menu = createStoryKeepMenu({
 
 const title = 'Dashboard | StoryKeep';
 
-const fullContentMap = await getFullContentMap();
-const homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
+let fullContentMap;
+let homeSlug = 'hello';
 
-// Enhanced tab parameter handling for the new navigation system
+try {
+  fullContentMap = await getFullContentMap();
+  homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
+} catch (error) {
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
 const urlPath = Astro.url.pathname + Astro.url.search;
 const tabMatch = urlPath.match(/[?&]tab=([^&]+)/);
 const tabParam = tabMatch ? tabMatch[1] : null;
 
-// Valid tabs from the actual project data
 const validTabs = ['analytics', 'content', 'branding', 'advanced'];
-// Determine initial tab with better fallback handling
 const initialTab =
   tabParam && validTabs.includes(tabParam) ? tabParam : 'analytics';
 ---
@@ -46,6 +90,7 @@ const initialTab =
         homeSlug={homeSlug}
         initialTab={initialTab}
         role={role}
+        initializing={initializing}
       />
     </div>
   </main>
