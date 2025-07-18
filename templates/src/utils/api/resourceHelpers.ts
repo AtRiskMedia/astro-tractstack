@@ -5,32 +5,18 @@ import type {
 } from '@/types/tractstack';
 
 export function convertToLocalState(backend: ResourceConfig): ResourceState {
-  let parsedOptionsPayload: Record<string, any> = {};
-
-  if (backend.OPTIONS_PAYLOAD) {
-    try {
-      parsedOptionsPayload =
-        typeof backend.OPTIONS_PAYLOAD === 'string'
-          ? JSON.parse(backend.OPTIONS_PAYLOAD)
-          : backend.OPTIONS_PAYLOAD;
-    } catch (error) {
-      console.warn('Failed to parse OPTIONS_PAYLOAD:', error);
-      parsedOptionsPayload = {};
-    }
-  }
-
   return {
-    id: backend.ID || '',
-    title: backend.TITLE || '',
-    slug: backend.SLUG || '',
-    categorySlug: backend.CATEGORY_SLUG || '',
-    oneliner: backend.ONELINER || '',
-    optionsPayload: parsedOptionsPayload,
-    actionLisp: backend.ACTION_LISP || undefined,
+    id: backend.id || '',
+    title: backend.title || '',
+    slug: backend.slug || '',
+    categorySlug: backend.categorySlug || '',
+    oneliner: backend.oneliner || '',
+    optionsPayload: backend.optionsPayload || {},
+    actionLisp: backend.actionLisp || undefined,
   };
 }
 
-export function convertToBackendFormat(local: ResourceState): any {
+export function convertToBackendFormat(local: ResourceState): ResourceConfig {
   return {
     id: local.id,
     title: local.title,

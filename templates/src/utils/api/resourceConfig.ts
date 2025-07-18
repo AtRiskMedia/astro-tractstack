@@ -8,10 +8,10 @@ const api = new TractStackAPI();
  * Save resource - handles both create and update operations
  */
 export async function saveResource(
-  resource: Partial<ResourceConfig> & { ID?: string }
+  resource: Partial<ResourceConfig> & { id?: string }
 ): Promise<ResourceConfig> {
   try {
-    const isCreate = !resource.ID || resource.ID === '';
+    const isCreate = !resource.id || resource.id === '';
 
     let response;
 
@@ -24,7 +24,7 @@ export async function saveResource(
     } else {
       // Update existing resource
       response = await api.put<ResourceConfig>(
-        `/api/v1/nodes/resources/${resource.ID}`,
+        `/api/v1/nodes/resources/${resource.id}`,
         resource
       );
     }
@@ -54,7 +54,7 @@ export async function saveResource(
 }
 
 export async function createResource(
-  resource: Omit<ResourceConfig, 'ID'>
+  resource: Omit<ResourceConfig, 'id'>
 ): Promise<ResourceConfig> {
   const response = await api.post('/api/v1/nodes/resources/create', resource);
   if (!response.success) {
@@ -112,7 +112,7 @@ export async function getResourcesByCategory(
   const allIds = await getAllResourceIds();
   const allResources = await getResourcesByIds(allIds);
   return allResources.filter(
-    (resource) => resource.CATEGORY_SLUG === categorySlug
+    (resource) => resource.categorySlug === categorySlug
   );
 }
 
@@ -127,14 +127,14 @@ export async function saveResourceWithStateUpdate(
   const isCreate = !currentState.id || currentState.id === '';
 
   if (isCreate) {
-    // For create, remove ID and call createResource
-    const { ID, ...createData } = backendFormat;
+    // For create, remove id and call createResource
+    const { id, ...createData } = backendFormat;
     const createdResource = await createResource(createData);
     return convertToLocalState(createdResource);
   } else {
     // For update, calculate changed fields
     const originalBackendFormat = convertToBackendFormat(originalState);
-    const changedFields: Partial<ResourceConfig> = { ID: backendFormat.ID };
+    const changedFields: Partial<ResourceConfig> = { id: backendFormat.id };
 
     // Compare each field and include only changed ones
     Object.keys(backendFormat).forEach((key) => {
@@ -144,7 +144,7 @@ export async function saveResourceWithStateUpdate(
       }
     });
 
-    // If only ID is in changedFields, nothing actually changed
+    // If only id is in changedFields, nothing actually changed
     if (Object.keys(changedFields).length <= 1) {
       return currentState;
     }

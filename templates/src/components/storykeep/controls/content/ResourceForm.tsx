@@ -6,7 +6,7 @@ import {
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
 import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
 import StringInput from '@/components/storykeep/form/StringInput';
-import StringArrayInput from '@/components/storykeep/form/StringArrayInput';
+import ParagraphArrayInput from '@/components/storykeep/form/ParagraphArrayInput';
 import NumberInput from '@/components/storykeep/form/NumberInput';
 import BooleanToggle from '@/components/storykeep/form/BooleanToggle';
 import DateTimeInput from '@/components/storykeep/form/DateTimeInput';
@@ -113,13 +113,16 @@ export default function ResourceForm({
 
       case 'multi':
         return (
-          <StringArrayInput
+          <ParagraphArrayInput
             key={fieldName}
             label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
             value={fieldValue || []}
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
             required={!fieldDef.optional}
+            placeholder={`Enter ${fieldName} paragraph...`}
+            minRows={2}
+            maxRows={8}
           />
         );
 
@@ -207,13 +210,12 @@ export default function ResourceForm({
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">
           {isCreate ? 'Create' : 'Edit'}{' '}
-          {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}{' '}
-          Resource
+          {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}
         </h2>
         <p className="mt-2 text-sm text-gray-600">
           {isCreate
-            ? `Create a new ${categorySlug} resource.`
-            : `Edit the ${categorySlug} resource configuration.`}
+            ? `Create a new ${categorySlug}.`
+            : `Edit the ${categorySlug} configuration.`}
         </p>
       </div>
 
@@ -224,7 +226,7 @@ export default function ResourceForm({
           value={state.title}
           onChange={(value: string) => updateField('title', value)}
           error={errors?.title}
-          placeholder="Enter resource title"
+          placeholder="Enter title"
           required
         />
 

@@ -228,7 +228,7 @@ const DateTimeInput = ({
       )}
 
       <DatePicker.Root
-        value={dateValue ? [dateValue] : undefined}
+        value={dateValue ? [dateValue] : []}
         onValueChange={handleDateChange}
         min={minDate}
         max={maxDate}

@@ -209,6 +209,12 @@ export async function injectTemplateFiles(
 
     // Atomic form components
     {
+      src: resolve(
+        'templates/src/components/storykeep/form/ParagraphArrayInput.tsx'
+      ),
+      dest: 'src/components/storykeep/form/ParagraphArrayInput.tsx',
+    },
+    {
       src: resolve('templates/src/components/storykeep/form/StringInput.tsx'),
       dest: 'src/components/storykeep/form/StringInput.tsx',
     },
@@ -385,6 +391,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
     },
     // Resource Management Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ResourceBulkIngest.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ResourceBulkIngest.tsx',
+    },
     {
       src: resolve(
         'templates/src/components/storykeep/controls/content/ResourceForm.tsx'

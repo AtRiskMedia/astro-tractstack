@@ -3,7 +3,7 @@ import { brandConfigStore } from '@/stores/brand';
 import { convertToLocalState, convertToBackendFormat } from './brandHelpers';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 const api = new TractStackAPI();
 
@@ -104,10 +104,6 @@ export async function saveBrandConfigWithStateUpdate(
   currentState: BrandConfigState,
   originalState: BrandConfigState
 ): Promise<BrandConfigState> {
-  console.log(
-    currentState.knownResources?.location,
-    originalState.knownResources?.location
-  );
   const backendFormat = convertToBackendFormat(currentState);
   const originalBackendFormat = convertToBackendFormat(originalState);
 

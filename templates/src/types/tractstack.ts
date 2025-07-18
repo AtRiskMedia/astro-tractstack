@@ -387,13 +387,13 @@ export interface KnownResourcesConfig {
 }
 
 export interface ResourceConfig {
-  ID: string;
-  TITLE: string;
-  SLUG: string;
-  CATEGORY_SLUG: string;
-  ONELINER: string;
-  OPTIONS_PAYLOAD: string; // JSON string
-  ACTION_LISP?: string;
+  id: string;
+  title: string;
+  slug: string;
+  categorySlug: string;
+  oneliner: string;
+  optionsPayload: Record<string, any>; // Object, not JSON string
+  actionLisp?: string;
 }
 
 export interface ResourceState {

@@ -3,6 +3,7 @@ import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import { deleteResource } from '@/utils/api/resourceConfig';
+import ResourceBulkIngest from './ResourceBulkIngest';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ResourceTableProps {
@@ -22,6 +23,7 @@ export default function ResourceTable({
 }: ResourceTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [showBulkIngest, setShowBulkIngest] = useState(false);
 
   // Filter resources for this category
   const categoryResources = fullContentMap.filter(
@@ -74,20 +76,27 @@ export default function ResourceTable({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-gray-900">
-            {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}{' '}
-            Resources
+            {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}
           </h3>
-          <p className="text-sm text-gray-600">
-            Manage {categorySlug} resources
-          </p>
+          <p className="text-sm text-gray-600">Manage {categorySlug}</p>
         </div>
-        <button
-          onClick={onCreate}
-          className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500"
-        >
-          <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-          Create {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setShowBulkIngest(true)}
+            className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500"
+          >
+            <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+            Bulk Import
+          </button>
+          <button
+            onClick={onCreate}
+            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500"
+          >
+            <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+            Create{' '}
+            {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}
+          </button>
+        </div>
       </div>
 
       {/* Search and refresh */}
@@ -192,6 +201,17 @@ export default function ResourceTable({
           </tbody>
         </table>
       </div>
+      {showBulkIngest && (
+        <ResourceBulkIngest
+          onClose={(saved) => {
+            setShowBulkIngest(false);
+            if (saved) {
+              onRefresh();
+            }
+          }}
+          onRefresh={onRefresh}
+        />
+      )}
     </div>
   );
 }
