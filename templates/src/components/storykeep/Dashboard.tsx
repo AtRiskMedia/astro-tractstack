@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../stores/analytics';
+import { epinetCustomFilters } from '@/stores/analytics';
 import { classNames } from '../../utils/helpers';
-import { brandConfigStore, getBrandConfig } from '../../stores/brand';
-import { navigationActions } from '../../stores/navigation';
-import StoryKeepDashboard_Wizard from './StoryKeepDashboard_Wizard';
-import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
-import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
-import StoryKeepDashboard_Branding from './StoryKeepDashboard_Branding';
-import StoryKeepDashboard_Advanced from './StoryKeepDashboard_Advanced';
-import type { FullContentMapItem } from 'templates/src/types/tractstack';
+import { brandConfigStore, getBrandConfig } from '@/stores/brand';
+import { navigationActions } from '@/stores/navigation';
+import StoryKeepDashboard_Wizard from './Dashboard_Wizard';
+import StoryKeepDashboard_Analytics from './Dashboard_Analytics';
+import StoryKeepDashboard_Content from './Dashboard_Content';
+import StoryKeepDashboard_Branding from './Dashboard_Branding';
+import StoryKeepDashboard_Advanced from './Dashboard_Advanced';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface Tab {
   id: string;

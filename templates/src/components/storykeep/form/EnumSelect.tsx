@@ -1,5 +1,4 @@
-import { Fragment } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface EnumOption {
   value: string;
@@ -18,7 +17,7 @@ interface EnumSelectProps {
   required?: boolean;
   className?: string;
   allowEmpty?: boolean;
-  id?: string; // Add id prop for accessibility
+  id?: string;
 }
 
 const EnumSelect = ({
@@ -32,7 +31,7 @@ const EnumSelect = ({
   required = false,
   className,
   allowEmpty = false,
-  id = 'enum-select', // Default id if not provided
+  id = 'enum-select',
 }: EnumSelectProps) => {
   return (
     <div className={classNames('space-y-1', className || '')}>
@@ -47,12 +46,12 @@ const EnumSelect = ({
       )}
 
       <select
-        id={id} // Add id to select
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         required={required}
-        aria-required={required ? 'true' : undefined} // Explicitly indicate required state
+        aria-required={required ? 'true' : undefined}
         className={classNames(
           'block w-fit min-w-48 rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset',
           error ? 'ring-red-300 focus:ring-red-500' : 'focus:ring-cyan-600',

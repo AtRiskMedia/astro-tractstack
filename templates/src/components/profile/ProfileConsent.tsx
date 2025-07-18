@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Switch } from '@ark-ui/react/switch';
-import { ProfileStorage } from '../../utils/profileStorage';
+import { ProfileStorage } from '@/utils/profileStorage';
 
 export const ProfileConsent = () => {
   const [isChecked, setIsChecked] = useState(false);

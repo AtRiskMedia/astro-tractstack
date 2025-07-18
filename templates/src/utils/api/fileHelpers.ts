@@ -1,31 +1,13 @@
-// File validation and image processing utilities
-// File: templates/src/utils/fileHelpers.ts
+import type {
+  AllowedImageFormat,
+  ImageDimensions,
+  ImageProcessingResult,
+} from '@/types/formTypes';
 
-export interface ImageDimensions {
-  width: number;
-  height: number;
-}
-
-export interface ValidationResult {
+interface ValidationResult {
   isValid: boolean;
   error?: string;
 }
-
-export interface ProcessingResult {
-  processedFile: string; // base64
-  warnings: string[];
-  originalDimensions: ImageDimensions;
-  finalDimensions: ImageDimensions;
-}
-
-export type AllowedImageFormat =
-  | 'svg'
-  | 'ico'
-  | 'png'
-  | 'jpg'
-  | 'jpeg'
-  | 'webp'
-  | 'gif';
 
 /**
  * Validates file size
@@ -175,7 +157,7 @@ export const resizeAndCropImage = async (
   file: File,
   targetDimensions: ImageDimensions,
   quality: number = 0.9
-): Promise<ProcessingResult> => {
+): Promise<ImageProcessingResult> => {
   // Handle SVG files differently
   if (isSvgFile(file)) {
     const base64 = await fileToBase64(file);

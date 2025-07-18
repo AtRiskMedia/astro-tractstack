@@ -9,7 +9,7 @@ import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRou
 import BellSlashIcon from '@heroicons/react/24/outline/BellSlashIcon';
 import BoltIcon from '@heroicons/react/24/outline/BoltIcon';
 import ChatBubbleBottomCenterIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterIcon';
-import { ProfileStorage } from '../../utils/profileStorage';
+import { ProfileStorage } from '@/utils/profileStorage';
 import type { FormEvent } from 'react';
 
 // Contact persona options - matches Go backend expectations

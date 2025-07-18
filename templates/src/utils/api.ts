@@ -1,5 +1,3 @@
-// Template file - will be injected into user projects
-
 export interface APIResponse<T = any> {
   success: boolean;
   data?: T;

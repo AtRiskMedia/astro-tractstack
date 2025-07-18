@@ -1,17 +1,13 @@
-// Enhanced FileUpload component with image processing
-// File: templates/src/components/storykeep/form/FileUpload.tsx
-
 import { useRef, useState, useId } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 import {
   validateFile,
   resizeAndCropImage,
   fileToBase64,
   isSvgFile,
   type FileValidationOptions,
-  type AllowedImageFormat,
-  type ImageDimensions,
-} from '../../../utils/fileHelpers';
+} from '@/utils/api/fileHelpers';
+import type { AllowedImageFormat, ImageDimensions } from '@/types/formTypes';
 
 interface FileUploadProps {
   value: string; // Base64 encoded file or URL

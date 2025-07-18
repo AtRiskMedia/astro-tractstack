@@ -1,7 +1,7 @@
 import { TractStackAPI } from '../api';
-import { brandConfigStore } from '../../stores/brand';
-import type { BrandConfig, BrandConfigState } from '../../types/tractstack';
-import { convertToLocalState, convertToBackendFormat } from '../brandHelpers';
+import { brandConfigStore } from '@/stores/brand';
+import { convertToLocalState, convertToBackendFormat } from './brandHelpers';
+import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
 const VERBOSE = true;
 

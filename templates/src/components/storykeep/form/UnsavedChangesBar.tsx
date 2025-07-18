@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { FormStateReturn, SaveState } from '../../../hooks/useFormState';
+import type { FormStateReturn, SaveState } from '@/hooks/useFormState';
 
 interface UnsavedChangesBarProps<T> {
   formState: FormStateReturn<T>;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../stores/analytics';
+import { epinetCustomFilters } from '@/stores/analytics';
 import { Accordion } from '@ark-ui/react';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';

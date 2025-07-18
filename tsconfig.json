@@ -19,12 +19,16 @@
     "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/types/*": ["src/types/*"],
-      "@/layouts/*": ["src/layouts/*"],
-      "@/pages/*": ["src/pages/*"]
+      "@/*": ["templates/src/*"], // Now @/ resolves to template files
+      "@/components/*": ["templates/src/components/*"],
+      "@/utils/*": ["templates/src/utils/*"],
+      "@/types/*": ["templates/src/types/*"],
+      "@/layouts/*": ["templates/src/layouts/*"],
+      "@/pages/*": ["templates/src/pages/*"],
+      "@/stores/*": ["templates/src/stores/*"],
+      "@/constants/*": ["templates/src/constants/*"],
+      "@/hooks/*": ["templates/src/hooks/*"],
+      "@/client/*": ["templates/src/client/*"]
     },
     "types": [
       "node",

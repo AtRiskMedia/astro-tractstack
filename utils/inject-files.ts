@@ -1,6 +1,5 @@
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { execSync } from 'child_process';
 import type { AstroIntegrationLogger } from 'astro';
 
 export async function injectTemplateFiles(
@@ -77,20 +76,20 @@ export async function injectTemplateFiles(
       dest: 'src/utils/profileStorage.ts',
     },
     {
-      src: resolve('templates/src/utils/fileHelpers.ts'),
-      dest: 'src/utils/fileHelpers.ts',
+      src: resolve('templates/src/utils/api/fileHelpers.ts'),
+      dest: 'src/utils/api/fileHelpers.ts',
     },
     {
-      src: resolve('templates/src/utils/brandHelpers.ts'),
-      dest: 'src/utils/brandHelpers.ts',
+      src: resolve('templates/src/utils/api/brandHelpers.ts'),
+      dest: 'src/utils/api/brandHelpers.ts',
     },
     {
       src: resolve('templates/src/utils/api/advancedConfig.ts'),
       dest: 'src/utils/api/advancedConfig.ts',
     },
     {
-      src: resolve('templates/src/utils/advancedHelpers.ts'),
-      dest: 'src/utils/advancedHelpers.ts',
+      src: resolve('templates/src/utils/api/advancedHelpers.ts'),
+      dest: 'src/utils/api/advancedHelpers.ts',
     },
     // Layouts
     {
@@ -245,17 +244,13 @@ export async function injectTemplateFiles(
     },
     //
     {
-      src: resolve(
-        'templates/src/components/storykeep/StoryKeepDashboard_Wizard.tsx'
-      ),
-      dest: 'src/components/storykeep/StoryKeepDashboard_Wizard.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard_Wizard.tsx'),
+      dest: 'src/components/storykeep/Dashboard_Wizard.tsx',
     },
     // Advanced Configuration Components
     {
-      src: resolve(
-        'templates/src/components/storykeep/StoryKeepDashboard_Advanced.tsx'
-      ),
-      dest: 'src/components/storykeep/StoryKeepDashboard_Advanced.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard_Advanced.tsx'),
+      dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
     },
     {
       src: resolve(
@@ -333,26 +328,22 @@ export async function injectTemplateFiles(
     },
     // StoryKeep dashboard components
     {
-      src: resolve('templates/src/components/storykeep/StoryKeepDashboard.tsx'),
-      dest: 'src/components/storykeep/StoryKeepDashboard.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard.tsx'),
+      dest: 'src/components/storykeep/Dashboard.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/StoryKeepDashboard_Analytics.tsx'
+        'templates/src/components/storykeep/Dashboard_Analytics.tsx'
       ),
-      dest: 'src/components/storykeep/StoryKeepDashboard_Analytics.tsx',
+      dest: 'src/components/storykeep/Dashboard_Analytics.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/StoryKeepDashboard_Branding.tsx'
-      ),
-      dest: 'src/components/storykeep/StoryKeepDashboard_Branding.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard_Branding.tsx'),
+      dest: 'src/components/storykeep/Dashboard_Branding.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/StoryKeepDashboard_Content.tsx'
-      ),
-      dest: 'src/components/storykeep/StoryKeepDashboard_Content.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard_Content.tsx'),
+      dest: 'src/components/storykeep/Dashboard_Content.tsx',
     },
     {
       src: resolve('templates/src/components/storykeep/DashboardActivity.tsx'),
@@ -412,8 +403,8 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/resourceConfig.ts',
     },
     {
-      src: resolve('templates/src/utils/resourceHelpers.ts'),
-      dest: 'src/utils/resourceHelpers.ts',
+      src: resolve('templates/src/utils/api/resourceHelpers.ts'),
+      dest: 'src/utils/api/resourceHelpers.ts',
     },
     // resources
     {
@@ -429,13 +420,13 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/controls/content/KnownResourceForm.tsx',
     },
     {
-      src: resolve('templates/src/utils/resourceHelpers.ts'),
-      dest: 'src/utils/resourceHelpers.ts',
+      src: resolve('templates/src/utils/api/resourceHelpers.ts'),
+      dest: 'src/utils/api/resourceHelpers.ts',
     },
     // Menu Utilities
     {
-      src: resolve('templates/src/utils/menuHelpers.ts'),
-      dest: 'src/utils/menuHelpers.ts',
+      src: resolve('templates/src/utils/api/menuHelpers.ts'),
+      dest: 'src/utils/api/menuHelpers.ts',
     },
     {
       src: resolve('templates/src/utils/api/menuConfig.ts'),
@@ -480,8 +471,8 @@ export async function injectTemplateFiles(
     },
     // Belief Utilities
     {
-      src: resolve('templates/src/utils/beliefHelpers.ts'),
-      dest: 'src/utils/beliefHelpers.ts',
+      src: resolve('templates/src/utils/api/beliefHelpers.ts'),
+      dest: 'src/utils/api/beliefHelpers.ts',
     },
     {
       src: resolve('templates/src/utils/api/beliefConfig.ts'),

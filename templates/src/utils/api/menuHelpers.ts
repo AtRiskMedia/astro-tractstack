@@ -1,4 +1,4 @@
-import type { MenuNode, MenuNodeState, FieldErrors } from '../types/tractstack';
+import type { MenuNode, MenuNodeState, FieldErrors } from '@/types/tractstack';
 
 /**
  * Convert backend MenuNode to frontend MenuNodeState

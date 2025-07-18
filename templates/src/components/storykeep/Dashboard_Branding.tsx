@@ -1,21 +1,21 @@
 import { useState } from 'react';
-import { useFormState } from '../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   convertToBackendFormat,
   brandStateIntercept,
   validateBrandConfig,
-} from '../../utils/brandHelpers';
-import { saveBrandConfigWithStateUpdate } from '../../utils/api/brandConfig';
+} from '@/utils/api/brandHelpers';
+import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
 import BrandColorsSection from './form/brand/BrandColorsSection';
 import BrandAssetsSection from './form/brand/BrandAssetsSection';
 import SiteConfigSection from './form/brand/SiteConfigSection';
 import SocialLinksSection from './form/brand/SocialLinksSection';
 import SEOSection from './form/brand/SEOSection';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
-import type { BrandConfig, BrandConfigState } from '../../types/tractstack';
+import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;

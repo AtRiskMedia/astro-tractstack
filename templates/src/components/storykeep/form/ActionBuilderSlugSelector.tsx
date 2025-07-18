@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { FullContentMapItem } from '../../../types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ActionBuilderSlugSelectorProps {
   type: 'storyFragment' | 'context' | 'pane';

@@ -1,22 +1,22 @@
-import { useFormState } from '../../../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   validateResource,
-} from '../../../../utils/resourceHelpers';
-import { saveResourceWithStateUpdate } from '../../../../utils/api/resourceConfig';
-import UnsavedChangesBar from '../../form/UnsavedChangesBar';
-import StringInput from '../../form/StringInput';
-import StringArrayInput from '../../form/StringArrayInput';
-import NumberInput from '../../form/NumberInput';
-import BooleanToggle from '../../form/BooleanToggle';
-import DateTimeInput from '../../form/DateTimeInput';
-import FileUpload from '../../form/FileUpload';
-import EnumSelect from '../../form/EnumSelect';
+} from '@/utils/api/resourceHelpers';
+import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
+import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
+import StringInput from '@/components/storykeep/form/StringInput';
+import StringArrayInput from '@/components/storykeep/form/StringArrayInput';
+import NumberInput from '@/components/storykeep/form/NumberInput';
+import BooleanToggle from '@/components/storykeep/form/BooleanToggle';
+import DateTimeInput from '@/components/storykeep/form/DateTimeInput';
+import FileUpload from '@/components/storykeep/form/FileUpload';
+import EnumSelect from '@/components/storykeep/form/EnumSelect';
 import type {
   ResourceConfig,
   ResourceState,
   FieldDefinition,
-} from '../../../../types/tractstack';
+} from '@/types/tractstack';
 
 interface ResourceFormProps {
   resourceData?: ResourceConfig;

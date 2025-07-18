@@ -1,23 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useFormState } from '../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   convertToBackendFormat,
   validateAdvancedConfig,
   advancedStateIntercept,
-} from '../../utils/advancedHelpers';
+} from '@/utils/api/advancedHelpers';
 import {
   getAdvancedConfigStatus,
   saveAdvancedConfig,
-} from '../../utils/api/advancedConfig';
+} from '@/utils/api/advancedConfig';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
 import AuthConfigSection from './form/advanced/AuthConfigSection';
 import APIConfigSection from './form/advanced/APIConfigSection';
-import StringInput from './form/StringInput';
 import type {
   AdvancedConfigState,
   AdvancedConfigStatus,
-} from '../../types/tractstack';
+} from '@/types/tractstack';
 
 interface StoryKeepDashboardAdvancedProps {
   initialize?: boolean;

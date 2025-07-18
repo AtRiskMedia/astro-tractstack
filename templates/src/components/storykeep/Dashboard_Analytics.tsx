@@ -1,13 +1,11 @@
 import { useState, useMemo, type ReactNode } from 'react';
-import { useStore } from '@nanostores/react';
 import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import DashboardActivity from './DashboardActivity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
 import EpinetTableView from '../codehooks/EpinetTableView';
-import { epinetCustomFilters } from '../../stores/analytics';
-import { classNames } from '../../utils/helpers';
-import type { FullContentMapItem } from 'templates/src/types/tractstack';
+import { classNames } from '@/utils/helpers';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface AnalyticsData {
   dashboard: any;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { GOTO_TARGETS } from '../../../constants';
+import { GOTO_TARGETS } from '@/constants';
 import ActionBuilderSlugSelector from './ActionBuilderSlugSelector';
-import type { FullContentMapItem } from '../../../types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ActionBuilderFieldProps {
   value: string;

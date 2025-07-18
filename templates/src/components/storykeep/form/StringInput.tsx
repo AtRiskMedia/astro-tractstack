@@ -1,5 +1,5 @@
 import { forwardRef, useId } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface StringInputProps {
   value: string;
@@ -12,8 +12,8 @@ interface StringInputProps {
   type?: 'text' | 'email' | 'url' | 'password';
   maxLength?: number;
   className?: string;
-  id?: string; // Allow custom ID override
-  name?: string; // Allow custom name override
+  id?: string;
+  name?: string;
 }
 
 const StringInput = forwardRef<HTMLInputElement, StringInputProps>(

@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { classNames } from '../../../../utils/helpers';
-import { navigationStore } from '../../../../stores/navigation';
-import { brandConfigStore } from '../../../../stores/brand';
-import { getBrandConfig } from '../../../../utils/api/brandConfig';
-import { getFullContentMap } from '../../../../stores/analytics';
+import { navigationStore } from '@/stores/navigation';
+import { brandConfigStore } from '@/stores/brand';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import {
   handleManageSubtabChange,
   restoreTabNavigation,
-} from '../../../../utils/navigationHelpers';
-import { getMenuById } from '../../../../utils/api/menuConfig';
-import { getBeliefById } from '../../../../utils/api/beliefConfig';
-import { getResource } from '../../../../utils/api/resourceConfig';
+} from '@/utils/navigationHelpers';
+import { classNames } from '@/utils/helpers';
+import { getMenuById } from '@/utils/api/menuConfig';
+import { getBeliefById } from '@/utils/api/beliefConfig';
+import { getResource } from '@/utils/api/resourceConfig';
 import ContentSummary from './ContentSummary';
 import StoryFragmentTable from './StoryFragmentTable';
 import MenuTable from './MenuTable';
@@ -27,7 +27,7 @@ import type {
   MenuNode,
   BeliefNode,
   ResourceConfig,
-} from '../../../../types/tractstack';
+} from '@/types/tractstack';
 
 interface ManageContentProps {
   fullContentMap: FullContentMapItem[];

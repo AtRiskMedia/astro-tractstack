@@ -2,8 +2,8 @@ import { atom } from 'nanostores';
 import {
   saveBrandConfig as apiSave,
   getBrandConfig as apiGet,
-} from '../utils/api/brandConfig';
-import type { BrandConfig } from '../types/tractstack';
+} from '@/utils/api/brandConfig';
+import type { BrandConfig } from '@/types/tractstack';
 
 export const brandConfigStore = atom<BrandConfig | null>(null);
 

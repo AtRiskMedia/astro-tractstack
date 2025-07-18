@@ -2,7 +2,7 @@ import type {
   ResourceConfig,
   ResourceState,
   FieldErrors,
-} from '../types/tractstack';
+} from '@/types/tractstack';
 
 export function convertToLocalState(backend: ResourceConfig): ResourceState {
   let parsedOptionsPayload: Record<string, any> = {};

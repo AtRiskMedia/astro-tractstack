@@ -2,7 +2,7 @@ import {
   navigationStore,
   navigationActions,
   type NavigationState,
-} from '../stores/navigation';
+} from '@/stores/navigation';
 
 /**
  * Update URL parameters for tab navigation

@@ -8,10 +8,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { colors } from '../../constants';
+import { colors } from '@/constants';
 import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../stores/analytics';
+import { epinetCustomFilters } from '@/stores/analytics';
 
 interface Point {
   y: number;

@@ -1,6 +1,3 @@
-// Profile storage utility - replaces nanostore for profile management
-// Works across tabs via localStorage, no reactivity overhead
-
 export interface ProfileData {
   firstname?: string;
   contactPersona?: string;

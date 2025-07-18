@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useStore } from '@nanostores/react';
-import { useFormState } from '../../../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import StringInput from '../../form/StringInput';
-import BooleanToggle from '../../form/BooleanToggle';
-import NumberInput from '../../form/NumberInput';
-import EnumSelect from '../../form/EnumSelect';
-import UnsavedChangesBar from '../../form/UnsavedChangesBar';
-import { saveBrandConfigWithStateUpdate } from '../../../../utils/api/brandConfig';
-import { convertToLocalState } from '../../../../utils/brandHelpers';
-import { brandConfigStore } from '../../../../stores/brand';
+import StringInput from '@/components/storykeep/form/StringInput';
+import BooleanToggle from '@/components/storykeep/form/BooleanToggle';
+import NumberInput from '@/components/storykeep/form/NumberInput';
+import EnumSelect from '@/components/storykeep/form/EnumSelect';
+import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
+import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
+import { convertToLocalState } from '@/utils/api/brandHelpers';
+import { brandConfigStore } from '@/stores/brand';
 import type {
   FieldDefinition,
   FullContentMapItem,
   FieldErrors,
-} from '../../../../types/tractstack';
+} from '@/types/tractstack';
 
 interface KnownResourceFormProps {
   categorySlug: string;

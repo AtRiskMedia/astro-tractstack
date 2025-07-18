@@ -6,12 +6,12 @@ import {
   type ReactNode,
 } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../stores/analytics';
-import { classNames } from '../../utils/helpers';
+import { epinetCustomFilters } from '@/stores/analytics';
+import { classNames } from '@/utils/helpers';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
 import EpinetTableView from './EpinetTableView';
-import type { FullContentMapItem } from 'templates/src/types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

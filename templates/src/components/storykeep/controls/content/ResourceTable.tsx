@@ -2,8 +2,8 @@ import { useState } from 'react';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import { deleteResource } from '../../../../utils/api/resourceConfig';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+import { deleteResource } from '@/utils/api/resourceConfig';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ResourceTableProps {
   categorySlug: string;

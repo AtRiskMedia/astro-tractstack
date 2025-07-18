@@ -2,12 +2,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import { deleteMenu } from '../../../../utils/api/menuConfig';
+import { deleteMenu } from '@/utils/api/menuConfig';
 import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
-} from '../../../../stores/orphanAnalysis';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+} from '@/stores/orphanAnalysis';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface MenuTableProps {
   fullContentMap: FullContentMapItem[];

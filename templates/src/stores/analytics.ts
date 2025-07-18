@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import { TractStackAPI } from '../utils/api';
+import { TractStackAPI } from '@/utils/api';
 
 export const epinetCustomFilters = atom<{
   enabled: boolean;

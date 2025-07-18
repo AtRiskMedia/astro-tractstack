@@ -2,7 +2,7 @@ import type {
   BeliefNode,
   BeliefNodeState,
   FieldErrors,
-} from '../types/tractstack';
+} from '@/types/tractstack';
 
 /**
  * Convert backend BeliefNode to frontend BeliefNodeState

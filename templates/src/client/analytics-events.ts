@@ -1,4 +1,4 @@
-import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '../constants';
+import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '@/constants';
 
 const VERBOSE = false;
 

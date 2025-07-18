@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react';
-import { orphanAnalysisStore } from '../../../stores/orphanAnalysis';
-import type { FullContentMapItem } from '../../../types/tractstack';
+import { orphanAnalysisStore } from '@/stores/orphanAnalysis';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface UsageCellProps {
   itemId: string;

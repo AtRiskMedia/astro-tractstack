@@ -1,8 +1,5 @@
-// Accessible StringArrayInput component with proper form attributes
-// File: templates/src/components/storykeep/form/StringArrayInput.tsx
-
 import { useState, KeyboardEvent, useId } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface StringArrayInputProps {
   value: string[];
@@ -15,8 +12,8 @@ interface StringArrayInputProps {
   maxItems?: number;
   className?: string;
   allowDuplicates?: boolean;
-  id?: string; // Allow custom ID override
-  name?: string; // Allow custom name override
+  id?: string;
+  name?: string;
 }
 
 const StringArrayInput = ({

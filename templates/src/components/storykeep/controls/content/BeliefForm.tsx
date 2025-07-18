@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { useFormState } from '../../../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   validateBeliefNode,
@@ -9,21 +9,21 @@ import {
   removeCustomValue,
   SCALE_OPTIONS,
   getScalePreview,
-} from '../../../../utils/beliefHelpers';
-import { saveBeliefWithStateUpdate } from '../../../../utils/api/beliefConfig';
+} from '@/utils/api/beliefHelpers';
+import { saveBeliefWithStateUpdate } from '@/utils/api/beliefConfig';
 import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
-} from '../../../../stores/orphanAnalysis';
-import StringInput from '../../form/StringInput';
-import EnumSelect from '../../form/EnumSelect';
-import UnsavedChangesBar from '../../form/UnsavedChangesBar';
+} from '@/stores/orphanAnalysis';
+import StringInput from '@/components/storykeep/form/StringInput';
+import EnumSelect from '@/components/storykeep/form/EnumSelect';
+import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
 import {
   PlusIcon,
   XMarkIcon,
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
-import type { BeliefNode, BeliefNodeState } from '../../../../types/tractstack';
+import type { BeliefNode, BeliefNodeState } from '@/types/tractstack';
 
 interface BeliefFormProps {
   belief?: BeliefNode;

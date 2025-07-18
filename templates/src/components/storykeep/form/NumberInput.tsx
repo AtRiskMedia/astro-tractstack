@@ -1,8 +1,5 @@
-// Accessible NumberInput component with proper form attributes
-// File: templates/src/components/storykeep/form/NumberInput.tsx
-
 import { forwardRef, useId } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface NumberInputProps {
   value: number;
@@ -16,8 +13,8 @@ interface NumberInputProps {
   max?: number;
   step?: number;
   className?: string;
-  id?: string; // Allow custom ID override
-  name?: string; // Allow custom name override
+  id?: string;
+  name?: string;
 }
 
 const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(

@@ -1,7 +1,7 @@
 import EnumSelect from '../EnumSelect';
 import FileUpload from '../FileUpload';
-import type { BrandConfigState } from '../../../../types/tractstack';
-import type { FormStateReturn } from '../../../../hooks/useFormState';
+import type { BrandConfigState } from '@/types/tractstack';
+import type { FormStateReturn } from '@/hooks/useFormState';
 
 interface BrandAssetsSectionProps {
   formState: FormStateReturn<BrandConfigState>;

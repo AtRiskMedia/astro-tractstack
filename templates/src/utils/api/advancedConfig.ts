@@ -2,7 +2,7 @@ import { TractStackAPI } from '../api';
 import type {
   AdvancedConfigStatus,
   AdvancedConfigUpdateRequest,
-} from '../../types/tractstack';
+} from '@/types/tractstack';
 
 const api = new TractStackAPI();
 

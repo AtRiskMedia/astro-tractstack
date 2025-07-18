@@ -1,6 +1,3 @@
-// TractStack Types
-// Common types for TractStack components and utilities
-
 // Base component props that all TractStack components should support
 export interface BaseComponentProps {
   /** Additional CSS classes */

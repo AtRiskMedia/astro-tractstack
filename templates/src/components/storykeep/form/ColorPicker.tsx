@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface ColorPickerProps {
   value: string;

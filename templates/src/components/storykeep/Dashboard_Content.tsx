@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { classNames } from '../../utils/helpers';
-import { navigationStore } from '../../stores/navigation';
+import { classNames } from '@/utils/helpers';
+import { navigationStore } from '@/stores/navigation';
 import {
   handleContentSubtabChange,
   restoreTabNavigation,
-} from '../../utils/navigationHelpers';
+} from '@/utils/navigationHelpers';
 import ContentBrowser from './controls/content/ContentBrowser';
 import ManageContent from './controls/content/ManageContent';
-import type { FullContentMapItem } from 'templates/src/types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface HotItem {
   id: string;

@@ -10,7 +10,6 @@ export const prerender = false;
 export const POST: APIRoute = async ({
   request,
   locals,
-  cookies,
 }: {
   request: Request;
   locals: Locals;

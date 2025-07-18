@@ -3,7 +3,7 @@ import type {
   AdvancedConfigState,
   AdvancedConfigUpdateRequest,
   FieldErrors,
-} from '../types/tractstack';
+} from '@/types/tractstack';
 
 /**
  * Convert backend status response to local form state

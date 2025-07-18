@@ -2,13 +2,13 @@ import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import { classNames } from '../../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
-} from '../../../../stores/orphanAnalysis';
+} from '@/stores/orphanAnalysis';
 import UsageCell from '../UsageCell';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryFragmentTableProps {
   fullContentMap: FullContentMapItem[];

@@ -1,5 +1,5 @@
 import { Switch } from '@ark-ui/react/switch';
-import { classNames } from '../../../utils/helpers';
+import { classNames } from '@/utils/helpers';
 
 interface BooleanToggleProps {
   value: boolean;

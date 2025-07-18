@@ -1,10 +1,6 @@
-import { getThemeColors, isCustomTheme } from '../constants/brandThemes';
-import type { FieldErrors } from '../hooks/useFormState';
-import type {
-  BrandConfig,
-  BrandConfigState,
-  KnownResourcesConfig,
-} from '../types/tractstack';
+import type { FieldErrors } from '@/hooks/useFormState';
+import { getThemeColors, isCustomTheme } from '@/constants/brandThemes';
+import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
 /**
  * Convert backend BrandConfig to local state format

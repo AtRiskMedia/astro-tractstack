@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ProfileStorage } from '../../utils/profileStorage';
+import { ProfileStorage } from '@/utils/profileStorage';
 import type { FormEvent } from 'react';
 
 interface ProfileUnlockProps {

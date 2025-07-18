@@ -4,8 +4,8 @@ import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
   countOrphans,
-} from '../../../../stores/orphanAnalysis';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+} from '@/stores/orphanAnalysis';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ContentSummaryProps {
   fullContentMap: FullContentMapItem[];

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { brandConfigStore, getBrandConfig } from '../../stores/brand';
-import { skipWizard } from '../../stores/navigation';
-import type { FullContentMapItem } from '../../types/tractstack';
+import { brandConfigStore, getBrandConfig } from '@/stores/brand';
+import { skipWizard } from '@/stores/navigation';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryKeepWizardProps {
   fullContentMap: FullContentMapItem[];

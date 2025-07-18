@@ -1,9 +1,9 @@
 import StringInput from '../StringInput';
-import type { FormStateReturn } from '../../../../hooks/useFormState';
+import type { FormStateReturn } from '@/hooks/useFormState';
 import type {
   AdvancedConfigState,
   AdvancedConfigStatus,
-} from '../../../../types/tractstack';
+} from '@/types/tractstack';
 
 interface AuthConfigSectionProps {
   formState: FormStateReturn<AdvancedConfigState>;

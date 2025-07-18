@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
-import { brandConfigStore } from '../../../../stores/brand';
-import { getBrandConfig } from '../../../../utils/api/brandConfig';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+import { brandConfigStore } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface KnownResourceTableProps {
   contentMap: FullContentMapItem[];

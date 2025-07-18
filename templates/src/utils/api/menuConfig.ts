@@ -1,6 +1,6 @@
 import { TractStackAPI } from '../api';
-import type { MenuNode, MenuNodeState } from '../../types/tractstack';
-import { convertToBackendFormat, convertToLocalState } from '../menuHelpers';
+import { convertToBackendFormat, convertToLocalState } from './menuHelpers';
+import type { MenuNode, MenuNodeState } from '@/types/tractstack';
 
 /**
  * Save an existing menu

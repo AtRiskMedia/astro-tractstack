@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../stores/analytics';
-import { MAX_ANALYTICS_HOURS } from '../../constants';
+import { epinetCustomFilters } from '@/stores/analytics';
+import { MAX_ANALYTICS_HOURS } from '@/constants';
 import { createListCollection } from '@ark-ui/react/collection';
 import { Select } from '@ark-ui/react/select';
 import { RadioGroup } from '@ark-ui/react/radio-group';

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Switch } from '@ark-ui/react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '../../../../stores/analytics';
-import { classNames } from '../../../../utils/helpers';
-import type { FullContentMapItem } from '../../../../types/tractstack';
+import { epinetCustomFilters } from '@/stores/analytics';
+import { classNames } from '@/utils/helpers';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface HotItem {
   id: string;

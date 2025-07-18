@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ProfileCreate } from './ProfileCreate';
 import { ProfileEdit } from './ProfileEdit';
 import { ProfileUnlock } from './ProfileUnlock';
-import { ProfileStorage } from '../../utils/profileStorage';
+import { ProfileStorage } from '@/utils/profileStorage';
 
 // Define profile restoration function for v2 thin client
 async function restoreProfileFromToken(): Promise<boolean> {

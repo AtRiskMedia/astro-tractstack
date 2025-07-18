@@ -1,6 +1,6 @@
 import { TractStackAPI } from '../api';
-import type { BeliefNode, BeliefNodeState } from '../../types/tractstack';
-import { convertToBackendFormat, convertToLocalState } from '../beliefHelpers';
+import { convertToBackendFormat, convertToLocalState } from './beliefHelpers';
+import type { BeliefNode, BeliefNodeState } from '@/types/tractstack';
 
 /**
  * Save an existing belief

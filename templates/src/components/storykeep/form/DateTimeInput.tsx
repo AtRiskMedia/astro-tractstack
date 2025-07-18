@@ -10,8 +10,8 @@ import {
 import CalendarDaysIcon from '@heroicons/react/24/outline/CalendarDaysIcon';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
-import { classNames } from '../../../utils/helpers';
-import type { BaseFormComponentProps } from '../../../types/formTypes';
+import { classNames } from '@/utils/helpers';
+import type { BaseFormComponentProps } from '@/types/formTypes';
 
 export interface DateTimeInputProps extends BaseFormComponentProps<number> {
   displayFormat?: 'date' | 'datetime' | 'time';

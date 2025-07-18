@@ -1,6 +1,6 @@
 import StringInput from '../StringInput';
-import type { BrandConfigState } from '../../../../types/tractstack';
-import type { FormStateReturn } from '../../../../hooks/useFormState';
+import type { BrandConfigState } from '@/types/tractstack';
+import type { FormStateReturn } from '@/hooks/useFormState';
 
 interface SiteConfigSectionProps {
   formState: FormStateReturn<BrandConfigState>;

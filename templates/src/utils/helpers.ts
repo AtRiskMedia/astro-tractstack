@@ -1,4 +1,4 @@
-import type { MenuNode } from '../types/tractstack';
+import type { MenuNode } from '@/types/tractstack';
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(` `);

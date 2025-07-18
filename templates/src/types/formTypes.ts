@@ -1,6 +1,3 @@
-// Form component type definitions
-// File: templates/src/types/formTypes.ts
-
 // Base props interface for all atomic form components
 export interface BaseFormComponentProps<T> {
   value: T;
@@ -120,10 +117,19 @@ export interface ValidationResult {
   warnings?: Record<string, string>;
 }
 
-// Updated form component type definitions with enhanced image processing
-// File: templates/src/types/formTypes.ts
+export type AllowedImageFormat =
+  | 'svg'
+  | 'ico'
+  | 'png'
+  | 'jpg'
+  | 'jpeg'
+  | 'webp'
+  | 'gif';
 
-import type { AllowedImageFormat, ImageDimensions } from '../utils/fileHelpers';
+export interface ImageDimensions {
+  width: number;
+  height: number;
+}
 
 // Base props interface for all atomic form components
 export interface BaseFormComponentProps<T> {

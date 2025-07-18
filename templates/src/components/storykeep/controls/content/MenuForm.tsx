@@ -1,4 +1,4 @@
-import { useFormState } from '../../../../hooks/useFormState';
+import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   validateMenuNode,
@@ -6,17 +6,17 @@ import {
   addMenuLink,
   removeMenuLink,
   updateMenuLink,
-} from '../../../../utils/menuHelpers';
-import { saveMenuWithStateUpdate } from '../../../../utils/api/menuConfig';
-import StringInput from '../../form/StringInput';
-import EnumSelect from '../../form/EnumSelect';
-import ActionBuilderField from '../../form/ActionBuilderField';
-import UnsavedChangesBar from '../../form/UnsavedChangesBar';
+} from '@/utils/api/menuHelpers';
+import { saveMenuWithStateUpdate } from '@/utils/api/menuConfig';
+import StringInput from '@/components/storykeep/form/StringInput';
+import EnumSelect from '@/components/storykeep/form/EnumSelect';
+import ActionBuilderField from '@/components/storykeep/form/ActionBuilderField';
+import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
 import type {
   MenuNode,
   MenuNodeState,
   FullContentMapItem,
-} from '../../../../types/tractstack';
+} from '@/types/tractstack';
 
 interface MenuFormProps {
   menu?: MenuNode;

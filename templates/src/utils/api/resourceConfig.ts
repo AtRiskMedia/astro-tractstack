@@ -1,9 +1,6 @@
 import { TractStackAPI } from '../api';
-import type { ResourceConfig, ResourceState } from '../../types/tractstack';
-import {
-  convertToLocalState,
-  convertToBackendFormat,
-} from '../resourceHelpers';
+import { convertToLocalState, convertToBackendFormat } from './resourceHelpers';
+import type { ResourceConfig, ResourceState } from '@/types/tractstack';
 
 const api = new TractStackAPI();
 
