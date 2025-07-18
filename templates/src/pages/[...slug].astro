@@ -56,6 +56,11 @@ const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
 
+// If no panes, redirect to storykeep for setup
+if (paneIds.length === 0) {
+  return Astro.redirect('/storykeep');
+}
+
 let fragmentsData = {};
 try {
   const batchResponse = await fetch(`${goBackend}/api/v1/fragments/panes`, {

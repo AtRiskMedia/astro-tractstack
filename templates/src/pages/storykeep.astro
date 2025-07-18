@@ -12,17 +12,9 @@ const editorCookie = Astro.cookies.get('editor_auth');
 const authResult = isAuthenticated(Astro);
 const adminResult = isAdmin(Astro);
 
-console.log('=== STORYKEEP AUTH DEBUG ===');
-console.log('Admin cookie exists:', !!adminCookie?.value);
-console.log('Editor cookie exists:', !!editorCookie?.value);
-console.log('isAuthenticated():', authResult);
-console.log('isAdmin():', adminResult);
-
 // Check for privileged authentication - redirect if not authenticated
 const authCheck = requireAdminOrEditor(Astro);
-console.log('Auth check result:', !!authCheck);
 if (authCheck) {
-  console.log('REDIRECTING TO LOGIN');
   return authCheck;
 }
 
