@@ -35,7 +35,11 @@ export default function ResourceTable({
   );
 
   // Handle delete resource
-  const handleDelete = async (resourceId: string, title: string, event: React.MouseEvent) => {
+  const handleDelete = async (
+    resourceId: string,
+    title: string,
+    event: React.MouseEvent
+  ) => {
     event.stopPropagation();
 
     const confirmed = window.confirm(
@@ -165,13 +169,20 @@ export default function ResourceTable({
 
                       {/* Delete button */}
                       <button
-                        onClick={(e) => handleDelete(resource.id, resource.title || 'Untitled', e)}
+                        onClick={(e) =>
+                          handleDelete(
+                            resource.id,
+                            resource.title || 'Untitled',
+                            e
+                          )
+                        }
                         disabled={isDeleting === resource.id}
                         title="Delete resource"
-                        className={`transition-colors ${isDeleting !== resource.id
-                          ? 'text-red-600 hover:text-red-900'
-                          : 'cursor-not-allowed text-gray-300'
-                          }`}
+                        className={`transition-colors ${
+                          isDeleting !== resource.id
+                            ? 'text-red-600 hover:text-red-900'
+                            : 'cursor-not-allowed text-gray-300'
+                        }`}
                       >
                         {isDeleting === resource.id ? (
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />

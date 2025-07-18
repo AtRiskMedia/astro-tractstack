@@ -7,7 +7,7 @@ import type { BrandConfig } from '../types/tractstack';
 
 export const brandConfigStore = atom<BrandConfig | null>(null);
 
-export async function getBrandConfig(goBackend: string): Promise<BrandConfig> {
+export async function getBrandConfig(): Promise<BrandConfig> {
   const cached = brandConfigStore.get();
   if (cached) return cached;
 
@@ -16,10 +16,7 @@ export async function getBrandConfig(goBackend: string): Promise<BrandConfig> {
   return config;
 }
 
-export async function saveBrandConfig(
-  goBackend: string,
-  brandConfig: BrandConfig
-): Promise<void> {
+export async function saveBrandConfig(brandConfig: BrandConfig): Promise<void> {
   const updatedConfig = await apiSave(brandConfig);
   brandConfigStore.set(updatedConfig);
 }

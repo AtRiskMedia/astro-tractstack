@@ -209,7 +209,7 @@ export default function StoryKeepDashboard({
   // Load brand config when branding tab is accessed - EXACTLY as original
   useEffect(() => {
     if (activeTab === 'branding' && !$brandConfig) {
-      getBrandConfig(goBackend);
+      getBrandConfig();
     }
   }, [activeTab, $brandConfig, goBackend]);
 

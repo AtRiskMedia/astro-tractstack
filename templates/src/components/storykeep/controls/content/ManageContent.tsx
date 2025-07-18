@@ -391,7 +391,7 @@ const ManageContent = ({
                 className={classNames(
                   activeTab === tab.id
                     ? tab.isResourceCategory
-                      ? 'border-dashed text-mydarkgrey border-gray-500 bg-white'
+                      ? 'text-mydarkgrey border-dashed border-gray-500 bg-white'
                       : 'border-cyan-500 bg-cyan-100 text-cyan-700'
                     : tab.isResourceCategory
                       ? 'text-mydarkgrey border-transparent bg-orange-50 hover:bg-orange-100'
