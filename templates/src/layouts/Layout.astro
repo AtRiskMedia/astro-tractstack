@@ -88,6 +88,79 @@ const brandConfig = propBrandConfig || (await getBrandConfig(goBackend));
       crossorigin="anonymous"
       is:inline></script>
 
+    <!-- TractStack Configuration - MOVED HERE FROM BODY -->
+    <script
+      define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
+      is:inline
+    >
+      // Set up configuration that SessionInit expects
+      window.TRACTSTACK_CONFIG = {
+        configured: true,
+        backendUrl: goBackend,
+        tenantId: tenantId,
+        fontBasePath: fontBasePath,
+        storyfragmentId: storyfragmentId,
+      };
+
+      // Also keep the old TractStack object for compatibility
+      window.TractStack = {
+        config: {
+          backend: goBackend,
+          tenantId: tenantId,
+          storyfragmentId: storyfragmentId,
+        },
+      };
+
+      // Configure HTMX (moved to DOMContentLoaded since HTMX needs to be loaded first)
+      document.addEventListener('DOMContentLoaded', function () {
+        htmx.config.selfRequestsOnly = false;
+        htmx.config.defaultSwapStyle = 'innerHTML';
+        htmx.config.historyCacheSize = 50;
+        htmx.config.requestClass = 'htmx-request';
+        htmx.config.refreshOnHistoryMiss = true;
+
+        // Set up default headers and URL resolution for TractStack
+        document.body.addEventListener('htmx:configRequest', function (evt) {
+          // Handle direct Go backend API routes only
+          if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
+            // Convert relative URLs to absolute
+            evt.detail.path = goBackend + evt.detail.path;
+
+            // Add session ID if available
+            const sessionId = localStorage.getItem('tractstack_session_id');
+            if (sessionId) {
+              evt.detail.headers['X-TractStack-Session-ID'] = sessionId;
+            }
+          }
+
+          // Add tenant and storyfragment headers for all HTMX requests
+          evt.detail.headers['X-Tenant-ID'] = tenantId;
+          evt.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
+        });
+
+        // Handle API errors
+        document.body.addEventListener('htmx:responseError', function (evt) {
+          console.error('TractStack API Error:', evt.detail);
+        });
+
+        // Loading animations for page transitions
+        document.addEventListener('astro:before-preparation', () => {
+          const indicator = document.getElementById('loading-indicator');
+          if (indicator) {
+            indicator.style.transform = 'scale-x-1';
+          }
+        });
+
+        document.addEventListener('astro:after-swap', () => {
+          htmx.process(document.body);
+          const indicator = document.getElementById('loading-indicator');
+          if (indicator) {
+            indicator.style.transform = 'scale-x-0';
+          }
+        });
+      });
+    </script>
+
     <ClientRouter />
   </head>
 
@@ -108,75 +181,6 @@ const brandConfig = propBrandConfig || (await getBrandConfig(goBackend));
       class="bg-myorange fixed left-0 top-0 z-50 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
     >
     </div>
-
-    <!-- TractStack Configuration -->
-    <script define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
-    >
-      // Set up configuration that SessionInit expects
-      window.TRACTSTACK_CONFIG = {
-        configured: true,
-        backendUrl: goBackend,
-        tenantId: tenantId,
-        fontBasePath: fontBasePath,
-        storyfragmentId: storyfragmentId,
-      };
-
-      // Also keep the old TractStack object for compatibility
-      window.TractStack = {
-        config: {
-          backend: goBackend,
-          tenantId: tenantId,
-          storyfragmentId: storyfragmentId,
-        },
-      };
-
-      // Configure HTMX
-      htmx.config.selfRequestsOnly = false;
-      htmx.config.defaultSwapStyle = 'innerHTML';
-      htmx.config.historyCacheSize = 50;
-      htmx.config.requestClass = 'htmx-request';
-      htmx.config.refreshOnHistoryMiss = true;
-
-      // Set up default headers and URL resolution for TractStack
-      document.body.addEventListener('htmx:configRequest', function (evt) {
-        // Handle direct Go backend API routes only
-        if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
-          // Convert relative URLs to absolute
-          evt.detail.path = goBackend + evt.detail.path;
-
-          // Add session ID if available
-          const sessionId = localStorage.getItem('tractstack_session_id');
-          if (sessionId) {
-            evt.detail.headers['X-TractStack-Session-ID'] = sessionId;
-          }
-        }
-
-        // Add tenant and storyfragment headers for all HTMX requests
-        evt.detail.headers['X-Tenant-ID'] = tenantId;
-        evt.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
-      });
-
-      // Handle API errors
-      document.body.addEventListener('htmx:responseError', function (evt) {
-        console.error('TractStack API Error:', evt.detail);
-      });
-
-      // Loading animations for page transitions
-      document.addEventListener('astro:before-preparation', () => {
-        const indicator = document.getElementById('loading-indicator');
-        if (indicator) {
-          indicator.style.transform = 'scale-x-1';
-        }
-      });
-
-      document.addEventListener('astro:after-swap', () => {
-        htmx.process(document.body);
-        const indicator = document.getElementById('loading-indicator');
-        if (indicator) {
-          indicator.style.transform = 'scale-x-0';
-        }
-      });
-    </script>
 
     <!-- Main content wrapper -->
     <div id="content" class="transition-opacity duration-300">

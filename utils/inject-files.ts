@@ -243,6 +243,13 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/components/storykeep/form/DateTimeInput.tsx'),
       dest: 'src/components/storykeep/form/DateTimeInput.tsx',
     },
+    //
+    {
+      src: resolve(
+        'templates/src/components/storykeep/StoryKeepDashboard_Wizard.tsx'
+      ),
+      dest: 'src/components/storykeep/StoryKeepDashboard_Wizard.tsx',
+    },
     // Advanced Configuration Components
     {
       src: resolve(

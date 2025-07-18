@@ -1,5 +1,8 @@
 import { atom } from 'nanostores';
 
+// Used by StoryKeepWizard
+export const skipWizard = atom<boolean>(false);
+
 // Navigation state structure based on actual project tabs
 export interface NavigationState {
   currentMainTab: 'analytics' | 'content' | 'branding' | 'advanced';

@@ -4,6 +4,7 @@ import { epinetCustomFilters } from '../../stores/analytics';
 import { classNames } from '../../utils/helpers';
 import { brandConfigStore, getBrandConfig } from '../../stores/brand';
 import { navigationActions } from '../../stores/navigation';
+import StoryKeepDashboard_Wizard from './StoryKeepDashboard_Wizard';
 import StoryKeepDashboard_Analytics from './StoryKeepDashboard_Analytics';
 import StoryKeepDashboard_Content from './StoryKeepDashboard_Content';
 import StoryKeepDashboard_Branding from './StoryKeepDashboard_Branding';
@@ -384,10 +385,10 @@ export default function StoryKeepDashboard({
   return (
     <div className="w-full">
       {isCurrentlyInitializing && (
-        <div className="mb-8 rounded-md border border-dashed border-cyan-200 bg-cyan-50 p-6">
+        <div className="mb-8 rounded-md border border-dashed border-orange-200 bg-orange-50 p-6">
           <div className="flex">
             <div className="flex-shrink-0">
-              <span className="text-2xl text-cyan-500">✨</span>
+              <span className="text-2xl">⭐</span>
             </div>
             <div className="ml-3">
               <h3 className="text-lg font-bold text-black">
@@ -403,6 +404,10 @@ export default function StoryKeepDashboard({
           </div>
         </div>
       )}
+      <StoryKeepDashboard_Wizard
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+      />
 
       {/* Tab Navigation */}
       {!isCurrentlyInitializing && (
