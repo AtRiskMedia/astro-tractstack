@@ -38,13 +38,13 @@ export default function ResourceForm({
   const initialData = resourceData
     ? convertToLocalState(resourceData)
     : {
-        id: '',
-        title: '',
-        slug: '',
-        categorySlug,
-        oneliner: '',
-        optionsPayload: {},
-      };
+      id: '',
+      title: '',
+      slug: '',
+      categorySlug,
+      oneliner: '',
+      optionsPayload: {},
+    };
 
   const formState = useFormState<ResourceState>({
     initialData,

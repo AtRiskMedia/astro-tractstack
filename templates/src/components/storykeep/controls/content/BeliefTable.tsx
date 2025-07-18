@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import { deleteBelief } from '../../../../utils/api/beliefConfig';
 import {
   orphanAnalysisStore,

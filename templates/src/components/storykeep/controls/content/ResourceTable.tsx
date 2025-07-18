@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import { deleteResource } from '../../../../utils/api/resourceConfig';
 import type { FullContentMapItem } from '../../../../types/tractstack';
 
 interface ResourceTableProps {
@@ -8,7 +11,6 @@ interface ResourceTableProps {
   onEdit: (resourceId: string) => void;
   onCreate: () => void;
   onRefresh: () => void;
-  isLoading?: boolean;
 }
 
 export default function ResourceTable({
@@ -17,9 +19,9 @@ export default function ResourceTable({
   onEdit,
   onCreate,
   onRefresh,
-  isLoading = false,
 }: ResourceTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // Filter resources for this category
   const categoryResources = fullContentMap.filter(
@@ -31,6 +33,36 @@ export default function ResourceTable({
       resource.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       resource.slug?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Handle delete resource
+  const handleDelete = async (resourceId: string, title: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${title}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(resourceId);
+    try {
+      await deleteResource(resourceId);
+      onRefresh(); // Refresh the table data
+    } catch (error) {
+      console.error('Delete failed:', error);
+      alert('Failed to delete resource. Please try again.');
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  // Handle edit resource
+  const handleEdit = (resourceId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    onEdit(resourceId);
+  };
 
   return (
     <div className="space-y-4">
@@ -62,7 +94,7 @@ export default function ResourceTable({
             placeholder={`Search ${categorySlug} resources...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-700 focus:ring-cyan-700"
           />
         </div>
         <button
@@ -120,15 +152,34 @@ export default function ResourceTable({
                     {(resource as any).oneliner || '-'}
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(resource.id);
-                      }}
-                      className="text-cyan-600 hover:text-cyan-900"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center justify-end space-x-2">
+                      {/* Edit button */}
+                      <button
+                        onClick={(e) => handleEdit(resource.id, e)}
+                        className="text-cyan-600 hover:text-cyan-900"
+                        title="Edit resource"
+                        disabled={isDeleting === resource.id}
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => handleDelete(resource.id, resource.title || 'Untitled', e)}
+                        disabled={isDeleting === resource.id}
+                        title="Delete resource"
+                        className={`transition-colors ${isDeleting !== resource.id
+                          ? 'text-red-600 hover:text-red-900'
+                          : 'cursor-not-allowed text-gray-300'
+                          }`}
+                      >
+                        {isDeleting === resource.id ? (
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />
+                        ) : (
+                          <TrashIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

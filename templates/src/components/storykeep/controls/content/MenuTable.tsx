@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import { deleteMenu } from '../../../../utils/api/menuConfig';
 import {
   orphanAnalysisStore,
@@ -13,7 +14,6 @@ interface MenuTableProps {
   onEdit: (menuId: string) => void;
   onCreate: () => void;
   onRefresh: () => void;
-  isLoading?: boolean;
 }
 
 export default function MenuTable({
@@ -21,7 +21,6 @@ export default function MenuTable({
   onEdit,
   onCreate,
   onRefresh,
-  isLoading = false,
 }: MenuTableProps) {
   const [query, setQuery] = useState('');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -137,7 +136,6 @@ export default function MenuTable({
         <button
           type="button"
           onClick={onCreate}
-          disabled={isLoading}
           className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <svg
@@ -282,7 +280,6 @@ export default function MenuTable({
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => onEdit(menu.id)}
-                            disabled={isLoading}
                             className="text-cyan-600 hover:text-cyan-900 disabled:cursor-not-allowed disabled:opacity-50"
                             title="Edit menu"
                           >

@@ -43,12 +43,12 @@ interface ContentManagementTab {
 const staticContentManagementTabs: ContentManagementTab[] = [
   { id: 'summary', name: 'Summary' },
   { id: 'storyfragments', name: 'Story Fragments' },
-  { id: 'panes', name: 'Panes' },
   { id: 'menus', name: 'Menus' },
   { id: 'resources', name: 'Resources' },
   { id: 'beliefs', name: 'Beliefs' },
-  { id: 'epinets', name: 'Epinets' },
-  { id: 'files', name: 'Files' },
+  //{ id: 'panes', name: 'Panes' },
+  //{ id: 'epinets', name: 'Epinets' },
+  //{ id: 'files', name: 'Files' },
 ];
 
 const ManageContent = ({
@@ -73,11 +73,6 @@ const ManageContent = ({
     resource: ResourceConfig | null;
     category: string;
   } | null>(null);
-
-  // Loading states
-  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
-  const [isLoadingBelief, setIsLoadingBelief] = useState(false);
-  const [isLoadingResource, setIsLoadingResource] = useState(false);
 
   // Subscribe to navigation store and brand config
   const navigationState = useStore(navigationStore);
@@ -161,7 +156,6 @@ const ManageContent = ({
   };
 
   const handleEditMenu = async (menuId: string) => {
-    setIsLoadingMenu(true);
     try {
       const menu = await getMenuById(menuId);
       setActiveMenuForm(menu);
@@ -169,7 +163,6 @@ const ManageContent = ({
       console.error('Failed to load menu for editing:', error);
       alert('Failed to load menu. Please try again.');
     } finally {
-      setIsLoadingMenu(false);
     }
   };
 
@@ -184,7 +177,6 @@ const ManageContent = ({
       return;
     }
 
-    setIsLoadingBelief(true);
     try {
       const belief = await getBeliefById(beliefId);
       setActiveBeliefForm(belief);
@@ -192,7 +184,6 @@ const ManageContent = ({
       console.error('Failed to load belief for editing:', error);
       alert('Failed to load belief. Please try again.');
     } finally {
-      setIsLoadingBelief(false);
     }
   };
 
@@ -210,7 +201,6 @@ const ManageContent = ({
   };
 
   const handleEditResource = async (resourceId: string) => {
-    setIsLoadingResource(true);
     try {
       const resource = await getResource(resourceId);
       setActiveResourceForm({
@@ -221,7 +211,6 @@ const ManageContent = ({
       console.error('Failed to load resource for editing:', error);
       alert('Failed to load resource. Please try again.');
     } finally {
-      setIsLoadingResource(false);
     }
   };
 
@@ -292,7 +281,6 @@ const ManageContent = ({
           onEdit={handleEditResource}
           onCreate={handleCreateResource}
           onRefresh={refreshData}
-          isLoading={isLoadingResource}
         />
       );
     }
@@ -326,7 +314,6 @@ const ManageContent = ({
             onEdit={handleEditMenu}
             onCreate={handleCreateMenu}
             onRefresh={refreshData}
-            isLoading={isLoadingMenu}
           />
         );
 
@@ -404,7 +391,7 @@ const ManageContent = ({
                 className={classNames(
                   activeTab === tab.id
                     ? tab.isResourceCategory
-                      ? 'text-mydarkgrey border-orange-500 bg-orange-100'
+                      ? 'border-dashed text-mydarkgrey border-gray-500 bg-white'
                       : 'border-cyan-500 bg-cyan-100 text-cyan-700'
                     : tab.isResourceCategory
                       ? 'text-mydarkgrey border-transparent bg-orange-50 hover:bg-orange-100'
