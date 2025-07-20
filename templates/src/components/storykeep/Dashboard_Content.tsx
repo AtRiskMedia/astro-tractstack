@@ -1,29 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '@/utils/helpers';
-import { navigationStore } from '@/stores/navigation';
 import {
+  contentNavigationStore,
   handleContentSubtabChange,
   restoreTabNavigation,
-} from '@/utils/navigationHelpers';
+} from '@/stores/navigation';
 import ContentBrowser from './controls/content/ContentBrowser';
 import ManageContent from './controls/content/ManageContent';
+import FetchAnalytics from './FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
-interface HotItem {
-  id: string;
-  totalEvents: number;
-}
-
 interface StoryKeepDashboardContentProps {
-  analytics: {
-    dashboard: {
-      hotContent?: HotItem[];
-    } | null;
-    isLoading: boolean;
-    status: string;
-    error: string | null;
-  };
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
 }
@@ -39,20 +27,40 @@ const contentTabs: ContentTab[] = [
 ];
 
 const StoryKeepDashboard_Content = ({
-  analytics,
   fullContentMap,
   homeSlug,
 }: StoryKeepDashboardContentProps) => {
   const [activeContentTab, setActiveContentTab] = useState('webpages');
   const [navigationRestored, setNavigationRestored] = useState(false);
 
+  // Analytics data state
+  const [analytics, setAnalytics] = useState<{
+    dashboard: any;
+    leads: any;
+    epinet: any;
+    userCounts: any[];
+    hourlyNodeActivity: any;
+    isLoading: boolean;
+    status: string;
+    error: string | null;
+  }>({
+    dashboard: null,
+    leads: null,
+    epinet: null,
+    userCounts: [],
+    hourlyNodeActivity: {},
+    isLoading: false,
+    status: 'idle',
+    error: null,
+  });
+
   // Subscribe to navigation store
-  const navigationState = useStore(navigationStore);
+  const contentNavigationState = useStore(contentNavigationStore);
 
   // Restore navigation state when component mounts or when returning to Content tab
   useEffect(() => {
     if (!navigationRestored) {
-      const contentNavigation = restoreTabNavigation('content');
+      const contentNavigation = restoreTabNavigation();
       if (contentNavigation) {
         setActiveContentTab(contentNavigation.subtab);
       }
@@ -86,6 +94,8 @@ const StoryKeepDashboard_Content = ({
 
   return (
     <div className="w-full">
+      <FetchAnalytics onAnalyticsUpdate={setAnalytics} />
+
       {/* Content Sub-Navigation */}
       <div className="mb-6">
         <div className="border-b border-gray-200">

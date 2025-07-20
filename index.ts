@@ -65,9 +65,6 @@ export default function tractstack(
                 '@/pages': resolve(process.cwd(), 'src/pages'),
               },
             },
-            build: {
-              chunkSizeWarningLimit: 650,
-            },
             ssr: {
               noExternal: [
                 'path-to-regexp',

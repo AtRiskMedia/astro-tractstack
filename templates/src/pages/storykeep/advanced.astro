@@ -1,7 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import StoryKeepDashboard from '@/components/storykeep/Dashboard';
-import StoryKeepDashboard_Analytics from '@/components/storykeep/Dashboard_Analytics';
+import StoryKeepDashboard_Advanced from '@/components/storykeep/Dashboard_Advanced';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
@@ -9,6 +9,12 @@ import { getBrandConfig } from '@/stores/brand';
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {
   return authCheck;
+}
+
+// Additional admin check for Advanced page
+const userIsAdmin = isAdmin(Astro);
+if (!userIsAdmin) {
+  return Astro.redirect('/storykeep');
 }
 
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
@@ -33,7 +39,6 @@ try {
 }
 
 const userIsAuthenticated = isAuthenticated(Astro);
-const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 
 const brandConfig = await getBrandConfig(
@@ -41,7 +46,7 @@ const brandConfig = await getBrandConfig(
 );
 const initializing = !brandConfig.SITE_INIT;
 
-const title = 'Analytics | StoryKeep';
+const title = 'Advanced | StoryKeep';
 
 let fullContentMap;
 let homeSlug = 'hello';
@@ -64,15 +69,24 @@ try {
         client:only="react"
         fullContentMap={fullContentMap}
         homeSlug={homeSlug}
-        activeTab="analytics"
+        activeTab="advanced"
         role={role}
         initializing={initializing}
+        onAnalyticsReady={(
+          analytics,
+          downloadFn,
+          durationHelper,
+          setDuration
+        ) => {
+          window.storykeepAnalyticsData = {
+            analytics,
+            downloadFn,
+            durationHelper,
+            setDuration,
+          };
+        }}
       />
-
-      <StoryKeepDashboard_Analytics
-        client:only="react"
-        fullContentMap={fullContentMap}
-      />
+      <StoryKeepDashboard_Advanced client:only="react" />
     </div>
   </main>
 </Layout>

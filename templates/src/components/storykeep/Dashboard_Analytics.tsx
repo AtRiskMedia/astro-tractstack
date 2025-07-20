@@ -1,53 +1,40 @@
-import { useState, useMemo, type ReactNode } from 'react';
-import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
+import { useState, useEffect, useCallback, useMemo, Component } from 'react';
+import type { ReactNode } from 'react';
+import { useStore } from '@nanostores/react';
+import { epinetCustomFilters } from '@/stores/analytics';
+import { classNames } from '@/utils/helpers';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import DashboardActivity from './DashboardActivity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
 import EpinetTableView from '../codehooks/EpinetTableView';
-import { classNames } from '@/utils/helpers';
+import FetchAnalytics from './FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
-interface AnalyticsData {
-  dashboard: any;
-  leads: any;
-  epinet: any;
-  userCounts: any[];
-  hourlyNodeActivity: any;
-  isLoading: boolean;
-  status: string;
-  error: string | null;
-}
-
-interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback: ReactNode;
-}
-
 interface StoryKeepDashboardAnalyticsProps {
-  analytics: AnalyticsData;
   fullContentMap: FullContentMapItem[];
-  onDownloadExcel: () => void;
-  isDownloading: boolean;
-  currentDurationHelper: 'daily' | 'weekly' | 'monthly' | 'custom';
-  setStandardDuration: (newValue: 'daily' | 'weekly' | 'monthly') => void;
 }
 
-const ErrorBoundary = ({ children, fallback }: ErrorBoundaryProps) => {
-  const [hasError, setHasError] = useState(false);
+// Helper component for error boundary
+class ErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-  if (hasError) return <>{fallback}</>;
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
 
-  return (
-    <div onError={() => setHasError(true)} style={{ display: 'contents' }}>
-      {children}
-    </div>
-  );
-};
-
-function formatNumber(num: number): string {
-  if (num < 10000) return num.toString();
-  if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
-  return (num / 1000000).toFixed(2) + 'M';
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
 }
 
 const DurationSelector = ({
@@ -55,25 +42,23 @@ const DurationSelector = ({
   setStandardDuration,
 }: {
   currentDurationHelper: 'daily' | 'weekly' | 'monthly' | 'custom';
-  setStandardDuration: (newValue: 'daily' | 'weekly' | 'monthly') => void;
+  setStandardDuration: (duration: 'daily' | 'weekly' | 'monthly') => void;
 }) => {
+  const periods = [
+    { value: 'daily', label: '24 Hours' },
+    { value: 'weekly', label: '7 Days' },
+    { value: 'monthly', label: '28 Days' },
+  ] as const;
+
   return (
-    <div className="mb-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
-      <span className="font-action font-bold text-gray-800">
-        Analytics period:
-      </span>
-      {[
-        { label: '24 hours', value: 'daily' },
-        { label: '7 days', value: 'weekly' },
-        { label: '4 weeks', value: 'monthly' },
-      ].map((period) => (
+    <div className="mb-6 flex flex-wrap items-center gap-2">
+      <span className="text-sm font-bold text-gray-900">Time Range:</span>
+      {periods.map((period) => (
         <button
           key={period.value}
-          onClick={() =>
-            setStandardDuration(period.value as 'daily' | 'weekly' | 'monthly')
-          }
+          onClick={() => setStandardDuration(period.value)}
           className={classNames(
-            'rounded-full px-3 py-1 transition-all duration-200 ease-in-out',
+            'rounded px-3 py-1 text-sm transition-colors',
             currentDurationHelper === period.value
               ? 'bg-cyan-600 font-bold text-white shadow-sm'
               : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'
@@ -92,13 +77,94 @@ const DurationSelector = ({
 };
 
 export default function StoryKeepDashboard_Analytics({
-  analytics,
   fullContentMap,
-  onDownloadExcel,
-  isDownloading,
-  currentDurationHelper,
-  setStandardDuration,
 }: StoryKeepDashboardAnalyticsProps) {
+  const $epinetCustomFilters = useStore(epinetCustomFilters);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Analytics data state
+  const [analytics, setAnalytics] = useState<{
+    dashboard: any;
+    leads: any;
+    epinet: any;
+    userCounts: any[];
+    hourlyNodeActivity: any;
+    isLoading: boolean;
+    status: string;
+    error: string | null;
+  }>({
+    dashboard: null,
+    leads: null,
+    epinet: null,
+    userCounts: [],
+    hourlyNodeActivity: {},
+    isLoading: false,
+    status: 'idle',
+    error: null,
+  });
+
+  // Duration helper for UI
+  const currentDurationHelper = useMemo(():
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'custom' => {
+    const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
+
+    if (startTimeUTC && endTimeUTC) {
+      const startTime = new Date(startTimeUTC);
+      const endTime = new Date(endTimeUTC);
+      const diffMs = endTime.getTime() - startTime.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+
+      if (Math.abs(diffHours - 24) <= 1) return 'daily';
+      if (Math.abs(diffHours - 168) <= 1) return 'weekly';
+      if (Math.abs(diffHours - 672) <= 1) return 'monthly';
+      return 'custom';
+    }
+
+    return 'monthly';
+  }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
+
+  // Standard duration setter helper
+  const setStandardDuration = useCallback(
+    (newValue: 'daily' | 'weekly' | 'monthly') => {
+      const nowUTC = new Date();
+      const hoursBack: number =
+        newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
+      const startTimeUTC = new Date(
+        nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+      );
+
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+        ...$epinetCustomFilters,
+        enabled: true,
+        startTimeUTC: startTimeUTC.toISOString(),
+        endTimeUTC: nowUTC.toISOString(),
+      });
+    },
+    [$epinetCustomFilters]
+  );
+
+  // Download leads CSV
+  const downloadLeadsCSV = async () => {
+    if (isDownloading) return;
+    try {
+      setIsDownloading(true);
+      alert('Leads download not yet implemented for V2');
+    } catch (error) {
+      console.error('Error downloading leads:', error);
+      alert('Failed to download leads. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Helper function for number formatting
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat().format(num);
+  };
+
   // Prepare stats data for display
   const stats = [
     {
@@ -120,6 +186,8 @@ export default function StoryKeepDashboard_Analytics({
 
   return (
     <div className="w-full">
+      <FetchAnalytics onAnalyticsUpdate={setAnalytics} />
+
       <div className="mb-6">
         <h2 className="font-action text-2xl font-bold text-gray-900">
           Analytics Dashboard
@@ -203,16 +271,14 @@ export default function StoryKeepDashboard_Analytics({
           <div className="flex items-center justify-between">
             <dt className="text-sm font-bold text-gray-800">Total Leads</dt>
             <div className="flex items-center gap-2">
-              {onDownloadExcel && (
-                <button
-                  onClick={onDownloadExcel}
-                  disabled={isDownloading}
-                  className="inline-flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-xs font-bold text-white hover:bg-cyan-700 disabled:opacity-50"
-                >
-                  <ArrowDownTrayIcon className="h-3 w-3" />
-                  {isDownloading ? 'Downloading...' : 'Download'}
-                </button>
-              )}
+              <button
+                onClick={downloadLeadsCSV}
+                disabled={isDownloading}
+                className="inline-flex items-center gap-1 rounded bg-cyan-600 px-2 py-1 text-xs font-bold text-white hover:bg-cyan-700 disabled:opacity-50"
+              >
+                <ArrowDownTrayIcon className="h-3 w-3" />
+                {isDownloading ? 'Downloading...' : 'Download'}
+              </button>
             </div>
           </div>
           <dd className="mt-2">
@@ -315,14 +381,16 @@ export default function StoryKeepDashboard_Analytics({
                 filter settings or time ranges.
               </div>
               <EpinetDurationSelector />
-              <EpinetTableView fullContentMap={[]} />
             </>
           )
         ) : (
-          <div className="mt-4 rounded-lg bg-gray-50 p-4 text-gray-800">
-            No user journey data is available yet. This visualization will
-            appear when users start interacting with your content.
-          </div>
+          <>
+            <div className="rounded-lg bg-gray-50 p-4 text-gray-800">
+              User Journey data will appear here once there's visitor activity.
+              Check back after some page views have been recorded.
+            </div>
+            <EpinetDurationSelector />
+          </>
         )}
       </div>
     </div>

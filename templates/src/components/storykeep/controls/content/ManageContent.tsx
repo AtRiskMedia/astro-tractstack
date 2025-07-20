@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { navigationStore } from '@/stores/navigation';
+import {
+  contentNavigationStore,
+  handleManageSubtabChange,
+  restoreTabNavigation,
+} from '@/stores/navigation';
 import { brandConfigStore } from '@/stores/brand';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import {
-  handleManageSubtabChange,
-  restoreTabNavigation,
-} from '@/utils/navigationHelpers';
 import { classNames } from '@/utils/helpers';
 import { getMenuById } from '@/utils/api/menuConfig';
 import { getBeliefById } from '@/utils/api/beliefConfig';
@@ -75,7 +75,7 @@ const ManageContent = ({
   } | null>(null);
 
   // Subscribe to navigation store and brand config
-  const navigationState = useStore(navigationStore);
+  const contentNavigationState = useStore(contentNavigationStore);
   const brandConfig = useStore(brandConfigStore);
 
   // Data refresh function - uses EXISTING API functions
@@ -138,16 +138,13 @@ const ManageContent = ({
   // Restore navigation state when component mounts
   useEffect(() => {
     if (!navigationRestored) {
-      const contentNavigation = restoreTabNavigation('content');
-      if (
-        contentNavigation &&
-        navigationState.tabPaths.content.subtab === 'manage'
-      ) {
+      const contentNavigation = restoreTabNavigation();
+      if (contentNavigation) {
         setActiveTab(contentNavigation.manageSubtab);
       }
       setNavigationRestored(true);
     }
-  }, [navigationRestored, navigationState.tabPaths.content.subtab]);
+  }, [navigationRestored]);
 
   // Enhanced manage tab change with navigation tracking
   const handleManageTabChange = (tabId: string) => {
@@ -275,15 +272,13 @@ const ManageContent = ({
       );
     }
 
-    // Resource form for dynamic category tabs
-    if (resourceCategories.includes(activeTab) && activeResourceForm) {
+    if (activeResourceForm) {
       return (
         <ResourceForm
-          fullContentMap={currentContentMap}
           resourceData={activeResourceForm.resource || undefined}
+          fullContentMap={currentContentMap}
           categorySlug={activeResourceForm.category}
           categorySchema={knownResources[activeResourceForm.category] || {}}
-          isCreate={!activeResourceForm.resource}
           onClose={async (saved: boolean) => {
             setActiveResourceForm(null);
             if (saved) await refreshData();
@@ -292,7 +287,7 @@ const ManageContent = ({
       );
     }
 
-    // Handle dynamic resource category tabs - show table
+    // Resource category tables
     if (resourceCategories.includes(activeTab)) {
       return (
         <ResourceTable

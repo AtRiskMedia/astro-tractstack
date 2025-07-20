@@ -1,7 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import StoryKeepDashboard from '@/components/storykeep/Dashboard';
-import StoryKeepDashboard_Analytics from '@/components/storykeep/Dashboard_Analytics';
+import StoryKeepDashboard_Branding from '@/components/storykeep/Dashboard_Branding';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
@@ -41,7 +41,7 @@ const brandConfig = await getBrandConfig(
 );
 const initializing = !brandConfig.SITE_INIT;
 
-const title = 'Analytics | StoryKeep';
+const title = 'Branding | StoryKeep';
 
 let fullContentMap;
 let homeSlug = 'hello';
@@ -64,14 +64,26 @@ try {
         client:only="react"
         fullContentMap={fullContentMap}
         homeSlug={homeSlug}
-        activeTab="analytics"
+        activeTab="branding"
         role={role}
         initializing={initializing}
+        onAnalyticsReady={(
+          analytics,
+          downloadFn,
+          durationHelper,
+          setDuration
+        ) => {
+          window.storykeepAnalyticsData = {
+            analytics,
+            downloadFn,
+            durationHelper,
+            setDuration,
+          };
+        }}
       />
-
-      <StoryKeepDashboard_Analytics
+      <StoryKeepDashboard_Branding
         client:only="react"
-        fullContentMap={fullContentMap}
+        brandConfig={brandConfig}
       />
     </div>
   </main>

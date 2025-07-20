@@ -161,6 +161,18 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep.astro',
     },
     {
+      src: resolve('templates/src/pages/storykeep/content.astro'),
+      dest: 'src/pages/storykeep/content.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/branding.astro'),
+      dest: 'src/pages/storykeep/branding.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/advanced.astro'),
+      dest: 'src/pages/storykeep/advanced.astro',
+    },
+    {
       src: resolve('templates/src/pages/maint.astro'),
       dest: 'src/pages/maint.astro',
     },
@@ -361,6 +373,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/components/storykeep/Dashboard.tsx'),
       dest: 'src/components/storykeep/Dashboard.tsx',
+    },
+    {
+      src: resolve('templates/src/components/storykeep/FetchAnalytics.tsx'),
+      dest: 'src/components/storykeep/FetchAnalytics.tsx',
     },
     {
       src: resolve('templates/src/components/storykeep/Dashboard_Wizard.tsx'),
