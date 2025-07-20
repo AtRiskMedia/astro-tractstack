@@ -62,7 +62,7 @@ export class ProfileStorage {
    */
   static getCurrentSession(): SessionData {
     return {
-      sessionId: (window as any).tractStackSessionId || undefined,
+      sessionId: localStorage.getItem('tractstack_session_id') || undefined,
       consent: StorageManager.get(this.STORAGE_KEYS.consent) || undefined,
       encryptedEmail:
         StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
@@ -83,80 +83,11 @@ export class ProfileStorage {
    * Check if should show unlock form
    */
   static shouldShowUnlock(): boolean {
-    return !!StorageManager.get(this.STORAGE_KEYS.showUnlock);
+    return !StorageManager.get(this.STORAGE_KEYS.hasProfile);
   }
 
   /**
-   * Set show unlock flag
-   */
-  static setShowUnlock(show: boolean): void {
-    if (show) {
-      StorageManager.set(this.STORAGE_KEYS.showUnlock, '1');
-    } else {
-      StorageManager.remove(this.STORAGE_KEYS.showUnlock);
-    }
-  }
-
-  /**
-   * Store consent
-   */
-  static storeConsent(consent: string): void {
-    StorageManager.set(this.STORAGE_KEYS.consent, consent);
-  }
-
-  /**
-   * Get consent
-   */
-  static getConsent(): string | null {
-    return StorageManager.get(this.STORAGE_KEYS.consent);
-  }
-
-  /**
-   * Store last email for unlock form
-   */
-  static storeLastEmail(email: string): void {
-    StorageManager.set(this.STORAGE_KEYS.lastEmail, email);
-  }
-
-  /**
-   * Get last email
-   */
-  static getLastEmail(): string | null {
-    return StorageManager.get(this.STORAGE_KEYS.lastEmail);
-  }
-
-  /**
-   * Get stored profile data
-   */
-  static getProfileData(): ProfileData {
-    return {
-      firstname: StorageManager.get(this.STORAGE_KEYS.firstname) || undefined,
-      contactPersona:
-        StorageManager.get(this.STORAGE_KEYS.contactPersona) || undefined,
-      email: StorageManager.get(this.STORAGE_KEYS.email) || undefined,
-      shortBio: StorageManager.get(this.STORAGE_KEYS.shortBio) || undefined,
-    };
-  }
-
-  /**
-   * Store profile data
-   */
-  static setProfileData(profile: ProfileData): void {
-    if (profile.firstname)
-      StorageManager.set(this.STORAGE_KEYS.firstname, profile.firstname);
-    if (profile.contactPersona)
-      StorageManager.set(
-        this.STORAGE_KEYS.contactPersona,
-        profile.contactPersona
-      );
-    if (profile.email)
-      StorageManager.set(this.STORAGE_KEYS.email, profile.email);
-    if (profile.shortBio)
-      StorageManager.set(this.STORAGE_KEYS.shortBio, profile.shortBio);
-  }
-
-  /**
-   * Prepare minimal session data for backend (session-first approach)
+   * Prepare handshake data for backend calls
    */
   static prepareHandshakeData(): {
     sessionId: string;
@@ -164,7 +95,7 @@ export class ProfileStorage {
     encryptedCode?: string;
     consent?: string;
   } {
-    const sessionId = (window as any).tractStackSessionId;
+    const sessionId = localStorage.getItem('tractstack_session_id');
     if (!sessionId) {
       throw new Error(
         'Session ID not available - ensure SSR session generation is working'
@@ -229,7 +160,7 @@ export class ProfileStorage {
    * Check if user has a profile
    */
   static hasProfile(): boolean {
-    return !!StorageManager.get(this.STORAGE_KEYS.hasProfile);
+    return !StorageManager.get(this.STORAGE_KEYS.hasProfile);
   }
 
   /**
@@ -255,11 +186,6 @@ export class ProfileStorage {
       localStorage.removeItem('profile_token');
     } catch {
       // Silently fail
-    }
-
-    // Clear global session reference
-    if (typeof window !== 'undefined') {
-      (window as any).tractStackSessionId = undefined;
     }
 
     console.log('TractStack: Session cleared completely including session ID');
@@ -299,6 +225,71 @@ export class ProfileStorage {
       session_id: localStorage.getItem('tractstack_session_id'),
     });
     console.groupEnd();
+  }
+
+  /**
+   * Get profile data from localStorage
+   */
+  static getProfileData(): ProfileData {
+    return {
+      firstname: StorageManager.get(this.STORAGE_KEYS.firstname) || undefined,
+      contactPersona:
+        StorageManager.get(this.STORAGE_KEYS.contactPersona) || undefined,
+      email: StorageManager.get(this.STORAGE_KEYS.email) || undefined,
+      shortBio: StorageManager.get(this.STORAGE_KEYS.shortBio) || undefined,
+    };
+  }
+
+  /**
+   * Set profile data in localStorage
+   */
+  static setProfileData(data: ProfileData): void {
+    if (data.firstname)
+      StorageManager.set(this.STORAGE_KEYS.firstname, data.firstname);
+    if (data.contactPersona)
+      StorageManager.set(this.STORAGE_KEYS.contactPersona, data.contactPersona);
+    if (data.email) StorageManager.set(this.STORAGE_KEYS.email, data.email);
+    if (data.shortBio)
+      StorageManager.set(this.STORAGE_KEYS.shortBio, data.shortBio);
+  }
+
+  /**
+   * Get consent status
+   */
+  static getConsent(): string | null {
+    return StorageManager.get(this.STORAGE_KEYS.consent);
+  }
+
+  /**
+   * Store consent status
+   */
+  static storeConsent(consent: string): void {
+    StorageManager.set(this.STORAGE_KEYS.consent, consent);
+  }
+
+  /**
+   * Get last used email
+   */
+  static getLastEmail(): string | null {
+    return StorageManager.get(this.STORAGE_KEYS.lastEmail);
+  }
+
+  /**
+   * Store last used email
+   */
+  static storeLastEmail(email: string): void {
+    StorageManager.set(this.STORAGE_KEYS.lastEmail, email);
+  }
+
+  /**
+   * Set show unlock flag
+   */
+  static setShowUnlock(show: boolean): void {
+    if (show) {
+      StorageManager.set(this.STORAGE_KEYS.showUnlock, '1');
+    } else {
+      StorageManager.remove(this.STORAGE_KEYS.showUnlock);
+    }
   }
 }
 

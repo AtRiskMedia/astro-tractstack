@@ -40,8 +40,6 @@
       //console.log('  encryptedEmail:', encryptedEmail ? 'PRESENT' : 'NULL');
       //console.log('  encryptedCode:', encryptedCode ? 'PRESENT' : 'NULL');
       //console.log('  consent:', consent);
-      //console.log('  typeof encryptedEmail:', typeof encryptedEmail);
-      //console.log('  typeof encryptedCode:', typeof encryptedCode);
 
       const sessionData = {
         sessionId: sessionId,
@@ -86,27 +84,14 @@
           localStorage.setItem('tractstack_profile_token', data.token);
         }
 
-        // Update global TRACTSTACK_CONFIG if it exists
-        if (window.TRACTSTACK_CONFIG) {
-          window.TRACTSTACK_CONFIG.session = {
-            isReady: true,
-            fingerprint: data.fingerprint,
-            visitId: data.visitId,
-            hasProfile: data.hasProfile,
-            consent: data.consent,
-          };
-        }
-
-        // Also update TractStack object for compatibility
-        if (window.TractStack) {
-          window.TractStack.session = {
-            isReady: true,
-            fingerprint: data.fingerprint,
-            visitId: data.visitId,
-            hasProfile: data.hasProfile,
-            consent: data.consent,
-          };
-        }
+        // Update global TRACTSTACK_CONFIG session
+        window.TRACTSTACK_CONFIG.session = {
+          isReady: true,
+          fingerprint: data.fingerprint,
+          visitId: data.visitId,
+          hasProfile: data.hasProfile,
+          consent: data.consent,
+        };
 
         // Dispatch session ready event
         window.dispatchEvent(
@@ -144,10 +129,7 @@
 
       // Store it for future page loads
       localStorage.setItem(SESSION_KEY, sessionId);
-      window.tractStackSessionId = sessionId;
     }
-    // Make sessionId available globally for ProfileStorage
-    window.tractStackSessionId = sessionId;
 
     return sessionId;
   }

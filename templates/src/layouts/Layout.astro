@@ -32,14 +32,6 @@ const {
   brandConfig: propBrandConfig,
 } = Astro.props;
 
-// Get context from middleware
-const tenant = Astro.locals.tenant || {
-  id: import.meta.env.PUBLIC_TENANTID || 'default',
-  domain: Astro.url.hostname,
-  isMultiTenant: false,
-  isLocalhost: true,
-};
-
 // Determine CSS and font paths based on environment
 const isDev = import.meta.env.DEV;
 const cssBasePath = isDev ? '/styles' : '/media/css';
@@ -107,15 +99,6 @@ const brandConfig =
         storyfragmentId: storyfragmentId,
       };
 
-      // Also keep the old TractStack object for compatibility
-      window.TractStack = {
-        config: {
-          backend: goBackend,
-          tenantId: tenantId,
-          storyfragmentId: storyfragmentId,
-        },
-      };
-
       // Configure HTMX (moved to DOMContentLoaded since HTMX needs to be loaded first)
       document.addEventListener('DOMContentLoaded', function () {
         htmx.config.selfRequestsOnly = false;
@@ -141,27 +124,6 @@ const brandConfig =
           // Add tenant and storyfragment headers for all HTMX requests
           evt.detail.headers['X-Tenant-ID'] = tenantId;
           evt.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
-        });
-
-        // Handle API errors
-        document.body.addEventListener('htmx:responseError', function (evt) {
-          console.error('TractStack API Error:', evt.detail);
-        });
-
-        // Loading animations for page transitions
-        document.addEventListener('astro:before-preparation', () => {
-          const indicator = document.getElementById('loading-indicator');
-          if (indicator) {
-            indicator.style.transform = 'scale-x-1';
-          }
-        });
-
-        document.addEventListener('astro:after-swap', () => {
-          htmx.process(document.body);
-          const indicator = document.getElementById('loading-indicator');
-          if (indicator) {
-            indicator.style.transform = 'scale-x-0';
-          }
         });
       });
     </script>

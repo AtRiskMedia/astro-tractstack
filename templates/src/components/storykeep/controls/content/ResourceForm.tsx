@@ -1,8 +1,5 @@
 import { useFormState } from '@/hooks/useFormState';
-import {
-  convertToLocalState,
-  validateResource,
-} from '@/utils/api/resourceHelpers';
+import { convertToLocalState } from '@/utils/api/resourceHelpers';
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import StringInput from '@/components/form/StringInput';
@@ -17,6 +14,7 @@ import type {
   ResourceState,
   FieldDefinition,
   FullContentMapItem,
+  FieldErrors,
 } from '@/types/tractstack';
 
 interface ResourceFormProps {
@@ -48,9 +46,72 @@ export default function ResourceForm({
         actionLisp: '',
       };
 
+  // Initialize optionsPayload with default values for all schema fields
+  if (!resourceData) {
+    // Only for new resources
+    const defaultOptionsPayload: Record<string, any> = {};
+
+    Object.entries(categorySchema).forEach(([fieldName, fieldDef]) => {
+      switch (fieldDef.type) {
+        case 'number':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? 0;
+          break;
+        case 'boolean':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? false;
+          break;
+        case 'string':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
+          break;
+        case 'multi':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? [];
+          break;
+        case 'date':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? 0;
+          break;
+        case 'image':
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
+          break;
+        default:
+          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
+      }
+    });
+
+    initialData.optionsPayload = defaultOptionsPayload;
+  }
+
+  const validator = (state: ResourceState): FieldErrors => {
+    const errors: FieldErrors = {};
+
+    if (!state.title?.trim()) {
+      errors.title = 'Title is required';
+    }
+
+    if (!state.slug?.trim()) {
+      errors.slug = 'Slug is required';
+    } else if (!/^[a-z0-9-]+$/.test(state.slug)) {
+      errors.slug =
+        'Slug must contain only lowercase letters, numbers, and hyphens';
+    } else {
+      // Check for duplicate slugs in existing content (excluding current resource)
+      const existingItem = fullContentMap.find(
+        (existing) =>
+          existing.slug === state.slug && existing.id !== resourceData?.id
+      );
+      if (existingItem) {
+        errors.slug = `Slug "${state.slug}" already exists (${existingItem.type})`;
+      }
+    }
+
+    if (!state.categorySlug?.trim()) {
+      errors.categorySlug = 'Category is required';
+    }
+
+    return errors;
+  };
+
   const formState = useFormState<ResourceState>({
     initialData,
-    validator: (state) => validateResource(state),
+    validator,
     onSave: async (data) => {
       try {
         const updatedState = await saveResourceWithStateUpdate(
