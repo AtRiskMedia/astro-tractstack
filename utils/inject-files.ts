@@ -7,26 +7,26 @@ interface InjectFilesConfig {
   enableMultiTenant?: boolean;
 }
 
+/**
+ * Injects template files into the project directory, organizing them into functional groups.
+ * Skips or overwrites files based on configuration and protection status.
+ * @param resolve - Function to resolve template file paths
+ * @param logger - Astro integration logger for logging operations
+ * @param config - Configuration options for including examples and enabling multi-tenant features
+ */
 export async function injectTemplateFiles(
   resolve: (path: string) => string,
   logger: AstroIntegrationLogger,
   config?: InjectFilesConfig
 ): Promise<void> {
-  logger.info('TractStack: injectTemplateFiles called');
+  logger.info('TractStack: Injecting template files');
 
+  // File groupings organized by functionality
   const templateFiles = [
-    // Core files
+    // Core Configuration
     {
       src: resolve('templates/env.example'),
       dest: 'env.example',
-    },
-    {
-      src: resolve('templates/src/constants.ts'),
-      dest: 'src/constants.ts',
-    },
-    {
-      src: resolve('templates/src/types/tractstack.ts'),
-      dest: 'src/types/tractstack.ts',
     },
     {
       src: resolve('templates/.gitignore'),
@@ -35,6 +35,14 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/tailwind.config.cjs'),
       dest: 'tailwind.config.cjs',
+    },
+    {
+      src: resolve('templates/src/constants.ts'),
+      dest: 'src/constants.ts',
+    },
+    {
+      src: resolve('templates/src/types/tractstack.ts'),
+      dest: 'src/types/tractstack.ts',
     },
 
     // Stores
@@ -46,8 +54,16 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/stores/analytics.ts'),
       dest: 'src/stores/analytics.ts',
     },
+    {
+      src: resolve('templates/src/stores/orphanAnalysis.ts'),
+      dest: 'src/stores/orphanAnalysis.ts',
+    },
+    {
+      src: resolve('templates/src/stores/navigation.ts'),
+      dest: 'src/stores/navigation.ts',
+    },
 
-    // Utils
+    // Utilities
     {
       src: resolve('templates/src/utils/actions.ts'),
       dest: 'src/utils/actions.ts',
@@ -100,6 +116,35 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/utils/api/advancedHelpers.ts'),
       dest: 'src/utils/api/advancedHelpers.ts',
     },
+    {
+      src: resolve('templates/src/utils/api/resourceConfig.ts'),
+      dest: 'src/utils/api/resourceConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/resourceHelpers.ts'),
+      dest: 'src/utils/api/resourceHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/menuHelpers.ts'),
+      dest: 'src/utils/api/menuHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/menuConfig.ts'),
+      dest: 'src/utils/api/menuConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/beliefHelpers.ts'),
+      dest: 'src/utils/api/beliefHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/api/beliefConfig.ts'),
+      dest: 'src/utils/api/beliefConfig.ts',
+    },
+    {
+      src: resolve('templates/src/utils/navigationHelpers.ts'),
+      dest: 'src/utils/navigationHelpers.ts',
+    },
+
     // Layouts
     {
       src: resolve('templates/src/layouts/Layout.astro'),
@@ -120,7 +165,7 @@ export async function injectTemplateFiles(
       dest: 'src/pages/maint.astro',
     },
 
-    // Auth pages
+    // Authentication Pages
     {
       src: resolve('templates/src/pages/storykeep/login.astro'),
       dest: 'src/pages/storykeep/login.astro',
@@ -134,7 +179,7 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep/profile.astro',
     },
 
-    // API routes
+    // API Routes
     {
       src: resolve('templates/src/pages/api/auth/visit.ts'),
       dest: 'src/pages/api/auth/visit.ts',
@@ -155,8 +200,12 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/pages/api/auth/logout.ts'),
       dest: 'src/pages/api/auth/logout.ts',
     },
+    {
+      src: resolve('templates/src/pages/api/orphan-analysis.ts'),
+      dest: 'src/pages/api/orphan-analysis.ts',
+    },
 
-    // Base components
+    // Base Components
     {
       src: resolve('templates/src/components/Header.astro'),
       dest: 'src/components/Header.astro',
@@ -174,13 +223,13 @@ export async function injectTemplateFiles(
       dest: 'src/components/Fragment.astro',
     },
 
-    // Auth components
+    // Authentication Components
     {
       src: resolve('templates/src/components/auth/SessionInit.astro'),
       dest: 'src/components/auth/SessionInit.astro',
     },
 
-    // Profile components
+    // Profile Components
     {
       src: resolve('templates/src/components/profile/ProfileConsent.tsx'),
       dest: 'src/components/profile/ProfileConsent.tsx',
@@ -202,7 +251,7 @@ export async function injectTemplateFiles(
       dest: 'src/components/profile/ProfileUnlock.tsx',
     },
 
-    // Form system
+    // Form System
     {
       src: resolve('templates/src/hooks/useFormState.ts'),
       dest: 'src/hooks/useFormState.ts',
@@ -215,127 +264,111 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/types/formTypes.ts'),
       dest: 'src/types/formTypes.ts',
     },
-    // Atomic form components
     {
-      src: resolve('templates/src/components/form//ParagraphArrayInput.tsx'),
-      dest: 'src/components/form//ParagraphArrayInput.tsx',
+      src: resolve('templates/src/components/form/ParagraphArrayInput.tsx'),
+      dest: 'src/components/form/ParagraphArrayInput.tsx',
     },
     {
-      src: resolve('templates/src/components/form//StringInput.tsx'),
-      dest: 'src/components/form//StringInput.tsx',
+      src: resolve('templates/src/components/form/StringInput.tsx'),
+      dest: 'src/components/form/StringInput.tsx',
     },
     {
-      src: resolve('templates/src/components/form//StringArrayInput.tsx'),
-      dest: 'src/components/form//StringArrayInput.tsx',
+      src: resolve('templates/src/components/form/StringArrayInput.tsx'),
+      dest: 'src/components/form/StringArrayInput.tsx',
     },
     {
-      src: resolve('templates/src/components/form//BooleanToggle.tsx'),
-      dest: 'src/components/form//BooleanToggle.tsx',
+      src: resolve('templates/src/components/form/BooleanToggle.tsx'),
+      dest: 'src/components/form/BooleanToggle.tsx',
     },
     {
-      src: resolve('templates/src/components/form//EnumSelect.tsx'),
-      dest: 'src/components/form//EnumSelect.tsx',
+      src: resolve('templates/src/components/form/EnumSelect.tsx'),
+      dest: 'src/components/form/EnumSelect.tsx',
     },
     {
-      src: resolve('templates/src/components/form//ColorPicker.tsx'),
-      dest: 'src/components/form//ColorPicker.tsx',
+      src: resolve('templates/src/components/form/ColorPicker.tsx'),
+      dest: 'src/components/form/ColorPicker.tsx',
     },
     {
-      src: resolve('templates/src/components/form//FileUpload.tsx'),
-      dest: 'src/components/form//FileUpload.tsx',
+      src: resolve('templates/src/components/form/FileUpload.tsx'),
+      dest: 'src/components/form/FileUpload.tsx',
     },
     {
-      src: resolve('templates/src/components/form//NumberInput.tsx'),
-      dest: 'src/components/form//NumberInput.tsx',
+      src: resolve('templates/src/components/form/NumberInput.tsx'),
+      dest: 'src/components/form/NumberInput.tsx',
     },
     {
-      src: resolve('templates/src/components/form//DateTimeInput.tsx'),
-      dest: 'src/components/form//DateTimeInput.tsx',
+      src: resolve('templates/src/components/form/DateTimeInput.tsx'),
+      dest: 'src/components/form/DateTimeInput.tsx',
     },
-    //
+    {
+      src: resolve('templates/src/components/form/UnsavedChangesBar.tsx'),
+      dest: 'src/components/form/UnsavedChangesBar.tsx',
+    },
+    {
+      src: resolve('templates/src/components/form/ActionBuilderField.tsx'),
+      dest: 'src/components/form/ActionBuilderField.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/form/ActionBuilderSlugSelector.tsx'
+      ),
+      dest: 'src/components/form/ActionBuilderSlugSelector.tsx',
+    },
+
+    // Brand Form Components
+    {
+      src: resolve(
+        'templates/src/components/form/brand/BrandColorsSection.tsx'
+      ),
+      dest: 'src/components/form/brand/BrandColorsSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/form/brand/BrandAssetsSection.tsx'
+      ),
+      dest: 'src/components/form/brand/BrandAssetsSection.tsx',
+    },
+    {
+      src: resolve('templates/src/components/form/brand/SiteConfigSection.tsx'),
+      dest: 'src/components/form/brand/SiteConfigSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/form/brand/SocialLinksSection.tsx'
+      ),
+      dest: 'src/components/form/brand/SocialLinksSection.tsx',
+    },
+    {
+      src: resolve('templates/src/components/form/brand/SEOSection.tsx'),
+      dest: 'src/components/form/brand/SEOSection.tsx',
+    },
+
+    // Advanced Configuration Components
+    {
+      src: resolve(
+        'templates/src/components/form/advanced/AuthConfigSection.tsx'
+      ),
+      dest: 'src/components/form/advanced/AuthConfigSection.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/form/advanced/APIConfigSection.tsx'
+      ),
+      dest: 'src/components/form/advanced/APIConfigSection.tsx',
+    },
+
+    // StoryKeep Dashboard Components
+    {
+      src: resolve('templates/src/components/storykeep/Dashboard.tsx'),
+      dest: 'src/components/storykeep/Dashboard.tsx',
+    },
     {
       src: resolve('templates/src/components/storykeep/Dashboard_Wizard.tsx'),
       dest: 'src/components/storykeep/Dashboard_Wizard.tsx',
     },
-    // Advanced Configuration Components
     {
       src: resolve('templates/src/components/storykeep/Dashboard_Advanced.tsx'),
       dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//advanced/AuthConfigSection.tsx'
-      ),
-      dest: 'src/components/form//advanced/AuthConfigSection.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//advanced/APIConfigSection.tsx'
-      ),
-      dest: 'src/components/form//advanced/APIConfigSection.tsx',
-    },
-    // Brand form components
-    {
-      src: resolve('templates/src/components/form//UnsavedChangesBar.tsx'),
-      dest: 'src/components/form//UnsavedChangesBar.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//brand/BrandColorsSection.tsx'
-      ),
-      dest: 'src/components/form//brand/BrandColorsSection.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//brand/BrandAssetsSection.tsx'
-      ),
-      dest: 'src/components/form//brand/BrandAssetsSection.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//brand/SiteConfigSection.tsx'
-      ),
-      dest: 'src/components/form//brand/SiteConfigSection.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//brand/SocialLinksSection.tsx'
-      ),
-      dest: 'src/components/form//brand/SocialLinksSection.tsx',
-    },
-    {
-      src: resolve('templates/src/components/form//brand/SEOSection.tsx'),
-      dest: 'src/components/form//brand/SEOSection.tsx',
-    },
-    // Manage Content
-    {
-      src: resolve(
-        'templates/src/components/storykeep/controls/content/ManageContent.tsx'
-      ),
-      dest: 'src/components/storykeep/controls/content/ManageContent.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/controls/content/ContentSummary.tsx'
-      ),
-      dest: 'src/components/storykeep/controls/content/ContentSummary.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/controls/content/StoryFragmentTable.tsx'
-      ),
-      dest: 'src/components/storykeep/controls/content/StoryFragmentTable.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/storykeep/controls/content/ContentBrowser.tsx'
-      ),
-      dest: 'src/components/storykeep/controls/content/ContentBrowser.tsx',
-    },
-    // StoryKeep dashboard components
-    {
-      src: resolve('templates/src/components/storykeep/Dashboard.tsx'),
-      dest: 'src/components/storykeep/Dashboard.tsx',
     },
     {
       src: resolve(
@@ -365,6 +398,41 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
+
+    // Content Management Components
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ManageContent.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ManageContent.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ContentSummary.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ContentSummary.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/StoryFragmentTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/StoryFragmentTable.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/storykeep/controls/content/ContentBrowser.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ContentBrowser.tsx',
+    },
+    {
+      src: resolve('templates/src/components/form/content/ContentSummary.tsx'),
+      dest: 'src/components/form/content/ContentSummary.tsx',
+    },
+    {
+      src: resolve('templates/src/components/storykeep/controls/UsageCell.tsx'),
+      dest: 'src/components/storykeep/controls/UsageCell.tsx',
+    },
+
     // Menu Management Components
     {
       src: resolve(
@@ -378,16 +446,7 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/controls/content/MenuForm.tsx',
     },
-    {
-      src: resolve('templates/src/components/form//ActionBuilderField.tsx'),
-      dest: 'src/components/form//ActionBuilderField.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/form//ActionBuilderSlugSelector.tsx'
-      ),
-      dest: 'src/components/form//ActionBuilderSlugSelector.tsx',
-    },
+
     // Resource Management Components
     {
       src: resolve(
@@ -407,16 +466,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/controls/content/ResourceTable.tsx',
     },
-    // Resource utilities
-    {
-      src: resolve('templates/src/utils/api/resourceConfig.ts'),
-      dest: 'src/utils/api/resourceConfig.ts',
-    },
-    {
-      src: resolve('templates/src/utils/api/resourceHelpers.ts'),
-      dest: 'src/utils/api/resourceHelpers.ts',
-    },
-    // resources
     {
       src: resolve(
         'templates/src/components/storykeep/controls/content/KnownResourceTable.tsx'
@@ -429,41 +478,7 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/controls/content/KnownResourceForm.tsx',
     },
-    {
-      src: resolve('templates/src/utils/api/resourceHelpers.ts'),
-      dest: 'src/utils/api/resourceHelpers.ts',
-    },
-    // Menu Utilities
-    {
-      src: resolve('templates/src/utils/api/menuHelpers.ts'),
-      dest: 'src/utils/api/menuHelpers.ts',
-    },
-    {
-      src: resolve('templates/src/utils/api/menuConfig.ts'),
-      dest: 'src/utils/api/menuConfig.ts',
-    },
-    {
-      src: resolve('templates/src/utils/api/resourceConfig.ts'),
-      dest: 'src/utils/api/resourceConfig.ts',
-    },
-    // Orphan analysis system
-    {
-      src: resolve('templates/src/stores/orphanAnalysis.ts'),
-      dest: 'src/stores/orphanAnalysis.ts',
-    },
-    {
-      src: resolve('templates/src/pages/api/orphan-analysis.ts'),
-      dest: 'src/pages/api/orphan-analysis.ts',
-    },
-    {
-      src: resolve('templates/src/components/form//content/ContentSummary.tsx'),
-      dest: 'src/components/form//content/ContentSummary.tsx',
-    },
-    //
-    {
-      src: resolve('templates/src/components/storykeep/controls/UsageCell.tsx'),
-      dest: 'src/components/storykeep/controls/UsageCell.tsx',
-    },
+
     // Belief Management Components
     {
       src: resolve(
@@ -477,25 +492,8 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/storykeep/controls/content/BeliefForm.tsx',
     },
-    // Belief Utilities
-    {
-      src: resolve('templates/src/utils/api/beliefHelpers.ts'),
-      dest: 'src/utils/api/beliefHelpers.ts',
-    },
-    {
-      src: resolve('templates/src/utils/api/beliefConfig.ts'),
-      dest: 'src/utils/api/beliefConfig.ts',
-    },
-    // Navigation system files
-    {
-      src: resolve('templates/src/stores/navigation.ts'),
-      dest: 'src/stores/navigation.ts',
-    },
-    {
-      src: resolve('templates/src/utils/navigationHelpers.ts'),
-      dest: 'src/utils/navigationHelpers.ts',
-    },
-    // CodeHooks components
+
+    // CodeHook Components
     {
       src: resolve('templates/src/components/codehooks/EpinetWrapper.tsx'),
       dest: 'src/components/codehooks/EpinetWrapper.tsx',
@@ -529,13 +527,13 @@ export async function injectTemplateFiles(
       dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
     },
 
-    // Widget components
+    // Widget Components
     {
       src: resolve('templates/src/components/widgets/BunnyVideo.astro'),
       dest: 'src/components/widgets/BunnyVideo.astro',
     },
 
-    // Client scripts
+    // Client Scripts
     {
       src: resolve('templates/src/client/belief-events.ts'),
       dest: 'src/client/belief-events.ts',
@@ -573,7 +571,7 @@ export async function injectTemplateFiles(
       dest: 'public/fonts/Inter-Regular.woff2',
     },
 
-    // Brand assets
+    // Brand Assets
     {
       src: resolve('templates/brand/static.jpg'),
       dest: 'public/static.jpg',
@@ -591,7 +589,7 @@ export async function injectTemplateFiles(
       dest: 'public/brand/wordmark.svg',
     },
 
-    // Social icons
+    // Social Icons
     {
       src: resolve('templates/socials/codepen.svg'),
       dest: 'public/socials/codepen.svg',
@@ -645,25 +643,15 @@ export async function injectTemplateFiles(
       dest: 'public/socials/youtube.svg',
     },
 
-    // Multi-tenant middleware (conditional injection)
+    // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
+          // Middleware
           {
             src: resolve('templates/src/middleware.ts'),
             dest: 'src/middleware.ts',
           },
-        ]
-      : []),
-
-    // Multi-tenant types (always inject since it's referenced in plan)
-    {
-      src: resolve('templates/src/types/multiTenant.ts'),
-      dest: 'src/types/multiTenant.ts',
-    },
-
-    // Multi-tenant API utilities (conditional injection)
-    ...(config?.enableMultiTenant
-      ? [
+          // API Utilities
           {
             src: resolve('templates/src/utils/api/tenantConfig.ts'),
             dest: 'src/utils/api/tenantConfig.ts',
@@ -672,24 +660,14 @@ export async function injectTemplateFiles(
             src: resolve('templates/src/utils/api/tenantHelpers.ts'),
             dest: 'src/utils/api/tenantHelpers.ts',
           },
-        ]
-      : []),
-
-    // Multi-tenant components (conditional injection)
-    ...(config?.enableMultiTenant
-      ? [
+          // Components
           {
             src: resolve(
               'templates/src/components/tenant/RegistrationForm.tsx'
             ),
             dest: 'src/components/tenant/RegistrationForm.tsx',
           },
-        ]
-      : []),
-
-    // Multi-tenant pages (conditional injection)
-    ...(config?.enableMultiTenant
-      ? [
+          // Pages
           {
             src: resolve('templates/src/pages/sandbox/register.astro'),
             dest: 'src/pages/sandbox/register.astro',
@@ -704,7 +682,13 @@ export async function injectTemplateFiles(
           },
         ]
       : []),
-    // Custom components (conditional)
+    // Multi-Tenant Types (Always included due to plan reference)
+    {
+      src: resolve('templates/src/types/multiTenant.ts'),
+      dest: 'src/types/multiTenant.ts',
+    },
+
+    // Custom Components (Conditional)
     {
       src: resolve(
         config?.includeExamples
@@ -724,7 +708,7 @@ export async function injectTemplateFiles(
       protected: true,
     },
 
-    // Example components (only with examples)
+    // Example Components (Conditional)
     ...(config?.includeExamples
       ? [
           {
@@ -748,6 +732,7 @@ export async function injectTemplateFiles(
       : []),
   ];
 
+  // Process each file: create directories, copy or create placeholders, and log results
   for (const file of templateFiles) {
     try {
       const destDir = dirname(file.dest);
@@ -755,6 +740,7 @@ export async function injectTemplateFiles(
         mkdirSync(destDir, { recursive: true });
       }
 
+      // Determine if file should be overwritten
       const shouldOverwrite =
         !file.protected &&
         (file.dest === 'tailwind.config.cjs' ||
@@ -773,7 +759,7 @@ export async function injectTemplateFiles(
           logger.info(`Created placeholder ${file.dest}`);
         }
       } else if (file.protected) {
-        logger.info(`Protected: ${file.dest} (won't overwrite)`);
+        logger.info(`Protected: ${file.dest} (skipped overwrite)`);
       } else {
         logger.info(`Skipped existing ${file.dest}`);
       }
@@ -784,6 +770,11 @@ export async function injectTemplateFiles(
   }
 }
 
+/**
+ * Creates a placeholder file content based on the file extension.
+ * @param filePath - Destination path of the file
+ * @returns Placeholder content for the file
+ */
 function createPlaceholder(filePath: string): string {
   if (filePath.endsWith('.astro')) {
     return `---
