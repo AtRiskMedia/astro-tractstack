@@ -137,7 +137,7 @@ export async function saveBrandConfigWithStateUpdate(
     // Get the complete updated config from backend
     const freshConfig = await getBrandConfig(tenantId);
     brandConfigStore.set(
-      window.TRACTSTACK_CONFIG?.tenantId || 'default',
+      tenantId,
       freshConfig
     );
 
