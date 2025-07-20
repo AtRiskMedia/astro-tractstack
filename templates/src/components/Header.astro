@@ -66,7 +66,7 @@ const authStatus = {
 ---
 
 <header class="relative shadow-inner">
-  <!-- TOP ROW: Logo/Wordmark + Menu -->
+  <!-- TOP ROW: Logo/Wordmark + Menu + Auth Controls -->
   <div
     class="flex flex-row flex-nowrap items-center justify-between px-4 py-3 md:px-8"
   >
@@ -95,13 +95,14 @@ const authStatus = {
         }
       </div>
     </a>
+
     {
       !!menu ? (
         <Menu
           payload={menu}
           slug={slug}
-          isContext={isContext}
           brandConfig={brandConfig}
+          isContext={isContext}
           client:load
         />
       ) : null
@@ -193,6 +194,135 @@ const authStatus = {
           </a>
         ) : null
       }
+
+      {/* Logout Icon - Admin/Editor Only */}
+      {
+        (authStatus.isAdmin || authStatus.userRole === 'editor') ? (
+          <button
+            id="logout-btn"
+            class="text-myblue/80 hover:text-red-600 hover:rotate-6"
+            title="Logout"
+          >
+            <svg
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
+              />
+            </svg>
+          </button>
+        ) : null
+      }
     </div>
   </div>
+  {
+    isContext && (
+      <div class="border-t bg-gray-50 px-4 py-2 md:px-8">
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-gray-600">
+            <span class="font-medium">Context:</span> {title}
+          </p>
+          {isEditable && (
+            <a
+              href={`/storykeep/edit/context/${slug}`}
+              class="text-sm text-blue-600 hover:text-blue-800"
+            >
+              Edit Context
+            </a>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  <!-- THIRD ROW: StoryKeep Bar (if needed) -->
+  {
+    isStoryKeep && (
+      <div class="border-t bg-blue-50 px-4 py-2 md:px-8">
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-blue-700">
+            <span class="font-medium">StoryKeep Dashboard</span>
+          </p>
+          <a
+            href="/"
+            class="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Return to Site
+          </a>
+        </div>
+      </div>
+    )
+  }
 </header>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        // Disable button during logout process
+        logoutBtn.disabled = true;
+        logoutBtn.textContent = 'Logging out...';
+        
+        try {
+          // Call the logout API
+          const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log('StoryKeep: Logout successful');
+            
+            // Clear any remaining TractStack user profile data
+            const tractStackKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('tractstack_')) {
+                tractStackKeys.push(key);
+              }
+            }
+            tractStackKeys.forEach((key) => localStorage.removeItem(key));
+
+            // Clear global session reference
+            if (typeof window !== 'undefined') {
+              window.tractStackSessionId = undefined;
+            }
+
+            console.log('TractStack: Complete logout finished');
+
+            // Redirect to home page
+            window.location.href = '/';
+          } else {
+            console.error('StoryKeep: Logout failed:', result.error);
+            alert('Logout failed. Please try again.');
+            
+            // Re-enable button
+            logoutBtn.disabled = false;
+            logoutBtn.textContent = 'Logout';
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          alert('Logout failed due to network error. Please try again.');
+          
+          // Re-enable button
+          logoutBtn.disabled = false;
+          logoutBtn.textContent = 'Logout';
+        }
+      });
+    }
+  });
+</script>

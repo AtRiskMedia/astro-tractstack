@@ -2,7 +2,6 @@
 import Layout from '@/layouts/Layout.astro';
 import StoryKeepDashboard from '@/components/storykeep/Dashboard';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
-import { createStoryKeepMenu } from '@/utils/helpers';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
 
@@ -46,11 +45,6 @@ const brandConfig = await getBrandConfig(
 );
 const initializing = !brandConfig.SITE_INIT;
 
-const menu = createStoryKeepMenu({
-  isAuthenticated: userIsAuthenticated,
-  isAdmin: userIsAdmin,
-});
-
 const title = 'Dashboard | StoryKeep';
 
 let fullContentMap;
@@ -75,7 +69,7 @@ const initialTab =
   tabParam && validTabs.includes(tabParam) ? tabParam : 'analytics';
 ---
 
-<Layout title={title} storykeep={true} slug="storykeep" menu={menu}>
+<Layout title={title} storykeep={true} slug="storykeep">
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
       <StoryKeepDashboard
