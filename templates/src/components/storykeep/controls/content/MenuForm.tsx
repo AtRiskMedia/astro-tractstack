@@ -8,10 +8,10 @@ import {
   updateMenuLink,
 } from '@/utils/api/menuHelpers';
 import { saveMenuWithStateUpdate } from '@/utils/api/menuConfig';
-import StringInput from '@/components/storykeep/form/StringInput';
-import EnumSelect from '@/components/storykeep/form/EnumSelect';
-import ActionBuilderField from '@/components/storykeep/form/ActionBuilderField';
-import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
+import StringInput from '@/components/form/StringInput';
+import EnumSelect from '@/components/form/EnumSelect';
+import ActionBuilderField from '@/components/form/ActionBuilderField';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import type {
   MenuNode,
   MenuNodeState,

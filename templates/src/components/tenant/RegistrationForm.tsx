@@ -7,9 +7,9 @@ import {
   tenantStateIntercept,
 } from '@/utils/api/tenantHelpers';
 import { checkTenantCapacity, provisionTenant } from '@/utils/api/tenantConfig';
-import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
-import StringInput from '@/components/storykeep/form/StringInput';
-import BooleanToggle from '@/components/storykeep/form/BooleanToggle';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
+import StringInput from '@/components/form/StringInput';
+import BooleanToggle from '@/components/form/BooleanToggle';
 import type { TenantCapacity } from '@/types/multiTenant';
 import type { TenantRegistrationState } from '@/types/multiTenant';
 

@@ -217,44 +217,40 @@ export async function injectTemplateFiles(
     },
     // Atomic form components
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/ParagraphArrayInput.tsx'
-      ),
-      dest: 'src/components/storykeep/form/ParagraphArrayInput.tsx',
+      src: resolve('templates/src/components/form//ParagraphArrayInput.tsx'),
+      dest: 'src/components/form//ParagraphArrayInput.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/StringInput.tsx'),
-      dest: 'src/components/storykeep/form/StringInput.tsx',
+      src: resolve('templates/src/components/form//StringInput.tsx'),
+      dest: 'src/components/form//StringInput.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/StringArrayInput.tsx'
-      ),
-      dest: 'src/components/storykeep/form/StringArrayInput.tsx',
+      src: resolve('templates/src/components/form//StringArrayInput.tsx'),
+      dest: 'src/components/form//StringArrayInput.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/BooleanToggle.tsx'),
-      dest: 'src/components/storykeep/form/BooleanToggle.tsx',
+      src: resolve('templates/src/components/form//BooleanToggle.tsx'),
+      dest: 'src/components/form//BooleanToggle.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/EnumSelect.tsx'),
-      dest: 'src/components/storykeep/form/EnumSelect.tsx',
+      src: resolve('templates/src/components/form//EnumSelect.tsx'),
+      dest: 'src/components/form//EnumSelect.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/ColorPicker.tsx'),
-      dest: 'src/components/storykeep/form/ColorPicker.tsx',
+      src: resolve('templates/src/components/form//ColorPicker.tsx'),
+      dest: 'src/components/form//ColorPicker.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/FileUpload.tsx'),
-      dest: 'src/components/storykeep/form/FileUpload.tsx',
+      src: resolve('templates/src/components/form//FileUpload.tsx'),
+      dest: 'src/components/form//FileUpload.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/NumberInput.tsx'),
-      dest: 'src/components/storykeep/form/NumberInput.tsx',
+      src: resolve('templates/src/components/form//NumberInput.tsx'),
+      dest: 'src/components/form//NumberInput.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/form/DateTimeInput.tsx'),
-      dest: 'src/components/storykeep/form/DateTimeInput.tsx',
+      src: resolve('templates/src/components/form//DateTimeInput.tsx'),
+      dest: 'src/components/form//DateTimeInput.tsx',
     },
     //
     {
@@ -268,52 +264,48 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/advanced/AuthConfigSection.tsx'
+        'templates/src/components/form//advanced/AuthConfigSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/advanced/AuthConfigSection.tsx',
+      dest: 'src/components/form//advanced/AuthConfigSection.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/advanced/APIConfigSection.tsx'
+        'templates/src/components/form//advanced/APIConfigSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/advanced/APIConfigSection.tsx',
+      dest: 'src/components/form//advanced/APIConfigSection.tsx',
     },
     // Brand form components
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/UnsavedChangesBar.tsx'
-      ),
-      dest: 'src/components/storykeep/form/UnsavedChangesBar.tsx',
+      src: resolve('templates/src/components/form//UnsavedChangesBar.tsx'),
+      dest: 'src/components/form//UnsavedChangesBar.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/brand/BrandColorsSection.tsx'
+        'templates/src/components/form//brand/BrandColorsSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/brand/BrandColorsSection.tsx',
+      dest: 'src/components/form//brand/BrandColorsSection.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/brand/BrandAssetsSection.tsx'
+        'templates/src/components/form//brand/BrandAssetsSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/brand/BrandAssetsSection.tsx',
+      dest: 'src/components/form//brand/BrandAssetsSection.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/brand/SiteConfigSection.tsx'
+        'templates/src/components/form//brand/SiteConfigSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/brand/SiteConfigSection.tsx',
+      dest: 'src/components/form//brand/SiteConfigSection.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/brand/SocialLinksSection.tsx'
+        'templates/src/components/form//brand/SocialLinksSection.tsx'
       ),
-      dest: 'src/components/storykeep/form/brand/SocialLinksSection.tsx',
+      dest: 'src/components/form//brand/SocialLinksSection.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/brand/SEOSection.tsx'
-      ),
-      dest: 'src/components/storykeep/form/brand/SEOSection.tsx',
+      src: resolve('templates/src/components/form//brand/SEOSection.tsx'),
+      dest: 'src/components/form//brand/SEOSection.tsx',
     },
     // Manage Content
     {
@@ -387,16 +379,14 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/controls/content/MenuForm.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/ActionBuilderField.tsx'
-      ),
-      dest: 'src/components/storykeep/form/ActionBuilderField.tsx',
+      src: resolve('templates/src/components/form//ActionBuilderField.tsx'),
+      dest: 'src/components/form//ActionBuilderField.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/storykeep/form/ActionBuilderSlugSelector.tsx'
+        'templates/src/components/form//ActionBuilderSlugSelector.tsx'
       ),
-      dest: 'src/components/storykeep/form/ActionBuilderSlugSelector.tsx',
+      dest: 'src/components/form//ActionBuilderSlugSelector.tsx',
     },
     // Resource Management Components
     {
@@ -466,10 +456,8 @@ export async function injectTemplateFiles(
       dest: 'src/pages/api/orphan-analysis.ts',
     },
     {
-      src: resolve(
-        'templates/src/components/storykeep/form/content/ContentSummary.tsx'
-      ),
-      dest: 'src/components/storykeep/form/content/ContentSummary.tsx',
+      src: resolve('templates/src/components/form//content/ContentSummary.tsx'),
+      dest: 'src/components/form//content/ContentSummary.tsx',
     },
     //
     {

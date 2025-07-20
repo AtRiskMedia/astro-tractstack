@@ -15,9 +15,9 @@ import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
 } from '@/stores/orphanAnalysis';
-import StringInput from '@/components/storykeep/form/StringInput';
-import EnumSelect from '@/components/storykeep/form/EnumSelect';
-import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
+import StringInput from '@/components/form/StringInput';
+import EnumSelect from '@/components/form/EnumSelect';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import {
   PlusIcon,
   XMarkIcon,

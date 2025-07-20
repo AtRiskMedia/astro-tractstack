@@ -7,12 +7,12 @@ import {
   validateBrandConfig,
 } from '@/utils/api/brandHelpers';
 import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
-import BrandColorsSection from './form/brand/BrandColorsSection';
-import BrandAssetsSection from './form/brand/BrandAssetsSection';
-import SiteConfigSection from './form/brand/SiteConfigSection';
-import SocialLinksSection from './form/brand/SocialLinksSection';
-import SEOSection from './form/brand/SEOSection';
-import UnsavedChangesBar from './form/UnsavedChangesBar';
+import BrandColorsSection from '@/components/form/brand/BrandColorsSection';
+import BrandAssetsSection from '@/components/form/brand/BrandAssetsSection';
+import SiteConfigSection from '@/components/form/brand/SiteConfigSection';
+import SocialLinksSection from '@/components/form/brand/SocialLinksSection';
+import SEOSection from '@/components/form/brand/SEOSection';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
 const VERBOSE = true;

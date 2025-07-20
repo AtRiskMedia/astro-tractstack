@@ -5,6 +5,7 @@ import type {
 } from '@/types/tractstack';
 
 export function convertToLocalState(backend: ResourceConfig): ResourceState {
+  console.log(1, backend);
   return {
     id: backend.id || '',
     title: backend.title || '',

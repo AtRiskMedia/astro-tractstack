@@ -4,34 +4,35 @@ import {
   validateResource,
 } from '@/utils/api/resourceHelpers';
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
-import UnsavedChangesBar from '@/components/storykeep/form/UnsavedChangesBar';
-import StringInput from '@/components/storykeep/form/StringInput';
-import ParagraphArrayInput from '@/components/storykeep/form/ParagraphArrayInput';
-import NumberInput from '@/components/storykeep/form/NumberInput';
-import BooleanToggle from '@/components/storykeep/form/BooleanToggle';
-import DateTimeInput from '@/components/storykeep/form/DateTimeInput';
-import FileUpload from '@/components/storykeep/form/FileUpload';
-import EnumSelect from '@/components/storykeep/form/EnumSelect';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
+import StringInput from '@/components/form/StringInput';
+import ParagraphArrayInput from '@/components/form/ParagraphArrayInput';
+import NumberInput from '@/components/form/NumberInput';
+import BooleanToggle from '@/components/form/BooleanToggle';
+import DateTimeInput from '@/components/form/DateTimeInput';
+import FileUpload from '@/components/form/FileUpload';
+import EnumSelect from '@/components/form/EnumSelect';
 import type {
   ResourceConfig,
   ResourceState,
   FieldDefinition,
+  FullContentMapItem,
 } from '@/types/tractstack';
 
 interface ResourceFormProps {
   resourceData?: ResourceConfig;
+  fullContentMap: FullContentMapItem[];
   categorySlug: string;
   categorySchema: Record<string, FieldDefinition>;
-  contentMap?: Array<{ slug: string; title: string; categorySlug: string }>;
   isCreate?: boolean;
   onClose?: (saved: boolean) => void;
 }
 
 export default function ResourceForm({
   resourceData,
+  fullContentMap,
   categorySlug,
   categorySchema,
-  contentMap = [],
   isCreate = false,
   onClose,
 }: ResourceFormProps) {
@@ -44,6 +45,7 @@ export default function ResourceForm({
         categorySlug,
         oneliner: '',
         optionsPayload: {},
+        actionLisp: '',
       };
 
   const formState = useFormState<ResourceState>({
@@ -74,7 +76,7 @@ export default function ResourceForm({
 
   // Helper to get category reference options for a field
   const getCategoryReferenceOptions = (belongsToCategory: string) => {
-    return contentMap
+    return fullContentMap
       .filter((item) => item.categorySlug === belongsToCategory)
       .map((item) => ({
         value: item.slug,
@@ -101,6 +103,24 @@ export default function ResourceForm({
 
     switch (fieldDef.type) {
       case 'string':
+        // Check if this string field references another category
+        if (fieldDef.belongsToCategory) {
+          const options = getCategoryReferenceOptions(
+            fieldDef.belongsToCategory
+          );
+          return (
+            <EnumSelect
+              key={fieldName}
+              label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
+              value={fieldValue || ''}
+              onChange={(value) => updateOptionsField(fieldName, value)}
+              options={options}
+              error={fieldError}
+              required={!fieldDef.optional}
+            />
+          );
+        }
+
         return (
           <StringInput
             key={fieldName}
@@ -132,10 +152,16 @@ export default function ResourceForm({
           <NumberInput
             key={fieldName}
             label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-            value={fieldValue || 0}
+            value={
+              fieldValue !== undefined && fieldValue !== null
+                ? fieldValue
+                : (fieldDef.defaultValue ?? 0)
+            }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
             required={!fieldDef.optional}
+            min={fieldDef.minNumber}
+            max={fieldDef.maxNumber}
           />
         );
 
@@ -144,29 +170,13 @@ export default function ResourceForm({
           <BooleanToggle
             key={fieldName}
             label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-            value={fieldValue || false}
+            value={
+              fieldValue !== undefined && fieldValue !== null
+                ? fieldValue
+                : (fieldDef.defaultValue ?? false)
+            }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
-          />
-        );
-
-      case 'categoryReference':
-        if (!fieldDef.belongsToCategory) {
-          return (
-            <div key={fieldName} className="text-sm text-red-600">
-              {fieldName} - Missing belongsToCategory configuration
-            </div>
-          );
-        }
-        return (
-          <EnumSelect
-            key={fieldName}
-            label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-            value={fieldValue || ''}
-            onChange={(value) => updateOptionsField(fieldName, value)}
-            options={getCategoryReferenceOptions(fieldDef.belongsToCategory)}
-            error={fieldError}
-            required={!fieldDef.optional}
           />
         );
 

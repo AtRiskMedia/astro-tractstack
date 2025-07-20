@@ -10,9 +10,9 @@ import {
   getAdvancedConfigStatus,
   saveAdvancedConfig,
 } from '@/utils/api/advancedConfig';
-import UnsavedChangesBar from './form/UnsavedChangesBar';
-import AuthConfigSection from './form/advanced/AuthConfigSection';
-import APIConfigSection from './form/advanced/APIConfigSection';
+import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
+import AuthConfigSection from '@/components/form/advanced/AuthConfigSection';
+import APIConfigSection from '@/components/form/advanced/APIConfigSection';
 import type {
   AdvancedConfigState,
   AdvancedConfigStatus,

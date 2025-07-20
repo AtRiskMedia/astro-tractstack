@@ -273,6 +273,7 @@ const ManageContent = ({
     if (resourceCategories.includes(activeTab) && activeResourceForm) {
       return (
         <ResourceForm
+          fullContentMap={currentContentMap}
           resourceData={activeResourceForm.resource || undefined}
           categorySlug={activeResourceForm.category}
           categorySchema={knownResources[activeResourceForm.category] || {}}
