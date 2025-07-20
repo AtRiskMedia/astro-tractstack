@@ -53,10 +53,15 @@ const mainStylesUrl = storykeep
 
 // Read environment variables
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
 
-const brandConfig = propBrandConfig || (await getBrandConfig(goBackend));
+const brandConfig =
+  propBrandConfig ||
+  (await getBrandConfig(
+    Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+  ));
 ---
 
 <!doctype html>
@@ -88,7 +93,7 @@ const brandConfig = propBrandConfig || (await getBrandConfig(goBackend));
       crossorigin="anonymous"
       is:inline></script>
 
-    <!-- TractStack Configuration - MOVED HERE FROM BODY -->
+    <!-- TractStack Configuration -->
     <script
       define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
       is:inline

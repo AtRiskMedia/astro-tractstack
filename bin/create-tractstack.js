@@ -35,6 +35,41 @@ async function main() {
   console.log(kleur.white().bold('  build your own adaptive website'));
   console.log(kleur.reset('  made by At Risk Media\n'));
 
+  // Parse command line arguments
+  const args = process.argv.slice(2);
+  let includeExamples = false;
+  let enableMultiTenant = false;
+  let showHelp = false;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--examples') {
+      includeExamples = true;
+    } else if (args[i] === '--multi-tenant') {
+      enableMultiTenant = true;
+    } else if (args[i] === '--help' || args[i] === '-h') {
+      showHelp = true;
+    }
+  }
+
+  if (showHelp) {
+    console.log(`${kleur.bold('create-tractstack')} - Initialize a new TractStack project
+
+${kleur.bold('Usage:')}
+  create-tractstack [options]
+
+${kleur.bold('Options:')}
+  --examples      Include example components and collections route
+  --multi-tenant  Enable multi-tenant functionality for sandbox hosting
+  --help, -h     Show this help message
+
+${kleur.bold('Examples:')}
+  create-tractstack
+  create-tractstack --examples
+  create-tractstack --multi-tenant
+  create-tractstack --examples --multi-tenant`);
+    process.exit(0);
+  }
+
   // Check if we're in an Astro project
   if (!existsSync('./astro.config.mjs') && !existsSync('./astro.config.ts')) {
     console.log(kleur.red("❌ This doesn't appear to be an Astro project."));
@@ -74,7 +109,13 @@ async function main() {
       name: 'includeExamples',
       message:
         'Include CodeHook examples? (custom components, collections route)',
-      initial: true,
+      initial: includeExamples,
+    },
+    {
+      type: 'confirm',
+      name: 'enableMultiTenant',
+      message: 'Enable multi-tenant functionality?',
+      initial: enableMultiTenant,
     },
   ]);
 
@@ -172,127 +213,164 @@ dist/
 
 # Environment variables
 .env
-.env.*
+.env.local
+.env.production
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
 
 # Logs
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+lerna-debug.log*
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.swp
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Project-specific ignores
-public/styles/
-public/fonts/
+# TractStack specific
+public/media/
+src/content/generated/
 `;
+
   if (!existsSync('.gitignore')) {
     writeFileSync('.gitignore', gitignoreContent);
     console.log(kleur.green('✅ Created .gitignore'));
-  } else {
-    console.log(
-      kleur.yellow('⚠️ .gitignore already exists, skipping creation')
-    );
   }
 
-  // Create .prettierignore
-  const prettierIgnore = `node_modules/
-dist/
-.astro/
-public/styles/
-public/fonts/
-`;
-  if (!existsSync('.prettierignore')) {
-    writeFileSync('.prettierignore', prettierIgnore);
-    console.log(kleur.green('✅ Created .prettierignore'));
-  } else {
-    console.log(
-      kleur.yellow('⚠️ .prettierignore already exists, skipping creation')
-    );
+  // Create directories
+  const dirs = [
+    'src',
+    'src/components',
+    'src/layouts',
+    'src/pages',
+    'src/types',
+    'src/utils',
+    'src/stores',
+    'src/hooks',
+    'public',
+    'public/brand',
+    'public/socials',
+  ];
+
+  dirs.forEach((dir) => {
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+  });
+
+  console.log(kleur.green('✅ Created directory structure'));
+
+  // Update Astro config
+  async function updateAstroConfig() {
+    const configs = ['astro.config.mjs', 'astro.config.ts'];
+    let configFile = null;
+
+    for (const config of configs) {
+      if (existsSync(config)) {
+        configFile = config;
+        break;
+      }
+    }
+
+    if (!configFile) {
+      console.log(kleur.red('❌ No Astro config file found'));
+      return;
+    }
+
+    try {
+      const content = readFileSync(configFile, 'utf-8');
+
+      let newContent;
+
+      if (configFile.endsWith('.ts')) {
+        newContent = `import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import node from '@astrojs/node';
+import tractstack from 'astro-tractstack';
+
+export default defineConfig({
+  integrations: [
+    react(),
+    tractstack({
+      includeExamples: ${responses.includeExamples},
+      enableMultiTenant: ${responses.enableMultiTenant},
+    }),
+  ],
+  output: 'server',
+  adapter: node({
+    mode: 'standalone',
+  }),
+});`;
+      } else {
+        newContent = `import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import node from '@astrojs/node';
+import tractstack from 'astro-tractstack';
+
+export default defineConfig({
+  integrations: [
+    react(),
+    tractstack({
+      includeExamples: ${responses.includeExamples},
+      enableMultiTenant: ${responses.enableMultiTenant},
+    }),
+  ],
+  output: 'server',
+  adapter: node({
+    mode: 'standalone',
+  }),
+});`;
+      }
+
+      writeFileSync(configFile, newContent);
+      console.log(kleur.green(`✅ Updated ${configFile}`));
+    } catch (error) {
+      console.log(
+        kleur.red(`❌ Failed to update ${configFile}:`, error.message)
+      );
+    }
   }
 
-  // Create .prettierrc
+  // Create prettier config
   const prettierConfig = `{
   "semi": true,
-  "trailingComma": "es5",
   "singleQuote": true,
   "tabWidth": 2,
-  "useTabs": false,
-  "plugins": ["prettier-plugin-astro", "prettier-plugin-tailwindcss"],
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "plugins": [
+    "prettier-plugin-astro",
+    "prettier-plugin-tailwindcss"
+  ],
   "overrides": [
-    { "files": "*.astro", "options": { "parser": "astro" } },
-    { "files": "*.css", "options": { "parser": "css" } },
-    { "files": "*.cjs", "options": { "parser": "babel" } }
+    {
+      "files": "*.astro",
+      "options": {
+        "parser": "astro"
+      }
+    }
   ]
 }`;
+
   if (!existsSync('.prettierrc')) {
     writeFileSync('.prettierrc', prettierConfig);
-    console.log(kleur.green('✅ Created .prettierrc'));
-  } else {
-    console.log(
-      kleur.yellow('⚠️ .prettierrc already exists, skipping creation')
-    );
-  }
-
-  // Create src/types/astro.d.ts
-  const astroTypes = `export {};
-
-declare global {
-  interface ImportMeta {
-    env: {
-      PUBLIC_GO_BACKEND?: string;
-      PUBLIC_TENANTID?: string;
-      DEV?: boolean;
-    };
-  }
-
-  interface Locals {
-    session?: Record<string, any>;
-  }
-}
-`;
-  if (!existsSync('src/types')) {
-    mkdirSync('src/types', { recursive: true });
-  }
-  if (!existsSync('src/types/astro.d.ts')) {
-    writeFileSync('src/types/astro.d.ts', astroTypes);
-    console.log(kleur.green('✅ Created src/types/astro.d.ts'));
-  } else {
-    console.log(
-      kleur.yellow('⚠️ src/types/astro.d.ts already exists, skipping creation')
-    );
+    console.log(kleur.green('✅ Created Prettier config'));
   }
 
   // Create tsconfig.json
   const tsConfig = `{
+  "extends": "astro/tsconfigs/strictest",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] },
     "types": ["astro", "@astrojs/react", "node", "@types/react", "@types/react-dom"]
@@ -318,100 +396,37 @@ declare global {
       build: 'astro build',
       format: 'prettier --write .',
       'format:check': 'prettier --check .',
-      tsc: 'tsc --noEmit --pretty',
     };
-    pkg.packageManager = 'pnpm@9.15.4';
-    pkg.engines = { node: '>=18.14.1', pnpm: '>=9.15.4' };
+
     writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-    console.log(kleur.green('✅ Updated package.json'));
+    console.log(kleur.green('✅ Updated package.json scripts'));
   } catch (error) {
     console.log(kleur.red('❌ Failed to update package.json:', error.message));
   }
 
-  // Update astro.config file
-  async function updateAstroConfig() {
-    const configFiles = ['astro.config.mjs', 'astro.config.ts'];
-    const configFile = configFiles.find((file) => existsSync(file));
-
-    if (!configFile) {
-      console.log(
-        kleur.yellow('⚠️ Could not find astro.config file to update')
-      );
-      console.log(
-        kleur.cyan(
-          'Please manually add the tractstack integration to your astro.config file'
-        )
-      );
-      return;
-    }
-
-    try {
-      let content = readFileSync(configFile, 'utf-8');
-
-      // Add tractstack import if not present
-      if (!content.includes('astro-tractstack')) {
-        const tractStackImport = "import tractstack from 'astro-tractstack';\n";
-
-        // Find the last import statement
-        const lines = content.split('\n');
-        let insertIndex = 0;
-
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].trim().startsWith('import ')) {
-            insertIndex = i + 1;
-          } else if (lines[i].trim() === '' && insertIndex > 0) {
-            break;
-          }
-        }
-
-        lines.splice(insertIndex, 0, tractStackImport);
-        content = lines.join('\n');
-      }
-
-      // Add react import if not present
-      if (!content.includes('@astrojs/react')) {
-        content = content.replace(
-          "import tractstack from 'astro-tractstack';",
-          "import tractstack from 'astro-tractstack';\nimport react from '@astrojs/react';"
-        );
-      }
-
-      // Add node import if not present
-      if (!content.includes('@astrojs/node')) {
-        content = content.replace(
-          "import react from '@astrojs/react';",
-          "import react from '@astrojs/react';\nimport node from '@astrojs/node';"
-        );
-      }
-
-      // Update the export default defineConfig section
-      content = content.replace(
-        /export default defineConfig\(\{[\s\S]*?\}\);/,
-        `export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' }),
-  integrations: [
-    tractstack(),
-    react()
-  ]
-});`
-      );
-
-      writeFileSync(configFile, content);
-      console.log(kleur.green(`✅ Updated ${configFile}`));
-    } catch (error) {
-      console.log(
-        kleur.yellow(`⚠️ Could not automatically update ${configFile}`)
-      );
-      console.log(
-        kleur.cyan(
-          'Please manually add tractstack() and react() to your integrations array'
-        )
-      );
-      console.log(kleur.cyan('Example: integrations: [tractstack(), react()]'));
-      console.log(kleur.cyan('Make sure tractstack() is FIRST in the array!'));
-    }
-  }
+  // Install TractStack (this will trigger file injection)
+  //try {
+  //  execSync(`${addCommand} astro-tractstack@latest`, {
+  //    stdio: 'inherit',
+  //  });
+  //  console.log(kleur.green('✅ TractStack installed'));
+  //} catch (error) {
+  //  console.log(kleur.red('❌ Failed to install TractStack:', error.message));
+  //  console.log('Please run manually:');
+  //  console.log(kleur.cyan(`${addCommand} astro-tractstack@latest`));
+  //  if (packageManager !== 'npm') {
+  //    try {
+  //      execSync(`${packageManager} install`, { stdio: 'inherit' });
+  //    } catch {
+  //      console.log(kleur.red('❌ Failed to run install'));
+  //    }
+  //  }
+  //}
+  console.log(
+    kleur.red(
+      '❌ Not installing TractStack NPM package yet: using local pnpm linked'
+    )
+  );
 
   await updateAstroConfig();
 
@@ -434,6 +449,25 @@ declare global {
   console.log('   tractstack-go');
   console.log(kleur.cyan('2. Start your Astro development server:'));
   console.log(`   ${runCommand} dev`);
+
+  if (responses.enableMultiTenant) {
+    console.log('\n' + kleur.bold('Multi-tenant features enabled:'));
+    console.log(`  • Tenant registration: ${kleur.cyan('/sandbox/register')}`);
+    console.log(`  • Subdomain routing middleware added`);
+    console.log(`  • Admin-only tenant management`);
+    console.log(
+      `\n${kleur.yellow('Note:')} Make sure your Go backend has ENABLE_MULTI_TENANT=true`
+    );
+  }
+
+  if (responses.includeExamples) {
+    console.log(`\n${kleur.bold('Example components included:')}`);
+    console.log(
+      `  • Collections route: ${kleur.cyan('/collections/[param1]')}`
+    );
+    console.log(`  • Custom components and CodeHooks`);
+  }
+
   console.log('\n📚 Documentation: https://tractstack.org/docs');
 }
 

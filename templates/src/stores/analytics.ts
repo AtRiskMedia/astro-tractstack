@@ -34,9 +34,9 @@ export const fullContentMapStore = atom<{
   lastUpdated: number;
 } | null>(null);
 
-export async function getFullContentMap(): Promise<any[]> {
+export async function getFullContentMap(tenantId: string): Promise<any[]> {
+  const api = new TractStackAPI(tenantId);
   const cached = fullContentMapStore.get();
-  const api = new TractStackAPI();
 
   try {
     const response = await api.getContentMapWithTimestamp(cached?.lastUpdated);

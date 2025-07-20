@@ -6,21 +6,19 @@ import { createStoryKeepMenu } from '@/utils/helpers';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
 
-// DEBUG: Check auth status
 const adminCookie = Astro.cookies.get('admin_auth');
 const editorCookie = Astro.cookies.get('editor_auth');
 const authResult = isAuthenticated(Astro);
 const adminResult = isAdmin(Astro);
 
-// Check for privileged authentication - redirect if not authenticated
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {
   return authCheck;
 }
 
-// Get backend URL and tenant info
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId = Astro.locals.tenant?.id || 'default';
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
 try {
   const statusResponse = await fetch(`${goBackend}/api/v1/health`, {
@@ -43,7 +41,9 @@ const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 
-const brandConfig = await getBrandConfig(goBackend);
+const brandConfig = await getBrandConfig(
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+);
 const initializing = !brandConfig.SITE_INIT;
 
 const menu = createStoryKeepMenu({
@@ -57,7 +57,9 @@ let fullContentMap;
 let homeSlug = 'hello';
 
 try {
-  fullContentMap = await getFullContentMap();
+  fullContentMap = await getFullContentMap(
+    Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+  );
   homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
   const currentPath = Astro.url.pathname;

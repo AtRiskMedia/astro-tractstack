@@ -5,8 +5,11 @@ import type { MenuNode, MenuNodeState } from '@/types/tractstack';
 /**
  * Save an existing menu
  */
-export async function saveMenu(menuState: MenuNodeState): Promise<MenuNode> {
-  const api = new TractStackAPI();
+export async function saveMenu(
+  tenantId: string,
+  menuState: MenuNodeState
+): Promise<MenuNode> {
+  const api = new TractStackAPI(tenantId);
   const menuData = convertToBackendFormat(menuState);
 
   const response = await api.put(
@@ -19,8 +22,11 @@ export async function saveMenu(menuState: MenuNodeState): Promise<MenuNode> {
 /**
  * Create a new menu
  */
-export async function createMenu(menuState: MenuNodeState): Promise<MenuNode> {
-  const api = new TractStackAPI();
+export async function createMenu(
+  tenantId: string,
+  menuState: MenuNodeState
+): Promise<MenuNode> {
+  const api = new TractStackAPI(tenantId);
   const menuData = convertToBackendFormat(menuState);
 
   const response = await api.post('/api/v1/nodes/menus/create', menuData);
@@ -30,16 +36,22 @@ export async function createMenu(menuState: MenuNodeState): Promise<MenuNode> {
 /**
  * Delete a menu
  */
-export async function deleteMenu(menuId: string): Promise<void> {
-  const api = new TractStackAPI();
+export async function deleteMenu(
+  tenantId: string,
+  menuId: string
+): Promise<void> {
+  const api = new TractStackAPI(tenantId);
   await api.request(`/api/v1/nodes/menus/${menuId}`, { method: 'DELETE' });
 }
 
 /**
  * Get a menu by ID
  */
-export async function getMenuById(menuId: string): Promise<MenuNode> {
-  const api = new TractStackAPI();
+export async function getMenuById(
+  tenantId: string,
+  menuId: string
+): Promise<MenuNode> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.get(`/api/v1/nodes/menus/${menuId}`);
   return response.data as MenuNode;
 }
@@ -49,6 +61,7 @@ export async function getMenuById(menuId: string): Promise<MenuNode> {
  * Following the exact pattern from brandConfig.ts
  */
 export async function saveMenuWithStateUpdate(
+  tenantId: string,
   currentState: MenuNodeState,
   originalState: MenuNodeState
 ): Promise<MenuNodeState> {
@@ -61,9 +74,9 @@ export async function saveMenuWithStateUpdate(
     if (isCreate) {
       // Generate temporary ID for create (backend will assign real ID)
       const tempState = { ...currentState, id: crypto.randomUUID() };
-      savedMenu = await createMenu(tempState);
+      savedMenu = await createMenu(tenantId, tempState);
     } else {
-      savedMenu = await saveMenu(currentState);
+      savedMenu = await saveMenu(tenantId, currentState);
     }
 
     // Convert the saved menu back to state format

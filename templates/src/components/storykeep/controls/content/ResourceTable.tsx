@@ -55,7 +55,10 @@ export default function ResourceTable({
 
     setIsDeleting(resourceId);
     try {
-      await deleteResource(resourceId);
+      await deleteResource(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        resourceId
+      );
       onRefresh(); // Refresh the table data
     } catch (error) {
       console.error('Delete failed:', error);
@@ -204,6 +207,7 @@ export default function ResourceTable({
       </div>
       {showBulkIngest && (
         <ResourceBulkIngest
+          fullContentMap={fullContentMap}
           onClose={(saved) => {
             setShowBulkIngest(false);
             if (saved) {

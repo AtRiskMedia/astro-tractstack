@@ -2,15 +2,24 @@ import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { AstroIntegrationLogger } from 'astro';
 
+interface InjectFilesConfig {
+  includeExamples?: boolean;
+  enableMultiTenant?: boolean;
+}
+
 export async function injectTemplateFiles(
-  resolve: (...paths: string[]) => string,
+  resolve: (path: string) => string,
   logger: AstroIntegrationLogger,
-  config?: any
+  config?: InjectFilesConfig
 ): Promise<void> {
   logger.info('TractStack: injectTemplateFiles called');
 
   const templateFiles = [
     // Core files
+    {
+      src: resolve('templates/env.example'),
+      dest: 'env.example',
+    },
     {
       src: resolve('templates/src/constants.ts'),
       dest: 'src/constants.ts',
@@ -206,7 +215,6 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/types/formTypes.ts'),
       dest: 'src/types/formTypes.ts',
     },
-
     // Atomic form components
     {
       src: resolve(
@@ -649,6 +657,65 @@ export async function injectTemplateFiles(
       dest: 'public/socials/youtube.svg',
     },
 
+    // Multi-tenant middleware (conditional injection)
+    ...(config?.enableMultiTenant
+      ? [
+          {
+            src: resolve('templates/src/middleware.ts'),
+            dest: 'src/middleware.ts',
+          },
+        ]
+      : []),
+
+    // Multi-tenant types (always inject since it's referenced in plan)
+    {
+      src: resolve('templates/src/types/multiTenant.ts'),
+      dest: 'src/types/multiTenant.ts',
+    },
+
+    // Multi-tenant API utilities (conditional injection)
+    ...(config?.enableMultiTenant
+      ? [
+          {
+            src: resolve('templates/src/utils/api/tenantConfig.ts'),
+            dest: 'src/utils/api/tenantConfig.ts',
+          },
+          {
+            src: resolve('templates/src/utils/api/tenantHelpers.ts'),
+            dest: 'src/utils/api/tenantHelpers.ts',
+          },
+        ]
+      : []),
+
+    // Multi-tenant components (conditional injection)
+    ...(config?.enableMultiTenant
+      ? [
+          {
+            src: resolve(
+              'templates/src/components/tenant/RegistrationForm.tsx'
+            ),
+            dest: 'src/components/tenant/RegistrationForm.tsx',
+          },
+        ]
+      : []),
+
+    // Multi-tenant pages (conditional injection)
+    ...(config?.enableMultiTenant
+      ? [
+          {
+            src: resolve('templates/src/pages/sandbox/register.astro'),
+            dest: 'src/pages/sandbox/register.astro',
+          },
+          {
+            src: resolve('templates/src/pages/sandbox/activate.astro'),
+            dest: 'src/pages/sandbox/activate.astro',
+          },
+          {
+            src: resolve('templates/src/pages/sandbox/success.astro'),
+            dest: 'src/pages/sandbox/success.astro',
+          },
+        ]
+      : []),
     // Custom components (conditional)
     {
       src: resolve(

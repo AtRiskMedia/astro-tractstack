@@ -15,42 +15,53 @@ export interface TractStackEvent {
 }
 
 function getConfig() {
+  // Server-side safety check
+  if (typeof window === 'undefined') {
+    return {
+      goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
+      tenantId: import.meta.env.PUBLIC_TENANTID || 'default',
+    };
+  }
+
   return {
     goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
-    tenantId: import.meta.env.PUBLIC_TENANTID || 'default',
+    tenantId:
+      window.TRACTSTACK_CONFIG?.tenantId ||
+      import.meta.env.PUBLIC_TENANTID ||
+      'default',
   };
 }
 
-function getTenantFromDomain(): string {
-  if (typeof window === 'undefined') return 'default';
-
-  const hostname = window.location.hostname;
-
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'localhost';
-  }
-
-  const parts = hostname.split('.');
-  if (
-    parts.length >= 4 &&
-    parts[1] === 'sandbox' &&
-    ['tractstack', 'freewebpress'].includes(parts[2]) &&
-    parts[3] === 'com'
-  ) {
-    return parts[0];
-  }
-
-  return 'default';
-}
+//function getTenantFromDomain(): string {
+//  if (typeof window === 'undefined') return 'default';
+//
+//  const hostname = window.location.hostname;
+//
+//  //if (hostname === 'localhost' || hostname === '127.0.0.1') {
+//  //  return 'default';
+//  //}
+//
+//  const parts = hostname.split('.');
+//  if (
+//    parts.length >= 4 &&
+//    parts[1] === 'sandbox' &&
+//    ['tractstack', 'freewebpress'].includes(parts[2]) &&
+//    parts[3] === 'com'
+//  ) {
+//    return parts[0];
+//  }
+//
+//  return 'default';
+//}
 
 export class TractStackAPI {
   private baseUrl: string;
   private tenantId: string;
 
-  constructor(baseUrl?: string, tenantId?: string) {
+  constructor(tenantId?: string) {
     const config = getConfig();
-    this.baseUrl = baseUrl || config.goBackend;
-    this.tenantId = tenantId || getTenantFromDomain() || config.tenantId;
+    this.baseUrl = config.goBackend;
+    this.tenantId = tenantId || config.tenantId;
   }
 
   async request<T = any>(
@@ -155,8 +166,6 @@ export class TractStackAPI {
   }
 }
 
-export const api = new TractStackAPI();
-
 export function handleAPIResponse<T>(
   response: APIResponse<T>,
   onSuccess?: (data: T) => void,
@@ -170,41 +179,5 @@ export function handleAPIResponse<T>(
     onError?.(error);
     console.error('TractStack API Error:', error);
     return false;
-  }
-}
-
-export function setupHTMXDefaults(): void {
-  if (typeof window !== 'undefined' && window.htmx) {
-    const tenantId = getTenantFromDomain() || getConfig().tenantId;
-
-    document.body.addEventListener('htmx:configRequest', (event: any) => {
-      event.detail.headers['X-Tenant-ID'] = tenantId;
-    });
-
-    document.body.addEventListener('htmx:responseError', (event: any) => {
-      console.error('HTMX Error:', event.detail);
-    });
-
-    document.body.addEventListener('htmx:beforeRequest', (event: any) => {
-      const target = event.target;
-      target.classList.add('htmx-loading');
-    });
-
-    document.body.addEventListener('htmx:afterRequest', (event: any) => {
-      const target = event.target;
-      target.classList.remove('htmx-loading');
-    });
-  }
-}
-
-if (typeof window !== 'undefined') {
-  if (window.htmx) {
-    setupHTMXDefaults();
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (window.htmx) {
-        setupHTMXDefaults();
-      }
-    });
   }
 }

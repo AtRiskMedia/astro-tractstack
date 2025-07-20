@@ -110,7 +110,10 @@ export default function MenuTable({
 
     try {
       setIsDeleting(menu.id);
-      await deleteMenu(menu.id);
+      await deleteMenu(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        menu.id
+      );
 
       // Reload orphan analysis after successful deletion
       await loadOrphanAnalysis();

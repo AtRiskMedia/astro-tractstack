@@ -25,7 +25,6 @@ const BooleanToggle = ({
   size = 'md',
 }: BooleanToggleProps) => {
   const handleCheckedChange = (details: { checked: boolean }) => {
-    console.log('Toggle changed:', details.checked);
     onChange(details.checked);
   };
 

@@ -1,0 +1,59 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import RegistrationForm from '@/components/tenant/RegistrationForm';
+import { getBrandConfig } from '@/stores/brand';
+import { checkBackendHealth } from '@/utils/backend';
+
+// Check if multi-tenant is enabled
+const isMultiTenantEnabled =
+  import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
+if (!isMultiTenantEnabled) {
+  return Astro.redirect('/storykeep?error=multi-tenant-disabled');
+}
+
+// Get backend URL and tenant info
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+const tenantId = 'default'; // For registration, always use default
+
+// Check backend health using utility
+try {
+  const healthResponse = await checkBackendHealth(goBackend, tenantId, 500);
+  if (healthResponse.shouldRedirectToMaint) {
+    const currentPath = Astro.url.pathname;
+    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  }
+} catch (error) {
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
+const brandConfig = await getBrandConfig('default');
+const title = 'Register New Tenant | TractStack';
+---
+
+<Layout
+  title={title}
+  description="Register a new TractStack tenant for sandbox testing"
+  storykeep={true}
+  slug="sandbox-register"
+  brandConfig={brandConfig}
+>
+  <main id="main-content" class="min-h-screen bg-gray-50">
+    <div class="py-12">
+      <RegistrationForm
+        client:load
+        onSuccess={(tenantId) => {
+          window.location.href = `/sandbox/success?tenant=${encodeURIComponent(tenantId)}`;
+        }}
+        onCapacityFull={() => {
+          window.location.href = '/sandbox/capacity-full';
+        }}
+      />
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Add any additional client-side logic here if needed
+  console.log('Tenant registration page loaded');
+</script>

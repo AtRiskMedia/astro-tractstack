@@ -50,6 +50,7 @@ export default function MenuForm({
     onSave: async (data) => {
       try {
         const updatedState = await saveMenuWithStateUpdate(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
           data,
           formState.originalState
         );

@@ -13,13 +13,16 @@ async function restoreProfileFromToken(): Promise<boolean> {
       return false;
     }
 
+    // Get tenant ID for headers
+    const tenantId = (window as any).TRACTSTACK_CONFIG?.tenantId || 'default';
+
     // Call the backend to decode the profile token
     const response = await fetch('/api/auth/decode', {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'X-Tenant-ID': (window as any).TRACTSTACK_CONFIG?.tenantId || '',
+        'X-Tenant-ID': tenantId,
       },
     });
 
@@ -58,10 +61,14 @@ async function tryFastPassUnlock(): Promise<boolean> {
       return false;
     }
 
+    // Get tenant ID for headers
+    const tenantId = (window as any).TRACTSTACK_CONFIG?.tenantId || 'default';
+
     const response = await fetch('/api/auth/profile', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Tenant-ID': tenantId,
       },
       body: JSON.stringify({
         encryptedEmail: sessionData.encryptedEmail,
@@ -91,7 +98,7 @@ async function tryFastPassUnlock(): Promise<boolean> {
 
     return false;
   } catch (error) {
-    console.log('Fast pass error:', error);
+    console.error('Failed to try fast pass unlock:', error);
     return false;
   }
 }

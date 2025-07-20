@@ -4,12 +4,13 @@ import type {
   AdvancedConfigUpdateRequest,
 } from '@/types/tractstack';
 
-const api = new TractStackAPI();
-
 /**
  * Get advanced configuration status (boolean flags only)
  */
-export async function getAdvancedConfigStatus(): Promise<AdvancedConfigStatus> {
+export async function getAdvancedConfigStatus(
+  tenantId: string
+): Promise<AdvancedConfigStatus> {
+  const api = new TractStackAPI(tenantId);
   try {
     const response = await api.get<AdvancedConfigStatus>(
       '/api/v1/config/advanced'
@@ -43,8 +44,10 @@ export async function getAdvancedConfigStatus(): Promise<AdvancedConfigStatus> {
  * Save advanced configuration
  */
 export async function saveAdvancedConfig(
+  tenantId: string,
   config: AdvancedConfigUpdateRequest
 ): Promise<void> {
+  const api = new TractStackAPI(tenantId);
   try {
     const response = await api.put('/api/v1/config/advanced', config);
 

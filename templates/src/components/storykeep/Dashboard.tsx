@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
-import { classNames } from '../../utils/helpers';
 import { brandConfigStore, getBrandConfig } from '@/stores/brand';
 import { navigationActions } from '@/stores/navigation';
+import { classNames } from '@/utils/helpers';
+import { TractStackAPI } from '@/utils/api';
 import StoryKeepDashboard_Wizard from './Dashboard_Wizard';
 import StoryKeepDashboard_Analytics from './Dashboard_Analytics';
 import StoryKeepDashboard_Content from './Dashboard_Content';
@@ -147,7 +148,7 @@ export default function StoryKeepDashboard({
     [$epinetCustomFilters]
   );
 
-  // Fetch all analytics data from V2 /analytics/all endpoint - EXACTLY as original
+  // Fetch all analytics data
   const fetchAllAnalytics = useCallback(async () => {
     try {
       setAnalytics((prev) => ({ ...prev, isLoading: true, status: 'loading' }));
@@ -155,8 +156,8 @@ export default function StoryKeepDashboard({
       const { startTimeUTC, endTimeUTC, visitorType, selectedUserId } =
         $epinetCustomFilters;
 
-      // Build URL with epinetCustomFilters parameters (UTC)
-      const url = new URL(`${goBackend}/api/v1/analytics/all`);
+      // Build URL parameters for TractStackAPI
+      const params = new URLSearchParams();
 
       if (startTimeUTC && endTimeUTC) {
         // Convert UTC timestamps to hours-back integers (what backend expects)
@@ -171,25 +172,25 @@ export default function StoryKeepDashboard({
           (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
         );
 
-        url.searchParams.append('startHour', startHour.toString());
-        url.searchParams.append('endHour', endHour.toString());
+        params.append('startHour', startHour.toString());
+        params.append('endHour', endHour.toString());
       }
 
-      if (visitorType) url.searchParams.append('visitorType', visitorType);
-      if (selectedUserId) url.searchParams.append('userId', selectedUserId);
+      if (visitorType) params.append('visitorType', visitorType);
+      if (selectedUserId) params.append('userId', selectedUserId);
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Use TractStackAPI instead of raw fetch
+      const api = new TractStackAPI(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default'
+      );
+      const endpoint = `/api/v1/analytics/all${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await api.get(endpoint);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics data');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch analytics data');
       }
 
-      const data = await response.json();
+      const data = response.data;
 
       setAnalytics((prev) => ({
         ...prev,
@@ -215,26 +216,21 @@ export default function StoryKeepDashboard({
         ...prev,
         error: error instanceof Error ? error.message : 'Unknown error',
         status: 'error',
+        isLoading: false,
       }));
     } finally {
       setAnalytics((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [
-    $epinetCustomFilters.startTimeUTC,
-    $epinetCustomFilters.endTimeUTC,
-    $epinetCustomFilters.visitorType,
-    $epinetCustomFilters.selectedUserId,
-    goBackend,
-  ]);
+  }, [$epinetCustomFilters]);
 
-  // Load brand config when branding tab is accessed - EXACTLY as original
+  // Load brand config when branding tab is accessed
   useEffect(() => {
     if (currentActiveTab === 'branding' && !$brandConfig) {
-      getBrandConfig();
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
     }
   }, [currentActiveTab, $brandConfig, goBackend]);
 
-  // EXACTLY as original initialization + URL restoration
+  // URL restoration
   useEffect(() => {
     if (
       !isInitialized.current &&
@@ -298,7 +294,6 @@ export default function StoryKeepDashboard({
     $epinetCustomFilters.endTimeUTC,
     $epinetCustomFilters.visitorType,
     $epinetCustomFilters.selectedUserId,
-    fetchAllAnalytics,
     isCurrentlyInitializing,
   ]);
 

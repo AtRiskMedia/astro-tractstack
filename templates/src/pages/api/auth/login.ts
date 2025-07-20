@@ -17,7 +17,10 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Get tenant info from environment
-    const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+    const tenantId =
+      request.headers.get('X-Tenant-ID') || // #1: From middleware
+      import.meta.env.PUBLIC_TENANTID ||
+      'default';
     const backendUrl =
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 

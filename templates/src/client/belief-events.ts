@@ -1,4 +1,4 @@
-const VERBOSE = false;
+const VERBOSE = true;
 
 interface BeliefUpdateData {
   [key: string]: string;
@@ -100,9 +100,10 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'X-Tenant-ID': (window as any).TENANT_ID || 'default',
+        'X-Tenant-ID': (window as any).TRACTSTACK_CONFIG?.tenantId || 'default',
+        'X-StoryFragment-ID':
+          (window as any).TRACTSTACK_CONFIG?.storyfragmentId || '',
         'X-TractStack-Session-ID': sessionId || '',
-        'X-StoryFragment-ID': (window as any).STORYFRAGMENT_ID || '',
       },
       body: new URLSearchParams(data),
     });

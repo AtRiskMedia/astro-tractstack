@@ -135,7 +135,7 @@ export default function StoryKeepDashboard_Wizard({
         // Ensure brand config is loaded
         let brandConfig = $brandConfig;
         if (!brandConfig) {
-          await getBrandConfig();
+          await getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
           brandConfig = brandConfigStore.get();
         }
 
@@ -156,7 +156,7 @@ export default function StoryKeepDashboard_Wizard({
             `${goBackend}/api/v1/nodes/storyfragments/home`,
             {
               headers: {
-                'X-Tenant-ID': 'default', // TODO: Get from context
+                'X-Tenant-ID': window.TRACTSTACK_CONFIG?.tenantId || 'default',
               },
             }
           );

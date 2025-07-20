@@ -3,13 +3,13 @@ import { brandConfigStore } from '@/stores/brand';
 import { convertToLocalState, convertToBackendFormat } from './brandHelpers';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = false;
-
-const api = new TractStackAPI();
+const VERBOSE = true;
 
 export async function saveBrandConfig(
+  tenantId: string,
   brandConfig: BrandConfig
 ): Promise<BrandConfig> {
+  const api = new TractStackAPI(tenantId);
   try {
     const response = await api.put('/api/v1/config/brand', brandConfig);
     if (!response.success) {
@@ -26,7 +26,8 @@ export async function saveBrandConfig(
   }
 }
 
-export async function getBrandConfig(): Promise<BrandConfig> {
+export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
+  const api = new TractStackAPI(tenantId);
   try {
     const response = await api.get('/api/v1/config/brand');
     if (!response.success) {
@@ -101,6 +102,7 @@ export async function getBrandConfig(): Promise<BrandConfig> {
  * Handle complete brand config save workflow including state updates
  */
 export async function saveBrandConfigWithStateUpdate(
+  tenantId: string,
   currentState: BrandConfigState,
   originalState: BrandConfigState
 ): Promise<BrandConfigState> {
@@ -130,10 +132,10 @@ export async function saveBrandConfigWithStateUpdate(
 
   try {
     // Save to backend
-    await saveBrandConfig(changedFields as BrandConfig);
+    await saveBrandConfig(tenantId, changedFields as BrandConfig);
 
     // Get the complete updated config from backend
-    const freshConfig = await getBrandConfig();
+    const freshConfig = await getBrandConfig(tenantId);
     brandConfigStore.set(freshConfig);
 
     if (VERBOSE)

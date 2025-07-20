@@ -1,8 +1,8 @@
 ---
 const originalUrl = Astro.url.searchParams.get('from') || '/';
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
-
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const isDev = import.meta.env.DEV;
 const brandBasePath = isDev ? '/brand' : '/media/brand';
 const logo = `${brandBasePath}/logo.svg`;

@@ -4,11 +4,10 @@ import CodeHook from '@/custom/CodeHook.astro';
 import { getBrandConfig } from '@/stores/brand';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
-import type { AuthStatus } from '@/types';
 
-const VERBOSE = false;
-const user = Astro.locals.user as AuthStatus;
-const tenantId = Astro.locals.tenant?.id || 'default';
+const VERBOSE = true;
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
 const { slug } = Astro.params;
 const lookup = slug || '';
@@ -108,21 +107,16 @@ if (!fragmentsData) {
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
-const fullContentMap = await getFullContentMap();
+const fullContentMap = await getFullContentMap(
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+);
 
 const title = storyfragmentTitle;
 const description = storyData.description || 'Dynamic content from TractStack';
 
-if (VERBOSE) {
-  console.log('Story Data:', {
-    id: storyfragmentId,
-    title: storyfragmentTitle,
-    paneCount: paneIds.length,
-    fragmentsCount: Object.keys(fragmentsData).length,
-  });
-}
-
-const brandConfig = await getBrandConfig(goBackend);
+const brandConfig = await getBrandConfig(
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+);
 if (!brandConfig.SITE_INIT) {
   return Astro.redirect('/storykeep');
 }
@@ -177,22 +171,6 @@ if (!brandConfig.SITE_INIT) {
       storyfragmentId,
       tenantId,
     });
-
-  const BACKEND_URL = goBackend;
-  const STORYFRAGMENT_ID = storyfragmentId;
-  const TENANT_ID = tenantId;
-
-  if (VERBOSE)
-    console.log('🟢 SCRIPT: Constants set:', {
-      BACKEND_URL,
-      STORYFRAGMENT_ID,
-      TENANT_ID,
-    });
-
-  // Make these globally available
-  window.BACKEND_URL = BACKEND_URL;
-  window.STORYFRAGMENT_ID = STORYFRAGMENT_ID;
-  window.TENANT_ID = TENANT_ID;
 
   let sessionId = '';
   let eventSource = null;
@@ -306,7 +284,7 @@ if (!brandConfig.SITE_INIT) {
       eventSource = null;
     }
 
-    const sseUrl = `${goBackend}/api/v1/auth/sse?storyfragment=${storyfragmentId}&sessionId=${sessionId}`;
+    const sseUrl = `${goBackend}/api/v1/auth/sse?storyfragment=${storyfragmentId}&sessionId=${sessionId}&tenantId=${tenantId}`;
     if (VERBOSE) console.log('🔌 SSE: Creating EventSource with URL:', sseUrl);
 
     eventSource = new EventSource(sseUrl);
@@ -372,7 +350,7 @@ if (!brandConfig.SITE_INIT) {
         const data = JSON.parse(event.data);
 
         if (VERBOSE) {
-          console.log('📨 SSE: Current storyfragment:', STORYFRAGMENT_ID);
+          console.log('📨 SSE: Current storyfragment:', storyfragmentId);
           console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
           console.log('📨 SSE: Affected panes:', data.affectedPanes);
 
@@ -381,7 +359,7 @@ if (!brandConfig.SITE_INIT) {
           }
         }
 
-        if (data.storyfragmentId === STORYFRAGMENT_ID) {
+        if (data.storyfragmentId === storyfragmentId) {
           if (VERBOSE)
             console.log('✅ SSE: Storyfragment matches, processing updates');
 
@@ -623,8 +601,8 @@ if (!brandConfig.SITE_INIT) {
   document.addEventListener('astro:page-load', () => {
     if (VERBOSE)
       console.log('🔄 ASTRO: page-load event fired, initializing analytics');
-    if (window.initAnalyticsTracking && window.STORYFRAGMENT_ID) {
-      window.initAnalyticsTracking(window.STORYFRAGMENT_ID);
+    if (window.initAnalyticsTracking) {
+      window.initAnalyticsTracking(storyfragmentId);
     }
   });
 

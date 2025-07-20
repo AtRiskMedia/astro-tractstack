@@ -52,20 +52,22 @@ export interface FragmentReference {
 
 // Configuration from virtual module
 export interface TractStackConfig {
-  goBackend: string;
-  tenantId: string;
-  theme: {
+  goBackend?: string;
+  tenantId?: string;
+  enableMultiTenant?: boolean;
+  includeExamples?: boolean;
+  theme?: {
     colorScheme: 'light' | 'dark' | 'auto';
     customCss?: string;
   };
-  htmx: {
+  htmx?: {
     version: string;
     extensions: string[];
   };
-  dev: {
+  dev?: {
     debug: boolean;
   };
-  isDev: boolean;
+  isDev?: boolean;
 }
 
 // Event types for tracking and analytics
@@ -404,4 +406,38 @@ export interface ResourceState {
   oneliner: string;
   optionsPayload: Record<string, any>;
   actionLisp?: string;
+}
+
+// Multi-tenant types following backend interfaces
+
+export interface TenantProvisioningData {
+  tenantId: string;
+  adminPassword: string;
+  name: string;
+  email: string;
+  tursoEnabled: boolean;
+  tursoDatabaseURL?: string;
+  tursoAuthToken?: string;
+}
+
+export interface TenantCapacity {
+  currentCount: number;
+  maxTenants: number;
+  available: number;
+  existingTenants: string[];
+}
+
+export interface TenantActivationRequest {
+  token: string;
+}
+
+// Form state for tenant registration
+export interface TenantRegistrationState {
+  tenantId: string;
+  adminPassword: string;
+  name: string;
+  email: string;
+  tursoEnabled: boolean;
+  tursoDatabaseURL: string;
+  tursoAuthToken: string;
 }

@@ -1,0 +1,241 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import { activateTenant } from '@/utils/api/tenantConfig';
+import { getBrandConfig } from '@/stores/brand';
+import { checkBackendHealth } from '@/utils/backend';
+
+// Check if multi-tenant is enabled
+const isMultiTenantEnabled =
+  import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
+if (!isMultiTenantEnabled) {
+  return Astro.redirect('/?error=multi-tenant-disabled');
+}
+
+// Dev mode detection
+const isDev = import.meta.env.DEV;
+
+// Get activation token from URL
+const url = new URL(Astro.request.url);
+const token = url.searchParams.get('token');
+
+let activationResult = {
+  success: false,
+  error: null as string | null,
+  tenantId: null as string | null,
+};
+
+if (!token) {
+  activationResult.error =
+    'Missing activation token. Please check your email link.';
+} else {
+  // Attempt activation
+  try {
+    await activateTenant(token);
+    activationResult.success = true;
+
+    if (isDev) {
+      // In dev mode, get tenant ID from URL param or use default
+      activationResult.tenantId =
+        url.searchParams.get('tenantId') || 'localhost';
+    } else {
+      // Extract tenant ID from current domain in production
+      const hostname = Astro.request.headers.get('host') || '';
+      const parts = hostname.split('.');
+      if (parts.length >= 4 && parts[1] === 'sandbox') {
+        activationResult.tenantId = parts[0];
+      }
+    }
+  } catch (error) {
+    activationResult.error =
+      error instanceof Error ? error.message : 'Activation failed';
+  }
+}
+
+// Get backend URL
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+// Skip health checks in dev mode
+let backendHealthy = true;
+if (!isDev) {
+  try {
+    const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
+    backendHealthy = healthResponse.isHealthy;
+  } catch (error) {
+    backendHealthy = false;
+  }
+}
+
+const brandConfig = await getBrandConfig('default');
+const title = activationResult.success
+  ? 'Tenant Activated | TractStack'
+  : 'Activation Error | TractStack';
+
+// Build dashboard URL based on environment
+const getDashboardUrl = (tenantId: string) => {
+  if (isDev) {
+    return '/storykeep';
+  }
+  return `https://${tenantId}.sandbox.freewebpress.com/storykeep`;
+};
+
+// Build display URL based on environment
+const getDisplayUrl = (tenantId: string) => {
+  if (isDev) {
+    return 'localhost:4321';
+  }
+  return `https://${tenantId}.sandbox.freewebpress.com`;
+};
+---
+
+<Layout
+  title={title}
+  description="TractStack tenant activation"
+  slug="tenant-activate"
+  brandConfig={brandConfig}
+>
+  <main
+    id="main-content"
+    class="flex min-h-screen items-center justify-center bg-gray-50"
+  >
+    <div class="mx-auto max-w-2xl p-6">
+      {
+        activationResult.success ? (
+          <div class="rounded-lg bg-white p-8 text-center shadow-lg">
+            <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <svg
+                class="h-8 w-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+
+            <h2 class="mb-4 text-2xl font-bold text-gray-900">
+              🎉 Tenant Activated Successfully!
+            </h2>
+
+            <p class="mb-6 text-gray-600">
+              Your TractStack tenant has been activated and is ready to use.
+            </p>
+
+            {activationResult.tenantId && (
+              <div class="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
+                <p class="mb-2 text-sm font-medium text-orange-800">
+                  Your tenant URL:
+                </p>
+                <p class="break-all font-mono text-orange-700">
+                  {getDisplayUrl(activationResult.tenantId)}
+                </p>
+              </div>
+            )}
+
+            <div class="space-y-4">
+              {activationResult.tenantId ? (
+                <a
+                  href={getDashboardUrl(activationResult.tenantId)}
+                  class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
+                  id="dashboard-button"
+                >
+                  Access Your Dashboard
+                </a>
+              ) : (
+                <div class="text-gray-500">
+                  <p class="mb-2">Unable to determine tenant URL</p>
+                  <p class="text-sm">Please contact support</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div class="rounded-lg bg-white p-8 text-center shadow-lg">
+            <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <svg
+                class="h-8 w-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+
+            <h2 class="mb-4 text-2xl font-bold text-gray-900">
+              Activation Failed
+            </h2>
+
+            <p class="mb-6 text-gray-600">{activationResult.error}</p>
+
+            <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+              <h3 class="mb-2 text-sm font-medium text-yellow-800">
+                Common Issues:
+              </h3>
+              <ul class="space-y-1 text-left text-sm text-yellow-700">
+                <li>• The activation link may have expired</li>
+                <li>• The token may have already been used</li>
+                <li>• There may be a temporary server issue</li>
+              </ul>
+            </div>
+
+            <div class="space-y-4">
+              <a
+                href="/sandbox/register"
+                class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
+              >
+                Register New Tenant
+              </a>
+
+              <div class="text-center">
+                <a
+                  href="mailto:support@tractstack.com"
+                  class="text-sm text-orange-600 underline hover:text-orange-800"
+                >
+                  Contact Support
+                </a>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Auto-redirect to dashboard after successful activation with countdown
+  const dashboardButton = document.getElementById('dashboard-button');
+  if (dashboardButton) {
+    let countdown = 5;
+    const originalText = dashboardButton.textContent;
+
+    // Update button text with countdown
+    const updateButton = () => {
+      dashboardButton.textContent = `Access Your Dashboard (${countdown}s)`;
+      countdown--;
+
+      if (countdown < 0) {
+        dashboardButton.click();
+      }
+    };
+
+    // Start countdown immediately
+    updateButton();
+    const interval = setInterval(updateButton, 1000);
+
+    // Clear interval if user clicks button manually
+    dashboardButton.addEventListener('click', () => {
+      clearInterval(interval);
+    });
+  }
+</script>

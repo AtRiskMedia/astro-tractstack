@@ -15,7 +15,7 @@ import SEOSection from './form/brand/SEOSection';
 import UnsavedChangesBar from './form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = false;
+const VERBOSE = true;
 
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;
@@ -35,6 +35,7 @@ export default function StoryKeepDashboard_Branding({
     onSave: async (data) => {
       try {
         const updatedState = await saveBrandConfigWithStateUpdate(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
           data,
           formState.originalState
         );

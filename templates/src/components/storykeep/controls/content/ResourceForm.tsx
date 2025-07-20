@@ -52,6 +52,7 @@ export default function ResourceForm({
     onSave: async (data) => {
       try {
         const updatedState = await saveResourceWithStateUpdate(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
           data,
           formState.originalState
         );

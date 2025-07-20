@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
+import { TractStackAPI } from '@/utils/api';
 import { classNames } from '@/utils/helpers';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
@@ -57,7 +58,13 @@ const EpinetWrapper = ({
   const MAX_POLLING_ATTEMPTS = 3;
   const POLLING_DELAYS = [2000, 5000, 10000]; // 2s, 5s, 10s
 
-  // Get backend URL
+  // Initialize TractStackAPI
+  const api = useMemo(
+    () => new TractStackAPI(window.TRACTSTACK_CONFIG?.tenantId || 'default'),
+    []
+  );
+
+  // Get backend URL (keep for compatibility with URL construction)
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
@@ -204,11 +211,8 @@ const EpinetWrapper = ({
         setPollingTimer(null);
       }
 
-      // V2 API call with discovered epinet ID
-      const url = new URL(
-        `${goBackend}/api/v1/analytics/epinet/${epinetId}`,
-        window.location.origin
-      );
+      // Build query parameters
+      const params = new URLSearchParams();
 
       // Convert UTC timestamps to hours-back integers (what backend expects)
       if (
@@ -226,30 +230,25 @@ const EpinetWrapper = ({
           (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
         );
 
-        url.searchParams.append('startHour', startHour.toString());
-        url.searchParams.append('endHour', endHour.toString());
+        params.append('startHour', startHour.toString());
+        params.append('endHour', endHour.toString());
       }
 
-      url.searchParams.append(
-        'visitorType',
-        $epinetCustomFilters.visitorType || 'all'
-      );
+      params.append('visitorType', $epinetCustomFilters.visitorType || 'all');
       if ($epinetCustomFilters.selectedUserId) {
-        url.searchParams.append('userId', $epinetCustomFilters.selectedUserId);
+        params.append('userId', $epinetCustomFilters.selectedUserId);
       }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Use TractStackAPI instead of raw fetch
+      const response = await api.get(
+        `/api/v1/analytics/epinet/${epinetId}?${params.toString()}`
+      );
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
+      if (!response.success) {
+        throw new Error(`API request failed: ${response.error}`);
       }
 
-      const result = await response.json();
+      const result = response.data;
 
       if (result.success !== false) {
         // Check if data is still loading
@@ -317,7 +316,7 @@ const EpinetWrapper = ({
     } finally {
       setAnalytics((prev) => ({ ...prev, isLoading: false }));
     }
-  }, [epinetId, $epinetCustomFilters, pollingAttempts, goBackend]);
+  }, [epinetId, $epinetCustomFilters, pollingAttempts, api]);
 
   const { epinet, isLoading, status, error } = analytics;
 
@@ -384,61 +383,46 @@ const EpinetWrapper = ({
   }
 
   return (
-    <>
-      {/* Quick Filter Presets */}
-      <div className="mb-4 mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
-        <span className="font-action font-bold text-gray-800">
-          Filter analytics:
-        </span>
-        {[
-          { label: '24 hours', value: 'daily' },
-          { label: '7 days', value: 'weekly' },
-          { label: '4 weeks', value: 'monthly' },
-        ].map((period) => (
+    <ErrorBoundary
+      fallback={
+        <div className="rounded-lg bg-red-50 p-4 text-red-800">
+          <p className="font-bold">
+            Error rendering user journey visualization
+          </p>
           <button
-            key={period.value}
-            onClick={() => handleFilterChange(period.value)}
-            className={classNames(
-              'rounded-full px-3 py-1 transition-all duration-200 ease-in-out',
-              currentDurationHelper === period.value
-                ? 'bg-cyan-600 font-bold text-white shadow-sm'
-                : 'bg-gray-100 text-gray-700 hover:bg-cyan-100 hover:text-cyan-800'
-            )}
+            onClick={() => window.location.reload()}
+            className="mt-3 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
           >
-            {period.label}
+            Reload Page
           </button>
-        ))}
-        {currentDurationHelper === 'custom' && (
-          <span className="px-3 py-1 text-sm italic text-gray-600">
-            Custom range active
-          </span>
-        )}
-      </div>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Duration Selector */}
+        <EpinetDurationSelector />
 
-      <div className="epinet-wrapper rounded-lg bg-white p-4 shadow">
-        <ErrorBoundary
-          fallback={
-            <div className="rounded-lg bg-red-50 p-4 text-red-800">
-              Error rendering user flow diagram. Please check the data and try
-              again.
-            </div>
-          }
-        >
-          <div className="relative">
-            {(isLoading || status === 'loading' || status === 'refreshing') && (
-              <div className="absolute right-0 top-0 rounded bg-white px-2 py-1 text-xs text-gray-500 shadow-sm">
-                Updating...
+        {/* Main Visualization */}
+        <div className="rounded-lg bg-white p-6 shadow">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              User Journey Visualization
+            </h3>
+            {(isLoading || status === 'loading') && (
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+                <span>Updating...</span>
               </div>
             )}
-            <SankeyDiagram
-              data={{ nodes: epinet.nodes, links: epinet.links }}
-            />
-            <EpinetDurationSelector />
-            <EpinetTableView fullContentMap={fullContentMap} />
           </div>
-        </ErrorBoundary>
+
+          <SankeyDiagram data={epinet} />
+        </div>
+
+        {/* Table View */}
+        <EpinetTableView fullContentMap={fullContentMap} />
       </div>
-    </>
+    </ErrorBoundary>
   );
 };
 

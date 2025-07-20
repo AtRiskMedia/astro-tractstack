@@ -1,6 +1,6 @@
 import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '@/constants';
 
-const VERBOSE = false;
+const VERBOSE = true;
 
 interface AnalyticsEvent {
   contentId: string;
@@ -490,11 +490,13 @@ async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
 
 // Utility functions for environment data - using existing V2 globals
 function getGoBackend(): string {
-  return (window as any).BACKEND_URL || 'http://localhost:8080';
+  return (
+    (window as any).TRACTSTACK_CONFIG?.backendUrl || 'http://localhost:8080'
+  );
 }
 
 function getTenantId(): string {
-  return (window as any).TENANT_ID || 'default';
+  return (window as any).TRACTSTACK_CONFIG?.tenantId || 'default';
 }
 
 function getSessionId(): string | null {

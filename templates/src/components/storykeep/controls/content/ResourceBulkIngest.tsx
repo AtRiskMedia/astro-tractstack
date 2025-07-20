@@ -7,6 +7,7 @@ import type { FullContentMapItem } from '@/types/tractstack';
 interface ResourceBulkIngestProps {
   onClose: (saved: boolean) => void;
   onRefresh: () => void;
+  fullContentMap: FullContentMapItem[];
 }
 
 interface ParsedResource {
@@ -43,14 +44,19 @@ interface FieldDefinition {
 export default function ResourceBulkIngest({
   onClose,
   onRefresh,
+  fullContentMap,
 }: ResourceBulkIngestProps) {
+  const brandConfig = useStore(brandConfigStore);
   const [jsonInput, setJsonInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [progress, setProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
 
-  const brandConfig = useStore(brandConfigStore);
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
 
+  // Parse and validate JSON input
   const validationResult = useMemo((): ValidationResult => {
     if (!jsonInput.trim()) {
       return {
@@ -64,16 +70,21 @@ export default function ResourceBulkIngest({
     let parsed: any[];
     try {
       parsed = JSON.parse(jsonInput);
-    } catch {
-      return {
-        status: 'invalid',
-        resources: [],
-        errors: [{ index: -1, field: 'json', message: 'Invalid JSON format' }],
-        validResources: [],
-      };
-    }
-
-    if (!Array.isArray(parsed)) {
+      if (!Array.isArray(parsed)) {
+        return {
+          status: 'invalid',
+          resources: [],
+          errors: [
+            {
+              index: -1,
+              field: 'root',
+              message: 'JSON must be an array of resource objects',
+            },
+          ],
+          validResources: [],
+        };
+      }
+    } catch (error) {
       return {
         status: 'invalid',
         resources: [],
@@ -81,7 +92,7 @@ export default function ResourceBulkIngest({
           {
             index: -1,
             field: 'root',
-            message: 'Input must be an array of objects',
+            message: `Invalid JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
           },
         ],
         validResources: [],
@@ -92,13 +103,17 @@ export default function ResourceBulkIngest({
     const validResources: ParsedResource[] = [];
     const slugs = new Set<string>();
 
-    parsed.forEach((item, index) => {
+    parsed.forEach((item: any, index: number) => {
+      // Basic structure validation
       if (!item || typeof item !== 'object') {
-        errors.push({ index, field: 'root', message: 'Must be an object' });
+        errors.push({
+          index,
+          field: 'root',
+          message: 'Each item must be an object',
+        });
         return;
       }
 
-      // Core field validation
       if (!item.title || typeof item.title !== 'string') {
         errors.push({
           index,
@@ -114,13 +129,7 @@ export default function ResourceBulkIngest({
           message: 'Slug is required and must be a string',
         });
       } else {
-        if (!/^[a-z0-9-]+$/.test(item.slug)) {
-          errors.push({
-            index,
-            field: 'slug',
-            message: `Slug "${item.slug}" must be lowercase alphanumeric and hyphens only`,
-          });
-        }
+        // Check for duplicate slugs within the batch
         if (slugs.has(item.slug)) {
           errors.push({
             index,
@@ -129,6 +138,18 @@ export default function ResourceBulkIngest({
           });
         } else {
           slugs.add(item.slug);
+        }
+
+        // Check for duplicate slugs in existing content
+        const existingItem = fullContentMap.find(
+          (existing) => existing.slug === item.slug
+        );
+        if (existingItem) {
+          errors.push({
+            index,
+            field: 'slug',
+            message: `Slug "${item.slug}" already exists (${existingItem.type})`,
+          });
         }
       }
 
@@ -193,7 +214,7 @@ export default function ResourceBulkIngest({
             // Skip validation if optional and not provided
             if (!hasValue) return;
 
-            // Type validation based on FieldDefinition.Type
+            // Type validation based on FieldDefinition
             switch (fieldDef.type) {
               case 'string':
                 if (typeof value !== 'string') {
@@ -206,32 +227,43 @@ export default function ResourceBulkIngest({
                 break;
 
               case 'number':
-                if (typeof value !== 'number') {
+                if (typeof value !== 'number' && typeof value !== 'string') {
                   errors.push({
                     index,
                     field: fieldName,
                     message: `${fieldName} must be a number`,
                   });
                 } else {
-                  if (
-                    fieldDef.minNumber !== undefined &&
-                    value < fieldDef.minNumber
-                  ) {
+                  const numValue =
+                    typeof value === 'string' ? parseFloat(value) : value;
+                  if (isNaN(numValue)) {
                     errors.push({
                       index,
                       field: fieldName,
-                      message: `${fieldName} must be at least ${fieldDef.minNumber}`,
+                      message: `${fieldName} must be a valid number`,
                     });
-                  }
-                  if (
-                    fieldDef.maxNumber !== undefined &&
-                    value > fieldDef.maxNumber
-                  ) {
-                    errors.push({
-                      index,
-                      field: fieldName,
-                      message: `${fieldName} must be at most ${fieldDef.maxNumber}`,
-                    });
+                  } else {
+                    // Check min/max constraints
+                    if (
+                      fieldDef.minNumber !== undefined &&
+                      numValue < fieldDef.minNumber
+                    ) {
+                      errors.push({
+                        index,
+                        field: fieldName,
+                        message: `${fieldName} must be at least ${fieldDef.minNumber}`,
+                      });
+                    }
+                    if (
+                      fieldDef.maxNumber !== undefined &&
+                      numValue > fieldDef.maxNumber
+                    ) {
+                      errors.push({
+                        index,
+                        field: fieldName,
+                        message: `${fieldName} must be at most ${fieldDef.maxNumber}`,
+                      });
+                    }
                   }
                 }
                 break;
@@ -241,7 +273,7 @@ export default function ResourceBulkIngest({
                   errors.push({
                     index,
                     field: fieldName,
-                    message: `${fieldName} must be a boolean`,
+                    message: `${fieldName} must be a boolean (true/false)`,
                   });
                 }
                 break;
@@ -254,13 +286,7 @@ export default function ResourceBulkIngest({
                     message: `${fieldName} must be an array`,
                   });
                 } else {
-                  if (!fieldDef.optional && value.length === 0) {
-                    errors.push({
-                      index,
-                      field: fieldName,
-                      message: `${fieldName} must have at least one value`,
-                    });
-                  }
+                  // Multi fields can be empty arrays - no minimum length requirement
                   value.forEach((str, i) => {
                     if (typeof str !== 'string') {
                       errors.push({
@@ -380,9 +406,9 @@ export default function ResourceBulkIngest({
       errors,
       validResources,
     };
-  }, [jsonInput, knownResources]);
+  }, [jsonInput, knownResources, fullContentMap]);
 
-  // Generate example JSON based on available categories
+  // Generate example JSON based on available categories - ENHANCED VERSION
   const exampleJson = useMemo(() => {
     const categories = Object.keys(knownResources);
     if (categories.length === 0) {
@@ -400,41 +426,58 @@ export default function ResourceBulkIngest({
       );
     }
 
-    const firstCategory = categories[0];
-    const schema = knownResources[firstCategory];
-    const example: any = {
-      title: 'Example Resource',
-      slug: `${firstCategory}-example`,
-      category: firstCategory,
-      oneliner: 'A brief description',
-    };
+    // Create examples for ALL categories, not just the first one
+    const examples = categories.map((categorySlug, index) => {
+      const schema = knownResources[categorySlug];
+      const example: any = {
+        title: `Example ${categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)} ${index + 1}`,
+        slug: `${categorySlug}-example-${index + 1}`,
+        category: categorySlug,
+        oneliner: `A brief description of this ${categorySlug}`,
+      };
 
-    // Add example values for schema fields
-    Object.entries(schema).forEach(([key, def]: [string, FieldDefinition]) => {
-      switch (def.type) {
-        case 'string':
-          example[key] = def.defaultValue || 'example text';
-          break;
-        case 'number':
-          example[key] = def.defaultValue || 0;
-          break;
-        case 'boolean':
-          example[key] =
-            def.defaultValue !== undefined ? def.defaultValue : true;
-          break;
-        case 'multi':
-          example[key] = def.defaultValue || ['example1', 'example2'];
-          break;
-        case 'date':
-          example[key] = new Date().toISOString();
-          break;
-        case 'image':
-          example[key] = 'file-id-here';
-          break;
-      }
+      // Add example values for schema fields
+      Object.entries(schema).forEach(
+        ([key, def]: [string, FieldDefinition]) => {
+          switch (def.type) {
+            case 'string':
+              if (
+                def.belongsToCategory &&
+                categories.includes(def.belongsToCategory)
+              ) {
+                example[key] = `${def.belongsToCategory}-example-slug`;
+              } else {
+                example[key] = def.defaultValue || `example ${key}`;
+              }
+              break;
+            case 'number':
+              example[key] = def.defaultValue ?? (def.minNumber || 0);
+              break;
+            case 'boolean':
+              example[key] = def.defaultValue ?? true;
+              break;
+            case 'multi':
+              example[key] = def.defaultValue || [
+                `example ${key} 1`,
+                `example ${key} 2`,
+              ];
+              break;
+            case 'date':
+              example[key] = new Date().toISOString();
+              break;
+            case 'image':
+              example[key] = 'file-id-placeholder';
+              break;
+            default:
+              example[key] = def.defaultValue || `example ${key}`;
+          }
+        }
+      );
+
+      return example;
     });
 
-    return JSON.stringify([example], null, 2);
+    return JSON.stringify(examples, null, 2);
   }, [knownResources]);
 
   // Handle bulk save
@@ -462,7 +505,11 @@ export default function ResourceBulkIngest({
           actionLisp: resource.actionLisp,
         };
 
-        await saveResourceWithStateUpdate(resourceState, resourceState);
+        await saveResourceWithStateUpdate(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
+          resourceState,
+          resourceState
+        );
 
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
@@ -607,42 +654,48 @@ export default function ResourceBulkIngest({
               )}
             </div>
 
-            {/* Progress Bar */}
-            {isProcessing && (
+            {/* Progress indicator */}
+            {isProcessing && progress && (
               <div className="mb-6">
-                <div className="mb-1 flex justify-between text-sm text-gray-600">
-                  <span>Importing resources...</span>
+                <div className="mb-2 flex items-center justify-between text-sm">
                   <span>
-                    {progress.current} / {progress.total}
+                    Processing resource {progress.current + 1} of{' '}
+                    {progress.total}
+                  </span>
+                  <span>
+                    {Math.round(
+                      ((progress.current + 1) / progress.total) * 100
+                    )}
+                    %
                   </span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-200">
+                <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                   <div
-                    className="h-2 rounded-full bg-cyan-600 transition-all duration-300"
+                    className="h-full bg-cyan-600 transition-all duration-300"
                     style={{
-                      width: `${(progress.current / progress.total) * 100}%`,
+                      width: `${((progress.current + 1) / progress.total) * 100}%`,
                     }}
                   />
                 </div>
               </div>
             )}
 
-            {/* Actions */}
+            {/* Action buttons */}
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => onClose(false)}
                 disabled={isProcessing}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!canSave}
-                className="rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
+                className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 {isProcessing
-                  ? `Importing... (${progress.current}/${progress.total})`
+                  ? 'Processing...'
                   : `Import ${validationResult.validResources.length} Resources`}
               </button>
             </div>

@@ -34,7 +34,9 @@ export default function StoryKeepDashboard_Advanced({
     async function loadStatus() {
       try {
         setIsLoading(true);
-        const statusData = await getAdvancedConfigStatus();
+        const statusData = await getAdvancedConfigStatus(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default'
+        );
         setStatus(statusData);
       } catch (err) {
         setError(
@@ -55,10 +57,15 @@ export default function StoryKeepDashboard_Advanced({
     interceptor: advancedStateIntercept,
     onSave: async (state: AdvancedConfigState) => {
       const backendPayload = convertToBackendFormat(state);
-      await saveAdvancedConfig(backendPayload);
+      await saveAdvancedConfig(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        backendPayload
+      );
 
       // Reload status after save
-      const newStatus = await getAdvancedConfigStatus();
+      const newStatus = await getAdvancedConfigStatus(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default'
+      );
       setStatus(newStatus);
 
       // Reset form to new state (clears password fields and isDirty)

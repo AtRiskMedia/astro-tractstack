@@ -6,9 +6,10 @@ import type { BeliefNode, BeliefNodeState } from '@/types/tractstack';
  * Save an existing belief
  */
 export async function saveBelief(
+  tenantId: string,
   beliefState: BeliefNodeState
 ): Promise<BeliefNode> {
-  const api = new TractStackAPI();
+  const api = new TractStackAPI(tenantId);
   const beliefData = convertToBackendFormat(beliefState);
 
   const response = await api.put(
@@ -22,9 +23,10 @@ export async function saveBelief(
  * Create a new belief
  */
 export async function createBelief(
+  tenantId: string,
   beliefState: BeliefNodeState
 ): Promise<BeliefNode> {
-  const api = new TractStackAPI();
+  const api = new TractStackAPI(tenantId);
   const beliefData = convertToBackendFormat(beliefState);
 
   const response = await api.post('/api/v1/nodes/beliefs/create', beliefData);
@@ -34,16 +36,22 @@ export async function createBelief(
 /**
  * Delete a belief
  */
-export async function deleteBelief(beliefId: string): Promise<void> {
-  const api = new TractStackAPI();
+export async function deleteBelief(
+  tenantId: string,
+  beliefId: string
+): Promise<void> {
+  const api = new TractStackAPI(tenantId);
   await api.request(`/api/v1/nodes/beliefs/${beliefId}`, { method: 'DELETE' });
 }
 
 /**
  * Get a belief by ID
  */
-export async function getBeliefById(beliefId: string): Promise<BeliefNode> {
-  const api = new TractStackAPI();
+export async function getBeliefById(
+  tenantId: string,
+  beliefId: string
+): Promise<BeliefNode> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.get(`/api/v1/nodes/beliefs/${beliefId}`);
   return response.data as BeliefNode;
 }
@@ -53,6 +61,7 @@ export async function getBeliefById(beliefId: string): Promise<BeliefNode> {
  * Following the exact pattern from menuConfig.ts
  */
 export async function saveBeliefWithStateUpdate(
+  tenantId: string,
   currentState: BeliefNodeState,
   originalState: BeliefNodeState
 ): Promise<BeliefNodeState> {
@@ -65,9 +74,9 @@ export async function saveBeliefWithStateUpdate(
     if (isCreate) {
       // Generate temporary ID for create (backend will assign real ID)
       const tempState = { ...currentState, id: crypto.randomUUID() };
-      savedBelief = await createBelief(tempState);
+      savedBelief = await createBelief(tenantId, tempState);
     } else {
-      savedBelief = await saveBelief(currentState);
+      savedBelief = await saveBelief(tenantId, currentState);
     }
 
     // Convert the saved belief back to state format

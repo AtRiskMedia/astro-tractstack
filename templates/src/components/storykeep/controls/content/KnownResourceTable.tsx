@@ -32,7 +32,7 @@ const KnownResourceTable = ({
   // Load brandConfig if not already loaded
   useEffect(() => {
     if (!brandConfig) {
-      getBrandConfig()
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
         .then((config) => {
           brandConfigStore.set(config);
         })
@@ -90,7 +90,11 @@ const KnownResourceTable = ({
         knownResources: updatedKnownResources,
       };
 
-      await saveBrandConfigWithStateUpdate(updatedBrandState, brandState);
+      await saveBrandConfigWithStateUpdate(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        updatedBrandState,
+        brandState
+      );
 
       // Refresh the data
       onRefresh?.();
@@ -244,6 +248,7 @@ const KnownResourceTable = ({
 
       {showBulkIngest && (
         <ResourceBulkIngest
+          fullContentMap={contentMap}
           onClose={(saved: boolean) => {
             setShowBulkIngest(false);
             if (saved) {

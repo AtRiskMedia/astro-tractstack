@@ -92,7 +92,11 @@ const KnownResourceForm = ({
           knownResources: updatedKnownResources,
         };
 
-        await saveBrandConfigWithStateUpdate(updatedBrandState, brandState);
+        await saveBrandConfigWithStateUpdate(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
+          updatedBrandState,
+          brandState
+        );
 
         // Call success callback after save (original pattern)
         setTimeout(() => {

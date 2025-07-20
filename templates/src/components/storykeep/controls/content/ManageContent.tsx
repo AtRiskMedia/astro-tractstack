@@ -82,11 +82,15 @@ const ManageContent = ({
   const refreshData = async () => {
     try {
       // Use existing getFullContentMap function from analytics store
-      const newContentMap = await getFullContentMap();
+      const newContentMap = await getFullContentMap(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default'
+      );
       setCurrentContentMap(newContentMap);
 
       // Use existing getBrandConfig function
-      const newBrandConfig = await getBrandConfig();
+      const newBrandConfig = await getBrandConfig(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default'
+      );
       brandConfigStore.set(newBrandConfig);
     } catch (error) {
       console.error('Failed to refresh data:', error);
@@ -96,7 +100,7 @@ const ManageContent = ({
   // Load brandConfig if not already loaded
   useEffect(() => {
     if (!brandConfig) {
-      getBrandConfig()
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
         .then((config) => {
           brandConfigStore.set(config);
         })
@@ -157,7 +161,10 @@ const ManageContent = ({
 
   const handleEditMenu = async (menuId: string) => {
     try {
-      const menu = await getMenuById(menuId);
+      const menu = await getMenuById(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        menuId
+      );
       setActiveMenuForm(menu);
     } catch (error) {
       console.error('Failed to load menu for editing:', error);
@@ -178,7 +185,10 @@ const ManageContent = ({
     }
 
     try {
-      const belief = await getBeliefById(beliefId);
+      const belief = await getBeliefById(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        beliefId
+      );
       setActiveBeliefForm(belief);
     } catch (error) {
       console.error('Failed to load belief for editing:', error);
@@ -202,7 +212,10 @@ const ManageContent = ({
 
   const handleEditResource = async (resourceId: string) => {
     try {
-      const resource = await getResource(resourceId);
+      const resource = await getResource(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        resourceId
+      );
       setActiveResourceForm({
         resource,
         category: activeTab,

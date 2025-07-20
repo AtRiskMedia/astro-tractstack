@@ -98,7 +98,10 @@ export default function BeliefTable({
 
     try {
       setIsDeleting(belief.id);
-      await deleteBelief(belief.id);
+      await deleteBelief(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        belief.id
+      );
 
       // Reload orphan analysis after successful deletion
       await loadOrphanAnalysis();

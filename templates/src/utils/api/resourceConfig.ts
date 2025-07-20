@@ -2,14 +2,14 @@ import { TractStackAPI } from '../api';
 import { convertToLocalState, convertToBackendFormat } from './resourceHelpers';
 import type { ResourceConfig, ResourceState } from '@/types/tractstack';
 
-const api = new TractStackAPI();
-
 /**
  * Save resource - handles both create and update operations
  */
 export async function saveResource(
+  tenantId: string,
   resource: Partial<ResourceConfig> & { id?: string }
 ): Promise<ResourceConfig> {
+  const api = new TractStackAPI(tenantId);
   try {
     const isCreate = !resource.id || resource.id === '';
 
@@ -54,8 +54,10 @@ export async function saveResource(
 }
 
 export async function createResource(
+  tenantId: string,
   resource: Omit<ResourceConfig, 'id'>
 ): Promise<ResourceConfig> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.post('/api/v1/nodes/resources/create', resource);
   if (!response.success) {
     throw new Error(response.error || 'Failed to create resource');
@@ -63,7 +65,11 @@ export async function createResource(
   return response.data;
 }
 
-export async function getResource(id: string): Promise<ResourceConfig> {
+export async function getResource(
+  tenantId: string,
+  id: string
+): Promise<ResourceConfig> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.get(`/api/v1/nodes/resources/${id}`);
   if (!response.success) {
     throw new Error(response.error || 'Failed to get resource');
@@ -71,7 +77,11 @@ export async function getResource(id: string): Promise<ResourceConfig> {
   return response.data;
 }
 
-export async function getResourceBySlug(slug: string): Promise<ResourceConfig> {
+export async function getResourceBySlug(
+  tenantId: string,
+  slug: string
+): Promise<ResourceConfig> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.get(`/api/v1/nodes/resources/slug/${slug}`);
   if (!response.success) {
     throw new Error(response.error || 'Failed to get resource by slug');
@@ -79,7 +89,11 @@ export async function getResourceBySlug(slug: string): Promise<ResourceConfig> {
   return response.data;
 }
 
-export async function deleteResource(id: string): Promise<void> {
+export async function deleteResource(
+  tenantId: string,
+  id: string
+): Promise<void> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.request(`/api/v1/nodes/resources/${id}`, {
     method: 'DELETE',
   });
@@ -88,7 +102,8 @@ export async function deleteResource(id: string): Promise<void> {
   }
 }
 
-export async function getAllResourceIds(): Promise<string[]> {
+export async function getAllResourceIds(tenantId: string): Promise<string[]> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.get('/api/v1/nodes/resources');
   if (!response.success) {
     throw new Error(response.error || 'Failed to get resource IDs');
@@ -97,8 +112,10 @@ export async function getAllResourceIds(): Promise<string[]> {
 }
 
 export async function getResourcesByIds(
+  tenantId: string,
   ids: string[]
 ): Promise<ResourceConfig[]> {
+  const api = new TractStackAPI(tenantId);
   const response = await api.post('/api/v1/nodes/resources', { ids });
   if (!response.success) {
     throw new Error(response.error || 'Failed to get resources by IDs');
@@ -107,16 +124,18 @@ export async function getResourcesByIds(
 }
 
 export async function getResourcesByCategory(
+  tenantId: string,
   categorySlug: string
 ): Promise<ResourceConfig[]> {
-  const allIds = await getAllResourceIds();
-  const allResources = await getResourcesByIds(allIds);
+  const allIds = await getAllResourceIds(tenantId);
+  const allResources = await getResourcesByIds(tenantId, allIds);
   return allResources.filter(
     (resource) => resource.categorySlug === categorySlug
   );
 }
 
 export async function saveResourceWithStateUpdate(
+  tenantId: string,
   currentState: ResourceState,
   originalState: ResourceState
 ): Promise<ResourceState> {
@@ -129,28 +148,12 @@ export async function saveResourceWithStateUpdate(
   if (isCreate) {
     // For create, remove id and call createResource
     const { id, ...createData } = backendFormat;
-    const createdResource = await createResource(createData);
+    const createdResource = await createResource(tenantId, createData);
     return convertToLocalState(createdResource);
   } else {
-    // For update, calculate changed fields
-    const originalBackendFormat = convertToBackendFormat(originalState);
-    const changedFields: Partial<ResourceConfig> = { id: backendFormat.id };
-
-    // Compare each field and include only changed ones
-    Object.keys(backendFormat).forEach((key) => {
-      const typedKey = key as keyof ResourceConfig;
-      if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
-        (changedFields as any)[typedKey] = backendFormat[typedKey];
-      }
-    });
-
-    // If only id is in changedFields, nothing actually changed
-    if (Object.keys(changedFields).length <= 1) {
-      return currentState;
-    }
-
-    // Save the changes
-    const updatedResource = await saveResource(changedFields);
+    // For update, send the FULL payload (not just changed fields)
+    // This is required for nodes unlike brand/advanced config
+    const updatedResource = await saveResource(tenantId, backendFormat);
     return convertToLocalState(updatedResource);
   }
 }

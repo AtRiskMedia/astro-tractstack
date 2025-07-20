@@ -1,5 +1,5 @@
 import type { AstroIntegration } from 'astro';
-import type { TractStackConfig } from './types.js';
+import type { TractStackConfig } from '@/types/tractstack';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
 import { injectTemplateFiles } from './utils/inject-files.js';
@@ -16,9 +16,16 @@ export default function tractstack(
       'astro:config:setup': async ({ config, updateConfig, logger }) => {
         const tractStackConfig = validateConfig(userConfig, logger);
 
+        // Check for multi-tenant environment variable
+        const enableMultiTenant = userConfig.enableMultiTenant || false;
+        logger.info(
+          `DEBUG: enableMultiTenant = ${enableMultiTenant}, process.env.PUBLIC_ENABLE_MULTI_TENANT = ${process.env.PUBLIC_ENABLE_MULTI_TENANT}`
+        );
+
         logger.info('TractStack: Starting file injection...');
         await injectTemplateFiles(resolveTemplate, logger, {
           includeExamples: userConfig.includeExamples,
+          enableMultiTenant,
         });
         logger.info('TractStack: File injection complete.');
 
@@ -44,6 +51,9 @@ export default function tractstack(
           vite: {
             define: {
               __TRACTSTACK_VERSION__: JSON.stringify('2.0.0-alpha.1'),
+              'import.meta.env.PUBLIC_ENABLE_MULTI_TENANT': JSON.stringify(
+                enableMultiTenant.toString()
+              ),
             },
             resolve: {
               alias: {
@@ -56,7 +66,7 @@ export default function tractstack(
               },
             },
             build: {
-              chunkSizeWarningLimit: 600,
+              chunkSizeWarningLimit: 650,
             },
             ssr: {
               noExternal: [
