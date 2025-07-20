@@ -138,7 +138,7 @@ export default function StoryKeepDashboard({
         nowUTC.getTime() - hoursBack * 60 * 60 * 1000
       );
 
-      epinetCustomFilters.set({
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         enabled: true,
         startTimeUTC: startTimeUTC.toISOString(),
@@ -205,7 +205,7 @@ export default function StoryKeepDashboard({
 
       // Update epinetCustomFilters with additional data from response
       const current = epinetCustomFilters.get();
-      epinetCustomFilters.set({
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...current,
         userCounts: data.userCounts || [],
         hourlyNodeActivity: data.hourlyNodeActivity || {},
@@ -261,7 +261,7 @@ export default function StoryKeepDashboard({
         nowUTC.getTime() - 28 * 24 * 60 * 60 * 1000
       );
 
-      epinetCustomFilters.set({
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         enabled: true,
         visitorType: 'all',
         selectedUserId: null,

@@ -166,7 +166,7 @@ const EpinetDurationSelector = () => {
     }
 
     // Update with UTC timestamps
-    epinetCustomFilters.set({
+    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       ...$epinetCustomFilters,
       visitorType: localFilters.visitorType,
       selectedUserId: localFilters.selectedUserId,
@@ -307,7 +307,7 @@ const EpinetDurationSelector = () => {
     );
 
     // Set the store directly like setStandardDuration does
-    epinetCustomFilters.set({
+    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       ...$epinetCustomFilters,
       enabled: true,
       startTimeUTC: startTimeUTC.toISOString(),

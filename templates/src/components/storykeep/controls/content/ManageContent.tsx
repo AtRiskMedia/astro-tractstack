@@ -91,7 +91,10 @@ const ManageContent = ({
       const newBrandConfig = await getBrandConfig(
         window.TRACTSTACK_CONFIG?.tenantId || 'default'
       );
-      brandConfigStore.set(newBrandConfig);
+      brandConfigStore.set(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        newBrandConfig
+      );
     } catch (error) {
       console.error('Failed to refresh data:', error);
     }
@@ -102,7 +105,10 @@ const ManageContent = ({
     if (!brandConfig) {
       getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
         .then((config) => {
-          brandConfigStore.set(config);
+          brandConfigStore.set(
+            window.TRACTSTACK_CONFIG?.tenantId || 'default',
+            config
+          );
         })
         .catch((error) => {
           console.error('Failed to load brand config:', error);

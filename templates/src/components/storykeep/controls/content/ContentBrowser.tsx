@@ -104,7 +104,7 @@ const ContentBrowser = ({
   const setStandardDuration = (hours: number) => {
     const nowUTC = new Date();
     const startTimeUTC = new Date(nowUTC.getTime() - hours * 60 * 60 * 1000);
-    epinetCustomFilters.set({
+    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       ...$epinetCustomFilters,
       enabled: true,
       startTimeUTC: startTimeUTC.toISOString(),

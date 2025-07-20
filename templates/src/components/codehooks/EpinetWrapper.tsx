@@ -64,10 +64,6 @@ const EpinetWrapper = ({
     []
   );
 
-  // Get backend URL (keep for compatibility with URL construction)
-  const goBackend =
-    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-
   // Clear polling timer on unmount
   useEffect(() => {
     return () => {
@@ -77,7 +73,6 @@ const EpinetWrapper = ({
     };
   }, [pollingTimer]);
 
-  // Auto-discover epinet ID following V1 pattern
   useEffect(() => {
     const discoverEpinetId = async () => {
       try {
@@ -118,7 +113,7 @@ const EpinetWrapper = ({
     const nowUTC = new Date();
     const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    epinetCustomFilters.set({
+    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       enabled: true,
       visitorType: 'all',
       selectedUserId: null,
@@ -190,7 +185,7 @@ const EpinetWrapper = ({
         nowUTC.getTime() - hoursBack * 60 * 60 * 1000
       );
 
-      epinetCustomFilters.set({
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         enabled: true,
         startTimeUTC: startTimeUTC.toISOString(),
@@ -283,11 +278,14 @@ const EpinetWrapper = ({
         }));
 
         // Update the global store with additional data from API response
-        epinetCustomFilters.set({
-          ...$epinetCustomFilters,
-          userCounts: result.userCounts || [],
-          hourlyNodeActivity: result.hourlyNodeActivity || {},
-        });
+        epinetCustomFilters.set(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default',
+          {
+            ...$epinetCustomFilters,
+            userCounts: result.userCounts || [],
+            hourlyNodeActivity: result.hourlyNodeActivity || {},
+          }
+        );
 
         setPollingAttempts(0);
       } else {
@@ -383,46 +381,44 @@ const EpinetWrapper = ({
   }
 
   return (
-    <ErrorBoundary
-      fallback={
-        <div className="rounded-lg bg-red-50 p-4 text-red-800">
-          <p className="font-bold">
-            Error rendering user journey visualization
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-3 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
-          >
-            Reload Page
-          </button>
-        </div>
-      }
-    >
-      <div className="space-y-6">
-        {/* Duration Selector */}
-        <EpinetDurationSelector />
-
-        {/* Main Visualization */}
-        <div className="rounded-lg bg-white p-6 shadow">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              User Journey Visualization
-            </h3>
-            {(isLoading || status === 'loading') && (
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
-                <span>Updating...</span>
-              </div>
-            )}
+    <div className="px-3.5 py-12 md:px-6">
+      <ErrorBoundary
+        fallback={
+          <div className="rounded-lg bg-red-50 p-4 text-red-800">
+            <p className="font-bold">
+              Error rendering user journey visualization
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-3 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {/* SankeyDiagram FIRST */}
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="mb-4 flex items-center justify-between">
+              {(isLoading || status === 'loading') && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+                  <span>Updating...</span>
+                </div>
+              )}
+            </div>
+            <SankeyDiagram data={epinet} />
           </div>
 
-          <SankeyDiagram data={epinet} />
-        </div>
+          {/* EpinetDurationSelector SECOND */}
+          <EpinetDurationSelector />
 
-        {/* Table View */}
-        <EpinetTableView fullContentMap={fullContentMap} />
-      </div>
-    </ErrorBoundary>
+          {/* EpinetTableView THIRD */}
+          <EpinetTableView fullContentMap={fullContentMap} />
+        </div>
+      </ErrorBoundary>
+    </div>
   );
 };
 

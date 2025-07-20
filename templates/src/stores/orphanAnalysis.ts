@@ -19,13 +19,74 @@ export interface OrphanAnalysisState {
   lastFetched: number | null;
 }
 
-// Create the store
-export const orphanAnalysisStore = atom<OrphanAnalysisState>({
+// Internal tenant-keyed storage
+const tenantOrphanAnalysis = atom<Record<string, OrphanAnalysisState>>({});
+
+// Helper to get current tenant ID
+function getCurrentTenantId(): string {
+  if (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) {
+    return window.TRACTSTACK_CONFIG.tenantId;
+  }
+  return import.meta.env.PUBLIC_TENANTID || 'default';
+}
+
+// Default state
+const defaultOrphanState: OrphanAnalysisState = {
   data: null,
   isLoading: false,
   error: null,
   lastFetched: null,
-});
+};
+
+// Create tenant-aware store that works with useStore
+const createOrphanAnalysisStore = () => {
+  const store = {
+    get: () => {
+      const tenantId = getCurrentTenantId();
+      return tenantOrphanAnalysis.get()[tenantId] || defaultOrphanState;
+    },
+
+    subscribe: (callback: (value: OrphanAnalysisState) => void) => {
+      const tenantId = getCurrentTenantId();
+      return tenantOrphanAnalysis.subscribe((analysis) => {
+        callback(analysis[tenantId] || defaultOrphanState);
+      });
+    },
+
+    // Required nanostore properties for useStore
+    lc: 0,
+    listen: function (callback: any) {
+      return this.subscribe(callback);
+    },
+    notify: function () {},
+    off: function () {},
+    get value() {
+      return this.get();
+    },
+    set: function () {}, // Orphan store is read-only for components
+  };
+
+  return store;
+};
+
+export const orphanAnalysisStore = createOrphanAnalysisStore();
+
+// Helper to update state for specific tenant
+function updateTenantState(
+  tenantId: string,
+  updates: Partial<OrphanAnalysisState>
+): void {
+  const currentStates = tenantOrphanAnalysis.get();
+  const currentState = currentStates[tenantId] || defaultOrphanState;
+
+  tenantOrphanAnalysis.set({
+    ...currentStates,
+    [tenantId]: {
+      ...currentState,
+      ...updates,
+    },
+  });
+}
 
 // Helper function to count orphans from the analysis data
 export function countOrphans(data: OrphanAnalysisData | null): number {
@@ -33,7 +94,6 @@ export function countOrphans(data: OrphanAnalysisData | null): number {
 
   let orphanCount = 0;
 
-  // Count items with empty dependency arrays (these are orphans)
   Object.values(data.storyFragments || {}).forEach((deps) => {
     if (deps.length === 0) orphanCount++;
   });
@@ -75,6 +135,7 @@ export async function fetchOrphanAnalysis(): Promise<OrphanAnalysisData> {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'X-Tenant-ID': getCurrentTenantId(),
     },
   });
 
@@ -88,15 +149,14 @@ export async function fetchOrphanAnalysis(): Promise<OrphanAnalysisData> {
   return await response.json();
 }
 
-// Polling interval for loading status
-let pollingInterval: NodeJS.Timeout | null = null;
+// Polling and state management (per tenant)
+const pollingIntervals = new Map<string, NodeJS.Timeout>();
+const fetchingStates = new Map<string, boolean>();
 
-// Track if we're currently fetching to prevent duplicate requests
-let isFetching = false;
-
-// Action to load orphan analysis data
 export async function loadOrphanAnalysis(): Promise<void> {
-  const currentState = orphanAnalysisStore.get();
+  const tenantId = getCurrentTenantId();
+  const currentState =
+    tenantOrphanAnalysis.get()[tenantId] || defaultOrphanState;
 
   // Don't reload if we've fetched in the last 5 minutes and it's complete
   const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
@@ -110,15 +170,14 @@ export async function loadOrphanAnalysis(): Promise<void> {
   }
 
   // Prevent duplicate concurrent requests
-  if (isFetching) {
+  if (fetchingStates.get(tenantId)) {
     return;
   }
 
-  isFetching = true;
+  fetchingStates.set(tenantId, true);
 
   // Set loading state
-  orphanAnalysisStore.set({
-    ...currentState,
+  updateTenantState(tenantId, {
     isLoading: true,
     error: null,
   });
@@ -126,7 +185,7 @@ export async function loadOrphanAnalysis(): Promise<void> {
   try {
     const data = await fetchOrphanAnalysis();
 
-    orphanAnalysisStore.set({
+    updateTenantState(tenantId, {
       data,
       isLoading: false,
       error: null,
@@ -135,67 +194,58 @@ export async function loadOrphanAnalysis(): Promise<void> {
 
     // If status is still "loading", start polling
     if (data.status === 'loading') {
-      startPolling();
+      startPolling(tenantId);
     } else {
-      // Analysis is complete, stop any existing polling
-      stopPolling();
+      stopPolling(tenantId);
     }
   } catch (error) {
-    orphanAnalysisStore.set({
+    updateTenantState(tenantId, {
       data: null,
       isLoading: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
       lastFetched: null,
     });
-    stopPolling();
+    stopPolling(tenantId);
   } finally {
-    isFetching = false;
+    fetchingStates.set(tenantId, false);
   }
 }
 
-// Start polling for updates when analysis is in progress
-function startPolling(): void {
-  // Clear any existing polling
-  stopPolling();
+function startPolling(tenantId: string): void {
+  stopPolling(tenantId);
 
-  pollingInterval = setInterval(async () => {
+  const intervalId = setInterval(async () => {
     try {
       const data = await fetchOrphanAnalysis();
-      const currentState = orphanAnalysisStore.get();
 
-      orphanAnalysisStore.set({
-        ...currentState,
+      updateTenantState(tenantId, {
         data,
         lastFetched: Date.now(),
       });
 
-      // Stop polling when analysis is complete
       if (data.status === 'complete') {
-        stopPolling();
+        stopPolling(tenantId);
       }
     } catch (error) {
       console.error('Polling error:', error);
-      // Continue polling on error, but log it
     }
-  }, 2000); // Poll every 2 seconds
+  }, 2000);
+
+  pollingIntervals.set(tenantId, intervalId);
 }
 
-// Stop polling
-function stopPolling(): void {
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-    pollingInterval = null;
+function stopPolling(tenantId: string): void {
+  const intervalId = pollingIntervals.get(tenantId);
+  if (intervalId) {
+    clearInterval(intervalId);
+    pollingIntervals.delete(tenantId);
   }
 }
 
-// Action to clear the store (useful for forced refresh)
 export function clearOrphanAnalysis(): void {
-  stopPolling(); // Stop any polling when clearing
-  isFetching = false; // Reset the fetching flag
-  orphanAnalysisStore.set({
-    data: null,
-    isLoading: false,
-    error: null,
-    lastFetched: null,
-  });
+  const tenantId = getCurrentTenantId();
+  stopPolling(tenantId);
+  fetchingStates.set(tenantId, false);
+
+  updateTenantState(tenantId, defaultOrphanState);
 }

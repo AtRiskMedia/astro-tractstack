@@ -197,10 +197,10 @@ const authStatus = {
 
       {/* Logout Icon - Admin/Editor Only */}
       {
-        (authStatus.isAdmin || authStatus.userRole === 'editor') ? (
+        authStatus.isAdmin || authStatus.userRole === 'editor' ? (
           <button
             id="logout-btn"
-            class="text-myblue/80 hover:text-red-600 hover:rotate-6"
+            class="text-myblue/80 hover:rotate-6 hover:text-red-600"
             title="Logout"
           >
             <svg
@@ -249,10 +249,7 @@ const authStatus = {
           <p class="text-sm text-blue-700">
             <span class="font-medium">StoryKeep Dashboard</span>
           </p>
-          <a
-            href="/"
-            class="text-sm text-blue-600 hover:text-blue-800"
-          >
+          <a href="/" class="text-sm text-blue-600 hover:text-blue-800">
             Return to Site
           </a>
         </div>
@@ -262,17 +259,17 @@ const authStatus = {
 </header>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const logoutBtn = document.getElementById('logout-btn');
-    
+
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', async function(e) {
+      logoutBtn.addEventListener('click', async function (e) {
         e.preventDefault();
-        
+
         // Disable button during logout process
         logoutBtn.disabled = true;
         logoutBtn.textContent = 'Logging out...';
-        
+
         try {
           // Call the logout API
           const response = await fetch('/api/auth/logout', {
@@ -286,7 +283,7 @@ const authStatus = {
 
           if (result.success) {
             console.log('StoryKeep: Logout successful');
-            
+
             // Clear any remaining TractStack user profile data
             const tractStackKeys = [];
             for (let i = 0; i < localStorage.length; i++) {
@@ -309,7 +306,7 @@ const authStatus = {
           } else {
             console.error('StoryKeep: Logout failed:', result.error);
             alert('Logout failed. Please try again.');
-            
+
             // Re-enable button
             logoutBtn.disabled = false;
             logoutBtn.textContent = 'Logout';
@@ -317,7 +314,7 @@ const authStatus = {
         } catch (error) {
           console.error('Logout error:', error);
           alert('Logout failed due to network error. Please try again.');
-          
+
           // Re-enable button
           logoutBtn.disabled = false;
           logoutBtn.textContent = 'Logout';

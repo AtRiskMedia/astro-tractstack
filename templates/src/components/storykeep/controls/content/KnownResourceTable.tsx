@@ -34,7 +34,10 @@ const KnownResourceTable = ({
     if (!brandConfig) {
       getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
         .then((config) => {
-          brandConfigStore.set(config);
+          brandConfigStore.set(
+            window.TRACTSTACK_CONFIG?.tenantId || 'default',
+            config
+          );
         })
         .catch((error) => {
           console.error('Failed to load brand config:', error);

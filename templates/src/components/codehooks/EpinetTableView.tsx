@@ -121,7 +121,7 @@ const EpinetTableView = ({
         Date.UTC(year, month - 1, day, hour, 59, 59, 999)
       );
 
-      epinetCustomFilters.set({
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         startTimeUTC: startTimeUTC.toISOString(),
         endTimeUTC: endTimeUTC.toISOString(),
