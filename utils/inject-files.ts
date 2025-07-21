@@ -193,10 +193,6 @@ export async function injectTemplateFiles(
 
     // API Routes
     {
-      src: resolve('templates/src/pages/api/auth/visit.ts'),
-      dest: 'src/pages/api/auth/visit.ts',
-    },
-    {
       src: resolve('templates/src/pages/api/auth/profile.ts'),
       dest: 'src/pages/api/auth/profile.ts',
     },
@@ -233,12 +229,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/components/Fragment.astro'),
       dest: 'src/components/Fragment.astro',
-    },
-
-    // Authentication Components
-    {
-      src: resolve('templates/src/components/auth/SessionInit.astro'),
-      dest: 'src/components/auth/SessionInit.astro',
     },
 
     // Profile Components

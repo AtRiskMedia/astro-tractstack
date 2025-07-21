@@ -1,6 +1,5 @@
 ---
 import { ClientRouter } from 'astro:transitions';
-import SessionInit from '@/components/auth/SessionInit.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/stores/brand';
@@ -134,7 +133,6 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
     >
     </div>
     <div id="content" class="transition-opacity duration-300">
-      <SessionInit />
       <slot />
     </div>
     <Footer
