@@ -3,8 +3,6 @@ import { brandConfigStore } from '@/stores/brand';
 import { convertToLocalState, convertToBackendFormat } from './brandHelpers';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = true;
-
 export async function saveBrandConfig(
   tenantId: string,
   brandConfig: BrandConfig
@@ -124,11 +122,8 @@ export async function saveBrandConfigWithStateUpdate(
 
   // Only send if there are actual changes
   if (Object.keys(changedFields).length === 0) {
-    if (VERBOSE) console.log('ℹ️ No changes detected, skipping save');
     return currentState;
   }
-
-  if (VERBOSE) console.log('🚀 Saving brand config changes:', changedFields);
 
   try {
     // Save to backend
@@ -138,16 +133,12 @@ export async function saveBrandConfigWithStateUpdate(
     const freshConfig = await getBrandConfig(tenantId);
     brandConfigStore.set(tenantId, freshConfig);
 
-    if (VERBOSE)
-      console.log('✅ Brand config saved successfully:', freshConfig);
-
     // Convert updated config back to local state format
     const newLocalState = convertToLocalState(freshConfig);
 
     return newLocalState;
   } catch (error) {
     // Network errors are already handled by redirecting to /maint in saveBrandConfig
-    if (VERBOSE) console.error('❌ Failed to save brand config:', error);
     throw error;
   }
 }

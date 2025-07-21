@@ -15,8 +15,6 @@ import SEOSection from '@/components/form/brand/SEOSection';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-const VERBOSE = true;
-
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;
 }
@@ -47,7 +45,7 @@ export default function StoryKeepDashboard_Branding({
         const updatedBrandConfig = convertToBackendFormat(updatedState);
         setCurrentBrandConfig(updatedBrandConfig);
       } catch (error) {
-        if (VERBOSE) console.error('Save failed:', error);
+        console.error('Save failed:', error);
         throw error; // Let UnsavedChangesBar handle error display
       }
     },

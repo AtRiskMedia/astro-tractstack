@@ -1,4 +1,4 @@
-export const VERBOSE = true;
+export const VERBOSE = false;
 
 // Module-specific state
 let eventSource: EventSource | null = null;
