@@ -5,11 +5,10 @@ import { getBrandConfig } from '@/stores/brand';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 
-const VERBOSE = true;
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
-const { slug } = Astro.params;
+const { slug } = Astro.params || {};
 const lookup = slug || '';
 
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
@@ -26,7 +25,6 @@ try {
     },
   });
 
-  // Handle failed response using utility
   const failedResponse = await handleFailedResponse(
     response,
     goBackend,
@@ -39,13 +37,10 @@ try {
 
   storyData = await response.json();
   if (storyData.isHome && lookup !== '') {
-    // This storyfragment is the home page but was accessed via its slug
-    // Redirect to / to normalize the URL
     return Astro.redirect('/');
   }
 } catch (error) {
   console.error('Error fetching storyfragment:', error);
-  // Network errors likely mean backend is down - go straight to maintenance
   const currentPath = Astro.url.pathname;
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
@@ -55,7 +50,6 @@ const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
 
-// If no panes, redirect to storykeep for setup
 if (paneIds.length === 0) {
   return Astro.redirect('/storykeep');
 }
@@ -69,7 +63,7 @@ try {
       'X-Tenant-ID': tenantId,
       'X-StoryFragment-ID': storyfragmentId,
     },
-    body: JSON.stringify({ paneIds: paneIds }),
+    body: JSON.stringify({ paneIds }),
   });
 
   if (batchResponse.ok) {
@@ -83,9 +77,6 @@ try {
       });
     }
   } else {
-    console.error('Batch fragment request failed:', batchResponse.status);
-
-    // Handle failed fragments response using utility
     const failedFragmentsResponse = await handleFailedResponse(
       batchResponse,
       goBackend,
@@ -107,16 +98,10 @@ if (!fragmentsData) {
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
-const fullContentMap = await getFullContentMap(
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
-);
-
-const title = storyfragmentTitle;
+const fullContentMap = await getFullContentMap(tenantId);
 const description = storyData.description || 'Dynamic content from TractStack';
+const brandConfig = await getBrandConfig(tenantId);
 
-const brandConfig = await getBrandConfig(
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
-);
 if (!brandConfig.SITE_INIT) {
   return Astro.redirect('/storykeep');
 }
@@ -132,6 +117,7 @@ if (!brandConfig.SITE_INIT) {
   isStoryKeep={false}
   isEditable={false}
   brandConfig={brandConfig}
+  storyfragmentId={storyfragmentId}
 >
   <main id="main-content" class="min-h-screen w-full">
     <div class="panes-container">
@@ -139,9 +125,10 @@ if (!brandConfig.SITE_INIT) {
         paneIds.map((paneId: string) => (
           <div
             key={paneId}
+            id={`pane-${paneId}`}
             data-pane-id={paneId}
             class="pane-fragment-container"
-            hx-get={`${goBackend}/api/v1/fragments/panes/${paneId}`}
+            hx-get={`/api/v1/fragments/panes/${paneId}`}
             hx-trigger="refresh"
             hx-swap="innerHTML"
           >
@@ -150,9 +137,10 @@ if (!brandConfig.SITE_INIT) {
                 target={codeHookTargets[paneId]}
                 paneId={paneId}
                 fullContentMap={fullContentMap}
+                noPaneId={true}
               />
             ) : (
-              <Fragment set:html={fragmentsData[paneId]} />
+              <Fragment set:html={fragmentsData[paneId] || ''} />
             )}
           </div>
         ))
@@ -160,503 +148,3 @@ if (!brandConfig.SITE_INIT) {
     </div>
   </main>
 </Layout>
-
-<script
-  is:inline
-  define:vars={{ goBackend, storyfragmentId, tenantId, VERBOSE }}
->
-  if (VERBOSE)
-    console.log('🟢 SCRIPT START: Variables received:', {
-      goBackend,
-      storyfragmentId,
-      tenantId,
-    });
-
-  let sessionId = '';
-  let eventSource = null;
-  let sseReconnectAttempts = 0;
-  const maxReconnectDelay = 30000; // 30 seconds max
-  const maxReconnectAttempts = 10; // Stop after 10 attempts
-  let reconnectTimeout = null; // Track pending reconnect timeout
-
-  if (VERBOSE) console.log('🟢 SCRIPT: Variables initialized');
-
-  async function initializeSessionAndSSE() {
-    if (VERBOSE)
-      console.log('🔵 INIT: Starting session and SSE initialization');
-
-    try {
-      if (VERBOSE) console.log('🔵 INIT: Getting session ID');
-      sessionId = getOrCreateSessionId();
-      if (VERBOSE) console.log('🔵 INIT: Session ID obtained:', sessionId);
-
-      if (VERBOSE) console.log('🔵 INIT: Waiting for session ready');
-      await waitForSessionReady();
-      if (VERBOSE) console.log('🔵 INIT: Session ready confirmed');
-
-      if (VERBOSE) console.log('🔵 INIT: Updating HTMX headers');
-      updateHTMXHeaders();
-      if (VERBOSE) console.log('🔵 INIT: HTMX headers updated');
-
-      if (VERBOSE) console.log('🔵 INIT: Setting up SSE connection');
-      setupSSEConnection();
-      if (VERBOSE) console.log('🔵 INIT: SSE setup complete');
-
-      if (VERBOSE) console.log('🔵 INIT: Initializing analytics tracking');
-      // Initialize analytics tracking for this page
-      if (window.initAnalyticsTracking) {
-        window.initAnalyticsTracking(storyfragmentId);
-      }
-    } catch (error) {
-      console.error('🔴 INIT ERROR:', error);
-    }
-  }
-
-  function waitForSessionReady() {
-    if (VERBOSE) console.log('⏳ SESSION: Checking if session is ready');
-
-    return new Promise((resolve) => {
-      if (window.TRACTSTACK_CONFIG?.session?.isReady) {
-        if (VERBOSE) console.log('✅ SESSION: Already ready');
-        resolve();
-      } else {
-        if (VERBOSE) console.log('⏳ SESSION: Waiting for session-ready event');
-        window.addEventListener(
-          'tractstack:session-ready',
-          () => {
-            if (VERBOSE) console.log('✅ SESSION: Ready event received');
-            resolve();
-          },
-          { once: true }
-        );
-      }
-    });
-  }
-
-  function getOrCreateSessionId() {
-    if (VERBOSE) console.log('🆔 SESSION_ID: Getting or creating session ID');
-
-    const SESSION_KEY = 'tractstack_session_id';
-    let sessionId = localStorage.getItem(SESSION_KEY);
-
-    if (!sessionId) {
-      if (VERBOSE)
-        console.log('🆔 SESSION_ID: No existing session, creating new one');
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 11);
-      sessionId = `sess_${timestamp}_${random}`;
-      localStorage.setItem(SESSION_KEY, sessionId);
-      if (VERBOSE)
-        console.log('🆔 SESSION_ID: New session created:', sessionId);
-    } else {
-      if (VERBOSE)
-        console.log('🆔 SESSION_ID: Using existing session:', sessionId);
-    }
-
-    return sessionId;
-  }
-
-  function updateHTMXHeaders() {
-    const paneContainers = document.querySelectorAll('[data-pane-id]');
-    if (VERBOSE)
-      console.log('📋 HTMX: Found', paneContainers.length, 'pane containers');
-
-    paneContainers.forEach((container) => {
-      container.setAttribute(
-        'hx-headers',
-        JSON.stringify({
-          'X-Tenant-ID': tenantId,
-          'X-StoryFragment-ID': storyfragmentId,
-          'X-TractStack-Session-ID': sessionId || '',
-        })
-      );
-    });
-
-    if (VERBOSE) console.log('📋 HTMX: Headers update complete');
-  }
-
-  function setupSSEConnection() {
-    if (VERBOSE) console.log('🔌 SSE: Setting up connection');
-
-    // Close existing connection if any
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
-
-    const sseUrl = `${goBackend}/api/v1/auth/sse?storyfragment=${storyfragmentId}&sessionId=${sessionId}&tenantId=${tenantId}`;
-    if (VERBOSE) console.log('🔌 SSE: Creating EventSource with URL:', sseUrl);
-
-    eventSource = new EventSource(sseUrl);
-
-    eventSource.onopen = function (event) {
-      if (VERBOSE)
-        console.log(
-          '✅ SSE: Connection opened for storyfragment:',
-          storyfragmentId
-        );
-      if (VERBOSE) console.log('✅ SSE: Open event details:', event);
-
-      // Reset reconnect attempts on successful connection
-      sseReconnectAttempts = 0;
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-        reconnectTimeout = null;
-      }
-    };
-
-    eventSource.addEventListener('connected', function (event) {
-      if (VERBOSE) console.log('🔗 SSE: Connected event received');
-      if (VERBOSE) console.log('🔗 SSE: Event data:', event.data);
-
-      try {
-        const data = JSON.parse(event.data);
-        if (VERBOSE)
-          console.log(
-            '🔗 SSE: Connected - Session:',
-            data.sessionId,
-            'Tenant:',
-            data.tenantId,
-            'Storyfragment:',
-            data.storyfragmentId
-          );
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing connected event:', parseError);
-      }
-    });
-
-    eventSource.addEventListener('heartbeat', function (event) {
-      if (VERBOSE) console.log('💓 SSE: Heartbeat received');
-
-      try {
-        const data = JSON.parse(event.data);
-        if (VERBOSE)
-          console.log(
-            '💓 SSE: Heartbeat - Session:',
-            data.sessionId,
-            'Tenant:',
-            data.tenantId
-          );
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing heartbeat:', parseError);
-      }
-    });
-
-    eventSource.addEventListener('panes_updated', function (event) {
-      if (VERBOSE) console.log('📨 SSE: === PANES_UPDATED EVENT ===');
-      if (VERBOSE) console.log('📨 SSE: Raw event data:', event.data);
-
-      try {
-        const data = JSON.parse(event.data);
-
-        if (VERBOSE) {
-          console.log('📨 SSE: Current storyfragment:', storyfragmentId);
-          console.log('📨 SSE: Event storyfragment:', data.storyfragmentId);
-          console.log('📨 SSE: Affected panes:', data.affectedPanes);
-
-          if (data.gotoPaneId) {
-            console.log('📨 SSE: Scroll target:', data.gotoPaneId);
-          }
-        }
-
-        if (data.storyfragmentId === storyfragmentId) {
-          if (VERBOSE)
-            console.log('✅ SSE: Storyfragment matches, processing updates');
-
-          if (data.affectedPanes && Array.isArray(data.affectedPanes)) {
-            if (VERBOSE)
-              console.log(
-                `🔄 SSE: Processing ${data.affectedPanes.length} pane updates`
-              );
-
-            // Existing pane refresh logic remains unchanged
-            data.affectedPanes.forEach((paneId, index) => {
-              if (VERBOSE)
-                console.log(
-                  `🔄 SSE: [${index + 1}/${data.affectedPanes.length}] Looking for pane: ${paneId}`
-                );
-
-              const element = document.querySelector(
-                `[data-pane-id="${paneId}"]`
-              );
-              if (element) {
-                if (VERBOSE)
-                  console.log(
-                    `✅ SSE: Found element for pane ${paneId}, triggering refresh`
-                  );
-
-                if (typeof window.htmx !== 'undefined' && window.htmx) {
-                  if (VERBOSE)
-                    console.log(
-                      `🔄 SSE: HTMX available, triggering refresh for pane ${paneId}`
-                    );
-                  htmx.trigger(element, 'refresh');
-                  if (VERBOSE)
-                    console.log(`✅ SSE: Refresh triggered for pane ${paneId}`);
-                } else {
-                  console.error(
-                    `🔴 SSE: HTMX not available! Cannot trigger refresh for pane ${paneId}. Reloading page!`
-                  );
-                  window.location.reload();
-                }
-              } else {
-                console.warn(`❌ SSE: Element not found for pane: ${paneId}`);
-                // Also log all available pane elements for debugging
-                const allPanes = document.querySelectorAll('[data-pane-id]');
-                if (VERBOSE)
-                  console.log(
-                    '🔍 SSE: Available panes:',
-                    Array.from(allPanes).map((el) =>
-                      el.getAttribute('data-pane-id')
-                    )
-                  );
-              }
-            });
-
-            // NEW: Handle scroll targeting after pane updates
-            if (data.gotoPaneId) {
-              if (VERBOSE)
-                console.log(
-                  `🎯 SSE: Scroll target specified: ${data.gotoPaneId}`
-                );
-              handleScrollToTarget(data.gotoPaneId);
-            }
-          } else {
-            if (VERBOSE)
-              console.warn(
-                '❌ SSE: No affectedPanes array found in event data'
-              );
-          }
-        } else {
-          if (VERBOSE)
-            console.log(
-              `❌ SSE: Ignoring event for different storyfragment: ${data.storyfragmentId}`
-            );
-        }
-      } catch (parseError) {
-        console.error('🔴 SSE: Error parsing event data:', parseError);
-        console.error('🔴 SSE: Raw data was:', event.data);
-      }
-
-      if (VERBOSE) console.log('📨 SSE: === END PANES_UPDATED EVENT ===');
-    });
-
-    function handleScrollToTarget(paneId) {
-      if (VERBOSE) console.log(`🎯 SSE: Starting scroll to pane ${paneId}`);
-
-      // Check user preference for reduced motion
-      const prefersReducedMotion = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-
-      if (VERBOSE) {
-        console.log(
-          `🎯 SSE: User prefers reduced motion: ${prefersReducedMotion}`
-        );
-      }
-
-      // Wait for HTMX requests to actually complete by checking for .htmx-request class
-      const checkAndScroll = () => {
-        const stillLoading =
-          document.querySelectorAll('.htmx-request').length > 0;
-
-        if (stillLoading) {
-          if (VERBOSE) console.log(`🎯 SSE: HTMX still loading, waiting...`);
-          setTimeout(checkAndScroll, 50);
-          return;
-        }
-
-        if (VERBOSE)
-          console.log(`🎯 SSE: HTMX loading complete, scrolling now`);
-
-        // Try multiple potential target selectors
-        const selectors = [
-          `#pane-${paneId}`, // Standard pane ID format
-          `[data-pane-id="${paneId}"]`, // Pane container with data attribute
-          `#${paneId}`, // Direct ID match
-          `.pane-${paneId}`, // Class-based selector
-        ];
-
-        let target = null;
-        let usedSelector = '';
-
-        // Find the first matching element
-        for (const selector of selectors) {
-          target = document.querySelector(selector);
-          if (target) {
-            usedSelector = selector;
-            break;
-          }
-        }
-
-        if (target) {
-          if (VERBOSE) {
-            console.log(
-              `🎯 SSE: Found scroll target using selector: ${usedSelector}`
-            );
-            console.log(`🎯 SSE: Target element:`, target);
-          }
-
-          // Scroll to the target element
-          target.scrollIntoView({
-            behavior: prefersReducedMotion ? 'auto' : 'smooth',
-            block: 'start',
-            inline: 'nearest',
-          });
-
-          if (VERBOSE)
-            console.log(`✅ SSE: Scroll completed for pane ${paneId}`);
-
-          // Optional: Add visual indication of the scrolled-to element
-          if (!prefersReducedMotion) {
-            target.style.transition = 'background-color 0.3s ease';
-            const originalBg = target.style.backgroundColor;
-            target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'; // Light blue highlight
-
-            setTimeout(() => {
-              target.style.backgroundColor = originalBg;
-              setTimeout(() => {
-                target.style.transition = '';
-              }, 300);
-            }, 1000);
-          }
-        } else {
-          console.warn(
-            `⚠️ SSE: Scroll target element not found for pane: ${paneId}`
-          );
-          if (VERBOSE) {
-            console.log(`🔍 SSE: Tried selectors:`, selectors);
-            console.log(`🔍 SSE: Available elements with data-pane-id:`);
-            const allPanes = document.querySelectorAll('[data-pane-id]');
-            allPanes.forEach((el) => {
-              console.log(
-                `  - ${el.getAttribute('data-pane-id')} (${el.tagName})`
-              );
-            });
-          }
-        }
-      };
-
-      // Start the check and scroll process
-      checkAndScroll();
-    }
-
-    eventSource.onerror = function (event) {
-      console.error('🔴 SSE: Connection error:', event);
-
-      sseReconnectAttempts++;
-
-      if (sseReconnectAttempts > maxReconnectAttempts) {
-        console.error(
-          '🔴 SSE: Max reconnection attempts reached. Redirecting to maintenance page...'
-        );
-        const currentPath = window.location.pathname;
-        window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
-        return;
-      }
-
-      const delay = Math.min(
-        1000 * Math.pow(2, sseReconnectAttempts - 1),
-        maxReconnectDelay
-      );
-
-      console.error(
-        `🔴 SSE: Connection error (attempt ${sseReconnectAttempts}/5). Retrying in ${delay}ms...`
-      );
-
-      reconnectTimeout = setTimeout(() => {
-        console.log('🔄 SSE: Retrying connection...');
-        reconnectTimeout = null;
-        setupSSEConnection();
-      }, delay);
-    };
-    if (VERBOSE) console.log('🔌 SSE: Event listeners attached');
-  }
-
-  if (VERBOSE)
-    console.log(
-      '🟢 SCRIPT: Checking document ready state:',
-      document.readyState
-    );
-
-  if (document.readyState === 'loading') {
-    if (VERBOSE)
-      console.log(
-        '⏳ SCRIPT: Document still loading, adding DOMContentLoaded listener'
-      );
-    document.addEventListener('DOMContentLoaded', () => {
-      if (VERBOSE)
-        console.log('✅ SCRIPT: DOMContentLoaded fired, initializing');
-      initializeSessionAndSSE();
-    });
-  } else {
-    if (VERBOSE)
-      console.log(
-        '✅ SCRIPT: Document already loaded, initializing immediately'
-      );
-    initializeSessionAndSSE();
-  }
-
-  // Set up analytics initialization on astro:page-load for return navigations
-  document.addEventListener('astro:page-load', () => {
-    if (VERBOSE)
-      console.log('🔄 ASTRO: page-load event fired, initializing analytics');
-    if (window.initAnalyticsTracking) {
-      window.initAnalyticsTracking(storyfragmentId);
-    }
-  });
-
-  window.addEventListener('beforeunload', function () {
-    if (VERBOSE) console.log('👋 SCRIPT: Page unloading, cleaning up');
-
-    if (reconnectTimeout) {
-      if (VERBOSE) console.log('🧹 SCRIPT: Clearing reconnect timeout');
-      clearTimeout(reconnectTimeout);
-    }
-    if (eventSource) {
-      if (VERBOSE) console.log('🧹 SCRIPT: Closing SSE connection');
-      eventSource.close();
-    }
-  });
-
-  if (VERBOSE) console.log('🟢 SCRIPT END: Setup complete');
-</script>
-
-<script
-  is:inline
-  define:vars={{ storyfragmentId, goBackend, tenantId, VERBOSE }}
->
-  document.addEventListener('DOMContentLoaded', function () {
-    if (window.htmx) {
-      document.body.addEventListener('htmx:configRequest', function (event) {
-        event.detail.headers['X-Tenant-ID'] = tenantId;
-        event.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
-
-        const sessionId = localStorage.getItem('tractstack_session_id');
-        if (sessionId) {
-          event.detail.headers['X-TractStack-Session-ID'] = sessionId;
-        }
-      });
-
-      document.body.addEventListener('htmx:responseError', function (event) {
-        console.error('TractStack HTMX Error:', event.detail);
-
-        if (event.detail.xhr && event.detail.xhr.status >= 500) {
-          const currentPath = window.location.pathname;
-          window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
-        }
-      });
-
-      document.body.addEventListener('htmx:afterRequest', function (event) {
-        if (VERBOSE) {
-          console.log('HTMX request completed:', event.detail);
-        }
-      });
-    }
-  });
-</script>
-
-<script type="module" is:inline>
-  import '/src/client/belief-events.js';
-  import '/src/client/analytics-events.js';
-</script>

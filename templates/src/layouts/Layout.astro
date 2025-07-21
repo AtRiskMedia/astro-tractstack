@@ -17,6 +17,7 @@ export interface Props {
   isStoryKeep?: boolean;
   isEditable?: boolean;
   brandConfig?: any;
+  storyfragmentId: string;
 }
 
 const {
@@ -30,9 +31,9 @@ const {
   isStoryKeep = false,
   isEditable = false,
   brandConfig: propBrandConfig,
+  storyfragmentId,
 } = Astro.props;
 
-// Determine CSS and font paths based on environment
 const isDev = import.meta.env.DEV;
 const cssBasePath = isDev ? '/styles' : '/media/css';
 const fontBasePath = isDev ? '/fonts' : '/media/fonts';
@@ -43,17 +44,11 @@ const mainStylesUrl = storykeep
     ? `${cssBasePath}/storykeep.css`
     : `${cssBasePath}/frontend.css`;
 
-// Read environment variables
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
-const storyfragmentId = Astro.params.id || '01JD2RFH35HX8MQMBJ3344KHS5';
 
-const brandConfig =
-  propBrandConfig ||
-  (await getBrandConfig(
-    Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
-  ));
+const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
 ---
 
 <!doctype html>
@@ -68,69 +63,61 @@ const brandConfig =
     <meta name="generator" content={Astro.generator} />
     <link rel="icon" type="image/svg+xml" href="/brand/favicon.ico" />
     <title>{title}</title>
-
-    <!-- TractStack Styles -->
     <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
     <link rel="stylesheet" href={mainStylesUrl} />
 
-    <!-- Bunny player.js -->
+    <ClientRouter />
+
     <script
       is:inline
       type="text/javascript"
       src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
 
-    <!-- HTMX -->
     <script
       src="https://unpkg.com/htmx.org@2.0.4"
       crossorigin="anonymous"
-      is:inline></script>
+      is:inline
+      is:persist></script>
 
-    <!-- TractStack Configuration -->
     <script
       define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
       is:inline
     >
-      // Set up configuration that SessionInit expects
-      window.TRACTSTACK_CONFIG = {
-        configured: true,
-        backendUrl: goBackend,
-        tenantId: tenantId,
-        fontBasePath: fontBasePath,
-        storyfragmentId: storyfragmentId,
-      };
+      function createTractstackConfig() {
+        window.TRACTSTACK_CONFIG = {
+          configured: true,
+          backendUrl: goBackend,
+          tenantId: tenantId,
+          fontBasePath: fontBasePath,
+          storyfragmentId: storyfragmentId,
+        };
+        console.log(
+          '✅ LAYOUT: Initial TRACTSTACK_CONFIG created',
+          window.TRACTSTACK_CONFIG
+        );
+      }
 
-      // Configure HTMX (moved to DOMContentLoaded since HTMX needs to be loaded first)
-      document.addEventListener('DOMContentLoaded', function () {
-        htmx.config.selfRequestsOnly = false;
-        htmx.config.defaultSwapStyle = 'innerHTML';
-        htmx.config.historyCacheSize = 50;
-        htmx.config.requestClass = 'htmx-request';
-        htmx.config.refreshOnHistoryMiss = true;
+      function updateTractstackConfig() {
+        if (window.TRACTSTACK_CONFIG) {
+          window.TRACTSTACK_CONFIG.storyfragmentId = storyfragmentId;
+          console.log(
+            '🔄 LAYOUT: TRACTSTACK_CONFIG updated for new page',
+            window.TRACTSTACK_CONFIG
+          );
+        } else {
+          createTractstackConfig();
+        }
+      }
 
-        // Set up default headers and URL resolution for TractStack
-        document.body.addEventListener('htmx:configRequest', function (evt) {
-          // Handle direct Go backend API routes only
-          if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
-            // Convert relative URLs to absolute
-            evt.detail.path = goBackend + evt.detail.path;
+      // Check if config exists. If not, create it. This handles the very first load.
+      if (!window.TRACTSTACK_CONFIG) {
+        createTractstackConfig();
+      }
 
-            // Add session ID if available
-            const sessionId = localStorage.getItem('tractstack_session_id');
-            if (sessionId) {
-              evt.detail.headers['X-TractStack-Session-ID'] = sessionId;
-            }
-          }
-
-          // Add tenant and storyfragment headers for all HTMX requests
-          evt.detail.headers['X-Tenant-ID'] = tenantId;
-          evt.detail.headers['X-StoryFragment-ID'] = storyfragmentId;
-        });
-      });
+      // Update on subsequent loads, or set for the first time if script runs after initial setup
+      document.addEventListener('astro:page-load', updateTractstackConfig);
     </script>
-
-    <ClientRouter />
   </head>
-
   <body class="font-main w-full">
     <Header
       title={title}
@@ -141,20 +128,15 @@ const brandConfig =
       isEditable={isEditable}
       menu={menu}
     />
-
-    <!-- Loading indicator -->
     <div
       id="loading-indicator"
       class="bg-myorange fixed left-0 top-0 z-50 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
     >
     </div>
-
-    <!-- Main content wrapper -->
     <div id="content" class="transition-opacity duration-300">
       <SessionInit />
       <slot />
     </div>
-
     <Footer
       slug={slug}
       brandConfig={brandConfig}
@@ -163,5 +145,10 @@ const brandConfig =
       created={created}
       backToTop={true}
     />
+    <script type="module" is:inline is:persist>
+      import '/src/client/sse.js';
+      import '/src/client/belief-events.js';
+      import '/src/client/analytics-events.js';
+    </script>
   </body>
 </html>

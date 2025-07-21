@@ -551,6 +551,10 @@ export async function injectTemplateFiles(
 
     // Client Scripts
     {
+      src: resolve('templates/src/client/sse.ts'),
+      dest: 'src/client/sse.ts',
+    },
+    {
       src: resolve('templates/src/client/belief-events.ts'),
       dest: 'src/client/belief-events.ts',
     },
