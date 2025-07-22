@@ -5,8 +5,13 @@ let eventSource: EventSource | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000;
+
+// NEW: Add state for tracking initial session connection attempts
+let sessionInitAttempts = 0;
+const MAX_SESSION_INIT_ATTEMPTS = 3; // Give up after 3 tries
+
 let currentStoryfragmentId: string | null = null;
-let isHtmxReady = false; // This remains a good safeguard
+let isHtmxReady = false;
 
 interface PanesUpdatedEventData {
   storyfragmentId: string;
@@ -195,13 +200,27 @@ function setupSSEConnection() {
   log('First-time initialization. Setting up connection...');
 
   // Initialize session first, then setup SSE
+  // MODIFIED: This function now handles retry limits and redirection
   async function initializeSessionAndSSE(): Promise<void> {
     const sessionId = await initializeSession();
     if (sessionId && window.TRACTSTACK_CONFIG?.session?.isReady) {
+      // On success, reset the attempt counter and start SSE
+      sessionInitAttempts = 0;
       initializeSSE(sessionId);
     } else {
-      log('Session initialization failed, retrying...');
-      setTimeout(initializeSessionAndSSE, 1000);
+      // On failure, increment the attempt counter
+      sessionInitAttempts++;
+      log(`Session initialization failed, attempt ${sessionInitAttempts}/${MAX_SESSION_INIT_ATTEMPTS}`);
+
+      // If we've exceeded the max attempts, redirect to the maintenance page
+      if (sessionInitAttempts >= MAX_SESSION_INIT_ATTEMPTS) {
+        console.error('🔴 TractStack: Max session initialization attempts reached. Redirecting to maintenance page.');
+        const currentPath = window.location.pathname;
+        window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
+      } else {
+        // Otherwise, schedule another attempt
+        setTimeout(initializeSessionAndSSE, 2000); // Retry after 2 seconds
+      }
     }
   }
 
