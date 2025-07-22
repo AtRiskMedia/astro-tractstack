@@ -10,26 +10,17 @@ export const ProfileConsent = () => {
     const currentConsent = ProfileStorage.getConsent();
     const initialState = currentConsent === '1';
     setIsChecked(initialState);
-    console.log('ProfileConsent initialized:', {
-      currentConsent,
-      initialState,
-      rawStorage: localStorage.getItem('tractstack_consent'),
-    });
   }, []);
 
   const handleCheckedChange = (details: { checked: boolean }) => {
-    console.log('Switch toggled:', details.checked);
-
     // Update local state immediately
     setIsChecked(details.checked);
 
     if (details.checked) {
       ProfileStorage.storeConsent('1');
-      console.log('Consent granted');
     } else {
       ProfileStorage.storeConsent('0');
       ProfileStorage.clearSession();
-      console.log('Consent revoked, session cleared');
     }
 
     // Force page reload to refresh ProfileSwitch

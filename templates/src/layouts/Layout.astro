@@ -8,7 +8,6 @@ import type { MenuNode } from '@/types/tractstack';
 export interface Props {
   title: string;
   description?: string;
-  storykeep?: boolean;
   slug?: string;
   menu?: MenuNode | null;
   created?: string;
@@ -22,7 +21,6 @@ export interface Props {
 const {
   title,
   description = 'TractStack dynamic website',
-  storykeep = false,
   slug = '',
   menu = null,
   created,
@@ -37,7 +35,7 @@ const isDev = import.meta.env.DEV;
 const cssBasePath = isDev ? '/styles' : '/media/css';
 const fontBasePath = isDev ? '/fonts' : '/media/fonts';
 
-const mainStylesUrl = storykeep
+const mainStylesUrl = isStoryKeep
   ? `${cssBasePath}/storykeep.css`
   : isDev
     ? `${cssBasePath}/storykeep.css`
@@ -90,19 +88,11 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
           fontBasePath: fontBasePath,
           storyfragmentId: storyfragmentId,
         };
-        console.log(
-          '✅ LAYOUT: Initial TRACTSTACK_CONFIG created',
-          window.TRACTSTACK_CONFIG
-        );
       }
 
       function updateTractstackConfig() {
         if (window.TRACTSTACK_CONFIG) {
           window.TRACTSTACK_CONFIG.storyfragmentId = storyfragmentId;
-          console.log(
-            '🔄 LAYOUT: TRACTSTACK_CONFIG updated for new page',
-            window.TRACTSTACK_CONFIG
-          );
         } else {
           createTractstackConfig();
         }

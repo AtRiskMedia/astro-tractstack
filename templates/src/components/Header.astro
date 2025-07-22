@@ -195,6 +195,44 @@ const authStatus = {
         ) : null
       }
 
+      {/* Remember Me Icon */}
+      <script>
+        function initRememberMe() {
+          const sessionId = localStorage.getItem('tractstack_session_id');
+          const consent = localStorage.getItem('tractstack_consent') === '1';
+          const hasProfile =
+            localStorage.getItem('tractstack_has_profile') === '1';
+
+          if (!sessionId) return;
+
+          const rememberMeContainer = document.getElementById(
+            'remember-me-container'
+          );
+          if (rememberMeContainer) {
+            const title =
+              consent || hasProfile
+                ? 'Configure your Session'
+                : 'Session and Profile options';
+            const iconSvg =
+              consent || hasProfile
+                ? '<svg class="h-6 w-6 text-myblue/80" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>'
+                : '<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>';
+
+            rememberMeContainer.innerHTML = `
+        <a href="/storykeep/profile" 
+           class="hover:text-myblue hover:rotate-6" 
+           title="${title}">
+          ${iconSvg}
+        </a>
+      `;
+          }
+        }
+
+        // Single event listener that handles DOMContentLoaded, view transitions, and HTMX
+        document.addEventListener('astro:page-load', initRememberMe);
+      </script>
+      <div id="remember-me-container"></div>
+
       {/* Logout Icon - Admin/Editor Only */}
       {
         authStatus.isAdmin || authStatus.userRole === 'editor' ? (
@@ -219,6 +257,15 @@ const authStatus = {
           </button>
         ) : null
       }
+
+      {/* Impressions placeholder */}
+      {
+        impressions?.length ? (
+          <div class="text-myblue/80 hover:text-myblue">
+            <span class="text-xs">📬 {impressions.length}</span>
+          </div>
+        ) : null
+      }
     </div>
   </div>
   {
@@ -236,22 +283,6 @@ const authStatus = {
               Edit Context
             </a>
           )}
-        </div>
-      </div>
-    )
-  }
-
-  <!-- THIRD ROW: StoryKeep Bar (if needed) -->
-  {
-    isStoryKeep && (
-      <div class="border-t bg-blue-50 px-4 py-2 md:px-8">
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-blue-700">
-            <span class="font-medium">StoryKeep Dashboard</span>
-          </p>
-          <a href="/" class="text-sm text-blue-600 hover:text-blue-800">
-            Return to Site
-          </a>
         </div>
       </div>
     )

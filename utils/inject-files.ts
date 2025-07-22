@@ -176,6 +176,22 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/pages/maint.astro'),
       dest: 'src/pages/maint.astro',
     },
+    {
+      src: resolve('templates/src/pages/404.astro'),
+      dest: 'src/pages/404.astro',
+    },
+    {
+      src: resolve('templates/src/pages/llms.txt.ts'),
+      dest: 'src/pages/llms.txt.ts',
+    },
+    {
+      src: resolve('templates/src/pages/robots.txt.ts'),
+      dest: 'src/pages/robots.txt.ts',
+    },
+    {
+      src: resolve('templates/src/pages/sitemap.xml.ts'),
+      dest: 'src/pages/sitemap.xml.ts',
+    },
 
     // Authentication Pages
     {

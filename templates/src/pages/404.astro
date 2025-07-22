@@ -1,0 +1,30 @@
+---
+// Simple 404 redirect to home (unless already at home)
+const currentPath = Astro.url.pathname;
+
+// If we're already at home, don't redirect to avoid infinite loop
+if (currentPath === '/') {
+  // Show minimal error page for home 404
+} else {
+  // Redirect to home
+  return Astro.redirect('/');
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found</title>
+  </head>
+  <body>
+    <div
+      style="text-align: center; padding: 50px; font-family: Arial, sans-serif;"
+    >
+      <h1>404 - Page Not Found</h1>
+      <p>The home page could not be found.</p>
+      <a href="/" style="color: #0066cc;">Try again</a>
+    </div>
+  </body>
+</html>
