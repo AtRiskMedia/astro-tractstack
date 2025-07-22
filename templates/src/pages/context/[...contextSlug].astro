@@ -1,0 +1,156 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import CodeHook from '@/custom/CodeHook.astro';
+
+import { getBrandConfig } from '@/stores/brand';
+import { handleFailedResponse } from '@/utils/backend';
+import { getFullContentMap } from '@/stores/analytics';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const { contextSlug } = Astro.params || {};
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+console.log(contextSlug);
+
+// Get context pane data by slug
+let contextPaneData;
+try {
+  const response = await fetch(
+    `${goBackend}/api/v1/nodes/panes/slug/${contextSlug}`,
+    {
+      headers: {
+        'X-Tenant-ID': tenantId,
+      },
+    }
+  );
+
+  const failedResponse = await handleFailedResponse(
+    response,
+    goBackend,
+    tenantId,
+    Astro.url.pathname
+  );
+  if (failedResponse) {
+    return failedResponse;
+  }
+
+  contextPaneData = await response.json();
+
+  // Verify this is actually a context pane
+  if (!contextPaneData.isContextPane) {
+    return new Response(null, {
+      status: 404,
+      statusText: 'Not Found - Not a context pane',
+    });
+  }
+} catch (error) {
+  console.error('Error fetching context pane:', error);
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
+const paneId = contextPaneData.id;
+const paneTitle = contextPaneData.title || 'Context';
+const codeHookTarget = contextPaneData.codeHookTarget || null;
+console.log(contextPaneData, paneId, paneTitle, codeHookTarget);
+// Get rendered fragment for the context pane
+let fragmentData = '';
+try {
+  const fragmentResponse = await fetch(
+    `${goBackend}/api/v1/fragments/panes/${paneId}`,
+    {
+      headers: {
+        'X-Tenant-ID': tenantId,
+      },
+    }
+  );
+
+  if (fragmentResponse.ok) {
+    fragmentData = await fragmentResponse.text();
+  } else {
+    const failedFragmentResponse = await handleFailedResponse(
+      fragmentResponse,
+      goBackend,
+      tenantId,
+      Astro.url.pathname
+    );
+    if (failedFragmentResponse) {
+      return failedFragmentResponse;
+    }
+  }
+} catch (error) {
+  console.error('Error fetching context fragment:', error);
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
+
+// Get supporting data
+const fullContentMap = await getFullContentMap(tenantId);
+const brandConfig = await getBrandConfig(tenantId);
+
+if (!brandConfig.SITE_INIT) {
+  return Astro.redirect('/storykeep');
+}
+---
+
+<Layout
+  title={paneTitle}
+  description={`Context: ${paneTitle}`}
+  slug={contextSlug}
+  menu={null}
+  created={contextPaneData.created}
+  isContext={true}
+  isStoryKeep={false}
+  isEditable={false}
+  brandConfig={brandConfig}
+  storyfragmentId={paneId}
+>
+  <main id="main-content" class="min-h-screen w-full">
+    <div
+      id={`pane-${paneId}`}
+      data-pane-id={paneId}
+      class="context-pane-container"
+      hx-get={`/api/v1/fragments/panes/${paneId}`}
+      hx-trigger="refresh"
+      hx-swap="innerHTML"
+    >
+      {
+        codeHookTarget ? (
+          <CodeHook target={codeHookTarget} fullContentMap={fullContentMap} />
+        ) : (
+          <Fragment set:html={fragmentData} />
+        )
+      }
+    </div>
+
+    <div class="py-12 text-center text-2xl md:text-3xl">
+      <button
+        id="context-close-btn"
+        class="rounded-lg bg-black px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1 hover:bg-orange-500"
+      >
+        Close
+      </button>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const closeBtn = document.getElementById('context-close-btn');
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        // Check if we have history to go back to
+        if (window.history.length > 1 && document.referrer) {
+          // Go back to previous page
+          window.history.back();
+        } else {
+          // Fallback to home page
+          window.location.href = '/';
+        }
+      });
+    }
+  });
+</script>
