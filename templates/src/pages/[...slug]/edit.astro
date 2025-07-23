@@ -13,7 +13,38 @@ if (!slug) return Astro.redirect('/404');
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
 const brandConfig = await getBrandConfig(tenantId);
+if (!brandConfig.SITE_INIT) {
+  return Astro.redirect('/storykeep');
+}
+
+const endpoint = `${goBackend}/api/v1/nodes/storyfragments/slug/${slug}/full-payload`;
+
+let loadData;
+try {
+  const response = await fetch(endpoint, {
+    headers: {
+      'X-Tenant-ID': tenantId,
+      Cookie: Astro.request.headers.get('cookie') || '',
+    },
+  });
+
+  if (!response.ok) {
+    return new Response(null, {
+      status: response.status,
+      statusText: response.statusText,
+    });
+  }
+
+  loadData = await response.json();
+  console.log('V2 Full Payload LoadData:', loadData);
+} catch (error) {
+  console.error('Error fetching storyfragment full payload:', error);
+  const currentPath = Astro.url.pathname;
+  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+}
 
 // Placeholder story fragment data for UI shell
 const storyfragmentNode = {
@@ -29,7 +60,7 @@ const storyfragmentNode = {
   hasMenu: false,
 };
 
-const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
+//const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
 ---
 
 <Layout
