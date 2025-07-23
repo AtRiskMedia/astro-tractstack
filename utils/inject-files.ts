@@ -415,8 +415,8 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/Dashboard_Content.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/DashboardActivity.tsx'),
-      dest: 'src/components/storykeep/DashboardActivity.tsx',
+      src: resolve('templates/src/components/storykeep/Dashboard_Activity.tsx'),
+      dest: 'src/components/storykeep/Dashboard_Activity.tsx',
     },
     {
       src: resolve('templates/src/components/storykeep/ResponsiveLine.tsx'),

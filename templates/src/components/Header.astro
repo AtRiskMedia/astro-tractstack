@@ -231,7 +231,7 @@ const authStatus = {
         // Single event listener that handles DOMContentLoaded, view transitions, and HTMX
         document.addEventListener('astro:page-load', initRememberMe);
       </script>
-      <div id="remember-me-container"></div>
+      {!isStoryKeep && <div id="remember-me-container" />}
 
       {/* Logout Icon - Admin/Editor Only */}
       {

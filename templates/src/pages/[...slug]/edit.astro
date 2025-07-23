@@ -73,11 +73,11 @@ const storyfragmentNode = {
   <Header
     title={storyfragmentNode.title}
     slug={slug}
-    isContext={false}
-    isEditable={true}
-    impressions={[]}
-    user={{ isAuthenticated: true, isAdmin: false, isOpenDemo: false }}
     brandConfig={brandConfig}
+    isContext={false}
+    isStoryKeep={true}
+    isEditable={false}
+    menu={null}
   />
 
   <!-- StoryKeep Editor Header (scroll-aware positioning) -->
@@ -98,7 +98,7 @@ const storyfragmentNode = {
     <!-- Tool Navigation (mobile bottom, desktop side) -->
     <nav
       id="mainNav"
-      class="bg-mywhite z-102 fixed bottom-0 left-0 right-0 pt-1.5 md:static md:fixed md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-16 md:pt-0"
+      class="bg-mywhite z-102 fixed bottom-0 left-0 right-0 pt-1.5 md:static md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-16 md:pt-0"
     >
       <div
         class="flex flex-wrap justify-around gap-4 py-3.5 md:mt-0 md:flex-col md:items-center md:gap-8 md:space-x-0 md:space-y-2 md:py-2"

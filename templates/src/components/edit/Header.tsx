@@ -5,6 +5,10 @@ import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon
 import PresentationChartBarIcon from '@heroicons/react/24/outline/PresentationChartBarIcon';
 import CursorArrowRaysIcon from '@heroicons/react/24/outline/CursorArrowRaysIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
+import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIcon';
+import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
+import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
+import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon';
 
 import {
   viewportModeStore,
@@ -69,26 +73,32 @@ const StoryKeepHeader = ({
   const activeIconClassName =
     '-rotate-2 w-8 h-8 text-white rounded bg-myblue p-1';
   const iconClassName =
-    'w-8 h-8 text-myblue hover:text-white hover:bg-myblue rounded-xl hover:rounded bg-white p-1 cursor-pointer transition-all';
+    'w-8 h-8 text-myblue hover:text-myblue hover:bg-gray-200 rounded-xl hover:rounded bg-white p-1 cursor-pointer transition-all';
+
+  // Viewport options and their corresponding icons
+  const viewportOptions = [
+    { value: 'auto', Icon: ViewfinderCircleIcon, title: 'Auto Viewport' },
+    { value: 'mobile', Icon: DevicePhoneMobileIcon, title: 'Mobile Viewport' },
+    { value: 'tablet', Icon: DeviceTabletIcon, title: 'Tablet Viewport' },
+    { value: 'desktop', Icon: ComputerDesktopIcon, title: 'Desktop Viewport' },
+  ];
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
       {/* Viewport Selector */}
-      <div className="flex items-center gap-2">
-        <select
-          value={viewport}
-          onChange={(e) =>
-            setViewportMode(
-              e.target.value as 'auto' | 'mobile' | 'tablet' | 'desktop'
-            )
-          }
-          className="text-myblue rounded border border-gray-200 bg-white px-2 py-1 text-sm"
-        >
-          <option value="auto">Auto</option>
-          <option value="mobile">Mobile</option>
-          <option value="tablet">Tablet</option>
-          <option value="desktop">Desktop</option>
-        </select>
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        {viewportOptions.map(({ value, Icon, title }) => (
+          <button
+            key={value}
+            onClick={() =>
+              setViewportMode(value as 'auto' | 'mobile' | 'tablet' | 'desktop')
+            }
+            title={title}
+            className={viewport === value ? activeIconClassName : iconClassName}
+          >
+            <Icon />
+          </button>
+        ))}
       </div>
 
       {/* Undo/Redo */}
@@ -125,13 +135,11 @@ const StoryKeepHeader = ({
 
       {/* Control Icons */}
       <div className="flex flex-wrap items-center justify-center gap-1">
-        {viewportKey !== 'mobile' && (
-          <QuestionMarkCircleIcon
-            onClick={toggleShowHelp}
-            title="Toggle Help Text"
-            className={showHelp ? activeIconClassName : iconClassName}
-          />
-        )}
+        <QuestionMarkCircleIcon
+          onClick={toggleShowHelp}
+          title="Toggle Help Text"
+          className={showHelp ? activeIconClassName : iconClassName}
+        />
         <PresentationChartBarIcon
           onClick={toggleShowAnalytics}
           title="Toggle Interaction Analytics"
