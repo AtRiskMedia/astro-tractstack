@@ -11,6 +11,11 @@ export interface Props {
   slug?: string;
   menu?: MenuNode | null;
   created?: string;
+  canonicalURL?: string;
+  pubDatetime?: Date;
+  modDatetime?: Date | null;
+  ogImage?: string;
+  id?: string;
   isContext?: boolean;
   isStoryKeep?: boolean;
   isEditor?: boolean;
@@ -25,6 +30,11 @@ const {
   slug = '',
   menu = null,
   created,
+  canonicalURL = Astro.url.pathname,
+  pubDatetime,
+  modDatetime,
+  ogImage,
+  id,
   isContext = false,
   isStoryKeep = false,
   isEditor = false,
@@ -48,6 +58,41 @@ const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
 const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
+
+// Social media and SEO setup
+const defaultFavIcon = `/brand/favicon.ico`;
+const defaultSocialImageURL = ogImage || brandConfig.OG || `/og.png`;
+const defaultSocialLogoURL = brandConfig.OGLOGO || `/oglogo.png`;
+const defaultSocialTitle =
+  typeof title === `string` && title
+    ? title
+    : typeof brandConfig.OGTITLE === `string`
+      ? brandConfig.OGTITLE
+      : `TractStack dynamic website`;
+const defaultSocialAuthor = brandConfig.OGAUTHOR || `TractStack`;
+const defaultSocialDesc =
+  description ||
+  brandConfig.OGDESC ||
+  `No-code website builder and content marketing platform`;
+
+const buildVersion = (() => {
+  if (modDatetime) return modDatetime.getTime();
+  if (pubDatetime) return pubDatetime.getTime();
+  return Date.now();
+})();
+
+const socialImageWithVersion = `${defaultSocialImageURL}?v=${buildVersion}`;
+const socialLogoWithVersion = `${defaultSocialLogoURL}?v=${buildVersion}`;
+const gtagId = brandConfig?.GTAG || false;
+const gtagUrl =
+  typeof gtagId === `string` && gtagId.length > 1
+    ? `https://www.googletagmanager.com/gtag/js?id=${gtagId}`
+    : null;
+const fullCanonicalUrl = brandConfig?.SITE_URL
+  ? canonicalURL.startsWith('/')
+    ? `${brandConfig.SITE_URL.replace(/\/$/, '')}${canonicalURL}`
+    : `${brandConfig.SITE_URL.replace(/\/$/, '')}/${canonicalURL}`
+  : canonicalURL;
 ---
 
 <!doctype html>
@@ -58,12 +103,84 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="description" content={description} />
+    <meta name="description" content={defaultSocialDesc} />
+    <meta name="author" content={defaultSocialAuthor} />
     <meta name="generator" content={Astro.generator} />
-    <link rel="icon" type="image/svg+xml" href="/brand/favicon.ico" />
-    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href={defaultFavIcon} />
+    <link rel="canonical" href={fullCanonicalUrl} />
+    <title>{defaultSocialTitle}</title>
     <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
     <link rel="stylesheet" href={mainStylesUrl} />
+    <link rel="sitemap" href="/sitemap.xml" />
+
+    <!-- General Meta Tags -->
+    <meta name="title" content={defaultSocialTitle} />
+    <meta
+      property="og:site_name"
+      content={brandConfig?.OGAUTHOR || brandConfig?.OGTITLE || 'TractStack'}
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content={`${defaultSocialTitle} - Social Preview Image`}
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:title" content={defaultSocialTitle} />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content={defaultSocialDesc} />
+    <meta property="og:url" content={fullCanonicalUrl} />
+    <meta property="og:image" content={socialImageWithVersion} />
+    <meta property="og:logo" content={socialLogoWithVersion} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={fullCanonicalUrl} />
+    <meta property="twitter:title" content={defaultSocialTitle} />
+    <meta property="twitter:description" content={defaultSocialDesc} />
+    <meta property="twitter:image" content={socialImageWithVersion} />
+
+    <!-- Article Published/Modified time -->
+    {
+      pubDatetime && (
+        <meta
+          property="article:published_time"
+          content={pubDatetime.toISOString()}
+        />
+      )
+    }
+    {
+      modDatetime && (
+        <meta
+          property="article:modified_time"
+          content={modDatetime.toISOString()}
+        />
+      )
+    }
+
+    <!-- Google Analytics -->
+    {gtagUrl && <script async src={gtagUrl} is:inline />}
+    <script is:inline define:vars={{ gtagId: brandConfig?.GTAG || '' }}>
+      (function () {
+        if (gtagId && gtagId.length > 1) {
+          window.dataLayer = window.dataLayer || [];
+          window.gtag =
+            window.gtag ||
+            function () {
+              window.dataLayer.push(arguments);
+            };
+
+          window.gtag('js', new Date());
+          window.gtag('config', gtagId);
+
+          document.addEventListener('astro:after-swap', () => {
+            window.gtag('config', gtagId);
+          });
+        }
+      })();
+    </script>
 
     <ClientRouter />
 

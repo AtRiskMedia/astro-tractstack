@@ -2,6 +2,7 @@
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getBrandConfig } from '@/stores/brand';
+import { joinUrlPaths } from '@/utils/helpers';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
@@ -46,32 +47,43 @@ try {
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
-// Placeholder story fragment data for UI shell
-const storyfragmentNode = {
-  id: 'placeholder-id',
-  nodeType: 'StoryFragment',
-  parentId: 'parent-id',
-  title: slug === 'create' ? '' : `Edit ${slug}`,
-  slug: slug,
-  tailwindBgColour: 'white',
-  paneIds: [],
-  created: new Date(),
-  changed: new Date(),
-  hasMenu: false,
-};
+// Extract data from the response
+const storyFragment = loadData?.storyfragmentNodes.at(0);
+const title = storyFragment?.title || `Editor`;
+const storyFragmentID = storyFragment?.id;
+const description = `Edit ${title} - TractStack Editor`;
+const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
 
-//const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
+// Extract dates if available
+const pubDatetime = storyFragment?.created
+  ? new Date(storyFragment.created)
+  : undefined;
+const modDatetime = storyFragment?.changed
+  ? new Date(storyFragment.changed)
+  : null;
+
+// Social image from the story fragment
+const ogImage = storyFragment?.socialImagePath
+  ? joinUrlPaths(brandConfig?.SITE_URL || ``, storyFragment.socialImagePath)
+  : undefined;
 ---
 
 <Layout
-  title={storyfragmentNode.title || 'Editor'}
+  title={title}
+  description={description}
+  slug={slug}
+  canonicalURL={canonicalURL}
+  pubDatetime={pubDatetime}
+  modDatetime={modDatetime}
+  ogImage={ogImage}
+  id={storyFragmentID}
   brandConfig={brandConfig}
-  storyfragmentId={storyfragmentNode.id}
+  storyfragmentId={storyFragmentID}
   isEditor={true}
 >
   <!-- Standard Header (scrollable) -->
   <Header
-    title={storyfragmentNode.title}
+    title={title}
     slug={slug}
     brandConfig={brandConfig}
     isContext={false}
@@ -88,7 +100,7 @@ const storyfragmentNode = {
   >
     <StoryKeepHeader
       keyboardAccessibleEnabled={true}
-      nodeId={storyfragmentNode.id}
+      nodeId={storyFragmentID}
       isContext={false}
       client:only="react"
     />
@@ -109,10 +121,9 @@ const storyfragmentNode = {
 
     <!-- Main Content Area -->
     <main id="mainContent" class="relative flex-1">
-      <div class="bg-myblue/20 bg-mylightgrey min-h-screen px-4 pb-28">
+      <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
         <div
           style={{
-            paddingBottom: '8rem',
             backgroundImage:
               'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
           }}
@@ -125,9 +136,6 @@ const storyfragmentNode = {
               <h2 class="font-action text-myblue mb-4 text-2xl">
                 Compositor Will Render Here
               </h2>
-              <p class="text-mylightgrey">
-                ReactNodesWrapper component will be integrated here
-              </p>
             </div>
           </div>
         </div>
