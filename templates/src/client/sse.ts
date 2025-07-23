@@ -210,11 +210,15 @@ function setupSSEConnection() {
     } else {
       // On failure, increment the attempt counter
       sessionInitAttempts++;
-      log(`Session initialization failed, attempt ${sessionInitAttempts}/${MAX_SESSION_INIT_ATTEMPTS}`);
+      log(
+        `Session initialization failed, attempt ${sessionInitAttempts}/${MAX_SESSION_INIT_ATTEMPTS}`
+      );
 
       // If we've exceeded the max attempts, redirect to the maintenance page
       if (sessionInitAttempts >= MAX_SESSION_INIT_ATTEMPTS) {
-        console.error('🔴 TractStack: Max session initialization attempts reached. Redirecting to maintenance page.');
+        console.error(
+          '🔴 TractStack: Max session initialization attempts reached. Redirecting to maintenance page.'
+        );
         const currentPath = window.location.pathname;
         window.location.href = `/maint?from=${encodeURIComponent(currentPath)}`;
       } else {

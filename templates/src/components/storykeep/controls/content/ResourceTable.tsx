@@ -79,7 +79,7 @@ export default function ResourceTable({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-bold text-gray-900">
             {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}
           </h3>
           <p className="text-sm text-gray-600">Manage {categorySlug}</p>
@@ -87,14 +87,14 @@ export default function ResourceTable({
         <div className="flex space-x-3">
           <button
             onClick={() => setShowBulkIngest(true)}
-            className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500"
+            className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-500"
           >
             <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
             Bulk Import
           </button>
           <button
             onClick={onCreate}
-            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500"
+            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
           >
             <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
             Create{' '}
@@ -121,13 +121,13 @@ export default function ResourceTable({
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 Title
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 Slug
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 One-liner
               </th>
               <th className="relative px-6 py-3">
@@ -153,7 +153,7 @@ export default function ResourceTable({
                   className="cursor-pointer hover:bg-gray-50"
                   onClick={() => onEdit(resource.id)}
                 >
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900">
                     {resource.title}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -162,7 +162,7 @@ export default function ResourceTable({
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {(resource as any).oneliner || '-'}
                   </td>
-                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-bold sm:pr-6">
                     <div className="flex items-center justify-end space-x-2">
                       {/* Edit button */}
                       <button

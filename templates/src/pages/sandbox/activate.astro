@@ -127,7 +127,7 @@ const getDisplayUrl = (tenantId: string) => {
 
             {activationResult.tenantId && (
               <div class="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
-                <p class="mb-2 text-sm font-medium text-orange-800">
+                <p class="mb-2 text-sm font-bold text-orange-800">
                   Your tenant URL:
                 </p>
                 <p class="break-all font-mono text-orange-700">
@@ -140,7 +140,7 @@ const getDisplayUrl = (tenantId: string) => {
               {activationResult.tenantId ? (
                 <a
                   href={getDashboardUrl(activationResult.tenantId)}
-                  class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
+                  class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-bold text-white transition-colors hover:bg-orange-700"
                   id="dashboard-button"
                 >
                   Access Your Dashboard
@@ -178,7 +178,7 @@ const getDisplayUrl = (tenantId: string) => {
             <p class="mb-6 text-gray-600">{activationResult.error}</p>
 
             <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-              <h3 class="mb-2 text-sm font-medium text-yellow-800">
+              <h3 class="mb-2 text-sm font-bold text-yellow-800">
                 Common Issues:
               </h3>
               <ul class="space-y-1 text-left text-sm text-yellow-700">
@@ -191,7 +191,7 @@ const getDisplayUrl = (tenantId: string) => {
             <div class="space-y-4">
               <a
                 href="/sandbox/register"
-                class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-700"
+                class="inline-block rounded-lg bg-orange-600 px-6 py-3 font-bold text-white transition-colors hover:bg-orange-700"
               >
                 Register New Tenant
               </a>

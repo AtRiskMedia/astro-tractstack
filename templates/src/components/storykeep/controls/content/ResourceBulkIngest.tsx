@@ -561,7 +561,7 @@ export default function ResourceBulkIngest({
             <div className="mb-4">
               <label
                 htmlFor="json-input"
-                className="mb-2 block text-sm font-medium text-gray-700"
+                className="mb-2 block text-sm font-bold text-gray-700"
               >
                 JSON Data
               </label>
@@ -579,11 +579,11 @@ export default function ResourceBulkIngest({
             {/* Status Display */}
             <div className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4">
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-medium text-gray-900">
+                <span className="font-bold text-gray-900">
                   {validationResult.resources.length} resources found
                 </span>
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
                     validationResult.status === 'valid'
                       ? 'bg-green-100 text-green-800'
                       : validationResult.status === 'invalid'
@@ -617,7 +617,7 @@ export default function ResourceBulkIngest({
 
               {validationResult.errors.length > 0 && (
                 <div className="mt-2">
-                  <p className="mb-2 text-sm font-medium text-red-700">
+                  <p className="mb-2 text-sm font-bold text-red-700">
                     Validation Errors:
                   </p>
                   <div className="max-h-32 overflow-y-auto">
@@ -626,7 +626,7 @@ export default function ResourceBulkIngest({
                         .slice(0, 10)
                         .map((error, idx) => (
                           <li key={idx} className="flex">
-                            <span className="mr-2 font-medium">
+                            <span className="mr-2 font-bold">
                               {error.index >= 0
                                 ? `Item ${error.index + 1}:`
                                 : 'JSON:'}
@@ -685,14 +685,14 @@ export default function ResourceBulkIngest({
               <button
                 onClick={() => onClose(false)}
                 disabled={isProcessing}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={!canSave}
-                className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
+                className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 {isProcessing
                   ? 'Processing...'

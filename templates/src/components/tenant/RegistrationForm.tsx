@@ -123,7 +123,7 @@ export default function RegistrationForm({
     return (
       <div className="mx-auto max-w-2xl p-6">
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <h3 className="mb-2 text-lg font-semibold text-red-800">
+          <h3 className="mb-2 text-lg font-bold text-red-800">
             Unable to Load Registration
           </h3>
           <p className="text-red-700">{capacityError}</p>
@@ -136,7 +136,7 @@ export default function RegistrationForm({
     return (
       <div className="mx-auto max-w-2xl p-6">
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <h3 className="mb-2 text-lg font-semibold text-yellow-800">
+          <h3 className="mb-2 text-lg font-bold text-yellow-800">
             Registration Currently Unavailable
           </h3>
           <p className="text-yellow-700">
@@ -369,13 +369,13 @@ export default function RegistrationForm({
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={handleModalClose}
-                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   >
                     I'll Use the Email Link
                   </button>
                   <button
                     onClick={handleActivate}
-                    className="rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   >
                     Activate Now
                   </button>

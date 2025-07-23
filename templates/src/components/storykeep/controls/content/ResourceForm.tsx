@@ -322,7 +322,7 @@ export default function ResourceForm({
         {/* Dynamic fields based on category schema */}
         {Object.entries(categorySchema).length > 0 && (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900">
               {categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)}{' '}
               Fields
             </h3>
@@ -346,7 +346,7 @@ export default function ResourceForm({
         <button
           type="button"
           onClick={handleCancel}
-          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+          className="text-sm font-bold text-gray-600 hover:text-gray-800"
         >
           ← Back to Resource List
         </button>

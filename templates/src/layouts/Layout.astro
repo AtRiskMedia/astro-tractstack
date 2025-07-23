@@ -13,6 +13,7 @@ export interface Props {
   created?: string;
   isContext?: boolean;
   isStoryKeep?: boolean;
+  isEditor?: boolean;
   isEditable?: boolean;
   brandConfig?: any;
   storyfragmentId: string;
@@ -26,6 +27,7 @@ const {
   created,
   isContext = false,
   isStoryKeep = false,
+  isEditor = false,
   isEditable = false,
   brandConfig: propBrandConfig,
   storyfragmentId,
@@ -108,15 +110,19 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
     </script>
   </head>
   <body class="font-main w-full">
-    <Header
-      title={title}
-      slug={slug}
-      brandConfig={brandConfig}
-      isContext={isContext}
-      isStoryKeep={isStoryKeep}
-      isEditable={isEditable}
-      menu={menu}
-    />
+    {
+      !isEditor && (
+        <Header
+          title={title}
+          slug={slug}
+          brandConfig={brandConfig}
+          isContext={isContext}
+          isStoryKeep={isStoryKeep}
+          isEditable={isEditable}
+          menu={menu}
+        />
+      )
+    }
     <div
       id="loading-indicator"
       class="bg-myorange fixed left-0 top-0 z-50 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
@@ -125,18 +131,25 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
     <div id="content" class="transition-opacity duration-300">
       <slot />
     </div>
-    <Footer
-      slug={slug}
-      brandConfig={brandConfig}
-      isContext={isContext}
-      menu={menu}
-      created={created}
-      backToTop={true}
-    />
-    <script type="module" is:inline is:persist>
-      import '/src/client/sse.js';
-      import '/src/client/belief-events.js';
-      import '/src/client/analytics-events.js';
-    </script>
+    {
+      !isEditor && (
+        <Footer
+          slug={slug}
+          brandConfig={brandConfig}
+          isContext={isContext}
+          menu={menu}
+          created={created}
+          backToTop={true}
+        />
+      )
+    }
+    {
+      !isEditor && (
+        <script type="module" is:inline is:persist>
+          import '/src/client/sse.js'; import '/src/client/belief-events.js';
+          import '/src/client/analytics-events.js';
+        </script>
+      )
+    }
   </body>
 </html>

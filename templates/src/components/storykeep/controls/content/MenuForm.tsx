@@ -129,11 +129,11 @@ export default function MenuForm({
       {/* Menu Links Section */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-gray-900">Menu Links</h3>
+          <h3 className="text-lg font-bold text-gray-900">Menu Links</h3>
           <button
             type="button"
             onClick={handleAddLink}
-            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+            className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
             Add Link
           </button>
@@ -151,13 +151,13 @@ export default function MenuForm({
                 className="space-y-4 rounded-lg border border-gray-200 p-4"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-gray-900">
+                  <h4 className="text-sm font-bold text-gray-900">
                     Link {index + 1}
                   </h4>
                   <button
                     type="button"
                     onClick={() => handleRemoveLink(index)}
-                    className="text-sm font-medium text-red-600 hover:text-red-800"
+                    className="text-sm font-bold text-red-600 hover:text-red-800"
                   >
                     Remove
                   </button>
@@ -228,7 +228,7 @@ export default function MenuForm({
         <button
           type="button"
           onClick={handleCancel}
-          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+          className="text-sm font-bold text-gray-600 hover:text-gray-800"
         >
           ← Back to Menu List
         </button>

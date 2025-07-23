@@ -207,11 +207,11 @@ const KnownResourceForm = ({
         {/* Fields Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">Fields</h3>
+            <h3 className="text-lg font-bold text-gray-900">Fields</h3>
             <button
               type="button"
               onClick={() => setShowAddField(true)}
-              className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500"
+              className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
             >
               <PlusIcon className="mr-2 h-4 w-4" />
               Add Field
@@ -221,7 +221,7 @@ const KnownResourceForm = ({
           {/* Add Field Form */}
           {showAddField && (
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <h4 className="mb-3 text-sm font-medium text-gray-900">
+              <h4 className="mb-3 text-sm font-bold text-gray-900">
                 Add New Field
               </h4>
               <div className="flex gap-3">
@@ -236,7 +236,7 @@ const KnownResourceForm = ({
                   type="button"
                   onClick={addNewField}
                   disabled={!newFieldName.trim()}
-                  className="rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:bg-cyan-500 disabled:opacity-50"
+                  className="rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white hover:bg-cyan-500 disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -246,7 +246,7 @@ const KnownResourceForm = ({
                     setShowAddField(false);
                     setNewFieldName('');
                   }}
-                  className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-400"
+                  className="rounded-md bg-gray-300 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-400"
                 >
                   Cancel
                 </button>
@@ -276,7 +276,7 @@ const KnownResourceForm = ({
                       }`}
                     >
                       <div className="mb-4 flex items-center justify-between">
-                        <h5 className="text-sm font-medium text-gray-900">
+                        <h5 className="text-sm font-bold text-gray-900">
                           {fieldName}
                           {locked && (
                             <span className="ml-2 text-xs text-gray-500">
@@ -375,7 +375,7 @@ const KnownResourceForm = ({
         <button
           type="button"
           onClick={handleCancel}
-          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+          className="text-sm font-bold text-gray-600 hover:text-gray-800"
         >
           ← Back to Resource Categories
         </button>

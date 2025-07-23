@@ -1,0 +1,113 @@
+import { useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
+
+import {
+  toolModeStore,
+  setToolMode,
+  type ToolModeVal,
+} from '@/stores/storykeep';
+
+const storykeepToolModes = [
+  {
+    key: 'styles' as const,
+    Icon: PaintBrushIcon,
+    title: 'Styles',
+    description: 'Click to edit styles',
+  },
+  {
+    key: 'text' as const,
+    Icon: PencilIcon,
+    title: 'Write',
+    description: 'Click to edit text',
+  },
+  {
+    key: 'insert' as const,
+    Icon: PlusIcon,
+    title: 'Add',
+    description: 'Add new element, e.g. paragraph or image',
+  },
+  {
+    key: 'eraser' as const,
+    Icon: TrashIcon,
+    title: 'Eraser',
+    description: 'Erase any element(s)',
+  },
+  {
+    key: 'move' as const,
+    Icon: ArrowsUpDownIcon,
+    title: 'Move',
+    description: 'Keyboard accessible re-order',
+  },
+  {
+    key: 'debug' as const,
+    Icon: BugAntIcon,
+    title: 'Debug',
+    description: 'Debug node ids',
+  },
+] as const;
+
+const StoryKeepToolMode = ({ isContext }: { isContext: boolean }) => {
+  // Connect to store
+  const toolModeVal = useStore(toolModeStore);
+
+  // Placeholder state - these would come from actual content data
+  const hasTitle = true;
+  const hasPanes = true;
+
+  const className =
+    'w-8 h-8 py-1 rounded-xl bg-white text-myblue hover:bg-mygreen/20 hover:text-black hover:rotate-3 cursor-pointer transition-all';
+  const classNameActive = 'w-8 h-8 py-1.5 rounded-md bg-myblue text-white';
+
+  const currentToolMode =
+    storykeepToolModes.find((mode) => mode.key === toolModeVal) ??
+    storykeepToolModes[0];
+
+  const handleClick = (mode: ToolModeVal) => {
+    setToolMode(mode);
+    console.log('Tool mode changed to:', mode);
+  };
+
+  // Escape key listener
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setToolMode('text');
+        console.log('Tool mode reset to text via Escape');
+      }
+    };
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, []);
+
+  if (!hasTitle || (!hasPanes && !isContext)) return null;
+
+  return (
+    <>
+      <div className="text-mydarkgrey h-16 text-center text-sm font-bold">
+        mode:
+        <div className="font-action text-myblue pt-1.5 text-center text-xs">
+          {currentToolMode.title}
+        </div>
+      </div>
+      {storykeepToolModes.map(({ key, Icon, description }) => (
+        <div title={description} key={key}>
+          {key === toolModeVal ? (
+            <Icon className={classNameActive} />
+          ) : (
+            <Icon className={className} onClick={() => handleClick(key)} />
+          )}
+        </div>
+      ))}
+    </>
+  );
+};
+
+export default StoryKeepToolMode;

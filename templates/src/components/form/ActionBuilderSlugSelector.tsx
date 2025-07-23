@@ -104,7 +104,7 @@ export default function ActionBuilderSlugSelector({
                   value === item.slug ? 'bg-cyan-50' : ''
                 }`}
               >
-                <div className="font-medium text-gray-900">{item.title}</div>
+                <div className="font-bold text-gray-900">{item.title}</div>
                 <div className="text-sm text-gray-500">{item.slug}</div>
               </button>
             ))}

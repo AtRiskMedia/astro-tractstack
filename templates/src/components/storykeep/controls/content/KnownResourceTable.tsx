@@ -123,14 +123,14 @@ const KnownResourceTable = ({
         <div className="flex space-x-3">
           <button
             onClick={() => setShowBulkIngest(true)}
-            className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500"
+            className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-orange-500"
           >
             <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
             Bulk Import
           </button>
           <button
             onClick={handleCreateNew}
-            className="inline-flex items-center gap-x-2 rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+            className="inline-flex items-center gap-x-2 rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
           >
             <PlusIcon className="-ml-0.5 h-5 w-5" />
             New Category
@@ -154,13 +154,13 @@ const KnownResourceTable = ({
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 Category
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 Resources
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+              <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-gray-500">
                 Fields
               </th>
               <th className="relative px-6 py-3">
@@ -193,7 +193,7 @@ const KnownResourceTable = ({
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => onEdit(categorySlug)}
                   >
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900">
                       {categorySlug}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -203,7 +203,7 @@ const KnownResourceTable = ({
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {fieldCount} {fieldCount === 1 ? 'field' : 'fields'}
                     </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-bold sm:pr-6">
                       <div className="flex items-center justify-end space-x-2">
                         {/* Edit button */}
                         <button

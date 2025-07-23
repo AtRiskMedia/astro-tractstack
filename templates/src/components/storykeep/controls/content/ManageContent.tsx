@@ -336,7 +336,7 @@ const ManageContent = ({
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="mb-4 text-lg font-medium text-gray-900">
+              <h3 className="mb-4 text-lg font-bold text-gray-900">
                 Resource Categories
               </h3>
               <KnownResourceTable

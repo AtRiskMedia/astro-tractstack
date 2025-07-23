@@ -305,7 +305,7 @@ export default function BeliefForm({
               type="button"
               onClick={handleAddCustomValue}
               disabled={!customValue.trim()}
-              className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <PlusIcon className="h-4 w-4" />
             </button>
@@ -369,7 +369,7 @@ export default function BeliefForm({
         <button
           type="button"
           onClick={handleCancel}
-          className="text-sm font-medium text-gray-600 hover:text-gray-800"
+          className="text-sm font-bold text-gray-600 hover:text-gray-800"
         >
           ← Back to Belief List
         </button>

@@ -39,7 +39,7 @@ const UsageCell = ({ itemId, fullContentMap, usageType }: UsageCellProps) => {
 
   if (usage.length === 0) {
     return (
-      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-800">
         Unused
       </span>
     );
@@ -55,7 +55,7 @@ const UsageCell = ({ itemId, fullContentMap, usageType }: UsageCellProps) => {
 
   return (
     <div className="group relative">
-      <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+      <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
         {usage.length} dependent{usage.length !== 1 ? 's' : ''}
       </span>
       {/* Tooltip */}

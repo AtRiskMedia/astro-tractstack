@@ -121,7 +121,7 @@ export default function StoryKeepDashboard({
                 tab.current
                   ? 'border-cyan-500 text-cyan-600'
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-                'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium'
+                'whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold'
               )}
               aria-current={tab.current ? 'page' : undefined}
             >

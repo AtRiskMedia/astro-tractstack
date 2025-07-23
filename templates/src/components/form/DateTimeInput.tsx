@@ -249,7 +249,7 @@ const DateTimeInput = ({
     <div className={classNames('space-y-4', className || '')}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-bold text-gray-700">
           {label}
           {required && <span className="ml-1 text-red-500">*</span>}
         </label>
@@ -257,7 +257,7 @@ const DateTimeInput = ({
 
       {/* Date Picker Section */}
       <div className="space-y-2">
-        <div className="text-xs font-medium text-gray-600">Date</div>
+        <div className="text-xs font-bold text-gray-600">Date</div>
         <DatePicker.Root
           value={selectedDate ? [selectedDate] : []}
           onValueChange={handleDateChange}
@@ -304,7 +304,7 @@ const DateTimeInput = ({
                           <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                             <ChevronLeftIcon className="h-4 w-4" />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
+                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-bold hover:bg-gray-100">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
                           <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
@@ -318,7 +318,7 @@ const DateTimeInput = ({
                               {api.weekDays.map((weekDay, id) => (
                                 <DatePicker.TableHeader
                                   key={id}
-                                  className="p-2 text-center text-xs font-medium text-gray-500"
+                                  className="p-2 text-center text-xs font-bold text-gray-500"
                                 >
                                   {weekDay.short}
                                 </DatePicker.TableHeader>
@@ -360,7 +360,7 @@ const DateTimeInput = ({
                           <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                             <ChevronLeftIcon className="h-4 w-4" />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
+                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-bold hover:bg-gray-100">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
                           <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
@@ -406,7 +406,7 @@ const DateTimeInput = ({
                           <DatePicker.PrevTrigger className="rounded p-1 hover:bg-gray-100">
                             <ChevronLeftIcon className="h-4 w-4" />
                           </DatePicker.PrevTrigger>
-                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-medium hover:bg-gray-100">
+                          <DatePicker.ViewTrigger className="rounded px-3 py-1 text-sm font-bold hover:bg-gray-100">
                             <DatePicker.RangeText />
                           </DatePicker.ViewTrigger>
                           <DatePicker.NextTrigger className="rounded p-1 hover:bg-gray-100">
@@ -452,7 +452,7 @@ const DateTimeInput = ({
       {/* Time Picker Section (only show if withTime is true and not date-only) */}
       {withTime && displayFormat !== 'date' && (
         <div className="space-y-2">
-          <div className="text-xs font-medium text-gray-600">
+          <div className="text-xs font-bold text-gray-600">
             Time (Local Timezone)
           </div>
           <div className="flex items-center space-x-2">
@@ -610,7 +610,7 @@ const DateTimeInput = ({
 
       {/* Current Selection Summary */}
       <div className="rounded-md bg-gray-50 p-3">
-        <div className="mb-1 text-xs font-medium text-gray-600">
+        <div className="mb-1 text-xs font-bold text-gray-600">
           Current Selection:
         </div>
         <div className="text-sm text-gray-900">{getDisplaySummary()}</div>

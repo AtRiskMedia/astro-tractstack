@@ -47,6 +47,10 @@ export async function injectTemplateFiles(
 
     // Stores
     {
+      src: resolve('templates/src/stores/storykeep.ts'),
+      dest: 'src/stores/storykeep.ts',
+    },
+    {
       src: resolve('templates/src/stores/brand.ts'),
       dest: 'src/stores/brand.ts',
     },
@@ -571,6 +575,38 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/client/analytics-events.ts'),
       dest: 'src/client/analytics-events.ts',
+    },
+
+    // StoryKeep Editor (add new section)
+    {
+      src: resolve('templates/src/pages/[...slug]/edit.astro'),
+      dest: 'src/pages/[...slug]/edit.astro',
+    },
+    {
+      src: resolve('templates/src/utils/layout.ts'),
+      dest: 'src/utils/layout.ts',
+    },
+
+    // StoryKeep Components (add new section)
+    {
+      src: resolve('templates/src/components/edit/Header.tsx'),
+      dest: 'src/components/edit/Header.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/ToolMode.tsx'),
+      dest: 'src/components/edit/ToolMode.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/ToolBar.tsx'),
+      dest: 'src/components/edit/ToolBar.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/SettingsPanel.tsx'),
+      dest: 'src/components/edit/SettingsPanel.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/HudDisplay.tsx'),
+      dest: 'src/components/edit/HudDisplay.tsx',
     },
 
     // Styles

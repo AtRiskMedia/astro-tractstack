@@ -174,7 +174,7 @@ const StoryFragmentTable = ({
         </div>
         <button
           onClick={handleCreate}
-          className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         >
           <svg
             className="mr-2 h-4 w-4"
@@ -221,7 +221,7 @@ const StoryFragmentTable = ({
                 d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <h3 className="mt-2 text-sm font-bold text-gray-900">
               {searchTerm
                 ? 'No matching story fragments found'
                 : 'No story fragments'}

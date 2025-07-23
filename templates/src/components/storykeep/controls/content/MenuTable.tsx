@@ -139,7 +139,7 @@ export default function MenuTable({
         <button
           type="button"
           onClick={onCreate}
-          className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <svg
             className="mr-2 h-4 w-4"
@@ -186,7 +186,7 @@ export default function MenuTable({
                 d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <h3 className="mt-2 text-sm font-bold text-gray-900">
               {query ? 'No matching menus found' : 'No menus'}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
@@ -261,7 +261,7 @@ export default function MenuTable({
                           </div>
                         ) : isInUse ? (
                           <div className="group relative">
-                            <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            <span className="inline-flex cursor-help items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
                               {usage.length} usage
                               {usage.length !== 1 ? 's' : ''}
                             </span>
@@ -274,7 +274,7 @@ export default function MenuTable({
                             </div>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-800">
                             Unused
                           </span>
                         )}
