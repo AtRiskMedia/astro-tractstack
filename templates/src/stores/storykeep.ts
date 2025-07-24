@@ -1,5 +1,18 @@
-import { atom } from 'nanostores';
+import { atom, map } from 'nanostores';
 import { handleSettingsPanelMobile } from '@/utils/layout';
+import type { FullContentMapItem, Theme } from '@/types/tractstack';
+import type { SettingsPanelSignal, ViewportKey } from '@/types/compositorTypes';
+
+export const fullContentMapStore = atom<FullContentMapItem[]>([]);
+export const urlParamsStore = atom<Record<string, string | boolean>>({});
+export const canonicalURLStore = atom<string>('');
+export const brandColourStore = atom<string>(
+  '10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3'
+);
+export const preferredThemeStore = atom<Theme>('light');
+
+export const hasAssemblyAIStore = atom<boolean>(false);
+export const codehookMapStore = atom<string[]>([]);
 
 // Tool mode types
 export type ToolModeVal =
@@ -24,27 +37,29 @@ export type ToolAddMode =
   | 'identify'
   | 'toggle';
 
-// Viewport types
-export type ViewportMode = 'auto' | 'mobile' | 'tablet' | 'desktop';
-
 // Header positioning state
 export type HeaderPositionState = 'normal' | 'sticky';
 
-// Core tool state
-export const toolModeStore = atom<ToolModeVal>('text');
-export const toolAddModeStore = atom<ToolAddMode>('p');
-
 // Viewport and display state
-export const viewportModeStore = atom<ViewportMode>('auto');
+export const viewportModeStore = atom<ViewportKey>('auto');
+export const viewportKeyStore = map<{
+  value: 'mobile' | 'tablet' | 'desktop';
+}>({
+  value: 'mobile',
+});
+
 export const showHelpStore = atom<boolean>(true);
+export const activeHelpKeyStore = atom<string | null>(null);
+export const isEditingStore = atom<boolean>(false);
+
 export const showAnalyticsStore = atom<boolean>(false);
-export const keyboardAccessibleStore = atom<boolean>(false);
 
 // Header positioning
 export const headerPositionStore = atom<HeaderPositionState>('normal');
 
 // Settings panel state
 export const settingsPanelOpenStore = atom<boolean>(false);
+export const addPanelOpenStore = atom<boolean>(false);
 
 // Mobile-specific behavior
 export const mobileHeaderFadedStore = atom<boolean>(false);
@@ -61,24 +76,37 @@ export const toggleSettingsPanel = () => {
   // Handle mobile behavior
   handleSettingsPanelMobile(isOpen);
 };
+export const toggleAddPanel = () => {
+  const isOpen = !addPanelOpenStore.get();
+  addPanelOpenStore.set(isOpen);
 
-// Close settings panel when switching to insert mode
-export const setToolMode = (mode: ToolModeVal) => {
-  toolModeStore.set(mode);
-
-  // If switching to insert mode and settings panel is open, close it
-  if (mode === 'insert' && settingsPanelOpenStore.get()) {
+  // If opening add panel, close settings panel
+  if (isOpen && settingsPanelOpenStore.get()) {
     settingsPanelOpenStore.set(false);
     handleSettingsPanelMobile(false);
   }
 };
 
-export const setToolAddMode = (mode: ToolAddMode) => {
-  toolAddModeStore.set(mode);
+export const showAnalytics = atom<boolean>(false);
+export const showGuids = atom<boolean>(false);
+
+const getViewportFromWidth = (
+  width: number
+): 'mobile' | 'tablet' | 'desktop' => {
+  if (width >= 1368) return 'desktop';
+  if (width >= 801) return 'tablet';
+  return 'mobile';
 };
 
-export const setViewportMode = (mode: ViewportMode) => {
+export const setViewportMode = (mode: ViewportKey) => {
   viewportModeStore.set(mode);
+  // Sync viewportKeyStore
+  if (mode === 'auto') {
+    const actualViewport = getViewportFromWidth(window.innerWidth);
+    viewportKeyStore.setKey('value', actualViewport);
+  } else {
+    viewportKeyStore.setKey('value', mode);
+  }
 };
 
 export const toggleShowHelp = () => {
@@ -87,10 +115,6 @@ export const toggleShowHelp = () => {
 
 export const toggleShowAnalytics = () => {
   showAnalyticsStore.set(!showAnalyticsStore.get());
-};
-
-export const toggleKeyboardAccessible = () => {
-  keyboardAccessibleStore.set(!keyboardAccessibleStore.get());
 };
 
 export const setHeaderPosition = (position: HeaderPositionState) => {
@@ -111,15 +135,26 @@ export const setCanRedo = (canRedo: boolean) => {
 
 // Reset to default state
 export const resetStoryKeepState = () => {
-  toolModeStore.set('text');
-  toolAddModeStore.set('p');
   viewportModeStore.set('auto');
   showHelpStore.set(true);
   showAnalyticsStore.set(false);
-  keyboardAccessibleStore.set(false);
   headerPositionStore.set('normal');
   settingsPanelOpenStore.set(false);
   mobileHeaderFadedStore.set(false);
   canUndoStore.set(false);
   canRedoStore.set(false);
 };
+
+export const settingsPanelStore = atom<SettingsPanelSignal | null>(null);
+
+export const styleElementInfoStore = map<{
+  markdownParentId: string | null;
+  tagName: string | null;
+  overrideNodeId: string | null;
+  className: string | null;
+}>({
+  markdownParentId: null,
+  tagName: null,
+  overrideNodeId: null,
+  className: null,
+});

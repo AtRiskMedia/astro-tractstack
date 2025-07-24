@@ -41,8 +41,510 @@ export async function injectTemplateFiles(
       dest: 'src/constants.ts',
     },
     {
+      src: resolve('templates/src/constants/stopWords.ts'),
+      dest: 'src/constants/stopWords.ts',
+    },
+    {
       src: resolve('templates/src/types/tractstack.ts'),
       dest: 'src/types/tractstack.ts',
+    },
+
+    // Compositor types
+    {
+      src: resolve('templates/src/types/compositorTypes.ts'),
+      dest: 'src/types/compositorTypes.ts',
+    },
+    {
+      src: resolve('templates/src/types/nodeProps.ts'),
+      dest: 'src/types/nodeProps.ts',
+    },
+    // Compositor components
+    {
+      src: resolve('templates/src/components/compositor/Compositor.tsx'),
+      dest: 'src/components/compositor/Compositor.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/Node.tsx'),
+      dest: 'src/components/compositor/Node.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/NodeWithGuid.tsx'),
+      dest: 'src/components/compositor/NodeWithGuid.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/PanelVisibilityWrapper.tsx'
+      ),
+      dest: 'src/components/compositor/PanelVisibilityWrapper.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/RenderChildren.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/RenderChildren.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/GhostInsertBlock.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/GhostInsertBlock.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/StoryFragment.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/StoryFragment.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/Pane.tsx'),
+      dest: 'src/components/compositor/nodes/Pane.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/Pane_eraser.tsx'),
+      dest: 'src/components/compositor/nodes/Pane_eraser.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/Pane_layout.tsx'),
+      dest: 'src/components/compositor/nodes/Pane_layout.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/Markdown.tsx'),
+      dest: 'src/components/compositor/nodes/Markdown.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/BgPaneWrapper.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/BgPaneWrapper.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/Widget.tsx'),
+      dest: 'src/components/compositor/nodes/Widget.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/nodes/TagElement.tsx'),
+      dest: 'src/components/compositor/nodes/TagElement.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/TabIndicator.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/TabIndicator.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeBasicTag.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeText.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeText.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeAnchorComponent.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeAnchorComponent.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeA.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeA.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeA.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeA.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeA_eraser.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeA_eraser.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeButton.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeButton.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/nodes/tagElements/NodeImg.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/tagElements/NodeImg.tsx',
+    },
+    // Compositor fields
+    {
+      src: resolve(
+        'templates/src/components/compositor/fields/ColorPickerCombo.tsx'
+      ),
+      dest: 'src/components/compositor/fields/ColorPickerCombo.tsx',
+    },
+    // Compositor elements
+    {
+      src: resolve('templates/src/components/compositor/elements/Belief.tsx'),
+      dest: 'src/components/compositor/elements/Belief.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/ToggleBelief.tsx'
+      ),
+      dest: 'src/components/compositor/elements/ToggleBelief.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/IdentifyAs.tsx'
+      ),
+      dest: 'src/components/compositor/elements/IdentifyAs.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/elements/SignUp.tsx'),
+      dest: 'src/components/compositor/elements/SignUp.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/BunnyVideo.tsx'
+      ),
+      dest: 'src/components/compositor/elements/BunnyVideo.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/YouTubeWrapper.tsx'
+      ),
+      dest: 'src/components/compositor/elements/YouTubeWrapper.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/BgVisualBreak.tsx'
+      ),
+      dest: 'src/components/compositor/elements/BgVisualBreak.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/elements/BgImage.tsx'),
+      dest: 'src/components/compositor/elements/BgImage.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/elements/Svg.tsx'),
+      dest: 'src/components/compositor/elements/Svg.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/elements/ButtonIsland.tsx'
+      ),
+      dest: 'src/components/compositor/elements/ButtonIsland.tsx',
+    },
+    // Compositor panels
+    {
+      src: resolve(
+        'templates/src/components/compositor/storyfragment/StoryFragmentConfigPanel.tsx'
+      ),
+      dest: 'src/components/compositor/storyfragment/StoryFragmentConfigPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_title.tsx'
+      ),
+      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_title.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_slug.tsx'
+      ),
+      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_slug.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_menu.tsx'
+      ),
+      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_menu.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_og.tsx'
+      ),
+      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_og.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/pane/AddPanePanel.tsx'),
+      dest: 'src/components/compositor/pane/AddPanePanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_break.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_break.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_codehook.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_codehook.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_newAICopy_modal.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_newAICopy_modal.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_newAICopy.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_newAICopy.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_newCopyMode.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_newCopyMode.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_newCustomCopy.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_newCustomCopy.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_new.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_new.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/AddPanePanel_reuse.tsx'
+      ),
+      dest: 'src/components/compositor/pane/AddPanePanel_reuse.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/ConfigPanePanel.tsx'
+      ),
+      dest: 'src/components/compositor/pane/ConfigPanePanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PanePanel_impression.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PanePanel_impression.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PanePanel_path.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PanePanel_path.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PanePanel_slug.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PanePanel_slug.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PanePanel_title.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PanePanel_title.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/context/ContextPaneConfig.tsx'
+      ),
+      dest: 'src/components/compositor/context/ContextPaneConfig.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/context/ContextPaneConfig_title.tsx'
+      ),
+      dest: 'src/components/compositor/context/ContextPaneConfig_title.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/context/ContextPaneConfig_slug.tsx'
+      ),
+      dest: 'src/components/compositor/context/ContextPaneConfig_slug.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PageGenSelector.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PageGenSelector.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PageGenSpecial.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PageGenSpecial.tsx',
+    },
+    {
+      src: resolve('templates/src/components/compositor/pane/PageGen.tsx'),
+      dest: 'src/components/compositor/pane/PageGen.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/pane/PageGen_preview.tsx'
+      ),
+      dest: 'src/components/compositor/pane/PageGen_preview.tsx',
+    },
+    // Compositor previews
+    {
+      src: resolve(
+        'templates/src/components/compositor/preview/NodesSnapshotRenderer.tsx'
+      ),
+      dest: 'src/components/compositor/preview/NodesSnapshotRenderer.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/preview/OgImagePreview.tsx'
+      ),
+      dest: 'src/components/compositor/preview/OgImagePreview.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/preview/VisualBreakPreview.tsx'
+      ),
+      dest: 'src/components/compositor/preview/VisualBreakPreview.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/preview/ListContentPreview.tsx'
+      ),
+      dest: 'src/components/compositor/preview/ListContentPreview.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/preview/FeaturedContentPreview.tsx'
+      ),
+      dest: 'src/components/compositor/preview/FeaturedContentPreview.tsx',
+    },
+
+    // Compositor stores
+    {
+      src: resolve('templates/src/stores/nodes.ts'),
+      dest: 'src/stores/nodes.ts',
+    },
+    {
+      src: resolve('templates/src/stores/notificationSystem.ts'),
+      dest: 'src/stores/notificationSystem.ts',
+    },
+    {
+      src: resolve('templates/src/stores/nodesHistory.ts'),
+      dest: 'src/stores/nodesHistory.ts',
+    },
+    // Compositor utils
+    {
+      src: resolve('templates/src/utils/compositor/processMarkdown.ts'),
+      dest: 'src/utils/compositor/processMarkdown.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/templateMarkdownStyles.ts'),
+      dest: 'src/utils/compositor/templateMarkdownStyles.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/nodesMarkdownGenerator.ts'),
+      dest: 'src/utils/compositor/nodesMarkdownGenerator.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/nodesHelper.ts'),
+      dest: 'src/utils/compositor/nodesHelper.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/allowInsert.ts'),
+      dest: 'src/utils/compositor/allowInsert.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/typeGuards.ts'),
+      dest: 'src/utils/compositor/typeGuards.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/preParse_Clicked.ts'),
+      dest: 'src/utils/compositor/preParse_Clicked.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/preParse_Bunny.ts'),
+      dest: 'src/utils/compositor/preParse_Bunny.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/domHelpers.ts'),
+      dest: 'src/utils/compositor/domHelpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/actionButton.ts'),
+      dest: 'src/utils/compositor/actionButton.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/handleClickEvent.ts'),
+      dest: 'src/utils/compositor/handleClickEvent.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/reduceNodesClassNames.ts'),
+      dest: 'src/utils/compositor/reduceNodesClassNames.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/tailwindClasses.ts'),
+      dest: 'src/utils/compositor/tailwindClasses.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/tailwindColors.ts'),
+      dest: 'src/utils/compositor/tailwindColors.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/TemplateNodes.ts'),
+      dest: 'src/utils/compositor/TemplateNodes.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/TemplatePanes.ts'),
+      dest: 'src/utils/compositor/TemplatePanes.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/TemplateMarkdowns.ts'),
+      dest: 'src/utils/compositor/TemplateMarkdowns.ts',
+    },
+    {
+      src: resolve('templates/src/constants/tailwindColors.json'),
+      dest: 'src/constants/tailwindColors.json',
+    },
+    {
+      src: resolve('templates/src/constants/shapes.ts'),
+      dest: 'src/constants/shapes.ts',
+    },
+    {
+      src: resolve('templates/src/constants/beliefs.ts'),
+      dest: 'src/constants/beliefs.ts',
+    },
+    {
+      src: resolve('templates/src/constants/prompts.json'),
+      dest: 'src/constants/prompts.json',
     },
 
     // Stores
@@ -335,6 +837,10 @@ export async function injectTemplateFiles(
       dest: 'src/components/form/ActionBuilderField.tsx',
     },
     {
+      src: resolve('templates/src/components/form/MagicPathBuilder.tsx'),
+      dest: 'src/components/form/MagicPathBuilder.tsx',
+    },
+    {
       src: resolve(
         'templates/src/components/form/ActionBuilderSlugSelector.tsx'
       ),
@@ -547,8 +1053,18 @@ export async function injectTemplateFiles(
       dest: 'src/components/codehooks/FeaturedContent.astro',
     },
     {
+      src: resolve(
+        'templates/src/components/codehooks/FeaturedContentSetup.tsx'
+      ),
+      dest: 'src/components/codehooks/FeaturedContentSetup.tsx',
+    },
+    {
       src: resolve('templates/src/components/codehooks/ListContent.astro'),
       dest: 'src/components/codehooks/ListContent.astro',
+    },
+    {
+      src: resolve('templates/src/components/codehooks/ListContentSetup.tsx'),
+      dest: 'src/components/codehooks/ListContentSetup.tsx',
     },
     {
       src: resolve(
@@ -556,11 +1072,15 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
     },
+    {
+      src: resolve('templates/src/components/codehooks/BunnyVideoSetup.tsx'),
+      dest: 'src/components/codehooks/BunnyVideoSetup.tsx',
+    },
 
     // Widget Components
     {
-      src: resolve('templates/src/components/widgets/BunnyVideo.astro'),
-      dest: 'src/components/widgets/BunnyVideo.astro',
+      src: resolve('templates/src/components/widgets/BunnyVideoHero.astro'),
+      dest: 'src/components/widgets/BunnyVideoHero.astro',
     },
 
     // Client Scripts

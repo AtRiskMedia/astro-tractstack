@@ -1,5 +1,6 @@
 import {
   settingsPanelOpenStore,
+  addPanelOpenStore,
   headerPositionStore,
   setHeaderPosition,
   setMobileHeaderFaded,
@@ -69,16 +70,15 @@ export function setupLayoutObservers(): void {
 
   const updateHudVisibility = () => {
     const isSettingsOpen = settingsPanelOpenStore.get();
+    const isAddPanelOpen = addPanelOpenStore.get();
 
     if (hudElement) {
-      if (isSettingsOpen) {
-        // Hide HUD when settings panel is open
+      if (isSettingsOpen || isAddPanelOpen) {
+        // Hide HUD when settings panel is open OR add panel is open
         hudElement.style.display = 'none';
       } else {
-        // Show HUD when settings panel is closed
+        // Show HUD when both panels are closed
         hudElement.style.display = 'block';
-
-        // Remove any margin-bottom that might have been set
         hudElement.style.marginBottom = '';
       }
     }

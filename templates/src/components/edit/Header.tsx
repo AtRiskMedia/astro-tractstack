@@ -3,7 +3,6 @@ import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCirc
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon';
 import PresentationChartBarIcon from '@heroicons/react/24/outline/PresentationChartBarIcon';
-import CursorArrowRaysIcon from '@heroicons/react/24/outline/CursorArrowRaysIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
 import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIcon';
 import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
@@ -14,13 +13,11 @@ import {
   viewportModeStore,
   showHelpStore,
   showAnalyticsStore,
-  keyboardAccessibleStore,
   canUndoStore,
   canRedoStore,
   setViewportMode,
   toggleShowHelp,
   toggleShowAnalytics,
-  toggleKeyboardAccessible,
   setCanUndo,
   setCanRedo,
 } from '@/stores/storykeep';
@@ -40,7 +37,6 @@ const StoryKeepHeader = ({
   const viewport = useStore(viewportModeStore);
   const showHelp = useStore(showHelpStore);
   const showAnalytics = useStore(showAnalyticsStore);
-  const keyboardAccessible = useStore(keyboardAccessibleStore);
   const canUndo = useStore(canUndoStore);
   const canRedo = useStore(canRedoStore);
 
@@ -145,13 +141,6 @@ const StoryKeepHeader = ({
           title="Toggle Interaction Analytics"
           className={showAnalytics ? activeIconClassName : iconClassName}
         />
-        {!keyboardAccessibleEnabled && (
-          <CursorArrowRaysIcon
-            onClick={toggleKeyboardAccessible}
-            title="Toggle Mobile/Keyboard Accessibility"
-            className={keyboardAccessible ? activeIconClassName : iconClassName}
-          />
-        )}
         <ArrowTopRightOnSquareIcon
           onClick={visitPage}
           title="Visit Page"

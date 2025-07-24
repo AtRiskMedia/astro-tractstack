@@ -1,4 +1,4 @@
-// POSITIONAL MAPPING SYSTEM:
+// Brand Colors --> POSITIONAL MAPPING SYSTEM:
 // Position 1: Very dark (primary black) - pairs with 2,8 for text contrast
 // Position 2: Very light (primary white) - pairs with 1,5,7 for background contrast
 // Position 3: Bright foreground/background color (accent)
@@ -7,11 +7,8 @@
 // Position 6: Middle color - general purpose, pairs with 1,5 for subtle contrast
 // Position 7: Dark utility color
 // Position 8: Off-white - pairs with 1,5,7 for softer contrast than position 2
-//
-// TODO: Add automated contrast checking validation for key pairs:
-// - 1-2, 1-8 (text on backgrounds) should be >7:1 (WCAG AAA)
-// - 5-2, 5-6, 5-8 (content on backgrounds) should be >4.5:1 (WCAG AA)
-// - Cross-validate all themes maintain this contrast structure
+
+export const PUBLIC_THEME = 'light-bold';
 
 export const THEME_OPTIONS = [
   'Default',

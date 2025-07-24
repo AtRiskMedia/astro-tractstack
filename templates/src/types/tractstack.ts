@@ -97,20 +97,25 @@ export type AstroComponentProps<T> = T extends (props: infer P) => any
   ? P
   : never;
 
-// StoryFragment types matching Go backend
-export interface StoryFragmentNode {
-  id: string;
+export type Theme =
+  | 'light'
+  | 'light-bw'
+  | 'light-bold'
+  | 'dark'
+  | 'dark-bw'
+  | 'dark-bold';
+export const themes: Theme[] = [
+  'light',
+  'light-bw',
+  'light-bold',
+  'dark',
+  'dark-bw',
+  'dark-bold',
+];
+
+export interface Topic {
+  id: number;
   title: string;
-  slug: string;
-  tractStackId: string;
-  menuId?: string;
-  paneIds: string[];
-  tailwindBgColour?: string;
-  socialImagePath?: string;
-  codeHookTargets?: Record<string, string>; // paneId -> codeHookTarget
-  isHome: boolean;
-  created: string;
-  changed?: string;
 }
 
 // CodeHook execution data

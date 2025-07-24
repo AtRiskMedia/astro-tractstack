@@ -3,17 +3,18 @@ import CogIcon from '@heroicons/react/24/outline/CogIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import {
   settingsPanelOpenStore,
-  toolModeStore,
   toggleSettingsPanel,
 } from '@/stores/storykeep';
+import { getCtx } from '@/stores/nodes';
 
 interface SettingsPanelProps {
   availableCodeHooks: string[];
 }
 
 const SettingsPanel = ({ availableCodeHooks }: SettingsPanelProps) => {
+  const ctx = getCtx();
   const isOpen = useStore(settingsPanelOpenStore);
-  const toolModeVal = useStore(toolModeStore);
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
   // Don't show settings button or panel when in insert mode (ToolBar takes over)
   if (toolModeVal === 'insert') {

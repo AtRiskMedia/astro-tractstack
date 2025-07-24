@@ -153,9 +153,12 @@ PUBLIC_TENANTID="${responses.tenantId}"
     console.log(kleur.green('✅ React and Node adapter installed'));
 
     // Install core dependencies
-    execSync(`${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1`, {
-      stdio: 'inherit',
-    });
+    execSync(
+      `${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid`,
+      {
+        stdio: 'inherit',
+      }
+    );
     console.log(kleur.green('✅ State management installed'));
 
     // Install UI components
@@ -169,7 +172,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install visualization dependencies
     execSync(
-      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0`,
+      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0 tinycolor2`,
       {
         stdio: 'inherit',
       }
@@ -182,7 +185,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3`,
+      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
@@ -191,12 +194,12 @@ PUBLIC_TENANTID="${responses.tenantId}"
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react react-dom @astrojs/react @astrojs/node @ark-ui/react @heroicons/react d3 d3-sankey recharts player.js path-to-regexp @nanostores/react nanostores`
+        `${addCommand} react react-dom @astrojs/react @astrojs/node @ark-ui/react @heroicons/react d3 d3-sankey recharts player.js path-to-regexp @nanostores/react nanostores @nanostores/persistent ulid tinycolor2`
       )
     );
     console.log(
       kleur.cyan(
-        `${addCommand} -D @types/react @types/react-dom @types/d3 @types/d3-sankey prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
+        `${addCommand} -D @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
       )
     );
     process.exit(1);
@@ -369,15 +372,15 @@ export default defineConfig({
 
   // Create tsconfig.json
   const tsConfig = `{
-  "extends": "astro/tsconfigs/strictest",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] },
-    "types": ["astro", "@astrojs/react", "node", "@types/react", "@types/react-dom"]
-  },
-  "include": ["src/**/*", "public/**/*", "tailwind.config.cjs", "src/types/astro.d.ts"],
-  "exclude": ["node_modules", "dist", ".astro"]
-}`;
+    "extends": "astro/tsconfigs/strictest",
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": { "@/*": ["src/*"] },
+      "types": ["astro/client", "@astrojs/react", "node", "@types/react", "@types/react-dom", "@types/tinycolor2"]
+    },
+    "include": ["src/**/*", "public/**/*", "tailwind.config.cjs"],
+    "exclude": ["node_modules", "dist", ".astro"]
+  }`;
   if (!existsSync('tsconfig.json')) {
     writeFileSync('tsconfig.json', tsConfig);
     console.log(kleur.green('✅ Created tsconfig.json'));

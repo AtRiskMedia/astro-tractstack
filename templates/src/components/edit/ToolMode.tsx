@@ -6,12 +6,8 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
-
-import {
-  toolModeStore,
-  setToolMode,
-  type ToolModeVal,
-} from '@/stores/storykeep';
+import { type ToolModeVal } from '@/types/compositorTypes';
+import { getCtx } from '@/stores/nodes';
 
 const storykeepToolModes = [
   {
@@ -52,9 +48,13 @@ const storykeepToolModes = [
   },
 ] as const;
 
-const StoryKeepToolMode = ({ isContext }: { isContext: boolean }) => {
-  // Connect to store
-  const toolModeVal = useStore(toolModeStore);
+interface StoryKeepToolModeProps {
+  isContext: boolean;
+}
+
+const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
+  const ctx = getCtx();
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
   // Placeholder state - these would come from actual content data
   const hasTitle = true;
@@ -69,7 +69,7 @@ const StoryKeepToolMode = ({ isContext }: { isContext: boolean }) => {
     storykeepToolModes[0];
 
   const handleClick = (mode: ToolModeVal) => {
-    setToolMode(mode);
+    ctx.toolModeValStore.set({ value: mode });
     console.log('Tool mode changed to:', mode);
   };
 
@@ -77,7 +77,7 @@ const StoryKeepToolMode = ({ isContext }: { isContext: boolean }) => {
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setToolMode('text');
+        ctx.toolModeValStore.set({ value: 'text' });
         console.log('Tool mode reset to text via Escape');
       }
     };
@@ -85,7 +85,7 @@ const StoryKeepToolMode = ({ isContext }: { isContext: boolean }) => {
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, []);
+  }, [ctx]);
 
   if (!hasTitle || (!hasPanes && !isContext)) return null;
 

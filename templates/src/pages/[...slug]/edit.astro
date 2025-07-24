@@ -1,16 +1,26 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
+import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
 import { joinUrlPaths } from '@/utils/helpers';
+import { components as codeHookComponents } from '@/custom/CodeHook.astro';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
 import SettingsPanel from '@/components/edit/SettingsPanel';
 import HudDisplay from '@/components/edit/HudDisplay';
+import { Compositor } from '@/components/compositor/Compositor';
+import { requireAdminOrEditor } from '@/utils/auth';
 
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/404');
+
+// Authentication check - redirect to login if not authenticated
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) {
+  return authCheck;
+}
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -40,7 +50,6 @@ try {
   }
 
   loadData = await response.json();
-  console.log('V2 Full Payload LoadData:', loadData);
 } catch (error) {
   console.error('Error fetching storyfragment full payload:', error);
   const currentPath = Astro.url.pathname;
@@ -53,6 +62,11 @@ const title = storyFragment?.title || `Editor`;
 const storyFragmentID = storyFragment?.id;
 const description = `Edit ${title} - TractStack Editor`;
 const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
+const fullCanonicalURL = brandConfig?.SITE_URL
+  ? canonicalURL.startsWith('/')
+    ? `${brandConfig.SITE_URL.replace(/\/$/, '')}${canonicalURL}`
+    : `${brandConfig.SITE_URL.replace(/\/$/, '')}/${canonicalURL}`
+  : canonicalURL;
 
 // Extract dates if available
 const pubDatetime = storyFragment?.created
@@ -66,6 +80,14 @@ const modDatetime = storyFragment?.changed
 const ogImage = storyFragment?.socialImagePath
   ? joinUrlPaths(brandConfig?.SITE_URL || ``, storyFragment.socialImagePath)
   : undefined;
+
+const fullContentMap = await getFullContentMap(
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+);
+const urlParams: Record<string, string | boolean> = {};
+for (const [key, value] of Astro.url.searchParams) {
+  urlParams[key] = value === '' ? true : value;
+}
 ---
 
 <Layout
@@ -123,21 +145,22 @@ const ogImage = storyFragment?.socialImagePath
     <main id="mainContent" class="relative flex-1">
       <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
         <div
+          class="h-full h-screen"
           style={{
             backgroundImage:
               'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
           }}
         >
-          <!-- Placeholder for compositor -->
-          <div
-            class="border-mylightgrey flex min-h-96 items-center justify-center rounded-lg border-2 border-dashed bg-white/80 shadow-sm"
-          >
-            <div class="p-8 text-center">
-              <h2 class="font-action text-myblue mb-4 text-2xl">
-                Compositor Will Render Here
-              </h2>
-            </div>
-          </div>
+          <Compositor
+            id={storyFragmentID}
+            nodes={loadData}
+            config={brandConfig}
+            fullContentMap={fullContentMap}
+            fullCanonicalURL={fullCanonicalURL}
+            urlParams={urlParams}
+            availableCodeHooks={Object.keys(codeHookComponents)}
+            client:only="react"
+          />
         </div>
       </div>
     </main>

@@ -1,4 +1,7 @@
+import { stopWords } from '@/constants/stopWords';
 import type { MenuNode } from '@/types/tractstack';
+
+let progressInterval: NodeJS.Timeout | null = null;
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(` `);
@@ -114,3 +117,134 @@ export function joinUrlPaths(base: string, path: string): string {
   // Join with a single slash
   return `${trimmedBase}/${trimmedPath}`;
 }
+
+export function startLoadingAnimation() {
+  const loadingIndicator = document.getElementById(
+    'loading-indicator'
+  ) as HTMLElement;
+  const content = document.getElementById('content') as HTMLElement;
+
+  if (
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
+    loadingIndicator
+  ) {
+    loadingIndicator.style.transform = 'scaleX(0)';
+    loadingIndicator.style.display = 'block';
+    content.style.opacity = '0.5';
+
+    let progress = 0;
+    progressInterval = setInterval(() => {
+      progress += 2;
+      if (progress > 90) {
+        if (progressInterval !== null) {
+          clearInterval(progressInterval);
+        }
+      }
+      loadingIndicator.style.transform = `scaleX(${progress / 100})`;
+    }, 20);
+  }
+}
+
+export function stopLoadingAnimation() {
+  const loadingIndicator = document.getElementById(
+    'loading-indicator'
+  ) as HTMLElement;
+  const content = document.getElementById('content') as HTMLElement;
+
+  if (
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
+    loadingIndicator
+  ) {
+    if (progressInterval !== null) {
+      clearInterval(progressInterval);
+    }
+    loadingIndicator.style.transform = 'scaleX(1)';
+    content.style.opacity = '1';
+
+    setTimeout(() => {
+      loadingIndicator.style.display = 'none';
+      loadingIndicator.style.transform = 'scaleX(0)';
+    }, 300);
+  }
+}
+
+export function isDeepEqual(obj1: any, obj2: any, excludeKeys: string[] = []) {
+  // Check if both are the same type and are objects
+  if (
+    typeof obj1 !== 'object' ||
+    typeof obj2 !== 'object' ||
+    obj1 === null ||
+    obj2 === null
+  ) {
+    return obj1 === obj2;
+  }
+  // Get the keys of both objects
+  const keys1 = Object.keys(obj1).filter((key) => !excludeKeys.includes(key));
+  const keys2 = Object.keys(obj2).filter((key) => !excludeKeys.includes(key));
+  // Check if the number of keys is the same
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+  // Check if all keys and their values are equal
+  for (const key of keys1) {
+    if (
+      !keys2.includes(key) ||
+      !isDeepEqual(obj1[key], obj2[key], excludeKeys)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function cleanString(s: string): string {
+  if (!s) return s;
+  s = s.toLowerCase();
+  s = s.replace(/[^a-z0-9\s-_]/g, '');
+  s = s.replace(/\s+/g, '-');
+  const words = s.split(/[-_]/);
+  if (words.length > 1) {
+    s = words.filter((word) => !stopWords.has(word)).join('-');
+  }
+  s = s.replace(/^[^a-z]+/, '');
+  s = s.replace(/[-_]{2,}/g, '-');
+  s = s.replace(/^[-_]+|[-_]+$/g, '');
+  if (!s.match(/^[a-z][a-z0-9-_]*[a-z0-9]$/)) {
+    s = s.replace(/[^a-z0-9]/g, '');
+  }
+  return s;
+}
+
+export function titleToSlug(title: string, maxLength: number = 50): string {
+  const slug = cleanString(title);
+  if (slug.length <= maxLength) {
+    return slug;
+  }
+  const words = slug.split('-');
+  let result = '';
+  for (const word of words) {
+    if ((result + (result ? '-' : '') + word).length > maxLength) {
+      break;
+    }
+    result += (result ? '-' : '') + word;
+  }
+  if (!result) {
+    result = slug.slice(0, maxLength);
+  }
+  return result.replace(/-+$/, '');
+}
+
+export function findUniqueSlug(slug: string, existingSlugs: string[]): string {
+  if (!existingSlugs.includes(slug)) {
+    return slug;
+  }
+  let counter = 1;
+  let newSlug = `${slug}-${counter}`;
+  while (existingSlugs.includes(newSlug)) {
+    counter++;
+    newSlug = `${slug}-${counter}`;
+  }
+  return newSlug;
+}
+
+export const timestampNodeId = (id: string): string => `${id}-${Date.now()}`;

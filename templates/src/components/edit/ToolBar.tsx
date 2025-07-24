@@ -1,12 +1,7 @@
 import { useStore } from '@nanostores/react';
-import {
-  toolModeStore,
-  toolAddModeStore,
-  setToolMode,
-  setToolAddMode,
-  type ToolModeVal,
-  type ToolAddMode,
-} from '@/stores/storykeep';
+import { addPanelOpenStore } from '@/stores/storykeep';
+import { getCtx } from '@/stores/nodes';
+import type { ToolModeVal, ToolAddMode } from '@/types/compositorTypes';
 
 const toolAddModeTitles: Record<ToolAddMode, string> = {
   p: 'Paragraph',
@@ -41,8 +36,10 @@ const AddElementsPanel = ({
 }: {
   currentToolAddMode: ToolAddMode;
 }) => {
+  const ctx = getCtx();
+
   const handleElementClick = (mode: ToolAddMode) => {
-    setToolAddMode(mode);
+    ctx.toolAddModeStore.set({ value: mode });
     console.log('Tool add mode changed to:', mode);
   };
 
@@ -66,9 +63,12 @@ const AddElementsPanel = ({
 };
 
 const StoryKeepToolBar = () => {
+  const ctx = getCtx();
+
   // Connect to stores
-  const toolModeVal = useStore(toolModeStore);
-  const toolAddModeVal = useStore(toolAddModeStore);
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
+  const { value: toolAddModeVal } = useStore(ctx.toolAddModeStore);
+  const isAddPanelOpen = useStore(addPanelOpenStore);
 
   // Placeholder state - these would come from actual content data
   const hasTitle = true;
