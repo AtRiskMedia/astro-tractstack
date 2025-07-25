@@ -1,8 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { sankey, sankeyLinkHorizontal } from 'd3-sankey';
-import { useEffect, useRef, useState } from 'react';
 
 const MAX_HEIGHT = 1200;
+const COMPRESSED_HEIGHT = 384; // Fixed height for compressed view
 
 const colors = [
   '#ef4444',
@@ -43,24 +44,31 @@ interface SankeyData {
 
 interface SankeyDiagramProps {
   data: SankeyData;
+  isLoading?: boolean;
 }
 
-const SankeyDiagram = ({ data }: SankeyDiagramProps) => {
+const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolledRef = useRef(false);
   const [dimensions, setDimensions] = useState({
     width: 800,
     height: 500,
   });
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
         const nodeCount = data.nodes.length || 1;
-        const calculatedHeight = nodeCount * (40 + 10) + 50;
-        const constrainedHeight = Math.min(MAX_HEIGHT, calculatedHeight);
-        setDimensions({ width: containerWidth, height: constrainedHeight });
+        const optimalHeight = nodeCount * (40 + 10) + 50;
+        const finalHeight = Math.min(MAX_HEIGHT, optimalHeight);
+
+        setDimensions({
+          width: containerWidth,
+          height: finalHeight,
+        });
       }
     };
 
@@ -68,6 +76,37 @@ const SankeyDiagram = ({ data }: SankeyDiagramProps) => {
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
   }, [data.nodes.length]);
+
+  useEffect(() => {
+    // Only scroll on subsequent data changes, not first load
+    if (
+      data &&
+      data.nodes.length > 0 &&
+      data.links.length > 0 &&
+      containerRef.current
+    ) {
+      if (hasScrolledRef.current) {
+        const prefersReducedMotion = window.matchMedia(
+          '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+        const timeoutId = setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.scrollIntoView({
+              behavior: prefersReducedMotion ? 'auto' : 'smooth',
+              block: 'start',
+              inline: 'nearest',
+            });
+          }
+        }, 100);
+
+        return () => clearTimeout(timeoutId);
+      } else {
+        // Mark that we've loaded data once
+        hasScrolledRef.current = true;
+      }
+    }
+  }, [data.nodes.length, data.links.length]);
 
   useEffect(() => {
     if (!svgRef.current || !data || !data.nodes.length || !data.links.length) {
@@ -188,23 +227,131 @@ const SankeyDiagram = ({ data }: SankeyDiagramProps) => {
         .attr('dy', '0.35em')
         .attr('text-anchor', (d) => ((d.x0 ?? 0) < width / 2 ? 'start' : 'end'))
         .text((d) => d.name)
-        .style('font-size', '12px')
+        .style('font-size', needsCompression ? '10px' : '12px')
         .style('fill', '#333');
     } catch (error) {
       console.error('SankeyDiagram: Error generating Sankey diagram', error);
     }
   }, [data, dimensions]);
 
+  const compressedHeight = COMPRESSED_HEIGHT;
+  const needsCompression = compressedHeight && !isExpanded;
+  const displayHeight = needsCompression ? compressedHeight : dimensions.height;
+
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <div ref={containerRef} className="w-full">
-      <svg
-        ref={svgRef}
-        width={dimensions.width}
-        height={dimensions.height}
-        style={{ display: 'block', width: '100%' }}
-        viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-        preserveAspectRatio="xMidYMid meet"
-      ></svg>
+    <div ref={containerRef} className="relative w-full">
+      {/* Expand/Compress Controls */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          {data.nodes.length} nodes • {data.links.length} connections
+        </div>
+        <button
+          onClick={handleExpand}
+          className="flex items-center space-x-1 rounded-md bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-200"
+        >
+          {isExpanded ? (
+            <>
+              <span>Compress view</span>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            </>
+          ) : (
+            <>
+              <span>Expand diagram ({data.nodes.length} nodes)</span>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Compression Warning */}
+      {needsCompression && (
+        <div className="mb-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <strong>Compressed view</strong> - click anywhere to expand!
+        </div>
+      )}
+
+      {/* SVG Container - Clickable when compressed */}
+      <div
+        className={`transition-all duration-300 ${
+          needsCompression
+            ? 'cursor-pointer hover:bg-gray-50 hover:shadow-md'
+            : ''
+        }`}
+        style={{
+          height: `${displayHeight}px`,
+          overflow: 'hidden',
+        }}
+        onClick={needsCompression ? handleExpand : undefined}
+        role={needsCompression ? 'button' : undefined}
+        tabIndex={needsCompression ? 0 : undefined}
+        onKeyDown={
+          needsCompression
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleExpand();
+                }
+              }
+            : undefined
+        }
+        aria-label={
+          needsCompression ? 'Click to expand Sankey diagram' : undefined
+        }
+      >
+        <svg
+          ref={svgRef}
+          width={dimensions.width}
+          height={dimensions.height}
+          style={{
+            display: 'block',
+            width: '100%',
+            height: `${dimensions.height}px`,
+            transform: needsCompression
+              ? `scaleY(${displayHeight / dimensions.height})`
+              : 'scaleY(1)',
+            transformOrigin: 'top center',
+          }}
+          viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+          preserveAspectRatio="xMidYMid meet"
+        ></svg>
+      </div>
+
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-80">
+          <div className="flex items-center space-x-2 text-white">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <span className="text-sm font-bold">Loading...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

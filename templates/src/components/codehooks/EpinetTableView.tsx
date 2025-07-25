@@ -29,6 +29,7 @@ interface ActiveHourData {
   hourKey: string;
   hourNum: number;
   hourDisplay: string;
+  humanReadableTime: string;
   contentItems: ContentItem[];
   hourlyTotal: number;
   hourlyVisitors: number;
@@ -40,6 +41,7 @@ interface EmptyHourRange {
   startHour: number;
   endHour: number;
   display: string;
+  humanReadableDisplay: string;
   isFuture: boolean;
 }
 
@@ -53,11 +55,12 @@ interface ContentMapItem {
 
 const EpinetTableView = ({
   fullContentMap,
+  isLoading = false,
 }: {
   fullContentMap: ContentMapItem[];
+  isLoading?: boolean;
 }) => {
   const $epinetCustomFilters = useStore(epinetCustomFilters);
-  const [showTable, setShowTable] = useState(false);
   const [currentDay, setCurrentDay] = useState<string | null>(null);
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
@@ -78,10 +81,46 @@ const EpinetTableView = ({
     };
   };
 
+  const getHumanReadableTime = (hour: number): string => {
+    if (hour === 0) return 'midnight';
+    if (hour === 12) return 'noon';
+    if (hour < 12) return `${hour}am`;
+    return `${hour - 12}pm`;
+  };
+
+  const getHumanReadableTimeRange = (
+    startHour: number,
+    endHour: number
+  ): string => {
+    if (startHour === endHour) {
+      return getHumanReadableTime(startHour);
+    }
+    const startTime = getHumanReadableTime(startHour);
+    // If end hour is 23 (11pm), show "end of day"
+    if (endHour === 23) {
+      return `${startTime} - end of day`;
+    }
+    // Show endHour:59 format
+    if (endHour === 0) {
+      return `${startTime} - 12:59am`;
+    } else if (endHour < 12) {
+      return `${startTime} - ${endHour}:59am`;
+    } else if (endHour === 12) {
+      return `${startTime} - 12:59pm`;
+    } else {
+      return `${startTime} - ${endHour - 12}:59pm`;
+    }
+  };
+
   // Parse UTC hourKey and convert to local timezone for display
   const getLocalDisplayTime = (
     hourKey: string
-  ): { localDay: string; localHour: number; localHourDisplay: string } => {
+  ): {
+    localDay: string;
+    localHour: number;
+    localHourDisplay: string;
+    humanReadableTime: string;
+  } => {
     try {
       const [year, month, day, hour] = hourKey.split('-').map(Number);
       const utcDate = new Date(Date.UTC(year, month - 1, day, hour));
@@ -95,8 +134,9 @@ const EpinetTableView = ({
 
       const localHour = localDate.getHours();
       const localHourDisplay = `${localHour.toString().padStart(2, '0')}:00`;
+      const humanReadableTime = getHumanReadableTime(localHour);
 
-      return { localDay, localHour, localHourDisplay };
+      return { localDay, localHour, localHourDisplay, humanReadableTime };
     } catch (e) {
       console.warn(`Failed to parse hourKey: ${hourKey}`, e);
       // Fallback to treating as already local
@@ -104,7 +144,8 @@ const EpinetTableView = ({
       const localDay = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const localHour = Number(hourKey.split('-')[3]) || 0;
       const localHourDisplay = `${localHour.toString().padStart(2, '0')}:00`;
-      return { localDay, localHour, localHourDisplay };
+      const humanReadableTime = getHumanReadableTime(localHour);
+      return { localDay, localHour, localHourDisplay, humanReadableTime };
     }
   };
 
@@ -262,6 +303,10 @@ const EpinetTableView = ({
               emptyRangeStart === localEmptyEnd
                 ? `${emptyRangeStart.toString().padStart(2, '0')}:00`
                 : `${emptyRangeStart.toString().padStart(2, '0')}:00 - ${localEmptyEnd.toString().padStart(2, '0')}:59`,
+            humanReadableDisplay: getHumanReadableTimeRange(
+              emptyRangeStart,
+              localEmptyEnd
+            ),
             isFuture,
           });
           emptyRangeStart = null;
@@ -279,6 +324,7 @@ const EpinetTableView = ({
           hourKey: activity.hourKey,
           hourNum: localHour,
           hourDisplay: activity.localHourDisplay,
+          humanReadableTime: getHumanReadableTime(localHour),
           contentItems,
           hourlyTotal: activity.hourlyTotal,
           hourlyVisitors: activity.hourlyVisitors,
@@ -302,6 +348,10 @@ const EpinetTableView = ({
           emptyRangeStart === localEmptyEnd
             ? `${emptyRangeStart.toString().padStart(2, '0')}:00`
             : `${emptyRangeStart.toString().padStart(2, '0')}:00 - ${localEmptyEnd.toString().padStart(2, '0')}:59`,
+        humanReadableDisplay: getHumanReadableTimeRange(
+          emptyRangeStart,
+          localEmptyEnd
+        ),
         isFuture,
       });
     }
@@ -368,34 +418,23 @@ const EpinetTableView = ({
 
   if (!hasData) return null;
 
-  if (!showTable) {
-    return (
-      <div className="mt-4">
-        <button
-          onClick={() => setShowTable(true)}
-          className="rounded-md bg-cyan-600 px-3 py-1 text-sm text-white shadow-sm transition-colors duration-200 hover:bg-cyan-700"
-        >
-          Show Analytics in Table View
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-4">
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="relative">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-black bg-opacity-80">
+          <div className="flex items-center space-x-2 text-white">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <span className="text-sm font-bold">Loading table data...</span>
+          </div>
+        </div>
+      )}
+      <div className="border-t border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between border-b border-gray-200 p-3">
           <h3 className="text-sm font-bold text-gray-800">
             Hourly Activity ({getTimezoneName()}) - {dailyTotal} Total Events /{' '}
             {dailyVisitors} Unique Visitors
           </h3>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowTable(false)}
-              className="rounded-md bg-gray-200 px-2 py-1 text-xs text-gray-700 transition-colors duration-200 hover:bg-gray-300"
-            >
-              Hide Table View
-            </button>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => navigateDay('prev')}
@@ -441,7 +480,7 @@ const EpinetTableView = ({
                 {item.type === 'active' ? (
                   <div className="flex flex-grow items-center space-x-3">
                     <span className="text-sm font-bold text-gray-700">
-                      {item.hourDisplay}
+                      {item.humanReadableTime}
                     </span>
                     <span className="text-xs text-gray-600">
                       {item.hourlyTotal} event
@@ -481,8 +520,8 @@ const EpinetTableView = ({
                   </div>
                 ) : (
                   <div className="flex flex-grow items-center">
-                    <span className="text-sm font-bold text-gray-700">
-                      {item.display}
+                    <span className="text-sm text-gray-700">
+                      {item.humanReadableDisplay}
                     </span>
                     <span className="ml-2 text-xs italic text-gray-500">
                       {item.isFuture ? 'The future awaits!' : 'No activity'}

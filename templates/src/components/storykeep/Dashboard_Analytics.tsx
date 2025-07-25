@@ -7,7 +7,6 @@ import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import DashboardActivity from './Dashboard_Activity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
-import EpinetTableView from '../codehooks/EpinetTableView';
 import FetchAnalytics from './FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
@@ -369,9 +368,16 @@ export default function StoryKeepDashboard_Analytics({
                     nodes: analytics.epinet.nodes,
                     links: analytics.epinet.links,
                   }}
+                  isLoading={
+                    analytics.isLoading || analytics.status === 'loading'
+                  }
                 />
-                <EpinetDurationSelector />
-                <EpinetTableView fullContentMap={fullContentMap} />
+                <EpinetDurationSelector
+                  fullContentMap={fullContentMap}
+                  isLoading={
+                    analytics.isLoading || analytics.status === 'loading'
+                  }
+                />
               </div>
             </ErrorBoundary>
           ) : (
@@ -380,7 +386,12 @@ export default function StoryKeepDashboard_Analytics({
                 No matching data found with current filters. Try different
                 filter settings or time ranges.
               </div>
-              <EpinetDurationSelector />
+              <EpinetDurationSelector
+                fullContentMap={fullContentMap}
+                isLoading={
+                  analytics.isLoading || analytics.status === 'loading'
+                }
+              />
             </>
           )
         ) : (
@@ -389,7 +400,10 @@ export default function StoryKeepDashboard_Analytics({
               User Journey data will appear here once there's visitor activity.
               Check back after some page views have been recorded.
             </div>
-            <EpinetDurationSelector />
+            <EpinetDurationSelector
+              fullContentMap={fullContentMap}
+              isLoading={analytics.isLoading || analytics.status === 'loading'}
+            />
           </>
         )}
       </div>

@@ -398,7 +398,6 @@ const EpinetWrapper = ({
         }
       >
         <div className="space-y-6">
-          {/* SankeyDiagram FIRST */}
           <div className="rounded-lg bg-white p-6 shadow">
             <div className="mb-4 flex items-center justify-between">
               {(isLoading || status === 'loading') && (
@@ -408,14 +407,16 @@ const EpinetWrapper = ({
                 </div>
               )}
             </div>
-            <SankeyDiagram data={epinet} />
+            <SankeyDiagram
+              data={epinet}
+              isLoading={isLoading || status === 'loading'}
+            />
           </div>
 
-          {/* EpinetDurationSelector SECOND */}
-          <EpinetDurationSelector />
-
-          {/* EpinetTableView THIRD */}
-          <EpinetTableView fullContentMap={fullContentMap} />
+          <EpinetDurationSelector
+            fullContentMap={fullContentMap}
+            isLoading={isLoading || status === 'loading'}
+          />
         </div>
       </ErrorBoundary>
     </div>
