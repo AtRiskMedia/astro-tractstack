@@ -1,17 +1,43 @@
 ---
-// Simple 404 redirect to home (unless already at home)
-const currentPath = Astro.url.pathname;
+// 404.astro
 
-// If we're already at home, don't redirect to avoid infinite loop
-if (currentPath === '/') {
-  // Show minimal error page for home 404
+const { pathname } = Astro.url;
+
+// A list of common asset file extensions. Add any others you use.
+const assetExtensions = [
+  '.webp',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.svg', // images
+  '.css',
+  '.js', // stylesheets and scripts
+  '.woff',
+  '.woff2',
+  '.ttf', // fonts
+];
+
+// Check if the path of the missing file ends with one of our asset extensions.
+const isAsset = assetExtensions.some((ext) => pathname.endsWith(ext));
+
+// If the request is for an asset, or we're already at the home page,
+// do not redirect. Just let the 404 happen.
+if (isAsset || pathname === '/') {
+  // For a missing asset, we can send a minimal 404 response.
+  // The browser will handle the error gracefully (e.g., not display the image).
+  if (isAsset) {
+    return new Response(null, { status: 404, statusText: 'Not Found' });
+  }
+  // For a 404 at the root, we show the simple error page below.
 } else {
-  // Redirect to home
+  // If it's not an asset and not the homepage, it's a missing page.
+  // Redirect to the homepage.
   return Astro.redirect('/');
 }
 ---
 
-<!doctype html>
+<!-- This HTML will now only be shown for a 404 error at the root URL ('/') --><!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -23,8 +49,8 @@ if (currentPath === '/') {
       style="text-align: center; padding: 50px; font-family: Arial, sans-serif;"
     >
       <h1>404 - Page Not Found</h1>
-      <p>The home page could not be found.</p>
-      <a href="/" style="color: #0066cc;">Try again</a>
+      <p>The page could not be found.</p>
+      <a href="/" style="color: #0066cc;">Go to Home</a>
     </div>
   </body>
 </html>
