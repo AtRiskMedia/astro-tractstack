@@ -1,6 +1,5 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import { activateTenant } from '@/utils/api/tenantConfig';
 import { getBrandConfig } from '@/stores/brand';
 import { checkBackendHealth } from '@/utils/backend';
 
@@ -13,6 +12,9 @@ if (!isMultiTenantEnabled) {
 
 // Dev mode detection
 const isDev = import.meta.env.DEV;
+
+// Get backend URL
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
 // Get activation token from URL
 const url = new URL(Astro.request.url);
@@ -27,42 +29,65 @@ let activationResult = {
 if (!token) {
   activationResult.error =
     'Missing activation token. Please check your email link.';
+  console.log('ERROR: No token provided');
 } else {
   // Attempt activation
   try {
-    await activateTenant(token);
-    activationResult.success = true;
+    // Get tenantId BEFORE calling activation
+    let tenantId: string;
 
     if (isDev) {
       // In dev mode, get tenant ID from URL param or use default
-      activationResult.tenantId =
-        url.searchParams.get('tenantId') || 'localhost';
+      tenantId = url.searchParams.get('tenantId') || 'localhost';
     } else {
       // Extract tenant ID from current domain in production
       const hostname = Astro.request.headers.get('host') || '';
       const parts = hostname.split('.');
       if (parts.length >= 4 && parts[1] === 'sandbox') {
-        activationResult.tenantId = parts[0];
+        tenantId = parts[0];
+      } else {
+        throw new Error('Could not determine tenant ID from domain');
       }
+    }
+
+    // Make direct fetch call to Go backend (like other .astro files)
+    const response = await fetch(`${goBackend}/api/v1/tenant/activation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': tenantId,
+      },
+      body: JSON.stringify({ token }),
+    });
+
+    const responseText = await response.text();
+
+    if (response.ok) {
+      activationResult.success = true;
+      activationResult.tenantId = tenantId;
+    } else {
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        errorData = { error: responseText };
+      }
+      activationResult.error = errorData.error || 'Activation failed';
+      console.log('FAILED: Activation error:', activationResult.error);
     }
   } catch (error) {
     activationResult.error =
       error instanceof Error ? error.message : 'Activation failed';
+    console.log('EXCEPTION:', error);
   }
 }
 
-// Get backend URL
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-
-// Skip health checks in dev mode
 let backendHealthy = true;
-if (!isDev) {
-  try {
-    const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
-    backendHealthy = healthResponse.isHealthy;
-  } catch (error) {
-    backendHealthy = false;
-  }
+try {
+  const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
+  backendHealthy = healthResponse.isHealthy;
+} catch (error) {
+  backendHealthy = false;
 }
 
 const brandConfig = await getBrandConfig('default');
@@ -217,7 +242,6 @@ const getDisplayUrl = (tenantId: string) => {
   const dashboardButton = document.getElementById('dashboard-button');
   if (dashboardButton) {
     let countdown = 5;
-    const originalText = dashboardButton.textContent;
 
     // Update button text with countdown
     const updateButton = () => {

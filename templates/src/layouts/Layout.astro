@@ -21,7 +21,7 @@ export interface Props {
   isEditor?: boolean;
   isEditable?: boolean;
   brandConfig?: any;
-  storyfragmentId: string;
+  storyfragmentId?: string;
 }
 
 const {
@@ -40,7 +40,7 @@ const {
   isEditor = false,
   isEditable = false,
   brandConfig: propBrandConfig,
-  storyfragmentId,
+  storyfragmentId = '',
 } = Astro.props;
 
 const isDev = import.meta.env.DEV;

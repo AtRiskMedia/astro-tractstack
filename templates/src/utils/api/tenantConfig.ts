@@ -80,7 +80,7 @@ export async function activateTenant(
   const api = new TractStackAPI(tenantId);
   try {
     const request: TenantActivationRequest = { token };
-    const response = await api.post('/api/v1/tenant/activation', request);
+    const response = await api.post('/api/v1/activate-tenant', request);
 
     if (!response.success) {
       throw new Error(response.error || 'Failed to activate tenant');
