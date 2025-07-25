@@ -89,6 +89,7 @@ const getElement = (
   const isTemplate = useStore(getCtx(props).isTemplate);
   const sharedProps = { nodeId: node.id, ctx: props.ctx };
   const type = getType(node);
+
   switch (type) {
     case 'Markdown':
       return <Markdown {...sharedProps} />;

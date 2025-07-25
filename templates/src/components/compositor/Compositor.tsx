@@ -35,8 +35,6 @@ export const Compositor = (props: CompositorProps) => {
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
 
-  console.log(props);
-
   fullContentMapStore.set(props.fullContentMap);
   hasAssemblyAIStore.set(false); // TODO: Must add to BRAND_CONFIG !!
   urlParamsStore.set(props.urlParams);
@@ -95,17 +93,6 @@ export const Compositor = (props: CompositorProps) => {
         background: 'white',
       }}
     >
-      {/* Placeholder for Node component until it's ported */}
-      <div className="rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
-        <h3 className="mb-2 text-lg font-semibold text-gray-700">
-          Compositor Ready
-        </h3>
-        <p className="mb-4 text-gray-600">Node ID: {props.id}</p>
-        <p className="text-sm text-gray-500">Update Counter: {updateCounter}</p>
-        <div className="mt-4 text-xs text-gray-400">
-          Node component will render here when ported
-        </div>
-      </div>
       <Node
         nodeId={props.id}
         key={`${props.id}-${updateCounter}`}

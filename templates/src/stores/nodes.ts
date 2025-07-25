@@ -433,35 +433,9 @@ export class NodesContext {
       // add childNodes after panes
       if (nodes?.childNodes) this.addNodes(nodes.childNodes);
       // then storyfragment nodes will link pane nodes from above
-
-      // for compatibility (until we remove buildNodesTreeFromFragmentNodes)
-      //if (nodes?.impressionNodes) this.addNodes(nodes.impressionNodes);
-      //if (nodes?.paneFragmentNodes) this.addNodes(nodes.paneFragmentNodes);
-      //if (nodes?.flatNodes) this.addNodes(nodes.flatNodes);
-
       // then add storyfragmentNodes
       if (nodes?.storyfragmentNodes) this.addNodes(nodes.storyfragmentNodes);
 
-      this.updateHasPanesStatus();
-    }
-  }
-
-  // this is for old data model once converted to nodes
-  buildNodesTreeFromFragmentNodes(nodes: LoadData | null) {
-    if (nodes !== null) {
-      this.clearAll();
-      if (nodes?.fileNodes) this.addNodes(nodes.fileNodes);
-      if (nodes?.menuNodes) this.addNodes(nodes.menuNodes);
-      if (nodes?.resourceNodes) this.addNodes(nodes.resourceNodes);
-      if (nodes?.tractstackNodes) this.addNodes(nodes.tractstackNodes);
-      // IMPORTANT!
-      // pane nodes have to be added BEFORE StoryFragment nodes so they can register in this.allNodes
-      if (nodes?.paneNodes) this.addNodes(nodes.paneNodes);
-      if (nodes?.impressionNodes) this.addNodes(nodes.impressionNodes);
-      if (nodes?.paneFragmentNodes) this.addNodes(nodes.paneFragmentNodes);
-      if (nodes?.flatNodes) this.addNodes(nodes.flatNodes);
-      // then storyfragment nodes will link pane nodes from above
-      if (nodes?.storyfragmentNodes) this.addNodes(nodes.storyfragmentNodes);
       this.updateHasPanesStatus();
     }
   }
