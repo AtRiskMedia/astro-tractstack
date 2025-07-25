@@ -1,28 +1,26 @@
 ---
-// 404.astro
-
 const { pathname } = Astro.url;
 
-// A list of common asset file extensions. Add any others you use.
+if (pathname.startsWith('/.')) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
 const assetExtensions = [
   '.webp',
   '.png',
   '.jpg',
   '.jpeg',
   '.gif',
-  '.svg', // images
+  '.svg',
   '.css',
-  '.js', // stylesheets and scripts
+  '.js',
   '.woff',
   '.woff2',
-  '.ttf', // fonts
+  '.ttf',
 ];
 
-// Check if the path of the missing file ends with one of our asset extensions.
 const isAsset = assetExtensions.some((ext) => pathname.endsWith(ext));
 
-// If the request is for an asset, or we're already at the home page,
-// do not redirect. Just let the 404 happen.
 if (isAsset || pathname === '/') {
   // For a missing asset, we can send a minimal 404 response.
   // The browser will handle the error gracefully (e.g., not display the image).
@@ -37,7 +35,7 @@ if (isAsset || pathname === '/') {
 }
 ---
 
-<!-- This HTML will now only be shown for a 404 error at the root URL ('/') --><!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
