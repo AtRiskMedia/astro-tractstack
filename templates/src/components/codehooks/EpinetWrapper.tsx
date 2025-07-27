@@ -8,10 +8,8 @@ import {
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
 import { TractStackAPI } from '@/utils/api';
-import { classNames } from '@/utils/helpers';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
-import EpinetTableView from './EpinetTableView';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface ErrorBoundaryProps {
