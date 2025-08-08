@@ -22,6 +22,7 @@ export interface Props {
   isEditable?: boolean;
   brandConfig?: any;
   storyfragmentId?: string;
+  sessionId?: string;
 }
 
 const {
@@ -41,18 +42,17 @@ const {
   isEditable = false,
   brandConfig: propBrandConfig,
   storyfragmentId = '',
+  sessionId = '',
 } = Astro.props;
 
 const isDev = import.meta.env.DEV;
 const cssBasePath = isDev ? '/styles' : '/media/css';
 const fontBasePath = isDev ? '/fonts' : '/media/fonts';
-
 const mainStylesUrl = isStoryKeep
   ? `${cssBasePath}/storykeep.css`
   : isDev
     ? `${cssBasePath}/storykeep.css`
     : `${cssBasePath}/frontend.css`;
-
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -74,13 +74,11 @@ const defaultSocialDesc =
   description ||
   brandConfig.OGDESC ||
   `No-code website builder and content marketing platform`;
-
 const buildVersion = (() => {
   if (modDatetime) return modDatetime.getTime();
   if (pubDatetime) return pubDatetime.getTime();
   return Date.now();
 })();
-
 const socialImageWithVersion = `${defaultSocialImageURL}?v=${buildVersion}`;
 const socialLogoWithVersion = `${defaultSocialLogoURL}?v=${buildVersion}`;
 const gtagId = brandConfig?.GTAG || false;
@@ -113,7 +111,6 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
     <link rel="stylesheet" href={mainStylesUrl} />
     <link rel="sitemap" href="/sitemap.xml" />
 
-    <!-- General Meta Tags -->
     <meta name="title" content={defaultSocialTitle} />
     <meta
       property="og:site_name"
@@ -127,7 +124,6 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
     />
     <meta property="og:locale" content="en_US" />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:title" content={defaultSocialTitle} />
     <meta property="og:type" content="website" />
     <meta property="og:description" content={defaultSocialDesc} />
@@ -135,14 +131,12 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
     <meta property="og:image" content={socialImageWithVersion} />
     <meta property="og:logo" content={socialLogoWithVersion} />
 
-    <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={fullCanonicalUrl} />
     <meta property="twitter:title" content={defaultSocialTitle} />
     <meta property="twitter:description" content={defaultSocialDesc} />
     <meta property="twitter:image" content={socialImageWithVersion} />
 
-    <!-- Article Published/Modified time -->
     {
       pubDatetime && (
         <meta
@@ -160,7 +154,6 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
       )
     }
 
-    <!-- Google Analytics -->
     {gtagUrl && <script async src={gtagUrl} is:inline />}
     <script is:inline define:vars={{ gtagId: brandConfig?.GTAG || '' }}>
       (function () {
@@ -196,7 +189,13 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
       is:persist></script>
 
     <script
-      define:vars={{ goBackend, tenantId, fontBasePath, storyfragmentId }}
+      define:vars={{
+        goBackend,
+        tenantId,
+        fontBasePath,
+        storyfragmentId,
+        sessionId,
+      }}
       is:inline
     >
       function createTractstackConfig() {
@@ -206,12 +205,14 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
           tenantId: tenantId,
           fontBasePath: fontBasePath,
           storyfragmentId: storyfragmentId,
+          sessionId: sessionId,
         };
       }
 
       function updateTractstackConfig() {
         if (window.TRACTSTACK_CONFIG) {
           window.TRACTSTACK_CONFIG.storyfragmentId = storyfragmentId;
+          window.TRACTSTACK_CONFIG.sessionId = sessionId;
         } else {
           createTractstackConfig();
         }

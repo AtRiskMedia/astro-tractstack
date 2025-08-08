@@ -5,6 +5,7 @@ interface AnalyticsEvent {
   contentId: string;
   contentType: 'Pane' | 'StoryFragment';
   eventVerb: string;
+  duration?: number; // Added for READ/GLOSSED events
 }
 
 const paneViewTimes = new Map<string, number>();
@@ -16,6 +17,7 @@ let globalObserver: IntersectionObserver | null = null;
 
 function waitForSessionReady(): Promise<void> {
   return new Promise((resolve) => {
+    // The new sse.ts fires this event after the handshake completes.
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
       resolve();
     } else {
@@ -53,6 +55,8 @@ function trackEnteredEvent() {
 
 function trackPageViewedEvent() {
   if (currentStoryfragmentId) {
+    // This event is now PURELY for analytics. It no longer triggers
+    // a synchronization workaround on the backend.
     sendAnalyticsEvent({
       contentId: currentStoryfragmentId,
       contentType: 'StoryFragment',
@@ -87,6 +91,7 @@ function initPaneVisibilityTracking() {
                 contentId: paneId,
                 contentType: 'Pane',
                 eventVerb,
+                duration,
               });
             }
           }
@@ -167,7 +172,12 @@ function flushPendingPaneEvents() {
     if (duration >= THRESHOLD_READ) eventVerb = 'READ';
     else if (duration >= THRESHOLD_GLOSSED) eventVerb = 'GLOSSED';
     if (eventVerb) {
-      sendAnalyticsEvent({ contentId: paneId, contentType: 'Pane', eventVerb });
+      sendAnalyticsEvent({
+        contentId: paneId,
+        contentType: 'Pane',
+        eventVerb,
+        duration,
+      });
     }
   });
   paneViewTimes.clear();
@@ -176,20 +186,26 @@ function flushPendingPaneEvents() {
 async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
   try {
     const config = window.TRACTSTACK_CONFIG;
-    if (!config) return;
-    const sessionId = getSessionId();
-    const formData = {
+    if (!config || !config.sessionId) return; // Use server-provided session ID
+
+    const sessionId = config.sessionId;
+    const formData: { [key: string]: string } = {
       beliefId: event.contentId,
       beliefType: event.contentType,
       beliefValue: event.eventVerb,
       paneId: '',
     };
+
+    if (event.duration !== undefined) {
+      formData.duration = event.duration.toString();
+    }
+
     await fetch(`${config.backendUrl}/api/v1/state`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-Tenant-ID': config.tenantId,
-        'X-TractStack-Session-ID': sessionId || '',
+        'X-TractStack-Session-ID': sessionId,
         'X-StoryFragment-ID': config.storyfragmentId,
       },
       body: new URLSearchParams(formData),
@@ -197,10 +213,6 @@ async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
   } catch (error) {
     console.error('❌ API ERROR: Analytics event failed', error, event);
   }
-}
-
-function getSessionId(): string | null {
-  return localStorage.getItem('tractstack_session_id');
 }
 
 function getPaneIdFromElement(element: HTMLElement): string | null {

@@ -4,15 +4,27 @@ import CodeHook from '@/custom/CodeHook.astro';
 import { getBrandConfig } from '@/stores/brand';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
+import { createBackendSession } from '@/lib/session';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
-
 const { slug } = Astro.params || {};
 const lookup = slug || '';
 
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+let sessionId = Astro.cookies.get('tractstack_session_id')?.value;
 
+if (!sessionId) {
+  sessionId = await createBackendSession(tenantId);
+  Astro.cookies.set('tractstack_session_id', sessionId, {
+    httpOnly: false,
+    secure: import.meta.env.PROD,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24, // 24 hours
+  });
+}
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const endpoint = lookup
   ? `${goBackend}/api/v1/nodes/storyfragments/slug/${lookup}`
   : `${goBackend}/api/v1/nodes/storyfragments/home`;
@@ -22,9 +34,9 @@ try {
   const response = await fetch(endpoint, {
     headers: {
       'X-Tenant-ID': tenantId,
+      'X-Session-ID': sessionId,
     },
   });
-
   const failedResponse = await handleFailedResponse(
     response,
     goBackend,
@@ -49,7 +61,6 @@ const storyfragmentId = storyData.id;
 const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
-
 if (paneIds.length === 0) {
   return Astro.redirect('/storykeep');
 }
@@ -62,14 +73,13 @@ try {
       'Content-Type': 'application/json',
       'X-Tenant-ID': tenantId,
       'X-StoryFragment-ID': storyfragmentId,
+      'X-Session-ID': sessionId,
     },
     body: JSON.stringify({ paneIds }),
   });
-
   if (batchResponse.ok) {
     const batchData = await batchResponse.json();
     fragmentsData = batchData.fragments || {};
-
     if (batchData.errors) {
       Object.entries(batchData.errors).forEach(([paneId, error]) => {
         fragmentsData[paneId] =
@@ -118,6 +128,7 @@ if (!brandConfig.SITE_INIT) {
   isEditable={false}
   brandConfig={brandConfig}
   storyfragmentId={storyfragmentId}
+  sessionId={sessionId}
 >
   <main id="main-content" class="min-h-screen w-full">
     <div class="panes-container">

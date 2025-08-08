@@ -11,13 +11,14 @@ function configureHtmx() {
 
   window.htmx.on(document.body, 'htmx:configRequest', function (evt: any) {
     const config = window.TRACTSTACK_CONFIG;
-    if (!config) return;
+    if (!config || !config.sessionId) return; // Check for config and session ID
 
     if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
       evt.detail.path = config.backendUrl + evt.detail.path;
     }
 
-    const sessionId = localStorage.getItem('tractstack_session_id');
+    // MODIFIED: Use session ID from the global config object
+    const sessionId = config.sessionId;
     evt.detail.headers['X-Tenant-ID'] = config.tenantId;
     evt.detail.headers['X-StoryFragment-ID'] = config.storyfragmentId;
     if (sessionId) {
@@ -41,6 +42,7 @@ let activeStoryfragmentId: string | null = null;
 
 function waitForSessionReady(): Promise<void> {
   return new Promise((resolve) => {
+    // This event is fired by sse.ts after the handshake is complete.
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
       resolve();
     } else {
@@ -122,14 +124,15 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
 
   try {
     const config = window.TRACTSTACK_CONFIG;
-    if (!config) return;
+    if (!config || !config.sessionId) return; // Check for config and session ID
 
-    const sessionId = localStorage.getItem('tractstack_session_id');
+    // MODIFIED: Use session ID from the global config object
+    const sessionId = config.sessionId;
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
       'X-Tenant-ID': config.tenantId,
       'X-StoryFragment-ID': config.storyfragmentId,
-      'X-TractStack-Session-ID': sessionId || '',
+      'X-TractStack-Session-ID': sessionId,
     };
 
     if (VERBOSE)

@@ -1083,6 +1083,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/widgets/BunnyVideoHero.astro',
     },
 
+    // Server Scripts
+    {
+      src: resolve('templates/src/lib/session.ts'),
+      dest: 'src/lib/session.ts',
+    },
+
     // Client Scripts
     {
       src: resolve('templates/src/client/sse.ts'),
