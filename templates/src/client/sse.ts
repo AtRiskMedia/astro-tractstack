@@ -39,8 +39,7 @@ interface PanesUpdatedEventData {
 }
 
 function log(message: string, ...args: any[]): void {
-  if (VERBOSE)
-    console.log(`🔌 SSE DEBUG: ${message}`, ...args);
+  if (VERBOSE) console.log(`🔌 SSE DEBUG: ${message}`, ...args);
 }
 
 // ============================================================================
@@ -79,9 +78,16 @@ async function performSSEHandshake(sessionId: string): Promise<void> {
 
   if (existingSessionId && existingSessionId !== sessionId) {
     payload.tractstack_session_id = existingSessionId;
-    log('🔄 CROSS-TAB CLONING detected - will clone from existing session:', existingSessionId, 'to new session:', sessionId);
+    log(
+      '🔄 CROSS-TAB CLONING detected - will clone from existing session:',
+      existingSessionId,
+      'to new session:',
+      sessionId
+    );
   } else if (existingSessionId === sessionId) {
-    log('ℹ️  Same session ID in localStorage and current session - no cloning needed');
+    log(
+      'ℹ️  Same session ID in localStorage and current session - no cloning needed'
+    );
   } else {
     log('ℹ️  No existing session in localStorage - fresh session');
   }
@@ -193,7 +199,9 @@ async function performSSEHandshake(sessionId: string): Promise<void> {
         });
       } else {
         log('HTMX ready status:', false);
-        log('⏳ HTMX not ready - scheduling pane refreshes for after page load');
+        log(
+          '⏳ HTMX not ready - scheduling pane refreshes for after page load'
+        );
 
         // Schedule refresh for after page load
         document.addEventListener(
@@ -360,7 +368,9 @@ function initializeSSE(sessionId: string): void {
 
         // Handle scroll target if provided
         if (data.gotoPaneId) {
-          const targetElement = document.getElementById(`pane-${data.gotoPaneId}`);
+          const targetElement = document.getElementById(
+            `pane-${data.gotoPaneId}`
+          );
           if (targetElement) {
             log(`📍 Scrolling to target pane: ${data.gotoPaneId}`);
             targetElement.scrollIntoView({ behavior: 'smooth' });
@@ -369,13 +379,10 @@ function initializeSSE(sessionId: string): void {
           }
         }
       } else {
-        log(
-          '⚠️  Storyfragment mismatch - ignoring update:',
-          {
-            eventStoryfragment: data.storyfragmentId,
-            currentStoryfragment: currentStoryfragmentId,
-          }
-        );
+        log('⚠️  Storyfragment mismatch - ignoring update:', {
+          eventStoryfragment: data.storyfragmentId,
+          currentStoryfragment: currentStoryfragmentId,
+        });
       }
     } catch (error) {
       log('❌ Error processing panes_updated event:', error);
@@ -390,13 +397,17 @@ function initializeSSE(sessionId: string): void {
 
 function handleReconnection(): void {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    log(`❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+    log(
+      `❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`
+    );
     return;
   }
 
   reconnectAttempts++;
   const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
-  log(`🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+  log(
+    `🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
+  );
 
   setTimeout(() => {
     const sessionId = window.TRACTSTACK_CONFIG?.sessionId;
@@ -424,7 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set initial context
   if (window.TRACTSTACK_CONFIG?.storyfragmentId) {
     currentStoryfragmentId = window.TRACTSTACK_CONFIG.storyfragmentId;
-    log(`📖 Initial context set. Tracking storyfragmentId: ${currentStoryfragmentId}`);
+    log(
+      `📖 Initial context set. Tracking storyfragmentId: ${currentStoryfragmentId}`
+    );
   }
 
   log('📄 SSE module is persistent across page navigation');
@@ -442,7 +455,6 @@ document.addEventListener('astro:page-load', () => {
     log('⚠️  HTMX not available after page load');
   }
 
-
   // Use setTimeout to ensure this runs after Layout.astro's config update
   setTimeout(() => {
     // Always use the config value as source of truth
@@ -455,7 +467,9 @@ document.addEventListener('astro:page-load', () => {
         );
         currentStoryfragmentId = newStoryfragmentId;
       } else {
-        log(`📖 Context confirmed. Still tracking storyfragmentId: ${currentStoryfragmentId}`);
+        log(
+          `📖 Context confirmed. Still tracking storyfragmentId: ${currentStoryfragmentId}`
+        );
       }
     } else {
       log('⚠️  No storyfragmentId in config after page load');
