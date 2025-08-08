@@ -123,27 +123,27 @@ const EpinetWrapper = ({
   }, []);
 
   // Detect current duration type from epinetCustomFilters (for UI helpers only)
-  const currentDurationHelper = useMemo(():
-    | 'daily'
-    | 'weekly'
-    | 'monthly'
-    | 'custom' => {
-    const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
+  //const currentDurationHelper = useMemo(():
+  //  | 'daily'
+  //  | 'weekly'
+  //  | 'monthly'
+  //  | 'custom' => {
+  //  const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
 
-    if (startTimeUTC && endTimeUTC) {
-      const startTime = new Date(startTimeUTC);
-      const endTime = new Date(endTimeUTC);
-      const diffMs = endTime.getTime() - startTime.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
+  //  if (startTimeUTC && endTimeUTC) {
+  //    const startTime = new Date(startTimeUTC);
+  //    const endTime = new Date(endTimeUTC);
+  //    const diffMs = endTime.getTime() - startTime.getTime();
+  //    const diffHours = diffMs / (1000 * 60 * 60);
 
-      if (Math.abs(diffHours - 24) <= 1) return 'daily';
-      if (Math.abs(diffHours - 168) <= 1) return 'weekly';
-      if (Math.abs(diffHours - 672) <= 1) return 'monthly';
-      return 'custom';
-    }
+  //    if (Math.abs(diffHours - 24) <= 1) return 'daily';
+  //    if (Math.abs(diffHours - 168) <= 1) return 'weekly';
+  //    if (Math.abs(diffHours - 672) <= 1) return 'monthly';
+  //    return 'custom';
+  //  }
 
-    return 'weekly'; // default
-  }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
+  //  return 'weekly'; // default
+  //}, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
 
   // Fetch data when epinet ID is available
   useEffect(() => {
@@ -174,24 +174,24 @@ const EpinetWrapper = ({
   ]);
 
   // Handle filter preset changes
-  const handleFilterChange = useCallback(
-    (newValue: string) => {
-      const nowUTC = new Date();
-      const hoursBack: number =
-        newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
-      const startTimeUTC = new Date(
-        nowUTC.getTime() - hoursBack * 60 * 60 * 1000
-      );
+  //const handleFilterChange = useCallback(
+  //  (newValue: string) => {
+  //    const nowUTC = new Date();
+  //    const hoursBack: number =
+  //      newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
+  //    const startTimeUTC = new Date(
+  //      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
+  //    );
 
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
-        ...$epinetCustomFilters,
-        enabled: true,
-        startTimeUTC: startTimeUTC.toISOString(),
-        endTimeUTC: nowUTC.toISOString(),
-      });
-    },
-    [$epinetCustomFilters]
-  );
+  //    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+  //      ...$epinetCustomFilters,
+  //      enabled: true,
+  //      startTimeUTC: startTimeUTC.toISOString(),
+  //      endTimeUTC: nowUTC.toISOString(),
+  //    });
+  //  },
+  //  [$epinetCustomFilters]
+  //);
 
   const fetchEpinetData = useCallback(async () => {
     if (!epinetId) return;
