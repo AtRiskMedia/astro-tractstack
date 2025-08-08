@@ -1,3 +1,4 @@
+// DEBUG CONFIGURATION
 export const VERBOSE = false;
 
 // Module-specific state
@@ -38,7 +39,8 @@ interface PanesUpdatedEventData {
 }
 
 function log(message: string, ...args: any[]): void {
-  console.log(`🔌 SSE DEBUG: ${message}`, ...args);
+  if (VERBOSE)
+    console.log(`🔌 SSE DEBUG: ${message}`, ...args);
 }
 
 // ============================================================================
@@ -70,15 +72,18 @@ async function performSSEHandshake(sessionId: string): Promise<void> {
     storyfragmentId: config.storyfragmentId,
   };
 
-  // Check for a previous session ID in localStorage for cross-tab cloning
+  // 🔧 FIXED: Cross-tab cloning logic
+  // Check for a DIFFERENT session ID in localStorage for cross-tab cloning
   const existingSessionId = localStorage.getItem('tractstack_session_id');
   log('Checking localStorage for existing session:', existingSessionId);
 
   if (existingSessionId && existingSessionId !== sessionId) {
     payload.tractstack_session_id = existingSessionId;
-    log('🔄 CROSS-TAB CLONING detected - will clone from:', existingSessionId);
+    log('🔄 CROSS-TAB CLONING detected - will clone from existing session:', existingSessionId, 'to new session:', sessionId);
+  } else if (existingSessionId === sessionId) {
+    log('ℹ️  Same session ID in localStorage and current session - no cloning needed');
   } else {
-    log('ℹ️  No cross-tab cloning needed');
+    log('ℹ️  No existing session in localStorage - fresh session');
   }
 
   // Check for encrypted credentials for profile unlock
@@ -148,55 +153,57 @@ async function performSSEHandshake(sessionId: string): Promise<void> {
     // Update localStorage with the latest data from the backend
     log('💾 Updating localStorage with handshake results...');
     localStorage.setItem('tractstack_session_id', sessionId);
-    localStorage.setItem('tractstack_consent', result.consent || 'unknown');
+    log('💾 Set session ID:', sessionId);
 
     if (result.fingerprint) {
-      localStorage.setItem('tractstack_fp_id', result.fingerprint);
+      localStorage.setItem('tractstack_fingerprint', result.fingerprint);
       log('💾 Set fingerprint:', result.fingerprint);
     }
+
     if (result.visitId) {
       localStorage.setItem('tractstack_visit_id', result.visitId);
       log('💾 Set visit ID:', result.visitId);
     }
+
     if (result.token) {
       localStorage.setItem('tractstack_profile_token', result.token);
       log('💾 Set profile token');
     }
 
-    // If the backend restored state, trigger UI updates
-    if (
-      result.restored &&
-      result.affectedPanes &&
-      result.affectedPanes.length > 0
-    ) {
-      log('🔄 STATE RESTORATION needed for panes:', result.affectedPanes);
-      log('HTMX ready status:', isHtmxReady);
+    if (result.consent) {
+      localStorage.setItem('tractstack_consent', result.consent);
+      log('💾 Set consent:', result.consent);
+    }
 
-      // Ensure HTMX is ready before triggering refreshes
+    // Handle belief state restoration if needed
+    if (result.restored && result.affectedPanes?.length) {
+      log('🔄 STATE RESTORATION needed for panes:', result.affectedPanes);
+
+      // Check if HTMX is ready for immediate processing
       if (isHtmxReady && window.htmx) {
-        log('✅ HTMX is ready - triggering immediate pane refreshes');
+        log('HTMX ready status:', true);
         result.affectedPanes.forEach((paneId) => {
           const element = document.querySelector(`[data-pane-id="${paneId}"]`);
           if (element) {
-            log(`🔄 Triggering refresh for pane: ${paneId}`);
+            log(`🔄 Triggering immediate refresh for pane ${paneId}`);
             window.htmx.trigger(element, 'refresh');
           } else {
-            log(`⚠️  Pane element not found: ${paneId}`);
+            log(`⚠️  Pane element not found for immediate refresh: ${paneId}`);
           }
         });
       } else {
-        log(
-          '⏳ HTMX not ready - scheduling pane refreshes for after page load'
-        );
-        // If HTMX isn't ready, wait for page-load and then trigger
+        log('HTMX ready status:', false);
+        log('⏳ HTMX not ready - scheduling pane refreshes for after page load');
+
+        // Schedule refresh for after page load
         document.addEventListener(
           'astro:page-load',
           () => {
-            log('📄 Page loaded - now triggering delayed pane refreshes');
-            if (!window.htmx) {
-              log('❌ HTMX still not available after page load');
+            if (!result?.affectedPanes?.length) {
+              log('⚠️  No affected panes for delayed refresh');
               return;
             }
+            log('📄 Page loaded - now triggering delayed pane refreshes');
             result?.affectedPanes?.forEach((paneId) => {
               const element = document.querySelector(
                 `[data-pane-id="${paneId}"]`
@@ -329,6 +336,7 @@ function initializeSSE(sessionId: string): void {
       const data: PanesUpdatedEventData = JSON.parse(
         (event as MessageEvent).data
       );
+
       log('Full panes_updated payload:', data);
       log(`Current page storyfragmentId: ${currentStoryfragmentId}`);
 
@@ -350,71 +358,76 @@ function initializeSSE(sessionId: string): void {
           }
         });
 
-        if (data.gotoPaneId && window.handleScrollToTarget) {
-          log('🎯 Scroll target specified:', data.gotoPaneId);
-          let swapsCompleted = 0;
-          const expectedSwaps = uniquePaneIds.length;
-
-          const handleSwapComplete = () => {
-            swapsCompleted++;
-            log(`Swap completed ${swapsCompleted}/${expectedSwaps}`);
-            if (swapsCompleted >= expectedSwaps && data.gotoPaneId) {
-              log('🎯 All swaps complete, scrolling to:', data.gotoPaneId);
-              window.handleScrollToTarget(data.gotoPaneId);
-              document.removeEventListener(
-                'htmx:afterSwap',
-                handleSwapComplete
-              );
-            }
-          };
-
-          document.addEventListener('htmx:afterSwap', handleSwapComplete);
+        // Handle scroll target if provided
+        if (data.gotoPaneId) {
+          const targetElement = document.getElementById(`pane-${data.gotoPaneId}`);
+          if (targetElement) {
+            log(`📍 Scrolling to target pane: ${data.gotoPaneId}`);
+            targetElement.scrollIntoView({ behavior: 'smooth' });
+          } else {
+            log(`⚠️  Target pane element not found: ${data.gotoPaneId}`);
+          }
         }
       } else {
-        log('⚠️  Storyfragment mismatch - ignoring update:', {
-          eventStoryfragment: data.storyfragmentId,
-          currentStoryfragment: currentStoryfragmentId,
-        });
+        log(
+          '⚠️  Storyfragment mismatch - ignoring update:',
+          {
+            eventStoryfragment: data.storyfragmentId,
+            currentStoryfragment: currentStoryfragmentId,
+          }
+        );
       }
-    } catch (parseError) {
-      log('❌ Error parsing panes_updated event:', parseError);
-      console.error('🔴 Error parsing panes_updated event:', parseError);
+    } catch (error) {
+      log('❌ Error processing panes_updated event:', error);
     }
   });
 
   eventSource.onerror = (error) => {
     log('❌ SSE Connection error:', error);
-    console.error('🔴 SSE: Connection error:', error);
-    handleReconnection(sessionId);
+    handleReconnection();
   };
 }
 
-function handleReconnection(sessionId: string): void {
+function handleReconnection(): void {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    log('❌ Max reconnection attempts reached');
-    console.error('🔴 SSE: Max reconnection attempts reached');
+    log(`❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
     return;
   }
 
   reconnectAttempts++;
   const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
-
-  log(
-    `🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
-  );
+  log(`🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
 
   setTimeout(() => {
-    initializeSSE(sessionId);
+    const sessionId = window.TRACTSTACK_CONFIG?.sessionId;
+    if (sessionId) {
+      initializeSSE(sessionId);
+    }
   }, delay);
 }
 
 // ============================================================================
-// ASTRO TRANSITION HANDLERS
+// PAGE LIFECYCLE INTEGRATION
 // ============================================================================
 
-document.addEventListener('astro:before-swap', () => {
-  isHtmxReady = false;
-  log('📄 Transition starting. HTMX is now considered NOT READY.');
+document.addEventListener('DOMContentLoaded', () => {
+  log('📄 === DOM CONTENT LOADED EVENT ===');
+
+  // HTMX should be available after DOM loads
+  if (window.htmx) {
+    isHtmxReady = true;
+    log('✅ HTMX is ready after DOM load');
+  } else {
+    log('⚠️  HTMX not available after DOM load');
+  }
+
+  // Set initial context
+  if (window.TRACTSTACK_CONFIG?.storyfragmentId) {
+    currentStoryfragmentId = window.TRACTSTACK_CONFIG.storyfragmentId;
+    log(`📖 Initial context set. Tracking storyfragmentId: ${currentStoryfragmentId}`);
+  }
+
+  log('📄 SSE module is persistent across page navigation');
 });
 
 document.addEventListener('astro:page-load', () => {
@@ -428,6 +441,26 @@ document.addEventListener('astro:page-load', () => {
   } else {
     log('⚠️  HTMX not available after page load');
   }
+
+
+  // Use setTimeout to ensure this runs after Layout.astro's config update
+  setTimeout(() => {
+    // Always use the config value as source of truth
+    if (window.TRACTSTACK_CONFIG?.storyfragmentId) {
+      const newStoryfragmentId = window.TRACTSTACK_CONFIG.storyfragmentId;
+
+      if (currentStoryfragmentId !== newStoryfragmentId) {
+        log(
+          `📖 Context updated. Storyfragment changed from ${currentStoryfragmentId} to ${newStoryfragmentId}`
+        );
+        currentStoryfragmentId = newStoryfragmentId;
+      } else {
+        log(`📖 Context confirmed. Still tracking storyfragmentId: ${currentStoryfragmentId}`);
+      }
+    } else {
+      log('⚠️  No storyfragmentId in config after page load');
+    }
+  }, 0);
 
   // Update context for the current page.
   if (window.TRACTSTACK_CONFIG?.storyfragmentId) {
