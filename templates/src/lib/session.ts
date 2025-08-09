@@ -78,9 +78,9 @@ export async function getOrSetSessionId(
       maxAge: 60 * 60 * 24, // 24 hours
     });
 
-    console.log(`Created new session: ${sessionId}`);
-  } else {
-    console.log(`Using existing session: ${sessionId}`);
+    //  console.log(`Created new session: ${sessionId}`);
+    //} else {
+    //  console.log(`Using existing session: ${sessionId}`);
   }
 
   return sessionId;

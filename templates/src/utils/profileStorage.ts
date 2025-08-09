@@ -68,7 +68,7 @@ export class ProfileStorage {
         StorageManager.get(this.STORAGE_KEYS.encryptedEmail) || undefined,
       encryptedCode:
         StorageManager.get(this.STORAGE_KEYS.encryptedCode) || undefined,
-      hasProfile: !StorageManager.get(this.STORAGE_KEYS.hasProfile),
+      hasProfile: !!StorageManager.get(this.STORAGE_KEYS.hasProfile),
     };
   }
 
@@ -83,7 +83,7 @@ export class ProfileStorage {
    * Check if should show unlock form
    */
   static shouldShowUnlock(): boolean {
-    return !StorageManager.get(this.STORAGE_KEYS.hasProfile);
+    return !!StorageManager.get(this.STORAGE_KEYS.hasProfile);
   }
 
   /**
@@ -95,11 +95,14 @@ export class ProfileStorage {
     encryptedCode?: string;
     consent?: string;
   } {
-    const sessionId = localStorage.getItem('tractstack_session_id');
+    let sessionId = localStorage.getItem('tractstack_session_id');
+
+    // If no session ID exists, generate one client-side
     if (!sessionId) {
-      throw new Error(
-        'Session ID not available - ensure SSR session generation is working'
-      );
+      sessionId = `client-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 11)}`;
+      localStorage.setItem('tractstack_session_id', sessionId);
     }
 
     const data: any = { sessionId };
@@ -160,7 +163,7 @@ export class ProfileStorage {
    * Check if user has a profile
    */
   static hasProfile(): boolean {
-    return !StorageManager.get(this.STORAGE_KEYS.hasProfile);
+    return !!StorageManager.get(this.STORAGE_KEYS.hasProfile);
   }
 
   /**
