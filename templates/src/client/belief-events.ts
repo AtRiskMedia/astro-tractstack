@@ -126,7 +126,13 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
     const config = window.TRACTSTACK_CONFIG;
     if (!config || !config.sessionId) return; // Check for config and session ID
 
-    // MODIFIED: Use session ID from the global config object
+    if (VERBOSE)
+      console.log('🚨 FRONTEND DEBUG: Sending belief update with headers:', {
+        'X-StoryFragment-ID': config.storyfragmentId,
+        beliefData: data,
+        currentSSEContext: 'check sse.ts logs'
+      });
+
     const sessionId = config.sessionId;
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded',
