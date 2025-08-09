@@ -130,7 +130,7 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
       console.log('🚨 FRONTEND DEBUG: Sending belief update with headers:', {
         'X-StoryFragment-ID': config.storyfragmentId,
         beliefData: data,
-        currentSSEContext: 'check sse.ts logs'
+        currentSSEContext: 'check sse.ts logs',
       });
 
     const sessionId = config.sessionId;

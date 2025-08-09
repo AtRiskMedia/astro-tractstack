@@ -496,20 +496,15 @@ function updateStoryfragmentContext(newStoryfragmentId: string, source: string):
 
 function setupSSEConnection(): void {
   log('=== SSE CONNECTION SETUP ===');
-
-  if (window.SSE_INITIALIZED) {
-    log('ℹ️  SSE already initialized, skipping setup');
-    return;
-  }
-  window.SSE_INITIALIZED = true;
   log('🚀 First-time SSE initialization');
 
   const sessionId = window.TRACTSTACK_CONFIG?.sessionId;
   log('🔍 Session ID from config:', sessionId);
 
   if (!sessionId) {
-    log('❌ FATAL: No session ID provided by server');
-    console.error('🔴 No session ID provided by server. Cannot initialize SSE.');
+    // Changed: Graceful dormancy instead of error
+    log('ℹ️  No session ID available - SSE will remain dormant until needed');
+    log('💤 SSE module loaded but inactive (no session context)');
     return;
   }
 
@@ -563,6 +558,13 @@ document.addEventListener('astro:page-load', () => {
     log('⚠️  HTMX not available after page load');
   }
 
+  // Check if SSE should wake up from dormancy
+  const sessionId = window.TRACTSTACK_CONFIG?.sessionId;
+  if (sessionId && !eventSource && window.SSE_INITIALIZED) {
+    log('🌅 SSE was dormant but session ID now available - waking up');
+    setupSSEConnection();
+  }
+
   // Single context update with extensive logging
   setTimeout(() => {
     const configId = window.TRACTSTACK_CONFIG?.storyfragmentId;
@@ -586,9 +588,17 @@ document.addEventListener('astro:page-load', () => {
 });
 
 // ============================================================================
-// INITIALIZATION
+// INITIALIZATION - Use existing SSE_INITIALIZED flag
 // ============================================================================
 
 log('=== SSE MODULE INITIALIZATION ===');
-setupSSEConnection();
+
+// Use the existing flag from astro.d.ts
+if (!window.SSE_INITIALIZED) {
+  window.SSE_INITIALIZED = true;
+  setupSSEConnection();
+} else {
+  log('ℹ️  SSE already initialized, skipping setup');
+}
+
 log('SSE events module loaded and is persistent.');
