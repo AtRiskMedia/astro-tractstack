@@ -11,6 +11,7 @@ export interface Props {
   isStoryKeep?: boolean;
   isEditable?: boolean;
   menu?: MenuNode | null;
+  sessionId?: string;
   impressions?: any[]; // TODO: Implement when backend ready
 }
 
@@ -22,6 +23,7 @@ const {
   isStoryKeep = false,
   isEditable = false,
   menu,
+  sessionId = '',
   impressions = [], // TODO: Remove when backend implemented
 } = Astro.props;
 
@@ -196,9 +198,8 @@ const authStatus = {
       }
 
       {/* Remember Me Icon */}
-      <script>
+      <script is:inline define:vars={{ sessionId }}>
         function initRememberMe() {
-          const sessionId = localStorage.getItem('tractstack_session_id');
           const consent = localStorage.getItem('tractstack_consent') === '1';
           const hasProfile =
             localStorage.getItem('tractstack_has_profile') === '1';

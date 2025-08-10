@@ -61,11 +61,15 @@ function log(...args: any[]): void {
 }
 
 function logCritical(...args: any[]): void {
-  if (VERBOSE)
-    console.error('🚨 SSE CRITICAL:', ...args);
+  if (VERBOSE) console.error('🚨 SSE CRITICAL:', ...args);
 }
 
-function logStoryfragmentChange(action: string, oldId: string | null, newId: string | null, source: string): void {
+function logStoryfragmentChange(
+  action: string,
+  oldId: string | null,
+  newId: string | null,
+  source: string
+): void {
   logCritical(`STORYFRAGMENT ${action}:`, {
     action,
     oldId,
@@ -73,11 +77,16 @@ function logStoryfragmentChange(action: string, oldId: string | null, newId: str
     source,
     configValue: window.TRACTSTACK_CONFIG?.storyfragmentId,
     timestamp: new Date().toISOString(),
-    changed: oldId !== newId
+    changed: oldId !== newId,
   });
 }
 
-function logSSEEvent(eventType: string, data: any, willProcess: boolean, reason?: string): void {
+function logSSEEvent(
+  eventType: string,
+  data: any,
+  willProcess: boolean,
+  reason?: string
+): void {
   logCritical(`SSE EVENT ${eventType}:`, {
     eventType,
     data,
@@ -85,7 +94,7 @@ function logSSEEvent(eventType: string, data: any, willProcess: boolean, reason?
     configContext: window.TRACTSTACK_CONFIG?.storyfragmentId,
     willProcess,
     reason,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -93,7 +102,9 @@ function logSSEEvent(eventType: string, data: any, willProcess: boolean, reason?
 // SSE HANDSHAKE
 // ============================================================================
 
-async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse> {
+async function performSSEHandshake(
+  sessionId: string
+): Promise<HandshakeResponse> {
   log('=== STARTING SSE HANDSHAKE ===');
   log('📤 Session ID provided by server:', sessionId);
 
@@ -108,15 +119,18 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
     storyfragmentId: config.storyfragmentId,
   });
 
-  const existingSession = localStorage.getItem('tractstack_session');
-  log('🔍 Checking localStorage for existing session:', existingSession ? 'found' : 'not found');
+  const existingSession = localStorage.getItem('tractstack_session_id');
+  log(
+    '🔍 Checking localStorage for existing session:',
+    existingSession ? 'found' : 'not found'
+  );
 
   if (!existingSession) {
     log('ℹ️  No existing session in localStorage - fresh session');
   }
 
-  const profileEmail = localStorage.getItem('tractstack_profile_email');
-  const profileCode = localStorage.getItem('tractstack_profile_code');
+  const profileEmail = localStorage.getItem('tractstack_encrypted_email');
+  const profileCode = localStorage.getItem('tractstack_encrypted_code');
 
   log('🔍 Checking localStorage for profile credentials:', {
     hasEmail: !!profileEmail,
@@ -127,7 +141,7 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
     log('ℹ️  No profile unlock needed');
   }
 
-  const consent = localStorage.getItem('tractstack_consent') || 'unknown';
+  const consent = localStorage.getItem('tractstack_consent') || '0';
   log('📋 Consent status:', consent);
 
   const handshakePayload: HandshakeRequest = {
@@ -155,7 +169,10 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
     });
 
     log('📡 Handshake response status:', response.status);
-    log('📡 Handshake response headers:', Object.fromEntries(response.headers.entries()));
+    log(
+      '📡 Handshake response headers:',
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
       throw new Error(`Handshake failed with status ${response.status}`);
@@ -173,7 +190,7 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
     log('🔍 Restoration details:', restorationDetails);
 
     log('💾 Updating localStorage with handshake results...');
-    localStorage.setItem('tractstack_session', result.sessionId);
+    localStorage.setItem('tractstack_session_id', result.sessionId);
     log('💾 Set session ID:', result.sessionId);
     localStorage.setItem('tractstack_fingerprint', result.fingerprint);
     log('💾 Set fingerprint:', result.fingerprint);
@@ -182,7 +199,11 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
     localStorage.setItem('tractstack_consent', result.consent);
     log('💾 Set consent:', result.consent);
 
-    if (result.restored && result.affectedPanes && result.affectedPanes.length > 0) {
+    if (
+      result.restored &&
+      result.affectedPanes &&
+      result.affectedPanes.length > 0
+    ) {
       log('🔄 State restoration needed. Affected panes:', result.affectedPanes);
 
       if (window.htmx && isHtmxReady) {
@@ -197,19 +218,27 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
           }
         });
       } else {
-        log('⚠️  HTMX not ready during restoration, setting up delayed refresh');
+        log(
+          '⚠️  HTMX not ready during restoration, setting up delayed refresh'
+        );
         document.addEventListener(
           'astro:page-load',
           () => {
             if (window.htmx && result.affectedPanes) {
-              log('🔄 HTMX now ready after page load, triggering delayed pane refreshes');
+              log(
+                '🔄 HTMX now ready after page load, triggering delayed pane refreshes'
+              );
               result.affectedPanes.forEach((paneId) => {
-                const element = document.querySelector(`[data-pane-id="${paneId}"]`);
+                const element = document.querySelector(
+                  `[data-pane-id="${paneId}"]`
+                );
                 if (element) {
                   log(`🔄 Delayed restoration for pane: ${paneId}`);
                   window.htmx.trigger(element, 'refresh');
                 } else {
-                  log(`⚠️  Delayed restoration pane element not found: ${paneId}`);
+                  log(
+                    `⚠️  Delayed restoration pane element not found: ${paneId}`
+                  );
                 }
               });
             }
@@ -233,7 +262,6 @@ async function performSSEHandshake(sessionId: string): Promise<HandshakeResponse
 
     log('✅ SSE HANDSHAKE COMPLETE');
     return result;
-
   } catch (error) {
     log('❌ Handshake request failed:', error);
     throw error;
@@ -274,7 +302,10 @@ function initializeSSE(sessionId: string): void {
       const data = JSON.parse((event as MessageEvent).data);
       log('📡 SSE Connected event received:', data);
     } catch (error) {
-      log('⚠️  Failed to parse connected event data:', (event as MessageEvent).data);
+      log(
+        '⚠️  Failed to parse connected event data:',
+        (event as MessageEvent).data
+      );
     }
   });
 
@@ -304,7 +335,7 @@ function initializeSSE(sessionId: string): void {
       logCritical('📨 PANES_UPDATED PARSED:', {
         data,
         currentStoryfragmentId,
-        configStoryfragmentId: window.TRACTSTACK_CONFIG?.storyfragmentId
+        configStoryfragmentId: window.TRACTSTACK_CONFIG?.storyfragmentId,
       });
 
       log('📨 Full panes_updated payload:', data);
@@ -319,17 +350,24 @@ function initializeSSE(sessionId: string): void {
             updateStoryfragment: update.storyfragmentId,
             currentStoryfragment: currentStoryfragmentId,
             configStoryfragment: window.TRACTSTACK_CONFIG?.storyfragmentId,
-            willProcess: update.storyfragmentId === currentStoryfragmentId
+            willProcess: update.storyfragmentId === currentStoryfragmentId,
           });
 
-          log(`🔍 Checking update for storyfragment: ${update.storyfragmentId}`);
+          log(
+            `🔍 Checking update for storyfragment: ${update.storyfragmentId}`
+          );
 
           if (update.storyfragmentId === currentStoryfragmentId) {
             logSSEEvent('panes_updated', update, true, 'storyfragment match');
             log('✅ Storyfragment matches, processing update');
             processStoryfragmentUpdate(update);
           } else {
-            logSSEEvent('panes_updated', update, false, 'storyfragment mismatch');
+            logSSEEvent(
+              'panes_updated',
+              update,
+              false,
+              'storyfragment mismatch'
+            );
             log('⚠️  Storyfragment mismatch - ignoring update:', {
               eventStoryfragment: update.storyfragmentId,
               currentStoryfragment: currentStoryfragmentId,
@@ -345,15 +383,25 @@ function initializeSSE(sessionId: string): void {
         logCritical(`🔍 LEGACY UPDATE CHECK:`, {
           dataStoryfragment: data.storyfragmentId,
           currentStoryfragment: currentStoryfragmentId,
-          willProcess: data.storyfragmentId === currentStoryfragmentId
+          willProcess: data.storyfragmentId === currentStoryfragmentId,
         });
 
         if (data.storyfragmentId === currentStoryfragmentId) {
-          logSSEEvent('panes_updated_legacy', data, true, 'storyfragment match');
+          logSSEEvent(
+            'panes_updated_legacy',
+            data,
+            true,
+            'storyfragment match'
+          );
           log('✅ Storyfragment matches, processing updates');
           processStoryfragmentUpdate(data);
         } else {
-          logSSEEvent('panes_updated_legacy', data, false, 'storyfragment mismatch');
+          logSSEEvent(
+            'panes_updated_legacy',
+            data,
+            false,
+            'storyfragment mismatch'
+          );
           log('⚠️  Storyfragment mismatch - ignoring update:', {
             eventStoryfragment: data.storyfragmentId,
             currentStoryfragment: currentStoryfragmentId,
@@ -383,7 +431,7 @@ function processStoryfragmentUpdate(update: StoryfragmentUpdate): void {
     storyfragmentId: update.storyfragmentId,
     affectedPanes: update.affectedPanes,
     gotoPaneId: update.gotoPaneId,
-    currentContext: currentStoryfragmentId
+    currentContext: currentStoryfragmentId,
   });
 
   log('🔄 === PROCESSING STORYFRAGMENT UPDATE ===');
@@ -444,7 +492,9 @@ function processStoryfragmentUpdate(update: StoryfragmentUpdate): void {
     } else {
       log(`⚠️  Target pane element not found: pane-${update.gotoPaneId}`, {
         expectedId: `pane-${update.gotoPaneId}`,
-        availablePaneElements: Array.from(document.querySelectorAll('[id^="pane-"]')).map(el => el.id),
+        availablePaneElements: Array.from(
+          document.querySelectorAll('[id^="pane-"]')
+        ).map((el) => el.id),
       });
     }
   }
@@ -454,13 +504,17 @@ function processStoryfragmentUpdate(update: StoryfragmentUpdate): void {
 
 function handleReconnection(): void {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    log(`❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+    log(
+      `❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`
+    );
     return;
   }
 
   reconnectAttempts++;
   const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
-  log(`🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+  log(
+    `🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`
+  );
 
   setTimeout(() => {
     const sessionId = window.TRACTSTACK_CONFIG?.sessionId;
@@ -477,16 +531,23 @@ function handleReconnection(): void {
 // CONTEXT MANAGEMENT
 // ============================================================================
 
-function updateStoryfragmentContext(newStoryfragmentId: string, source: string): void {
+function updateStoryfragmentContext(
+  newStoryfragmentId: string,
+  source: string
+): void {
   const oldId = currentStoryfragmentId;
 
   if (currentStoryfragmentId !== newStoryfragmentId) {
     logStoryfragmentChange('UPDATE', oldId, newStoryfragmentId, source);
-    log(`📖 Context updated [${source}]. Storyfragment changed from ${currentStoryfragmentId} to ${newStoryfragmentId}`);
+    log(
+      `📖 Context updated [${source}]. Storyfragment changed from ${currentStoryfragmentId} to ${newStoryfragmentId}`
+    );
     currentStoryfragmentId = newStoryfragmentId;
   } else {
     logStoryfragmentChange('CONFIRM', oldId, newStoryfragmentId, source);
-    log(`📖 Context confirmed [${source}]. Still tracking storyfragmentId: ${currentStoryfragmentId}`);
+    log(
+      `📖 Context confirmed [${source}]. Still tracking storyfragmentId: ${currentStoryfragmentId}`
+    );
   }
 }
 
@@ -539,7 +600,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialId = window.TRACTSTACK_CONFIG.storyfragmentId;
     logStoryfragmentChange('INIT', null, initialId, 'DOM_LOADED');
     currentStoryfragmentId = initialId;
-    log(`📖 Initial context set. Tracking storyfragmentId: ${currentStoryfragmentId}`);
+    log(
+      `📖 Initial context set. Tracking storyfragmentId: ${currentStoryfragmentId}`
+    );
   } else {
     log('⚠️  No storyfragmentId in config on DOM load');
   }
@@ -575,7 +638,7 @@ document.addEventListener('astro:page-load', () => {
       currentId,
       willUpdate: configId !== currentId,
       configExists: !!window.TRACTSTACK_CONFIG,
-      configFull: window.TRACTSTACK_CONFIG
+      configFull: window.TRACTSTACK_CONFIG,
     });
 
     if (configId) {
