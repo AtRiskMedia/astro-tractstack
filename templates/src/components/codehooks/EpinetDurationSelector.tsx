@@ -453,22 +453,20 @@ const EpinetDurationSelector = ({
     const userInfo = needsApply
       ? localFilters.selectedUserId
         ? ` for individual user ${localFilters.selectedUserId}`
-        : ` for ${
-            localFilters.visitorType === 'all'
-              ? 'all visitors'
-              : localFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`
+        : ` for ${localFilters.visitorType === 'all'
+          ? 'all visitors'
+          : localFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`
       : $epinetCustomFilters.selectedUserId
         ? ` for individual user ${$epinetCustomFilters.selectedUserId}`
-        : ` for ${
-            $epinetCustomFilters.visitorType === 'all'
-              ? 'all visitors'
-              : $epinetCustomFilters.visitorType === 'anonymous'
-                ? 'anonymous visitors'
-                : 'known leads'
-          }`;
+        : ` for ${$epinetCustomFilters.visitorType === 'all'
+          ? 'all visitors'
+          : $epinetCustomFilters.visitorType === 'anonymous'
+            ? 'anonymous visitors'
+            : 'known leads'
+        }`;
 
     return baseMessage + userInfo;
   };
@@ -619,21 +617,28 @@ const EpinetDurationSelector = ({
                 {/* Right column: Date/time controls and user select in 2 rows */}
                 <div className="space-y-4">
                   {/* Row 1: Date Range | Start Hour | End Hour */}
-                  <div
-                    className="grid grid-cols-1 gap-4"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr auto auto',
-                      gap: '1rem',
-                    }}
-                  >
+                  <div className="date-time-row grid grid-cols-1 gap-4">
                     <style>{`
-                      @media (max-width: 767px) {
-                        .date-time-grid {
-                          grid-template-columns: 1fr !important;
-                        }
-                      }
-                    `}</style>
+.date-time-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+}
+
+@media (max-width: 767px) {
+  .date-time-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .date-time-row {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+  .date-time-row > div:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+`}</style>
                     <div className="date-time-grid space-y-1">
                       <div className="block text-sm font-bold text-gray-700">
                         Date Range (Local Time)
@@ -932,11 +937,10 @@ const EpinetDurationSelector = ({
       {/* UnsavedChangesBar-style sticky bottom bar */}
       {isVisible && (
         <div
-          className={`fixed bottom-0 left-0 right-0 z-50 transform pr-12 transition-all duration-300 ease-in-out ${
-            isAnimating
-              ? 'translate-y-0 opacity-100'
-              : 'translate-y-full opacity-0'
-          }`}
+          className={`fixed bottom-0 left-0 right-0 z-50 transform pr-12 transition-all duration-300 ease-in-out ${isAnimating
+            ? 'translate-y-0 opacity-100'
+            : 'translate-y-full opacity-0'
+            }`}
         >
           {/* Backdrop blur overlay */}
           <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
@@ -970,11 +974,10 @@ const EpinetDurationSelector = ({
                   <button
                     type="button"
                     onClick={cancelChanges}
-                    className={`rounded-md border px-3 py-2 text-sm font-bold shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                      errorMessage
-                        ? 'border-red-300 bg-white text-red-800 hover:bg-red-50 focus:ring-red-500'
-                        : 'border-amber-300 bg-white text-amber-800 hover:bg-amber-50 focus:ring-amber-500'
-                    }`}
+                    className={`rounded-md border px-3 py-2 text-sm font-bold shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${errorMessage
+                      ? 'border-red-300 bg-white text-red-800 hover:bg-red-50 focus:ring-red-500'
+                      : 'border-amber-300 bg-white text-amber-800 hover:bg-amber-50 focus:ring-amber-500'
+                      }`}
                   >
                     Cancel
                   </button>
@@ -986,17 +989,16 @@ const EpinetDurationSelector = ({
                     type="button"
                     onClick={updateDateRange}
                     disabled={!startDate || !endDate || isApplying}
-                    className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed ${
-                      isApplying
-                        ? 'bg-blue-500 opacity-75'
-                        : errorMessage
-                          ? startDate && endDate
-                            ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                            : 'bg-red-400 opacity-50'
-                          : startDate && endDate
-                            ? 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500'
-                            : 'bg-amber-400 opacity-50'
-                    }`}
+                    className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed ${isApplying
+                      ? 'bg-blue-500 opacity-75'
+                      : errorMessage
+                        ? startDate && endDate
+                          ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                          : 'bg-red-400 opacity-50'
+                        : startDate && endDate
+                          ? 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500'
+                          : 'bg-amber-400 opacity-50'
+                      }`}
                   >
                     {isApplying ? 'Applying...' : 'Apply Filters'}
                   </button>
