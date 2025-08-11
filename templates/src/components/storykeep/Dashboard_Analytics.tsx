@@ -300,13 +300,13 @@ export default function StoryKeepDashboard_Analytics({
       />
 
       {/* Dashboard Activity Chart */}
-      <div className="mb-6">
+      <div className="mb-6 overflow-hidden">
         <h3 className="mb-4 text-lg font-bold text-gray-900">
           Activity Over Time
         </h3>
         {analytics.dashboard &&
-        analytics.dashboard.line &&
-        analytics.dashboard.line.length > 0 ? (
+          analytics.dashboard.line &&
+          analytics.dashboard.line.length > 0 ? (
           <DashboardActivity data={analytics.dashboard.line} />
         ) : (
           <div className="flex h-64 w-full items-center justify-center rounded-lg bg-gray-100">
@@ -330,7 +330,7 @@ export default function StoryKeepDashboard_Analytics({
       </div>
 
       {/* User Journey Section */}
-      <div className="mb-6">
+      <div className="mb-6 overflow-hidden">
         <h3 className="mb-4 text-lg font-bold text-gray-900">
           User Journey Analytics
         </h3>
@@ -348,7 +348,7 @@ export default function StoryKeepDashboard_Analytics({
           analytics.epinet.nodes &&
           analytics.epinet.links ? (
           analytics.epinet.nodes.length > 0 &&
-          analytics.epinet.links.length > 0 ? (
+            analytics.epinet.links.length > 0 ? (
             <ErrorBoundary
               fallback={
                 <div className="rounded-lg bg-red-50 p-4 text-red-800">
