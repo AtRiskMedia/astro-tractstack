@@ -234,6 +234,31 @@ const authStatus = {
       </script>
       {!isStoryKeep && <div id="remember-me-container" />}
 
+      {/* Admin Terminal Icon - Only for admins */}
+      {
+        authStatus.isAdmin ? (
+          <button
+            id="admin-heart-btn"
+            class="text-myblue/80 hover:text-green-500 hover:rotate-6"
+            title="Admin Terminal"
+          >
+            <svg
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"
+              />
+            </svg>
+          </button>
+        ) : null
+      }
+
       {/* Logout Icon - Admin/Editor Only */}
       {
         authStatus.isAdmin || authStatus.userRole === 'editor' ? (
@@ -289,6 +314,52 @@ const authStatus = {
     )
   }
 </header>
+
+{/* Admin Modal - Only render for admins */}
+{authStatus.isAdmin && (
+  <div
+    id="admin-modal"
+    class="fixed inset-0 z-50 hidden bg-black bg-opacity-75"
+    aria-labelledby="admin-modal-title"
+    aria-hidden="true"
+  >
+    <div class="relative w-full h-full">
+      {/* Modal Header with Close Button */}
+      <div class="absolute top-4 right-4 z-10">
+        <button
+          id="admin-modal-close"
+          class="flex items-center justify-center w-10 h-10 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full shadow-lg transition-all duration-200"
+          title="Close Admin Panel"
+          aria-label="Close Admin Panel"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="feather feather-x"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      {/* Iframe Container */}
+      <iframe
+        id="admin-sysop-iframe"
+        src={`${import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080'}/sysop`}
+        class="w-full h-full border-0"
+        title="Admin System Operations Panel"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+      ></iframe>
+    </div>
+  </div>
+)}
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -355,3 +426,73 @@ const authStatus = {
     }
   });
 </script>
+
+{/* Admin Modal JavaScript - Only include for admins */}
+{authStatus.isAdmin && (
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const heartBtn = document.getElementById('admin-heart-btn');
+      const modal = document.getElementById('admin-modal');
+      const closeBtn = document.getElementById('admin-modal-close');
+      const iframe = document.getElementById('admin-sysop-iframe');
+
+      if (!heartBtn || !modal || !closeBtn || !iframe) {
+        console.warn('Admin modal elements not found');
+        return;
+      }
+
+      // Open modal when heart icon is clicked
+      heartBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+        
+        // Focus management for accessibility
+        closeBtn.focus();
+        
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+      });
+
+      // Close modal when X button is clicked
+      closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        closeModal();
+      });
+
+      // Close modal when clicking outside the iframe
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+        
+        // Return focus to heart button for accessibility
+        heartBtn.focus();
+      }
+
+      // Handle iframe load events for better UX
+      iframe.addEventListener('load', function() {
+        console.log('Admin panel loaded successfully');
+      });
+
+      iframe.addEventListener('error', function() {
+        console.error('Failed to load admin panel');
+      });
+    });
+  </script>
+)}
