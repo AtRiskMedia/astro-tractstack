@@ -118,22 +118,6 @@ function setupLifecycleListeners() {
       '📊 ANALYTICS: Setting up lifecycle listeners for the first time.'
     );
 
-  window.handleScrollToTarget = function (paneId: string) {
-    if (!paneId) return;
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const target = document.querySelector(`#pane-${paneId}`);
-    if (target) {
-      target.scrollIntoView({
-        behavior: prefersReducedMotion ? 'auto' : 'smooth',
-        block: 'start',
-      });
-    } else {
-      console.warn(`⚠️ Scroll target element not found for pane: ${paneId}`);
-    }
-  };
-
   window.addEventListener('beforeunload', () => {
     flushPendingPaneEvents();
   });
