@@ -252,6 +252,7 @@ const ContentBrowser = ({
           <Switch.Root
             checked={showMostActive}
             onCheckedChange={(details) => setShowMostActive(details.checked)}
+            className="flex items-center"
           >
             <Switch.Control
               className={classNames(

@@ -344,7 +344,6 @@ export default function FetchAnalytics({
     $epinetCustomFilters.selectedUserId,
     $epinetCustomFilters.startTimeUTC,
     $epinetCustomFilters.endTimeUTC,
-    fetchAllAnalytics,
   ]);
 
   return null;
