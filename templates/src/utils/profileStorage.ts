@@ -170,23 +170,22 @@ export class ProfileStorage {
    * Clear entire session (localStorage) INCLUDING session ID
    */
   static clearSession(): void {
-    // Clear all localStorage keys with tractstack prefix
     Object.values(this.STORAGE_KEYS).forEach((key) => {
       StorageManager.remove(key);
     });
 
-    // CRITICAL: Also clear the session ID that's stored without prefix
     try {
       localStorage.removeItem('tractstack_session_id');
+      localStorage.removeItem('tractstack_fingerprint');
+      localStorage.removeItem('tractstack_visit');
+      localStorage.removeItem('tractstack_entered_tracked');
     } catch {
       // Silently fail
     }
 
-    // Clear any other non-prefixed TractStack keys
+    // Clear session cookie
     try {
-      localStorage.removeItem('fp_id');
-      localStorage.removeItem('visit_id');
-      localStorage.removeItem('profile_token');
+      document.cookie = 'tractstack_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     } catch {
       // Silently fail
     }
