@@ -26,8 +26,8 @@ interface HandshakeRequest {
   sessionId: string;
   storyfragmentId: string;
   consent: string;
-  email?: string;
-  code?: string;
+  encryptedEmail?: string;
+  encryptedCode?: string;
 }
 
 interface HandshakeResponse {
@@ -150,8 +150,8 @@ async function performSSEHandshake(
     consent,
   };
 
-  if (profileEmail) handshakePayload.email = profileEmail;
-  if (profileCode) handshakePayload.code = profileCode;
+  if (profileEmail) handshakePayload.encryptedEmail = profileEmail;
+  if (profileCode) handshakePayload.encryptedCode = profileCode;
 
   log('📤 Sending handshake payload:', handshakePayload);
 
