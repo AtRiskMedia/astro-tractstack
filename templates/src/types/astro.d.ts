@@ -1,7 +1,7 @@
 // templates/src/types/astro.d.ts
 
-import type { FullContentMapItem } from "./tractstack";
-export { };
+import type { FullContentMapItem } from './tractstack';
+export {};
 
 declare global {
   interface ImportMeta {

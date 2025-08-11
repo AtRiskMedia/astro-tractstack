@@ -185,7 +185,8 @@ export class ProfileStorage {
 
     // Clear session cookie
     try {
-      document.cookie = 'tractstack_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      document.cookie =
+        'tractstack_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     } catch {
       // Silently fail
     }

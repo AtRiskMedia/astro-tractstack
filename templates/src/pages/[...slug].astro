@@ -133,12 +133,14 @@ if (!brandConfig.SITE_INIT) {
             hx-swap="innerHTML"
           >
             {codeHookTargets[paneId] ? (
-              <CodeHook
-                target={codeHookTargets[paneId]}
-                paneId={paneId}
-                fullContentMap={fullContentMap}
-                noPaneId={true}
-              />
+              <div class="overflow-hidden">
+                <CodeHook
+                  target={codeHookTargets[paneId]}
+                  paneId={paneId}
+                  fullContentMap={fullContentMap}
+                  noPaneId={true}
+                />
+              </div>
             ) : (
               <Fragment set:html={fragmentsData[paneId] || ''} />
             )}
