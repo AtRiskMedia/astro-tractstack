@@ -5,6 +5,7 @@ import { getBrandConfig } from '@/stores/brand';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 import { getOrSetSessionId } from '@/lib/session';
+import { getStoryData } from '@/lib/storyData';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -20,27 +21,11 @@ const endpoint = lookup
 
 let storyData;
 try {
-  const response = await fetch(endpoint, {
-    headers: {
-      'X-Tenant-ID': tenantId,
-      'X-TractStack-Session-ID': sessionId,
-    },
-  });
-  const failedResponse = await handleFailedResponse(
-    response,
-    goBackend,
-    tenantId,
-    Astro.url.pathname
-  );
-  if (failedResponse) {
-    return failedResponse;
-  }
-
-  storyData = await response.json();
-  if (storyData.isHome && lookup !== '') {
-    return Astro.redirect('/');
-  }
+  storyData = await getStoryData(Astro, lookup, sessionId, tenantId);
 } catch (error) {
+  if (error instanceof Response) {
+    return error; // This handles both redirects and failed responses
+  }
   console.error('Error fetching storyfragment:', error);
   const currentPath = Astro.url.pathname;
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
