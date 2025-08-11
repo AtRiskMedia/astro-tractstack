@@ -1242,41 +1242,41 @@ export async function injectTemplateFiles(
     // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
-        // Middleware
-        {
-          src: resolve('templates/src/middleware.ts'),
-          dest: 'src/middleware.ts',
-        },
-        // API Utilities
-        {
-          src: resolve('templates/src/utils/api/tenantConfig.ts'),
-          dest: 'src/utils/api/tenantConfig.ts',
-        },
-        {
-          src: resolve('templates/src/utils/api/tenantHelpers.ts'),
-          dest: 'src/utils/api/tenantHelpers.ts',
-        },
-        // Components
-        {
-          src: resolve(
-            'templates/src/components/tenant/RegistrationForm.tsx'
-          ),
-          dest: 'src/components/tenant/RegistrationForm.tsx',
-        },
-        // Pages
-        {
-          src: resolve('templates/src/pages/sandbox/register.astro'),
-          dest: 'src/pages/sandbox/register.astro',
-        },
-        {
-          src: resolve('templates/src/pages/sandbox/activate.astro'),
-          dest: 'src/pages/sandbox/activate.astro',
-        },
-        {
-          src: resolve('templates/src/pages/sandbox/success.astro'),
-          dest: 'src/pages/sandbox/success.astro',
-        },
-      ]
+          // Middleware
+          {
+            src: resolve('templates/src/middleware.ts'),
+            dest: 'src/middleware.ts',
+          },
+          // API Utilities
+          {
+            src: resolve('templates/src/utils/api/tenantConfig.ts'),
+            dest: 'src/utils/api/tenantConfig.ts',
+          },
+          {
+            src: resolve('templates/src/utils/api/tenantHelpers.ts'),
+            dest: 'src/utils/api/tenantHelpers.ts',
+          },
+          // Components
+          {
+            src: resolve(
+              'templates/src/components/tenant/RegistrationForm.tsx'
+            ),
+            dest: 'src/components/tenant/RegistrationForm.tsx',
+          },
+          // Pages
+          {
+            src: resolve('templates/src/pages/sandbox/register.astro'),
+            dest: 'src/pages/sandbox/register.astro',
+          },
+          {
+            src: resolve('templates/src/pages/sandbox/activate.astro'),
+            dest: 'src/pages/sandbox/activate.astro',
+          },
+          {
+            src: resolve('templates/src/pages/sandbox/success.astro'),
+            dest: 'src/pages/sandbox/success.astro',
+          },
+        ]
       : []),
     // Multi-Tenant Types (Always included due to plan reference)
     {
@@ -1307,24 +1307,24 @@ export async function injectTemplateFiles(
     // Example Components (Conditional)
     ...(config?.includeExamples
       ? [
-        {
-          src: resolve('templates/custom/with-examples/CustomHero.astro'),
-          dest: 'src/custom/CustomHero.astro',
-          protected: true,
-        },
-        {
-          src: resolve(
-            'templates/custom/with-examples/pages/Collections.astro'
-          ),
-          dest: 'src/custom/pages/Collections.astro',
-          protected: true,
-        },
-        {
-          src: resolve('templates/src/pages/collections/[param1].astro'),
-          dest: 'src/pages/collections/[param1].astro',
-          protected: true,
-        },
-      ]
+          {
+            src: resolve('templates/custom/with-examples/CustomHero.astro'),
+            dest: 'src/custom/CustomHero.astro',
+            protected: true,
+          },
+          {
+            src: resolve(
+              'templates/custom/with-examples/pages/Collections.astro'
+            ),
+            dest: 'src/custom/pages/Collections.astro',
+            protected: true,
+          },
+          {
+            src: resolve('templates/src/pages/collections/[param1].astro'),
+            dest: 'src/pages/collections/[param1].astro',
+            protected: true,
+          },
+        ]
       : []),
   ];
 

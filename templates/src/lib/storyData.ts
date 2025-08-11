@@ -19,7 +19,8 @@ export async function getStoryData(
   sessionId: string,
   tenantId: string
 ): Promise<StoryData> {
-  const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
   const endpoint = lookup
     ? `${goBackend}/api/v1/nodes/storyfragments/slug/${lookup}/personalized-payload`
     : `${goBackend}/api/v1/nodes/storyfragments/home/personalized-payload`;
