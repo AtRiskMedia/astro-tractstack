@@ -1,6 +1,6 @@
 import { useEffect, useState, memo, type CSSProperties } from 'react';
 import { getCtx } from '@/stores/nodes';
-import { viewportKeyStore, showAnalytics } from '@/stores/storykeep';
+import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
 import FeaturedContentSetup from '@/components/codehooks/FeaturedContentSetup';
 import ListContentSetup from '@/components/codehooks/ListContentSetup';
@@ -64,8 +64,6 @@ function getSizeClasses(
 
 const Pane = memo(
   (props: NodeProps) => {
-    const $showAnalytics = showAnalytics.get();
-
     // Track the viewport value in state so we can react to changes
     const [currentViewport, setCurrentViewport] = useState(
       viewportKeyStore.get().value
@@ -230,8 +228,6 @@ const Pane = memo(
                 nodeProps={props}
                 key={`content-children-${props.nodeId}-${renderCount}`}
               />
-
-              {$showAnalytics ? <div>show analytics here</div> : null}
             </div>
           ) : (
             // Current Grid Layout (default)
@@ -259,7 +255,6 @@ const Pane = memo(
                 nodeProps={props}
                 key={`render-children-${props.nodeId}-${renderCount}`}
               />
-              {$showAnalytics ? <div>show analytics here</div> : null}
             </div>
           )}
         </div>

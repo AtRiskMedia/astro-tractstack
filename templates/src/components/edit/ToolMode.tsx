@@ -70,6 +70,7 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
 
   const handleClick = (mode: ToolModeVal) => {
     ctx.toolModeValStore.set({ value: mode });
+    ctx.showGuids.set(mode === `debug`);
     ctx.notifyNode('root');
   };
 

@@ -28,8 +28,8 @@ const VERBOSE = false;
 
 export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
-  const Tag = props.tagName;
   const ctx = getCtx(props);
+  const Tag = ctx.showGuids.get() ? `div` : props.tagName;
 
   // Core state
   const [editState, setEditState] = useState<EditState>('viewing');

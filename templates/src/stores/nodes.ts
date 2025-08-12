@@ -96,6 +96,7 @@ export class NodesContext {
   toolAddModeStore = map<{ value: ToolAddMode }>({
     value: 'p',
   });
+  showGuids = atom<boolean>(false);
 
   /**
    * Sets an edit lock on a specific node to prevent re-renders during editing
@@ -370,6 +371,7 @@ export class NodesContext {
   private lastProcessedTime = 0;
 
   setClickedNodeId(nodeId: string, dblClick: boolean = false) {
+    console.log(`setClickedNodeId`, nodeId, dblClick);
     const now = Date.now();
     // Prevent processing if we're too close to the last event
     if (now - this.lastProcessedTime < 50 || this.isProcessingDoubleClick)

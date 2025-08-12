@@ -1,7 +1,7 @@
 import { memo, type ReactElement, useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
-import { showGuids, styleElementInfoStore } from '@/stores/storykeep';
+import { styleElementInfoStore } from '@/stores/storykeep';
 import { getType } from '@/utils/compositor/typeGuards';
 import { NodeWithGuid } from './NodeWithGuid';
 import PanelVisibilityWrapper from './PanelVisibilityWrapper';
@@ -298,7 +298,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => { }
+        () => {}
       );
       return () => unsubscribe();
     }
@@ -335,21 +335,27 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-      outline: isOverride
-        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-        : '2.5px dashed rgba(0, 0, 0, 0.3)',
-    }
+        outline: isOverride
+          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+          : '2.5px dashed rgba(0, 0, 0, 0.3)',
+      }
     : {};
-  const hoverClasses = isStylesMode ? "hover:outline hover:outline-2 hover:outline-black" : ""
+  const hoverClasses = isStylesMode
+    ? 'hover:outline hover:outline-2 hover:outline-black'
+    : '';
 
   const element = getElement(node, props);
 
-  if (!isPreview && showGuids.get()) {
+  if (!isPreview && getCtx(props).showGuids.get()) {
     return <NodeWithGuid {...props} element={element} />;
   }
 
   if (isTopLevelBlock) {
-    return <div className={hoverClasses} style={highlightStyle}>{element}</div>;
+    return (
+      <div className={hoverClasses} style={highlightStyle}>
+        {element}
+      </div>
+    );
   }
 
   return element;

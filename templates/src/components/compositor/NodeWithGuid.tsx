@@ -8,7 +8,6 @@ export type RenderableNodes = NodeProps & { element: ReactElement };
 
 export const NodeWithGuid = memo((props: RenderableNodes) => {
   const node = getCtx(props).allNodes.get().get(props.nodeId) as FlatNode;
-
   return (
     <div className="relative">
       <div

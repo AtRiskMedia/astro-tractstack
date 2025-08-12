@@ -30,7 +30,12 @@ const contactPersona = [
   },
 ];
 
-export const SignUp = ({ persona, prompt, clarifyConsent, id }: SignupProps) => {
+export const SignUp = ({
+  persona,
+  prompt,
+  clarifyConsent,
+  id,
+}: SignupProps) => {
   // Static values for visual representation
   const personaSelected =
     contactPersona.find((p) => p.id === persona) || contactPersona[0];

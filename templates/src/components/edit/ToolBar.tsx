@@ -1,9 +1,7 @@
 import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
-import {
-  toggleSettingsPanel,
-} from '@/stores/storykeep';
+import { toggleSettingsPanel } from '@/stores/storykeep';
 
 import type { ToolAddMode } from '@/types/compositorTypes';
 
@@ -53,10 +51,11 @@ const AddElementsPanel = ({
         <button
           key={mode}
           onClick={() => handleElementClick(mode)}
-          className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${currentToolAddMode === mode
-            ? 'bg-myblue text-white'
-            : 'text-myblue hover:bg-myblue/10 border border-gray-200 bg-white'
-            }`}
+          className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${
+            currentToolAddMode === mode
+              ? 'bg-myblue text-white'
+              : 'text-myblue hover:bg-myblue/10 border border-gray-200 bg-white'
+          }`}
         >
           {toolAddModeTitles[mode]}
         </button>
@@ -88,9 +87,8 @@ const StoryKeepToolBar = () => {
         <button
           onClick={() => {
             ctx.toolModeValStore.set({ value: `text` });
-            toggleSettingsPanel
-          }
-          }
+            toggleSettingsPanel;
+          }}
           className="hover:text-myblue text-gray-500"
         >
           <XMarkIcon className="h-5 w-5" />

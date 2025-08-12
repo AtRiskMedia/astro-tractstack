@@ -96,9 +96,6 @@ export const toggleAddPanel = () => {
   }
 };
 
-export const showAnalytics = atom<boolean>(false);
-export const showGuids = atom<boolean>(false);
-
 const getViewportFromWidth = (
   width: number
 ): 'mobile' | 'tablet' | 'desktop' => {
