@@ -1,7 +1,16 @@
 import { atom, map } from 'nanostores';
+import { persistentAtom } from '@nanostores/persistent';
 import { handleSettingsPanelMobile } from '@/utils/layout';
 import type { FullContentMapItem, Theme } from '@/types/tractstack';
 import type { SettingsPanelSignal, ViewportKey } from '@/types/compositorTypes';
+import type {
+  ElementStylesMemory,
+  ParentStylesMemory,
+  ButtonStylesMemory,
+  PendingImageOperation,
+  PendingImageOperationsStore,
+  StoryFragmentTopicsData,
+} from '@/types/nodeProps';
 
 export const fullContentMapStore = atom<FullContentMapItem[]>([]);
 export const urlParamsStore = atom<Record<string, string | boolean>>({});
@@ -158,3 +167,78 @@ export const styleElementInfoStore = map<{
   overrideNodeId: null,
   className: null,
 });
+
+// Style Memory System (persistent across sessions)
+export const elementStylesMemoryStore = persistentAtom<ElementStylesMemory>(
+  'element-styles-memory:',
+  {},
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
+
+export const parentStylesMemoryStore = persistentAtom<ParentStylesMemory>(
+  'parent-styles-memory:',
+  {
+    parentClasses: [],
+    bgColour: null,
+  },
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
+
+export const buttonStylesMemoryStore = persistentAtom<ButtonStylesMemory>(
+  'button-styles-memory:',
+  {
+    buttonClasses: {},
+    buttonHoverClasses: {},
+  },
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
+
+// Image Operations Management
+export const pendingImageOperationsStore = map<PendingImageOperationsStore>({});
+
+export const setPendingImageOperation = (
+  storyFragmentId: string,
+  operation: PendingImageOperation | null
+) => {
+  const current = pendingImageOperationsStore.get();
+  pendingImageOperationsStore.set({
+    ...current,
+    [storyFragmentId]: operation,
+  });
+};
+
+export const getPendingImageOperation = (
+  storyFragmentId: string
+): PendingImageOperation | null => {
+  return pendingImageOperationsStore.get()[storyFragmentId] || null;
+};
+
+export const clearPendingImageOperation = (storyFragmentId: string) => {
+  const current = pendingImageOperationsStore.get();
+  const updated = { ...current };
+  delete updated[storyFragmentId];
+  pendingImageOperationsStore.set(updated);
+};
+
+export const clearAllPendingImageOperations = () => {
+  pendingImageOperationsStore.set({});
+};
+
+// Topics Management
+export const storyFragmentTopicsStore = map<{
+  [storyFragmentId: string]: StoryFragmentTopicsData;
+}>({});
+
+// Admin & UI State Flags
+export const isAdminStore = atom<boolean>(false);
+export const activeHelpTemplateStore = atom<string | null>(null);
+export const viewportSetStore = atom<boolean>(false);
