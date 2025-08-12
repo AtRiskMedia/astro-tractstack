@@ -1,7 +1,11 @@
 import { useStore } from '@nanostores/react';
-import { addPanelOpenStore } from '@/stores/storykeep';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
-import type { ToolModeVal, ToolAddMode } from '@/types/compositorTypes';
+import {
+  toggleSettingsPanel,
+} from '@/stores/storykeep';
+
+import type { ToolAddMode } from '@/types/compositorTypes';
 
 const toolAddModeTitles: Record<ToolAddMode, string> = {
   p: 'Paragraph',
@@ -40,7 +44,7 @@ const AddElementsPanel = ({
 
   const handleElementClick = (mode: ToolAddMode) => {
     ctx.toolAddModeStore.set({ value: mode });
-    console.log('Tool add mode changed to:', mode);
+    ctx.notifyNode('root');
   };
 
   return (
@@ -49,11 +53,10 @@ const AddElementsPanel = ({
         <button
           key={mode}
           onClick={() => handleElementClick(mode)}
-          className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${
-            currentToolAddMode === mode
-              ? 'bg-myblue text-white'
-              : 'text-myblue hover:bg-myblue/10 border border-gray-200 bg-white'
-          }`}
+          className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${currentToolAddMode === mode
+            ? 'bg-myblue text-white'
+            : 'text-myblue hover:bg-myblue/10 border border-gray-200 bg-white'
+            }`}
         >
           {toolAddModeTitles[mode]}
         </button>
@@ -68,7 +71,6 @@ const StoryKeepToolBar = () => {
   // Connect to stores
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const { value: toolAddModeVal } = useStore(ctx.toolAddModeStore);
-  const isAddPanelOpen = useStore(addPanelOpenStore);
 
   // Placeholder state - these would come from actual content data
   const hasTitle = true;
@@ -81,8 +83,18 @@ const StoryKeepToolBar = () => {
 
   return (
     <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <h3 className="text-myblue text-lg font-bold">Add Elements</h3>
+        <button
+          onClick={() => {
+            ctx.toolModeValStore.set({ value: `text` });
+            toggleSettingsPanel
+          }
+          }
+          className="hover:text-myblue text-gray-500"
+        >
+          <XMarkIcon className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-x-2 gap-y-1">

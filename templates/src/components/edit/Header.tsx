@@ -12,31 +12,26 @@ import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon
 import {
   viewportModeStore,
   showHelpStore,
-  showAnalyticsStore,
   canUndoStore,
   canRedoStore,
   setViewportMode,
   toggleShowHelp,
-  toggleShowAnalytics,
   setCanUndo,
   setCanRedo,
 } from '@/stores/storykeep';
 
 interface StoryKeepHeaderProps {
-  keyboardAccessibleEnabled: boolean;
   nodeId: string;
   isContext: boolean;
 }
 
 const StoryKeepHeader = ({
-  keyboardAccessibleEnabled,
   nodeId,
   isContext = false,
 }: StoryKeepHeaderProps) => {
   // Connect to stores
   const viewport = useStore(viewportModeStore);
   const showHelp = useStore(showHelpStore);
-  const showAnalytics = useStore(showAnalyticsStore);
   const canUndo = useStore(canUndoStore);
   const canRedo = useStore(canRedoStore);
 
@@ -135,11 +130,6 @@ const StoryKeepHeader = ({
           onClick={toggleShowHelp}
           title="Toggle Help Text"
           className={showHelp ? activeIconClassName : iconClassName}
-        />
-        <PresentationChartBarIcon
-          onClick={toggleShowAnalytics}
-          title="Toggle Interaction Analytics"
-          className={showAnalytics ? activeIconClassName : iconClassName}
         />
         <ArrowTopRightOnSquareIcon
           onClick={visitPage}

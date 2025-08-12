@@ -70,7 +70,7 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
 
   const handleClick = (mode: ToolModeVal) => {
     ctx.toolModeValStore.set({ value: mode });
-    console.log('Tool mode changed to:', mode);
+    ctx.notifyNode('root');
   };
 
   // Escape key listener
