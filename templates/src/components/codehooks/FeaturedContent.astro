@@ -164,20 +164,23 @@ function formatDate(dateString: string | null): string {
     try {
       const goBackend = window.location.protocol + '//' + window.location.host;
       const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
-      const response = await fetch(`${goBackend}/api/v1/analytics/content-summary`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tenant-ID': tenantId,
-        },
-      });
+      const response = await fetch(
+        `${goBackend}/api/v1/analytics/content-summary`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': tenantId,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       // If data is fetched, update state and re-order content
       if (data.hotContent && data.hotContent.length > 0) {
         hotContent = data.hotContent;
@@ -203,8 +206,10 @@ function formatDate(dateString: string | null): string {
   // Re-orders stories based on popularity if mode is 'popular'
   function updateContentOrder() {
     if (hasHotContent && defaultMode === 'popular') {
-      const viewsMap = new Map(hotContent.map(item => [item.id, item.totalEvents]));
-      
+      const viewsMap = new Map(
+        hotContent.map((item) => [item.id, item.totalEvents])
+      );
+
       const sortedByPopular = [...includedStories].sort((a, b) => {
         const aViews = viewsMap.get(a.id) || 0;
         const bViews = viewsMap.get(b.id) || 0;
@@ -216,7 +221,7 @@ function formatDate(dateString: string | null): string {
         }
         return bViews - aViews;
       });
-      
+
       updateDisplayedStories(sortedByPopular.slice(0, 5));
     }
   }
@@ -226,12 +231,23 @@ function formatDate(dateString: string | null): string {
     const rightColumn = document.querySelector('.md\\:w-2\\/5 .space-y-4');
     if (!rightColumn) return;
 
-    rightColumn.innerHTML = stories.map(story => {
-      const formattedDate = story.changed ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(story.changed)) : 'Unknown';
-      const imageHtml = story.thumbSrc ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">` : '';
-      const descriptionHtml = story.description ? `<p class="line-clamp-2 text-sm text-gray-800">${story.description}</p>` : '';
+    rightColumn.innerHTML = stories
+      .map((story) => {
+        const formattedDate = story.changed
+          ? new Intl.DateTimeFormat('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }).format(new Date(story.changed))
+          : 'Unknown';
+        const imageHtml = story.thumbSrc
+          ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">`
+          : '';
+        const descriptionHtml = story.description
+          ? `<p class="line-clamp-2 text-sm text-gray-800">${story.description}</p>`
+          : '';
 
-      return `
+        return `
         <a href="/${story.slug}" class="group block">
           <div class="flex items-start space-x-4 p-1 group-hover:bg-slate-50">
             ${imageHtml}
@@ -245,7 +261,8 @@ function formatDate(dateString: string | null): string {
           </div>
         </a>
       `;
-    }).join('');
+      })
+      .join('');
   }
 
   // Start fetching analytics on page load

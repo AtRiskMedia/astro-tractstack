@@ -74,7 +74,11 @@ function formatDate(dateString: string | null): string {
 ---
 
 <div class="mx-auto max-w-7xl p-4 py-12">
-  <div id="toggle-container" class="mb-4 flex justify-center" style="display: none;">
+  <div
+    id="toggle-container"
+    class="mb-4 flex justify-center"
+    style="display: none;"
+  >
     <div class="inline-flex rounded-md shadow-sm" role="group">
       <button
         id="recent-toggle"
@@ -100,69 +104,130 @@ function formatDate(dateString: string | null): string {
   }
 
   <div id="mobile-content" class="block space-y-6 p-4 md:hidden">
-    {initialStories.map((story) => (
-      <a href={`/${story.slug}`} class="group block">
+    {
+      initialStories.map((story) => (
+        <a href={`/${story.slug}`} class="group block">
           <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
-            {story.thumbSrc && <img src={story.thumbSrc} alt={story.title} style="width: 100px; height: auto;" class="rounded-md"/>}
+            {story.thumbSrc && (
+              <img
+                src={story.thumbSrc}
+                alt={story.title}
+                style="width: 100px; height: auto;"
+                class="rounded-md"
+              />
+            )}
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">{story.title}</h3>
-              {story.description && <p class="line-clamp-2 text-sm text-gray-800">{story.description}</p>}
+              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                {story.title}
+              </h3>
+              {story.description && (
+                <p class="line-clamp-2 text-sm text-gray-800">
+                  {story.description}
+                </p>
+              )}
               {story.topics && story.topics.length > 0 && (
                 <div class="mt-1 flex flex-wrap gap-1">
                   {story.topics.slice(0, 3).map((topic: string) => (
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">{topic}</span>
+                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                      {topic}
+                    </span>
                   ))}
                 </div>
               )}
-              <p class="mt-1 text-xs text-gray-600">{story.changed && formatDate(story.changed)}</p>
+              <p class="mt-1 text-xs text-gray-600">
+                {story.changed && formatDate(story.changed)}
+              </p>
             </div>
           </div>
         </a>
-    ))}
+      ))
+    }
   </div>
 
   <div id="desktop-content" class="hidden p-4 md:flex md:space-x-6">
     <div class="space-y-6 md:w-1/2">
-      {initialStories.slice(0, Math.ceil(initialStories.length / 2)).map((story) => (
-         <a href={`/${story.slug}`} class="group block">
-          <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
-            {story.thumbSrc && <img src={story.thumbSrc} alt={story.title} style="width: 100px; height: auto;" class="rounded-md"/>}
-            <div class="flex-1">
-              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">{story.title}</h3>
-              {story.description && <p class="line-clamp-2 text-sm text-gray-800">{story.description}</p>}
-              {story.topics && story.topics.length > 0 && (
-                <div class="mt-1 flex flex-wrap gap-1">
-                  {story.topics.slice(0, 3).map((topic: string) => (
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">{topic}</span>
-                  ))}
+      {
+        initialStories
+          .slice(0, Math.ceil(initialStories.length / 2))
+          .map((story) => (
+            <a href={`/${story.slug}`} class="group block">
+              <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
+                {story.thumbSrc && (
+                  <img
+                    src={story.thumbSrc}
+                    alt={story.title}
+                    style="width: 100px; height: auto;"
+                    class="rounded-md"
+                  />
+                )}
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                    {story.title}
+                  </h3>
+                  {story.description && (
+                    <p class="line-clamp-2 text-sm text-gray-800">
+                      {story.description}
+                    </p>
+                  )}
+                  {story.topics && story.topics.length > 0 && (
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      {story.topics.slice(0, 3).map((topic: string) => (
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p class="mt-1 text-xs text-gray-600">
+                    {story.changed && formatDate(story.changed)}
+                  </p>
                 </div>
-              )}
-              <p class="mt-1 text-xs text-gray-600">{story.changed && formatDate(story.changed)}</p>
-            </div>
-          </div>
-        </a>
-      ))}
+              </div>
+            </a>
+          ))
+      }
     </div>
     <div class="space-y-6 md:w-1/2">
-       {initialStories.slice(Math.ceil(initialStories.length / 2)).map((story) => (
-         <a href={`/${story.slug}`} class="group block">
-          <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
-            {story.thumbSrc && <img src={story.thumbSrc} alt={story.title} style="width: 100px; height: auto;" class="rounded-md"/>}
-            <div class="flex-1">
-              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">{story.title}</h3>
-              {story.description && <p class="line-clamp-2 text-sm text-gray-800">{story.description}</p>}
-              {story.topics && story.topics.length > 0 && (
-                <div class="mt-1 flex flex-wrap gap-1">
-                  {story.topics.slice(0, 3).map((topic: string) => (
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">{topic}</span>
-                  ))}
+      {
+        initialStories
+          .slice(Math.ceil(initialStories.length / 2))
+          .map((story) => (
+            <a href={`/${story.slug}`} class="group block">
+              <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
+                {story.thumbSrc && (
+                  <img
+                    src={story.thumbSrc}
+                    alt={story.title}
+                    style="width: 100px; height: auto;"
+                    class="rounded-md"
+                  />
+                )}
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                    {story.title}
+                  </h3>
+                  {story.description && (
+                    <p class="line-clamp-2 text-sm text-gray-800">
+                      {story.description}
+                    </p>
+                  )}
+                  {story.topics && story.topics.length > 0 && (
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      {story.topics.slice(0, 3).map((topic: string) => (
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p class="mt-1 text-xs text-gray-600">
+                    {story.changed && formatDate(story.changed)}
+                  </p>
                 </div>
-              )}
-              <p class="mt-1 text-xs text-gray-600">{story.changed && formatDate(story.changed)}</p>
-            </div>
-          </div>
-        </a>
-      ))}
+              </div>
+            </a>
+          ))
+      }
     </div>
   </div>
 
@@ -174,10 +239,18 @@ function formatDate(dateString: string | null): string {
           <span id="total-pages-num">{totalPages}</span>
         </div>
         <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
-          <button id="prev-page" class="rounded-l-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50" disabled>
+          <button
+            id="prev-page"
+            class="rounded-l-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled
+          >
             Previous
           </button>
-          <button id="next-page" class="rounded-r-md border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50" disabled={totalPages <= 1}>
+          <button
+            id="next-page"
+            class="rounded-r-md border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={totalPages <= 1}
+          >
             Next
           </button>
         </nav>
@@ -196,8 +269,8 @@ function formatDate(dateString: string | null): string {
   // === CLIENT-SIDE STATE ===
   let currentPage = 1;
   let currentMode = 'recent'; // Default mode is always 'recent' on initial load
-  let sortedByPopular = [];   // This will be populated by the fetch function
-  
+  let sortedByPopular = []; // This will be populated by the fetch function
+
   // === DOM ELEMENTS ===
   const mobileContainer = document.getElementById('mobile-content');
   const desktopContainer = document.getElementById('desktop-content');
@@ -211,37 +284,45 @@ function formatDate(dateString: string | null): string {
   async function fetchHotContent() {
     let retryCount = 0;
     const maxRetries = 2;
-    
+
     const attemptFetch = async () => {
       try {
-        const goBackend = window.location.protocol + '//' + window.location.host;
+        const goBackend =
+          window.location.protocol + '//' + window.location.host;
         const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
-        const response = await fetch(`${goBackend}/api/v1/analytics/content-summary`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
-        });
+        const response = await fetch(
+          `${goBackend}/api/v1/analytics/content-summary`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+          }
+        );
 
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        
+
         const data = await response.json();
 
         if (data.hotContent && data.hotContent.length > 0) {
           // On success, create the popular sort array
-          const viewsMap = new Map(data.hotContent.map(item => [item.id, item.totalEvents]));
+          const viewsMap = new Map(
+            data.hotContent.map((item) => [item.id, item.totalEvents])
+          );
           sortedByPopular = [...sortedByRecent].sort((a, b) => {
             const aViews = viewsMap.get(a.id) || 0;
             const bViews = viewsMap.get(b.id) || 0;
             if (bViews === aViews) {
-                const dateA = a.changed ? new Date(a.changed).getTime() : 0;
-                const dateB = b.changed ? new Date(b.changed).getTime() : 0;
-                return dateB - dateA;
+              const dateA = a.changed ? new Date(a.changed).getTime() : 0;
+              const dateB = b.changed ? new Date(b.changed).getTime() : 0;
+              return dateB - dateA;
             }
             return bViews - aViews;
           });
-          
+
           // Show the toggle buttons
-          if(toggleContainer) toggleContainer.style.display = 'flex';
-          
+          if (toggleContainer) toggleContainer.style.display = 'flex';
         } else if (retryCount < maxRetries) {
           retryCount++;
           setTimeout(attemptFetch, retryCount * 3000);
@@ -256,16 +337,33 @@ function formatDate(dateString: string | null): string {
     };
     await attemptFetch();
   }
-  
+
   // === DOM UPDATING ===
   function createStoryItem(story) {
-    const formattedDate = story.changed ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(story.changed)) : 'Unknown';
-    const imageHtml = story.thumbSrc ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">` : '';
-    const descriptionHtml = story.description ? `<p class="text-sm text-gray-800 line-clamp-2">${story.description}</p>` : '';
-    const topicsHtml = story.topics && story.topics.length > 0
-      ? `<div class="mt-1 flex flex-wrap gap-1">${story.topics.slice(0, 3).map(topic => `<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">${topic}</span>`).join('')}</div>`
+    const formattedDate = story.changed
+      ? new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }).format(new Date(story.changed))
+      : 'Unknown';
+    const imageHtml = story.thumbSrc
+      ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">`
       : '';
-    
+    const descriptionHtml = story.description
+      ? `<p class="text-sm text-gray-800 line-clamp-2">${story.description}</p>`
+      : '';
+    const topicsHtml =
+      story.topics && story.topics.length > 0
+        ? `<div class="mt-1 flex flex-wrap gap-1">${story.topics
+            .slice(0, 3)
+            .map(
+              (topic) =>
+                `<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">${topic}</span>`
+            )
+            .join('')}</div>`
+        : '';
+
     return `
       <a href="/${story.slug}" class="group block">
         <div class="flex items-start space-x-4 rounded-md p-2 group-hover:bg-slate-200/20">
@@ -282,72 +380,79 @@ function formatDate(dateString: string | null): string {
   }
 
   function updateDisplayedContent() {
-    const currentData = currentMode === 'recent' ? sortedByRecent : sortedByPopular;
+    const currentData =
+      currentMode === 'recent' ? sortedByRecent : sortedByPopular;
     const totalPages = Math.ceil(currentData.length / pageSize);
 
     const startIdx = (currentPage - 1) * pageSize;
     const endIdx = startIdx + pageSize;
     const pageData = currentData.slice(startIdx, endIdx);
 
-    if (mobileContainer) mobileContainer.innerHTML = pageData.map(createStoryItem).join('');
-    
+    if (mobileContainer)
+      mobileContainer.innerHTML = pageData.map(createStoryItem).join('');
+
     if (desktopContainer) {
-        const midpoint = Math.ceil(pageData.length / 2);
-        const leftCol = pageData.slice(0, midpoint);
-        const rightCol = pageData.slice(midpoint);
-        desktopContainer.innerHTML = `
+      const midpoint = Math.ceil(pageData.length / 2);
+      const leftCol = pageData.slice(0, midpoint);
+      const rightCol = pageData.slice(midpoint);
+      desktopContainer.innerHTML = `
           <div class="space-y-6 md:w-1/2">${leftCol.map(createStoryItem).join('')}</div>
           <div class="space-y-6 md:w-1/2">${rightCol.map(createStoryItem).join('')}</div>
         `;
     }
-    
+
     // Update pagination state
-    if(prevPageBtn) prevPageBtn.disabled = currentPage === 1;
-    if(nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= totalPages;
     const pageInfoNum = document.getElementById('current-page-num');
     const totalPagesNum = document.getElementById('total-pages-num');
-    if(pageInfoNum) pageInfoNum.textContent = currentPage;
-    if(totalPagesNum) totalPagesNum.textContent = totalPages;
+    if (pageInfoNum) pageInfoNum.textContent = currentPage;
+    if (totalPagesNum) totalPagesNum.textContent = totalPages;
   }
 
   // === EVENT LISTENERS ===
   function switchMode(newMode) {
-      if(currentMode === newMode) return;
-      currentMode = newMode;
-      currentPage = 1;
-      
-      recentToggle.classList.toggle('bg-cyan-600', newMode === 'recent');
-      recentToggle.classList.toggle('text-white', newMode === 'recent');
-      recentToggle.classList.toggle('bg-white', newMode !== 'recent');
-      recentToggle.classList.toggle('text-gray-800', newMode !== 'recent');
+    if (currentMode === newMode) return;
+    currentMode = newMode;
+    currentPage = 1;
 
-      popularToggle.classList.toggle('bg-cyan-600', newMode === 'popular');
-      popularToggle.classList.toggle('text-white', newMode === 'popular');
-      popularToggle.classList.toggle('bg-white', newMode !== 'popular');
-      popularToggle.classList.toggle('text-gray-800', newMode !== 'popular');
+    recentToggle.classList.toggle('bg-cyan-600', newMode === 'recent');
+    recentToggle.classList.toggle('text-white', newMode === 'recent');
+    recentToggle.classList.toggle('bg-white', newMode !== 'recent');
+    recentToggle.classList.toggle('text-gray-800', newMode !== 'recent');
 
-      updateDisplayedContent();
+    popularToggle.classList.toggle('bg-cyan-600', newMode === 'popular');
+    popularToggle.classList.toggle('text-white', newMode === 'popular');
+    popularToggle.classList.toggle('bg-white', newMode !== 'popular');
+    popularToggle.classList.toggle('text-gray-800', newMode !== 'popular');
+
+    updateDisplayedContent();
   }
 
-  if (recentToggle) recentToggle.addEventListener('click', () => switchMode('recent'));
-  if (popularToggle) popularToggle.addEventListener('click', () => switchMode('popular'));
-  if (prevPageBtn) prevPageBtn.addEventListener('click', () => {
-      if(currentPage > 1) {
-          currentPage--;
-          updateDisplayedContent();
+  if (recentToggle)
+    recentToggle.addEventListener('click', () => switchMode('recent'));
+  if (popularToggle)
+    popularToggle.addEventListener('click', () => switchMode('popular'));
+  if (prevPageBtn)
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        updateDisplayedContent();
       }
-  });
-  if (nextPageBtn) nextPageBtn.addEventListener('click', () => {
-      const currentData = currentMode === 'recent' ? sortedByRecent : sortedByPopular;
+    });
+  if (nextPageBtn)
+    nextPageBtn.addEventListener('click', () => {
+      const currentData =
+        currentMode === 'recent' ? sortedByRecent : sortedByPopular;
       const totalPages = Math.ceil(currentData.length / pageSize);
-      if(currentPage < totalPages) {
-          currentPage++;
-          updateDisplayedContent();
+      if (currentPage < totalPages) {
+        currentPage++;
+        updateDisplayedContent();
       }
-  });
+    });
 
   // === INITIALIZATION ===
   document.addEventListener('DOMContentLoaded', () => {
-      fetchHotContent();
+    fetchHotContent();
   });
 </script>

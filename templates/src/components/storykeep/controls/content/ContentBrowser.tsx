@@ -29,7 +29,7 @@ const ContentBrowser = ({
   homeSlug,
 }: ContentBrowserProps) => {
   const [isClient, setIsClient] = useState(false);
-  const [showMostActive, setShowMostActive] = useState(true);
+  const [showMostActive, setShowMostActive] = useState(false);
   const [query, setQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
@@ -98,7 +98,7 @@ const ContentBrowser = ({
       page.type === 'Pane' && page.isContext
         ? `/context/${page.slug}`
         : `/${page.slug}`;
-    return isEdit ? `${basePath}?edit=true` : basePath;
+    return isEdit ? `${basePath}/edit` : basePath;
   };
 
   const setStandardDuration = (hours: number) => {

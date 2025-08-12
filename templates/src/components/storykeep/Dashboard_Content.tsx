@@ -74,7 +74,7 @@ const StoryKeepDashboard_Content = ({
 
     const fetchContentSummary = async () => {
       try {
-        setAnalytics(prev => ({ ...prev, isLoading: true, error: null }));
+        setAnalytics((prev) => ({ ...prev, isLoading: true, error: null }));
 
         // Use TractStackAPI like FetchAnalytics does
         const api = new TractStackAPI(
@@ -105,7 +105,6 @@ const StoryKeepDashboard_Content = ({
           const delayMs = retryCount === 1 ? 3000 : 6000; // 3s, then 6s
           setTimeout(fetchContentSummary, delayMs);
         }
-
       } catch (error) {
         console.error('Content summary fetch error:', error);
 
@@ -113,7 +112,7 @@ const StoryKeepDashboard_Content = ({
         if (retryCount < maxRetries) {
           retryCount++;
           const delayMs = retryCount === 1 ? 3000 : 6000;
-          setAnalytics(prev => ({
+          setAnalytics((prev) => ({
             ...prev,
             isLoading: false,
             status: 'retrying',
@@ -126,7 +125,10 @@ const StoryKeepDashboard_Content = ({
             dashboard: { hotContent: [] },
             isLoading: false,
             status: 'error',
-            error: error instanceof Error ? error.message : 'Failed to load content analytics',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to load content analytics',
           });
         }
       }
