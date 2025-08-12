@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '@/utils/helpers';
+import { TractStackAPI } from '@/utils/api';
 import {
   contentNavigationStore,
   handleContentSubtabChange,
@@ -8,7 +9,6 @@ import {
 } from '@/stores/navigation';
 import ContentBrowser from './controls/content/ContentBrowser';
 import ManageContent from './controls/content/ManageContent';
-import FetchAnalytics from './FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryKeepDashboardContentProps {
@@ -33,22 +33,16 @@ const StoryKeepDashboard_Content = ({
   const [activeContentTab, setActiveContentTab] = useState('webpages');
   const [navigationRestored, setNavigationRestored] = useState(false);
 
-  // Analytics data state
+  // Lightweight analytics data state - only for hotContent
   const [analytics, setAnalytics] = useState<{
-    dashboard: any;
-    leads: any;
-    epinet: any;
-    userCounts: any[];
-    hourlyNodeActivity: any;
+    dashboard: {
+      hotContent?: Array<{ id: string; totalEvents: number }>;
+    } | null;
     isLoading: boolean;
     status: string;
     error: string | null;
   }>({
     dashboard: null,
-    leads: null,
-    epinet: null,
-    userCounts: [],
-    hourlyNodeActivity: {},
     isLoading: false,
     status: 'idle',
     error: null,
@@ -73,6 +67,74 @@ const StoryKeepDashboard_Content = ({
     handleContentSubtabChange(tabId as any, setActiveContentTab);
   };
 
+  // Lightweight content summary fetch with retry logic
+  useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    const fetchContentSummary = async () => {
+      try {
+        setAnalytics(prev => ({ ...prev, isLoading: true, error: null }));
+
+        // Use TractStackAPI like FetchAnalytics does
+        const api = new TractStackAPI(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default'
+        );
+
+        const response = await api.get('/api/v1/analytics/content-summary');
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to fetch content summary');
+        }
+
+        const data = response.data;
+
+        // Check if we got actual data
+        const hasData = data.hotContent && data.hotContent.length > 0;
+
+        setAnalytics({
+          dashboard: { hotContent: data.hotContent || [] },
+          isLoading: false,
+          status: hasData ? 'complete' : 'empty',
+          error: null,
+        });
+
+        // If no data and we have retries left, try again after delay
+        if (!hasData && retryCount < maxRetries) {
+          retryCount++;
+          const delayMs = retryCount === 1 ? 3000 : 6000; // 3s, then 6s
+          setTimeout(fetchContentSummary, delayMs);
+        }
+
+      } catch (error) {
+        console.error('Content summary fetch error:', error);
+
+        // If we have retries left, try again
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delayMs = retryCount === 1 ? 3000 : 6000;
+          setAnalytics(prev => ({
+            ...prev,
+            isLoading: false,
+            status: 'retrying',
+            error: `Attempt ${retryCount} failed, retrying in ${delayMs / 1000}s...`,
+          }));
+          setTimeout(fetchContentSummary, delayMs);
+        } else {
+          // Max retries reached
+          setAnalytics({
+            dashboard: { hotContent: [] },
+            isLoading: false,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Failed to load content analytics',
+          });
+        }
+      }
+    };
+
+    fetchContentSummary();
+  }, []);
+
   const renderContentTabContent = () => {
     switch (activeContentTab) {
       case 'webpages':
@@ -94,8 +156,6 @@ const StoryKeepDashboard_Content = ({
 
   return (
     <div className="w-full">
-      <FetchAnalytics onAnalyticsUpdate={setAnalytics} />
-
       {/* Content Sub-Navigation */}
       <div className="mb-6">
         <div className="border-b border-gray-200">

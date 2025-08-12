@@ -10,7 +10,7 @@ export interface Props {
 
 const { options, contentMap } = Astro.props;
 
-// Parse the options from the CodeHookPayload
+// Parse component options
 let parsedOptions;
 try {
   parsedOptions = JSON.parse(options?.params?.options || '{}');
@@ -33,7 +33,6 @@ const storyfragmentIdsArray = parsedOptions.storyfragmentIds
 const featuredStory = contentMap.find(
   (item) => item.id === featuredId && item.type === 'StoryFragment'
 );
-
 // Filter and sort the included stories, excluding the featured story
 let includedStories = contentMap.filter(
   (item) =>
@@ -42,7 +41,8 @@ let includedStories = contentMap.filter(
     item.id !== featuredId
 );
 
-// Sort included stories based on defaultMode
+// Sort included stories based on defaultMode ('ordered' or 'recent')
+// The 'popular' mode will be handled on the client-side
 if (defaultMode === 'ordered') {
   includedStories.sort(
     (a, b) =>
@@ -59,7 +59,7 @@ if (defaultMode === 'ordered') {
 // Limit to 5 stories for display
 const displayedStories = includedStories.slice(0, 5);
 
-// Function to format dates in a human-readable way
+// Function to format dates
 function formatDate(dateString: string | null): string {
   if (!dateString) return 'Unknown';
   const date = new Date(dateString);
@@ -71,9 +71,7 @@ function formatDate(dateString: string | null): string {
 }
 ---
 
-<!-- Main container with responsive flex layout -->
 <div class="mx-auto flex max-w-7xl flex-col gap-4 py-12 md:flex-row">
-  <!-- Left column (Featured Story) -->
   <div class="p-4 md:w-3/5">
     {
       featuredStory ? (
@@ -103,7 +101,6 @@ function formatDate(dateString: string | null): string {
     }
   </div>
 
-  <!-- Right column (Included Stories) -->
   <div
     class="border-t-2 border-slate-100 p-4 md:w-2/5 md:border-l-2 md:border-t-0"
   >
@@ -144,3 +141,113 @@ function formatDate(dateString: string | null): string {
     }
   </div>
 </div>
+
+<script
+  is:inline
+  define:vars={{
+    includedStories,
+    defaultMode,
+  }}
+>
+  // Client-side script to fetch and apply "hot content" analytics
+  let hotContent = [];
+  let hasHotContent = false;
+  let isLoading = false;
+  let retryCount = 0;
+  const maxRetries = 2;
+
+  // Fetches hot content data from the analytics endpoint with polling
+  async function fetchHotContent() {
+    if (isLoading) return;
+    isLoading = true;
+
+    try {
+      const goBackend = window.location.protocol + '//' + window.location.host;
+      const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+      const response = await fetch(`${goBackend}/api/v1/analytics/content-summary`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // If data is fetched, update state and re-order content
+      if (data.hotContent && data.hotContent.length > 0) {
+        hotContent = data.hotContent;
+        hasHotContent = true;
+        updateContentOrder();
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        const delayMs = retryCount === 1 ? 3000 : 6000;
+        setTimeout(fetchHotContent, delayMs);
+      }
+    } catch (error) {
+      console.warn('Could not fetch hot content:', error);
+      if (retryCount < maxRetries) {
+        retryCount++;
+        const delayMs = retryCount === 1 ? 3000 : 6000;
+        setTimeout(fetchHotContent, delayMs);
+      }
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  // Re-orders stories based on popularity if mode is 'popular'
+  function updateContentOrder() {
+    if (hasHotContent && defaultMode === 'popular') {
+      const viewsMap = new Map(hotContent.map(item => [item.id, item.totalEvents]));
+      
+      const sortedByPopular = [...includedStories].sort((a, b) => {
+        const aViews = viewsMap.get(a.id) || 0;
+        const bViews = viewsMap.get(b.id) || 0;
+        // Fallback to date sort if views are equal
+        if (bViews === aViews) {
+          const dateA = a.changed ? new Date(a.changed).getTime() : 0;
+          const dateB = b.changed ? new Date(b.changed).getTime() : 0;
+          return dateB - dateA;
+        }
+        return bViews - aViews;
+      });
+      
+      updateDisplayedStories(sortedByPopular.slice(0, 5));
+    }
+  }
+
+  // Updates the DOM with the new list of stories
+  function updateDisplayedStories(stories) {
+    const rightColumn = document.querySelector('.md\\:w-2\\/5 .space-y-4');
+    if (!rightColumn) return;
+
+    rightColumn.innerHTML = stories.map(story => {
+      const formattedDate = story.changed ? new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(story.changed)) : 'Unknown';
+      const imageHtml = story.thumbSrc ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">` : '';
+      const descriptionHtml = story.description ? `<p class="line-clamp-2 text-sm text-gray-800">${story.description}</p>` : '';
+
+      return `
+        <a href="/${story.slug}" class="group block">
+          <div class="flex items-start space-x-4 p-1 group-hover:bg-slate-50">
+            ${imageHtml}
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">
+                ${story.title}
+              </h3>
+              ${descriptionHtml}
+              <p class="mt-1 text-xs text-gray-600">${formattedDate}</p>
+            </div>
+          </div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  // Start fetching analytics on page load
+  document.addEventListener('DOMContentLoaded', fetchHotContent);
+</script>
