@@ -51,7 +51,7 @@ const AddPanePanel = ({
 
   // Always render a stable container div for the intersection observer
   return (
-    <div className="add-pane-panel-wrapper">
+    <div className="add-pane-panel-wrapper border-b-2 border-t-2 border-mydarkgrey border-dotted">
       {mode === PaneAddMode.NEW || (!hasPanes && first && !reset) ? (
         <AddPaneNewPanel
           nodeId={nodeId}

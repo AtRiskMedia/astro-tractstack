@@ -8,6 +8,7 @@ export interface SignupProps {
   persona: string;
   prompt: string;
   clarifyConsent: boolean;
+  id: string;
 }
 
 // Static contact persona data
@@ -29,7 +30,7 @@ const contactPersona = [
   },
 ];
 
-export const SignUp = ({ persona, prompt, clarifyConsent }: SignupProps) => {
+export const SignUp = ({ persona, prompt, clarifyConsent, id }: SignupProps) => {
   // Static values for visual representation
   const personaSelected =
     contactPersona.find((p) => p.id === persona) || contactPersona[0];
@@ -48,14 +49,14 @@ export const SignUp = ({ persona, prompt, clarifyConsent }: SignupProps) => {
       <form className="space-y-4">
         <div>
           <label
-            htmlFor="firstname"
+            htmlFor={`${id}-firstname`}
             className="mb-1 block text-sm font-bold text-gray-700"
           >
             First Name
           </label>
           <input
             type="text"
-            id="firstname"
+            id={`${id}-firstname`}
             name="firstname"
             placeholder="First name"
             autoComplete="given-name"
@@ -66,14 +67,14 @@ export const SignUp = ({ persona, prompt, clarifyConsent }: SignupProps) => {
 
         <div>
           <label
-            htmlFor="email"
+            htmlFor={`${id}-email`}
             className="mb-1 block text-sm font-bold text-gray-700"
           >
             Email Address
           </label>
           <input
             type="email"
-            id="email"
+            id={`${id}-email`}
             name="email"
             placeholder="Email address"
             autoComplete="email"
@@ -84,14 +85,14 @@ export const SignUp = ({ persona, prompt, clarifyConsent }: SignupProps) => {
 
         <div>
           <label
-            htmlFor="codeword"
+            htmlFor={`${id}-codeword`}
             className="mb-1 block text-sm font-bold text-gray-700"
           >
             Code Word
           </label>
           <input
             type="password"
-            id="codeword"
+            id={`${id}-codeword`}
             name="codeword"
             placeholder="Choose a code word"
             autoComplete="new-password"

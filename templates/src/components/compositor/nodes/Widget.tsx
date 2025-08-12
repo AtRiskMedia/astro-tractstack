@@ -21,7 +21,7 @@ const getWidgetElement = (
   props: WidgetProps,
   classNames: string
 ): ReactElement | null => {
-  const { hook, value1, value2, value3 } = props;
+  const { hook, value1, value2, value3, nodeId } = props;
   if (!hook || !value1) return null;
 
   switch (hook) {
@@ -36,6 +36,7 @@ const getWidgetElement = (
       return (
         <div className={`${classNames} pointer-events-none`}>
           <SignUp
+            id={nodeId}
             persona={value1 ?? 'Major Updates Only'}
             prompt={value2 ?? 'Keep in touch!'}
             clarifyConsent={value3 === 'true'}
