@@ -132,7 +132,7 @@ export function startLoadingAnimation() {
   ) {
     loadingIndicator.style.transform = 'scaleX(0)';
     loadingIndicator.style.display = 'block';
-    content.style.opacity = '0.5';
+    //content.style.opacity = '0.5';
 
     let progress = 0;
     progressInterval = setInterval(() => {

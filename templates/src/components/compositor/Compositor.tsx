@@ -31,9 +31,47 @@ export type CompositorProps = {
   fullCanonicalURL: string;
 };
 
+// Enhanced transition overlay that runs independently
+const TransitionOverlay = ({ show }: { show: boolean }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  useEffect(() => {
+    if (show) {
+      // Start the 300ms fire & forget sequence
+      setShouldRender(true);
+      setIsVisible(true);
+
+      // After 300ms, hide the overlay
+      const hideTimer = setTimeout(() => {
+        setIsVisible(false);
+        // Remove from DOM after fade out completes
+        setTimeout(() => setShouldRender(false), 150);
+      }, 300);
+
+      return () => clearTimeout(hideTimer);
+    }
+  }, [show]);
+
+  if (!shouldRender) return null;
+
+  return (
+    <div
+      className={`pointer-events-none absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-150 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      style={{
+        backgroundColor: 'rgba(167, 177, 183, 0.85)', // Start and end at 50% opacity
+      }}
+    >
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-700 border-t-blue-500" />
+    </div>
+  );
+};
+
 export const Compositor = (props: CompositorProps) => {
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
+  const [triggerTransition, setTriggerTransition] = useState(false);
 
   fullContentMapStore.set(props.fullContentMap);
   hasAssemblyAIStore.set(false); // TODO: Must add to BRAND_CONFIG !!
@@ -65,8 +103,15 @@ export const Compositor = (props: CompositorProps) => {
     const unsubscribe = getCtx(props).notifications.subscribe(
       ROOT_NODE_NAME,
       () => {
+        // Trigger the independent fade effect
+        setTriggerTransition(prev => !prev); // Toggle to trigger useEffect
+
+        // Update the tree immediately
         setUpdateCounter((prev) => prev + 1);
-        setTimeout(() => stopLoadingAnimation(), 160);
+
+        // Stop the existing loading animation with a slightly longer delay for effect
+        // This is decoupled from our fade effect
+        setTimeout(() => stopLoadingAnimation(), 260);
       }
     );
 
@@ -79,20 +124,26 @@ export const Compositor = (props: CompositorProps) => {
   if (!initialized) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">Loading compositor...</div>
+        <div className="text-gray-600">Compositing page...</div>
       </div>
     );
   }
 
   return (
     <div
+      id="content" // This ID is used by startLoadingAnimation
       style={{
+        position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),
         maxWidth: `${viewportMaxWidth}px`,
         margin: '0 auto',
         background: 'white',
       }}
     >
+      {/* Independent transition overlay - 300ms fire & forget */}
+      <TransitionOverlay show={triggerTransition} />
+
+      {/* Main content */}
       <Node
         nodeId={props.id}
         key={`${props.id}-${updateCounter}`}
