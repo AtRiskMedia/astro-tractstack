@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useStore } from '@nanostores/react';
+import { settingsPanelStore } from '@/stores/storykeep';
 
 const HudDisplay = () => {
-  const [isVisible, setIsVisible] = useState(true);
+  const signal = useStore(settingsPanelStore);
+  const isVisible = !signal;
 
   if (!isVisible) {
     return null;
