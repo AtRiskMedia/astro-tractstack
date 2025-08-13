@@ -174,8 +174,8 @@ const authStatus = {
             data-astro-reload
             href={
               !isContext
-                ? `/storykeep/storyfragment/${slug}`
-                : `/storykeep/pane/${slug}`
+                ? `/${slug}/edit`
+                : `/context/${slug}/edit`
             }
             class="text-myblue/80 hover:text-myblue hover:rotate-6"
             title={!isContext ? 'Edit this story' : 'Edit this pane'}

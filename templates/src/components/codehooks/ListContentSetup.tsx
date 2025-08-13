@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/react';
 import { fullContentMapStore } from '@/stores/storykeep';
 import { classNames, cloneDeep } from '@/utils/helpers';
 import { getCtx } from '@/stores/nodes';
-import ColorPickerCombo from '@/components/compositor/fields/ColorPickerCombo';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import type { BrandConfig } from '@/types/tractstack';
 import type { PaneNode } from '@/types/compositorTypes';
 

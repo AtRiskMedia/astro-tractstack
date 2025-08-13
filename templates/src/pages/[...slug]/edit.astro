@@ -31,6 +31,7 @@ if (!brandConfig.SITE_INIT) {
 }
 
 const endpoint = `${goBackend}/api/v1/nodes/storyfragments/slug/${slug}/full-payload`;
+console.log(endpoint)
 
 let loadData;
 try {
@@ -40,6 +41,7 @@ try {
       Cookie: Astro.request.headers.get('cookie') || '',
     },
   });
+  console.log(response)
 
   if (!response.ok) {
     return new Response(null, {
@@ -120,6 +122,7 @@ for (const [key, value] of Astro.url.searchParams) {
     class="bg-mywhite z-101 left-0 right-0 drop-shadow transition-all duration-200"
   >
     <StoryKeepHeader
+      slug={slug}
       nodeId={storyFragmentID}
       isContext={false}
       client:only="react"
@@ -174,6 +177,7 @@ for (const [key, value] of Astro.url.searchParams) {
     </div>
     <div class="pointer-events-auto">
       <SettingsPanel
+        config={brandConfig}
         availableCodeHooks={['featured-content', 'list-content', 'bunny-video']}
         client:only="react"
       />

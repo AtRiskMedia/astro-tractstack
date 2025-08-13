@@ -1,4 +1,5 @@
 import type { GotoTargets } from './types/tractstack';
+import type { WidgetMeta } from './types/compositorTypes';
 import type { ToolAddMode } from './types/compositorTypes';
 
 export const THRESHOLD_GLOSSED = 7000; // 7 seconds in ms
@@ -36,6 +37,8 @@ export const colors = [
   '#FF6B6B',
   '#4EC9B0',
 ];
+
+export const collections = ['kCz'];
 
 export const GOTO_TARGETS: GotoTargets = {
   storykeep: {
@@ -160,3 +163,111 @@ export const toolAddModesIcons: Record<ToolAddMode, string> = {
   belief: '',
   //aside: "",
 };
+
+export const widgetMeta: WidgetMeta = {
+  belief: {
+    title: `Belief Widget`,
+    parameters: [
+      {
+        label: 'Belief Tag',
+        defaultValue: 'BELIEF',
+        type: 'string',
+        isBeliefTag: true,
+      },
+      { label: 'Scale', defaultValue: 'yn', type: 'scale' },
+      { label: 'Question Prompt', defaultValue: 'Prompt', type: 'string' },
+    ],
+    isBelief: true,
+  },
+  identifyAs: {
+    title: `Identify As Widget`,
+    parameters: [
+      {
+        label: 'Belief Tag',
+        defaultValue: 'BELIEF',
+        type: 'string',
+        isBeliefTag: true,
+      },
+      {
+        label: 'Belief Matching Value(s)',
+        defaultValue: '*',
+        type: 'multi-string',
+      },
+      { label: 'Question Prompt', defaultValue: 'Prompt', type: 'string' },
+    ],
+    isBelief: true,
+  },
+  toggle: {
+    title: `Toggle Belief Widget`,
+    parameters: [
+      {
+        label: 'Belief Tag',
+        defaultValue: 'BELIEF',
+        type: 'string',
+        isBeliefTag: true,
+      },
+      { label: 'Question Prompt', defaultValue: 'Prompt', type: 'string' },
+    ],
+    isBelief: true,
+  },
+  youtube: {
+    title: `YouTube Video Embed`,
+    parameters: [
+      { label: 'Embed Code', defaultValue: '*', type: 'string' },
+      { label: 'Title', defaultValue: 'Descriptive Title', type: 'string' },
+    ],
+  },
+  bunny: {
+    title: `BunnyCDN Video Embed`,
+    parameters: [
+      { label: 'Embed URL', defaultValue: '*', type: 'string' },
+      { label: 'Title', defaultValue: 'Descriptive Title', type: 'string' },
+    ],
+  },
+  resource: {
+    title: `Not yet implemented`,
+    parameters: [
+      { label: 'Type', defaultValue: '?', type: 'string' },
+      { label: 'Variation', defaultValue: '?', type: 'string' },
+    ],
+  },
+  signup: {
+    title: `Email Sign Up Widget`,
+    parameters: [
+      {
+        label: 'Contact Persona',
+        defaultValue: 'Major Updates Only',
+        type: 'string',
+      },
+      { label: 'Prompt Text', defaultValue: 'Keep in touch!', type: 'string' },
+      { label: 'Clarify Consent', defaultValue: 'false', type: 'boolean' },
+    ],
+  },
+};
+
+export const contactPersona = [
+  {
+    id: 'major',
+    title: 'Major Updates Only',
+    description: 'Will only send major updates and do so infrequently.',
+    disabled: false,
+  },
+  {
+    id: 'all',
+    title: 'All Updates',
+    description: 'Be fully in the know!',
+    disabled: false,
+  },
+  {
+    id: 'open',
+    title: 'DMs open',
+    description: "Leave your contact details and we'll get in touch!",
+    disabled: false,
+  },
+  {
+    id: 'none',
+    title: 'None',
+    description: 'Disables all communications from us.',
+    disabled: false,
+  },
+];

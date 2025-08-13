@@ -86,7 +86,7 @@ module.exports = {
       },
       animation: {
         fadeOut: 'fadeOut 1s forwards',
-        fadeIn: 'fadeIn 1s ease-in',
+        fadeIn: 'fadeIn 0.5s ease-in',
         fadeInUp: 'fadeInUp 1s ease-in',
         fadeInRight: 'fadeInRight 1s ease-in',
         fadeInLeft: 'fadeInLeft 1s ease-in',

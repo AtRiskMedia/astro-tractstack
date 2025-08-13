@@ -72,10 +72,8 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/NodeWithGuid.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/PanelVisibilityWrapper.tsx'
-      ),
-      dest: 'src/components/compositor/PanelVisibilityWrapper.tsx',
+      src: resolve('templates/src/components/edit/panelVisibilityWrapper.tsx'),
+      dest: 'src/components/edit/panelVisibilityWrapper.tsx',
     },
     {
       src: resolve(
@@ -203,12 +201,105 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeImg.tsx',
     },
-    // Compositor fields
+    // Compositor widgets
     {
       src: resolve(
-        'templates/src/components/compositor/fields/ColorPickerCombo.tsx'
+        'templates/src/components/compositor/widgets/BeliefWidget.tsx'
       ),
-      dest: 'src/components/compositor/fields/ColorPickerCombo.tsx',
+      dest: 'src/components/compositor/widgets/BeliefWidget.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/widgets/IdentifyAsWidget.tsx'
+      ),
+      dest: 'src/components/compositor/widgets/IdentifyAsWidget.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/widgets/ToggleWidget.tsx'
+      ),
+      dest: 'src/components/compositor/widgets/ToggleWidget.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/widgets/BunnyWidget.tsx'
+      ),
+      dest: 'src/components/compositor/widgets/BunnyWidget.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/widgets/SignupWidget.tsx'
+      ),
+      dest: 'src/components/compositor/widgets/SignupWidget.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/compositor/widgets/YouTubeWidget.tsx'
+      ),
+      dest: 'src/components/compositor/widgets/YouTubeWidget.tsx',
+    },
+    // Compositor fields
+    {
+      src: resolve('templates/src/components/fields/SingleParam.tsx'),
+      dest: 'src/components/fields/SingleParam.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/BooleanParam.tsx'),
+      dest: 'src/components/fields/BooleanParam.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/MultiParam.tsx'),
+      dest: 'src/components/fields/MultiParam.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/ImageUpload.tsx'),
+      dest: 'src/components/fields/ImageUpload.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/ArtpackImage.tsx'),
+      dest: 'src/components/fields/ArtpackImage.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/BackgroundImage.tsx'),
+      dest: 'src/components/fields/BackgroundImage.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/fields/BackgroundImageWrapper.tsx'
+      ),
+      dest: 'src/components/fields/BackgroundImageWrapper.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/ColorPickerCombo.tsx'),
+      dest: 'src/components/fields/ColorPickerCombo.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/fields/PaneBreakCollectionSelector.tsx'
+      ),
+      dest: 'src/components/fields/PaneBreakCollectionSelector.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/fields/PaneBreakShapeSelector.tsx'
+      ),
+      dest: 'src/components/fields/PaneBreakShapeSelector.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/SelectedTailwindClass.tsx'),
+      dest: 'src/components/fields/SelectedTailwindClass.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/ViewportComboBox.tsx'),
+      dest: 'src/components/fields/ViewportComboBox.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/BunnyMomentSelector.tsx'),
+      dest: 'src/components/fields/BunnyMomentSelector.tsx',
+    },
+    {
+      src: resolve('templates/src/components/fields/ActionBuilderTimeSelector.tsx'),
+      dest: 'src/components/fields/ActionBuilderTimeSelector.tsx',
     },
     // Compositor elements
     {
@@ -266,155 +357,135 @@ export async function injectTemplateFiles(
     // Compositor panels
     {
       src: resolve(
-        'templates/src/components/compositor/storyfragment/StoryFragmentConfigPanel.tsx'
+        'templates/src/components/edit/storyfragment/StoryFragmentConfigPanel.tsx'
       ),
-      dest: 'src/components/compositor/storyfragment/StoryFragmentConfigPanel.tsx',
+      dest: 'src/components/edit/storyfragment/StoryFragmentConfigPanel.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_title.tsx'
+        'templates/src/components/edit/storyfragment/StoryFragmentPanel_title.tsx'
       ),
-      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_title.tsx',
+      dest: 'src/components/edit/storyfragment/StoryFragmentPanel_title.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_slug.tsx'
+        'templates/src/components/edit/storyfragment/StoryFragmentPanel_slug.tsx'
       ),
-      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_slug.tsx',
+      dest: 'src/components/edit/storyfragment/StoryFragmentPanel_slug.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_menu.tsx'
+        'templates/src/components/edit/storyfragment/StoryFragmentPanel_menu.tsx'
       ),
-      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_menu.tsx',
+      dest: 'src/components/edit/storyfragment/StoryFragmentPanel_menu.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/storyfragment/StoryFragmentPanel_og.tsx'
+        'templates/src/components/edit/storyfragment/StoryFragmentPanel_og.tsx'
       ),
-      dest: 'src/components/compositor/storyfragment/StoryFragmentPanel_og.tsx',
+      dest: 'src/components/edit/storyfragment/StoryFragmentPanel_og.tsx',
     },
     {
-      src: resolve('templates/src/components/compositor/pane/AddPanePanel.tsx'),
-      dest: 'src/components/compositor/pane/AddPanePanel.tsx',
+      src: resolve('templates/src/components/edit/pane/AddPanePanel.tsx'),
+      dest: 'src/components/edit/pane/AddPanePanel.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/AddPanePanel_break.tsx'),
+      dest: 'src/components/edit/pane/AddPanePanel_break.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_break.tsx'
+        'templates/src/components/edit/pane/AddPanePanel_codehook.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_break.tsx',
+      dest: 'src/components/edit/pane/AddPanePanel_codehook.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_codehook.tsx'
+        'templates/src/components/edit/pane/AddPanePanel_newAICopy_modal.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_codehook.tsx',
+      dest: 'src/components/edit/pane/AddPanePanel_newAICopy_modal.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_newAICopy_modal.tsx'
+        'templates/src/components/edit/pane/AddPanePanel_newAICopy.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_newAICopy_modal.tsx',
+      dest: 'src/components/edit/pane/AddPanePanel_newAICopy.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_newAICopy.tsx'
+        'templates/src/components/edit/pane/AddPanePanel_newCopyMode.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_newAICopy.tsx',
+      dest: 'src/components/edit/pane/AddPanePanel_newCopyMode.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_newCopyMode.tsx'
+        'templates/src/components/edit/pane/AddPanePanel_newCustomCopy.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_newCopyMode.tsx',
+      dest: 'src/components/edit/pane/AddPanePanel_newCustomCopy.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/AddPanePanel_new.tsx'),
+      dest: 'src/components/edit/pane/AddPanePanel_new.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/AddPanePanel_reuse.tsx'),
+      dest: 'src/components/edit/pane/AddPanePanel_reuse.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/ConfigPanePanel.tsx'),
+      dest: 'src/components/edit/pane/ConfigPanePanel.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_newCustomCopy.tsx'
+        'templates/src/components/edit/pane/PanePanel_impression.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_newCustomCopy.tsx',
+      dest: 'src/components/edit/pane/PanePanel_impression.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/PanePanel_path.tsx'),
+      dest: 'src/components/edit/pane/PanePanel_path.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/PanePanel_slug.tsx'),
+      dest: 'src/components/edit/pane/PanePanel_slug.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/pane/PanePanel_title.tsx'),
+      dest: 'src/components/edit/pane/PanePanel_title.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_new.tsx'
+        'templates/src/components/edit/context/ContextPaneConfig.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_new.tsx',
+      dest: 'src/components/edit/context/ContextPaneConfig.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/AddPanePanel_reuse.tsx'
+        'templates/src/components/edit/context/ContextPaneConfig_title.tsx'
       ),
-      dest: 'src/components/compositor/pane/AddPanePanel_reuse.tsx',
+      dest: 'src/components/edit/context/ContextPaneConfig_title.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/pane/ConfigPanePanel.tsx'
+        'templates/src/components/edit/context/ContextPaneConfig_slug.tsx'
       ),
-      dest: 'src/components/compositor/pane/ConfigPanePanel.tsx',
+      dest: 'src/components/edit/context/ContextPaneConfig_slug.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/pane/PanePanel_impression.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PanePanel_impression.tsx',
+      src: resolve('templates/src/components/edit/pane/PageGenSelector.tsx'),
+      dest: 'src/components/edit/pane/PageGenSelector.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/pane/PanePanel_path.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PanePanel_path.tsx',
+      src: resolve('templates/src/components/edit/pane/PageGenSpecial.tsx'),
+      dest: 'src/components/edit/pane/PageGenSpecial.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/pane/PanePanel_slug.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PanePanel_slug.tsx',
+      src: resolve('templates/src/components/edit/pane/PageGen.tsx'),
+      dest: 'src/components/edit/pane/PageGen.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/pane/PanePanel_title.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PanePanel_title.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/context/ContextPaneConfig.tsx'
-      ),
-      dest: 'src/components/compositor/context/ContextPaneConfig.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/context/ContextPaneConfig_title.tsx'
-      ),
-      dest: 'src/components/compositor/context/ContextPaneConfig_title.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/context/ContextPaneConfig_slug.tsx'
-      ),
-      dest: 'src/components/compositor/context/ContextPaneConfig_slug.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/pane/PageGenSelector.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PageGenSelector.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/pane/PageGenSpecial.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PageGenSpecial.tsx',
-    },
-    {
-      src: resolve('templates/src/components/compositor/pane/PageGen.tsx'),
-      dest: 'src/components/compositor/pane/PageGen.tsx',
-    },
-    {
-      src: resolve(
-        'templates/src/components/compositor/pane/PageGen_preview.tsx'
-      ),
-      dest: 'src/components/compositor/pane/PageGen_preview.tsx',
+      src: resolve('templates/src/components/edit/pane/PageGen_preview.tsx'),
+      dest: 'src/components/edit/pane/PageGen_preview.tsx',
     },
     // Compositor previews
     {
@@ -463,6 +534,10 @@ export async function injectTemplateFiles(
     },
     // Compositor utils
     {
+      src: resolve('templates/src/utils/compositor/lispLexer.ts'),
+      dest: 'src/utils/compositor/lispLexer.ts',
+    },
+    {
       src: resolve('templates/src/utils/compositor/processMarkdown.ts'),
       dest: 'src/utils/compositor/processMarkdown.ts',
     },
@@ -485,6 +560,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/utils/compositor/typeGuards.ts'),
       dest: 'src/utils/compositor/typeGuards.ts',
+    },
+    {
+      src: resolve('templates/src/utils/compositor/preParse_Action.ts'),
+      dest: 'src/utils/compositor/preParse_Action.ts',
     },
     {
       src: resolve('templates/src/utils/compositor/preParse_Clicked.ts'),
@@ -1135,6 +1214,178 @@ export async function injectTemplateFiles(
       dest: 'src/components/edit/SettingsPanel.tsx',
     },
     {
+      src: resolve('templates/src/components/edit/PanelSwitch.tsx'),
+      dest: 'src/components/edit/PanelSwitch.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/state/StylesMemory.tsx'),
+      dest: 'src/components/edit/state/StylesMemory.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/panels/StyleBreakPanel.tsx'),
+      dest: 'src/components/edit/panels/StyleBreakPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleCodeHookPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleCodeHookPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleElementPanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleElementPanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleElementPanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleElementPanel_remove.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleElementPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleElementPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleElementPanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleElementPanel_update.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleImagePanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleImagePanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleImagePanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleImagePanel_remove.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/panels/StyleImagePanel.tsx'),
+      dest: 'src/components/edit/panels/StyleImagePanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleImagePanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleImagePanel_update.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLiElementPanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLiElementPanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLiElementPanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLiElementPanel_remove.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLiElementPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLiElementPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLiElementPanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLiElementPanel_update.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLinkPanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLinkPanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLinkPanel_config.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLinkPanel_config.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLinkPanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLinkPanel_remove.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/panels/StyleLinkPanel.tsx'),
+      dest: 'src/components/edit/panels/StyleLinkPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleLinkPanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleLinkPanel_update.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleParentPanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleParentPanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleParentPanel_deleteLayer.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleParentPanel_deleteLayer.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleParentPanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleParentPanel_remove.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/panels/StyleParentPanel.tsx'),
+      dest: 'src/components/edit/panels/StyleParentPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleParentPanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleParentPanel_update.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleWidgetPanel_add.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleWidgetPanel_add.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleWidgetPanel_config.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleWidgetPanel_config.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleWidgetPanel_remove.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleWidgetPanel_remove.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/panels/StyleWidgetPanel.tsx'),
+      dest: 'src/components/edit/panels/StyleWidgetPanel.tsx',
+    },
+    {
+      src: resolve(
+        'templates/src/components/edit/panels/StyleWidgetPanel_update.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleWidgetPanel_update.tsx',
+    },
+    {
       src: resolve('templates/src/components/edit/HudDisplay.tsx'),
       dest: 'src/components/edit/HudDisplay.tsx',
     },
@@ -1242,41 +1493,41 @@ export async function injectTemplateFiles(
     // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
-          // Middleware
-          {
-            src: resolve('templates/src/middleware.ts'),
-            dest: 'src/middleware.ts',
-          },
-          // API Utilities
-          {
-            src: resolve('templates/src/utils/api/tenantConfig.ts'),
-            dest: 'src/utils/api/tenantConfig.ts',
-          },
-          {
-            src: resolve('templates/src/utils/api/tenantHelpers.ts'),
-            dest: 'src/utils/api/tenantHelpers.ts',
-          },
-          // Components
-          {
-            src: resolve(
-              'templates/src/components/tenant/RegistrationForm.tsx'
-            ),
-            dest: 'src/components/tenant/RegistrationForm.tsx',
-          },
-          // Pages
-          {
-            src: resolve('templates/src/pages/sandbox/register.astro'),
-            dest: 'src/pages/sandbox/register.astro',
-          },
-          {
-            src: resolve('templates/src/pages/sandbox/activate.astro'),
-            dest: 'src/pages/sandbox/activate.astro',
-          },
-          {
-            src: resolve('templates/src/pages/sandbox/success.astro'),
-            dest: 'src/pages/sandbox/success.astro',
-          },
-        ]
+        // Middleware
+        {
+          src: resolve('templates/src/middleware.ts'),
+          dest: 'src/middleware.ts',
+        },
+        // API Utilities
+        {
+          src: resolve('templates/src/utils/api/tenantConfig.ts'),
+          dest: 'src/utils/api/tenantConfig.ts',
+        },
+        {
+          src: resolve('templates/src/utils/api/tenantHelpers.ts'),
+          dest: 'src/utils/api/tenantHelpers.ts',
+        },
+        // Components
+        {
+          src: resolve(
+            'templates/src/components/tenant/RegistrationForm.tsx'
+          ),
+          dest: 'src/components/tenant/RegistrationForm.tsx',
+        },
+        // Pages
+        {
+          src: resolve('templates/src/pages/sandbox/register.astro'),
+          dest: 'src/pages/sandbox/register.astro',
+        },
+        {
+          src: resolve('templates/src/pages/sandbox/activate.astro'),
+          dest: 'src/pages/sandbox/activate.astro',
+        },
+        {
+          src: resolve('templates/src/pages/sandbox/success.astro'),
+          dest: 'src/pages/sandbox/success.astro',
+        },
+      ]
       : []),
     // Multi-Tenant Types (Always included due to plan reference)
     {
@@ -1307,24 +1558,24 @@ export async function injectTemplateFiles(
     // Example Components (Conditional)
     ...(config?.includeExamples
       ? [
-          {
-            src: resolve('templates/custom/with-examples/CustomHero.astro'),
-            dest: 'src/custom/CustomHero.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              'templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
-            protected: true,
-          },
-        ]
+        {
+          src: resolve('templates/custom/with-examples/CustomHero.astro'),
+          dest: 'src/custom/CustomHero.astro',
+          protected: true,
+        },
+        {
+          src: resolve(
+            'templates/custom/with-examples/pages/Collections.astro'
+          ),
+          dest: 'src/custom/pages/Collections.astro',
+          protected: true,
+        },
+        {
+          src: resolve('templates/src/pages/collections/[param1].astro'),
+          dest: 'src/pages/collections/[param1].astro',
+          protected: true,
+        },
+      ]
       : []),
   ];
 

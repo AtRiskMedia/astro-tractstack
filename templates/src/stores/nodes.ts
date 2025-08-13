@@ -371,7 +371,7 @@ export class NodesContext {
   private lastProcessedTime = 0;
 
   setClickedNodeId(nodeId: string, dblClick: boolean = false) {
-    console.log(`setClickedNodeId`, nodeId, dblClick);
+    settingsPanelStore.set(null);
     const now = Date.now();
     // Prevent processing if we're too close to the last event
     if (now - this.lastProcessedTime < 50 || this.isProcessingDoubleClick)

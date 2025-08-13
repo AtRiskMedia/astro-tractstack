@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import ColorPickerCombo from '@/components/compositor/fields/ColorPickerCombo';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import type { BrandConfig } from '@/types/tractstack';
 
 const OG_IMAGE_WIDTH = 1200;

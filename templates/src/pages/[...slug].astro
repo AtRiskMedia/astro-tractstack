@@ -94,12 +94,12 @@ if (!brandConfig.SITE_INIT) {
 <Layout
   title={storyfragmentTitle}
   description={description}
-  slug={lookup}
+  slug={lookup || brandConfig.HOME_SLUG}
   menu={storyData.menu || null}
   created={storyData.created}
   isContext={false}
   isStoryKeep={false}
-  isEditable={false}
+  isEditable={true}
   brandConfig={brandConfig}
   storyfragmentId={storyfragmentId}
   sessionId={sessionId}

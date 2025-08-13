@@ -23,13 +23,13 @@ import { NodeBasicTag } from './nodes/tagElements/NodeBasicTag';
 import { NodeBasicTagInsert } from './nodes/tagElements/NodeBasicTag_insert';
 import { NodeBasicTagEraser } from './nodes/tagElements/NodeBasicTag_eraser';
 import { NodeBasicTagSettings } from './nodes/tagElements/NodeBasicTag_settings';
-import AddPanePanel from './pane/AddPanePanel';
-import PageCreationSelector from './pane/PageGenSelector';
-import ConfigPanePanel from './pane/ConfigPanePanel';
-import StoryFragmentConfigPanel from './storyfragment/StoryFragmentConfigPanel';
-import StoryFragmentTitlePanel from './storyfragment/StoryFragmentPanel_title';
-import ContextPanePanel from './context/ContextPaneConfig';
-import ContextPaneTitlePanel from './context/ContextPaneConfig_title';
+import AddPanePanel from '@/components/edit/pane/AddPanePanel';
+import PageCreationSelector from '@/components/edit/pane/PageGenSelector';
+import ConfigPanePanel from '@/components/edit/pane/ConfigPanePanel';
+import StoryFragmentConfigPanel from '@/components/edit/storyfragment/StoryFragmentConfigPanel';
+import StoryFragmentTitlePanel from '@/components/edit/storyfragment/StoryFragmentPanel_title';
+import ContextPanePanel from '@/components/edit/context/ContextPaneConfig';
+import ContextPaneTitlePanel from '@/components/edit/context/ContextPaneConfig_title';
 import type {
   StoryFragmentNode,
   PaneNode,

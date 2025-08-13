@@ -2,7 +2,6 @@ import { useStore } from '@nanostores/react';
 import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon';
-import PresentationChartBarIcon from '@heroicons/react/24/outline/PresentationChartBarIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
 import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIcon';
 import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
@@ -22,11 +21,13 @@ import {
 
 interface StoryKeepHeaderProps {
   nodeId: string;
+  slug: string;
   isContext: boolean;
 }
 
 const StoryKeepHeader = ({
   nodeId,
+  slug,
   isContext = false,
 }: StoryKeepHeaderProps) => {
   // Connect to stores
@@ -55,10 +56,6 @@ const StoryKeepHeader = ({
   const handleRedo = () => {
     console.log('Redo placeholder');
     setCanRedo(false);
-  };
-
-  const visitPage = () => {
-    console.log('Visit page placeholder');
   };
 
   const activeIconClassName =
@@ -131,11 +128,9 @@ const StoryKeepHeader = ({
           title="Toggle Help Text"
           className={showHelp ? activeIconClassName : iconClassName}
         />
-        <ArrowTopRightOnSquareIcon
-          onClick={visitPage}
-          title="Visit Page"
-          className={iconClassName}
-        />
+        <a href={`/${slug}`} title="Visit Page">
+          <ArrowTopRightOnSquareIcon className={iconClassName} />
+        </a>
       </div>
     </div>
   );

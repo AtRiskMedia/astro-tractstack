@@ -117,9 +117,9 @@ export const SignUp = ({
               positioning={{ sameWidth: true }}
               disabled
             >
-              <Select.Label className="mb-1 block text-sm font-bold text-gray-700">
+              <div className="mb-1 block text-sm font-bold text-gray-700">
                 Contact Preferences
-              </Select.Label>
+              </div>
               <Select.Control className="relative">
                 <Select.Trigger className="relative w-full cursor-not-allowed rounded-md bg-white py-2 pl-3 pr-10 text-left opacity-50 shadow-md focus:outline-none">
                   <Select.ValueText className="block truncate">

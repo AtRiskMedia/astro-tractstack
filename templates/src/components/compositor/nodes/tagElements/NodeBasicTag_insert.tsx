@@ -10,7 +10,6 @@ type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
 export const NodeBasicTagInsert = (props: NodeTagProps) => {
   const { value: toolAddMode } = getCtx(props).toolAddModeStore.get();
-  console.log(toolAddMode);
   const nodeId = props.nodeId;
   const { allowInsertBefore, allowInsertAfter } =
     props.tagName !== 'li'

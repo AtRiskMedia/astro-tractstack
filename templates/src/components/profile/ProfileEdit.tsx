@@ -9,35 +9,8 @@ import BellSlashIcon from '@heroicons/react/24/outline/BellSlashIcon';
 import BoltIcon from '@heroicons/react/24/outline/BoltIcon';
 import ChatBubbleBottomCenterIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterIcon';
 import { ProfileStorage } from '@/utils/profileStorage';
+import { contactPersona } from '@/constants';
 import type { FormEvent } from 'react';
-
-// Contact persona options - matches Go backend expectations
-const contactPersona = [
-  {
-    id: 'major',
-    title: 'Major Updates Only',
-    description: 'Will only send major updates and do so infrequently.',
-    disabled: false,
-  },
-  {
-    id: 'all',
-    title: 'All Updates',
-    description: 'Be fully in the know!',
-    disabled: false,
-  },
-  {
-    id: 'open',
-    title: 'DMs open',
-    description: "Leave your contact details and we'll get in touch!",
-    disabled: false,
-  },
-  {
-    id: 'none',
-    title: 'None',
-    description: 'Disables all communications from us.',
-    disabled: false, // Changed from true to false to allow selection
-  },
-];
 
 interface ProfileEditProps {
   onSuccess?: () => void;

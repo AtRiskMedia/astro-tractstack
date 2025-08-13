@@ -1,3 +1,5 @@
+import type { BrandConfig } from './tractstack';
+
 export type ViewportKey = 'mobile' | 'tablet' | 'desktop' | 'auto';
 export type ViewportAuto = 'mobile' | 'tablet' | 'desktop';
 export type ToolModeVal =
@@ -421,3 +423,30 @@ export type PageDesign = {
     even: any; // Will be TemplatePane
   };
 };
+
+export interface BasePanelProps {
+  node: FlatNode | null;
+  config?: BrandConfig | null;
+  parentNode?: FlatNode;
+  containerNode?: FlatNode;
+  outerContainerNode?: FlatNode;
+  layer?: number;
+  className?: string;
+  childId?: string;
+  availableCodeHooks?: string[];
+}
+
+interface WidgetParameterDefinition {
+  label: string;
+  defaultValue: string;
+  type: 'string' | 'boolean' | 'scale' | 'multi-string';
+  isBeliefTag?: boolean;
+}
+
+export interface WidgetMeta {
+  [key: string]: {
+    title: string;
+    parameters: WidgetParameterDefinition[];
+    isBelief?: boolean;
+  };
+}

@@ -9,7 +9,7 @@ import ChevronUpIcon from '@heroicons/react/24/outline/ChevronUpIcon';
 import { getCtx } from '@/stores/nodes';
 import { canonicalURLStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
-import ColorPickerCombo from '@/components/compositor/fields/ColorPickerCombo';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import ActionBuilderSlugSelector from '@/components/form/ActionBuilderSlugSelector';
 import type { BrandConfig } from '@/types/tractstack';
 import type {

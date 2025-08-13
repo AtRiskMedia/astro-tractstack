@@ -1,7 +1,11 @@
 import { atom, map } from 'nanostores';
 import { persistentAtom } from '@nanostores/persistent';
 import { handleSettingsPanelMobile } from '@/utils/layout';
-import type { FullContentMapItem, Theme } from '@/types/tractstack';
+import type {
+  FullContentMapItem,
+  Theme,
+  ArtpacksStore,
+} from '@/types/tractstack';
 import type { SettingsPanelSignal, ViewportKey } from '@/types/compositorTypes';
 import type {
   ElementStylesMemory,
@@ -13,6 +17,7 @@ import type {
 } from '@/types/nodeProps';
 
 export const fullContentMapStore = atom<FullContentMapItem[]>([]);
+export const hasArtpacksStore = map<ArtpacksStore>({});
 export const urlParamsStore = atom<Record<string, string | boolean>>({});
 export const canonicalURLStore = atom<string>('');
 export const brandColourStore = atom<string>(
@@ -239,3 +244,12 @@ export const storyFragmentTopicsStore = map<{
 export const isAdminStore = atom<boolean>(false);
 export const activeHelpTemplateStore = atom<string | null>(null);
 export const viewportSetStore = atom<boolean>(false);
+
+export const resetStyleElementInfo = () => {
+  styleElementInfoStore.set({
+    markdownParentId: null,
+    tagName: null,
+    overrideNodeId: null,
+    className: null,
+  });
+};

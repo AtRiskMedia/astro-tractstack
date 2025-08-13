@@ -4,7 +4,7 @@ import { RadioGroup } from '@ark-ui/react/radio-group';
 import { classNames, cloneDeep } from '@/utils/helpers';
 import { fullContentMapStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import ColorPickerCombo from '@/components/compositor/fields/ColorPickerCombo';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import type { BrandConfig } from '@/types/tractstack';
 import type { PaneNode } from '@/types/compositorTypes';
 

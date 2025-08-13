@@ -16,7 +16,8 @@ export const NodeBasicTagSettings = (props: NodeTagProps) => {
   const Tag = props.tagName;
 
   const canMove = (/*direction: "before" | "after"*/): boolean => {
-    console.log(`TODO-- wire into allowInsert for proper signal`);
+    // TODO:
+    console.log(`TODO: wire into allowInsert for proper signal`);
     const hasCodeChildren = getCtx(props).getChildNodeByTagNames(nodeId, [
       'code',
     ]);

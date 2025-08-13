@@ -446,3 +446,18 @@ export interface TenantRegistrationState {
   tursoDatabaseURL: string;
   tursoAuthToken: string;
 }
+
+export type ArtpacksStore = Record<string, string[]>;
+
+export interface BunnyPlayer {
+  on(event: string, callback: (data: any) => void): void;
+  off(event: string): void;
+  getCurrentTime(callback: (time: number) => void): void;
+  setCurrentTime(time: number): void;
+  pause(): void;
+  call(method: string, ...args: any[]): void;
+}
+
+export interface PlayerJS {
+  Player: new (elementId: string) => BunnyPlayer;
+}

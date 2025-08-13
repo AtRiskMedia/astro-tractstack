@@ -6,8 +6,9 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
-import { type ToolModeVal } from '@/types/compositorTypes';
+import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
+import type { ToolModeVal } from '@/types/compositorTypes';
 
 const storykeepToolModes = [
   {
@@ -53,6 +54,7 @@ interface StoryKeepToolModeProps {
 }
 
 const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
+  const signal = useStore(settingsPanelStore);
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
@@ -69,6 +71,7 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
     storykeepToolModes[0];
 
   const handleClick = (mode: ToolModeVal) => {
+    settingsPanelStore.set(null);
     ctx.toolModeValStore.set({ value: mode });
     ctx.showGuids.set(mode === `debug`);
     ctx.notifyNode('root');

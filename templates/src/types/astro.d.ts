@@ -1,6 +1,6 @@
 // templates/src/types/astro.d.ts
 
-import type { FullContentMapItem } from './tractstack';
+import type { FullContentMapItem, PlayerJS } from './tractstack';
 export {};
 
 declare global {
@@ -28,6 +28,7 @@ declare global {
   interface Window {
     initAnalyticsTracking: (storyfragmentId?: string) => Promise<void>;
     htmx: any;
+    playerjs: PlayerJS;
     TRACTSTACK_CONFIG: {
       configured: boolean;
       backendUrl: string;

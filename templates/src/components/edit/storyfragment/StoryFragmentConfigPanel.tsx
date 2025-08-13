@@ -9,7 +9,7 @@ import {
   urlParamsStore,
 } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import ColorPickerCombo from '@/components/compositor/fields/ColorPickerCombo';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import StoryFragmentSlugPanel from './StoryFragmentPanel_slug';
 import StoryFragmentMenuPanel from './StoryFragmentPanel_menu';
 import StoryFragmentOpenGraphPanel from './StoryFragmentPanel_og';

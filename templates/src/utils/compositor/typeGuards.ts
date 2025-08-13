@@ -1,3 +1,4 @@
+import type { PlayerJS } from '@/types/tractstack';
 import type {
   BaseNode,
   PaneNode,
@@ -184,3 +185,9 @@ export const getType = (node: BaseNode | FlatNode): string => {
   }
   return type;
 };
+
+export function hasPlayerJS(
+  window: Window
+): window is Window & { playerjs: PlayerJS } {
+  return 'playerjs' in window;
+}
