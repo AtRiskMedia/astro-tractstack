@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
+import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
@@ -19,7 +19,7 @@ const storykeepToolModes = [
   },
   {
     key: 'text' as const,
-    Icon: PencilIcon,
+    Icon: PencilSquareIcon,
     title: 'Write',
     description: 'Click to edit text',
   },

@@ -503,6 +503,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     selection.addRange(range);
   };
 
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleClick = (e: MouseEvent) => {
     if (
       isEditableMode &&
@@ -512,54 +514,65 @@ export const NodeBasicTag = (props: NodeTagProps) => {
       e.preventDefault();
       e.stopPropagation();
     }
-    if (isEditableMode && supportsEditing && editState === 'viewing') {
-      const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        if (elementRef.current?.contains(range.commonAncestorContainer)) {
-          cursorPositionRef.current = {
-            node: range.startContainer,
-            offset: range.startOffset,
-          };
-        } else if (elementRef.current) {
-          const textNode =
-            findLastTextNode(elementRef.current) ||
-            findFirstTextNode(elementRef.current);
-          if (textNode) {
+
+    // Clear any existing timeout
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+
+    // Delay single-click behavior to see if double-click follows
+    clickTimeoutRef.current = setTimeout(() => {
+      if (isEditableMode && supportsEditing && editState === 'viewing') {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          if (elementRef.current?.contains(range.commonAncestorContainer)) {
             cursorPositionRef.current = {
-              node: textNode,
-              offset: textNode.textContent?.length || 0,
+              node: range.startContainer,
+              offset: range.startOffset,
             };
+          } else if (elementRef.current) {
+            const textNode =
+              findLastTextNode(elementRef.current) ||
+              findFirstTextNode(elementRef.current);
+            if (textNode) {
+              cursorPositionRef.current = {
+                node: textNode,
+                offset: textNode.textContent?.length || 0,
+              };
+            }
           }
         }
+        startEditing();
+        if (elementRef.current) {
+          elementRef.current.contentEditable = 'true';
+          elementRef.current.focus();
+          requestAnimationFrame(() => {
+            restoreCursorPosition();
+            if (
+              elementRef.current &&
+              document.activeElement !== elementRef.current
+            ) {
+              console.warn(
+                `[NodeBasicTag] Focus lost after click for nodeId: ${nodeId}, retrying`
+              );
+              elementRef.current.focus();
+            }
+          });
+          setTimeout(() => {
+            if (
+              elementRef.current &&
+              document.activeElement !== elementRef.current
+            ) {
+              elementRef.current.focus();
+            }
+          }, 0);
+        }
       }
-      startEditing();
-      if (elementRef.current) {
-        elementRef.current.contentEditable = 'true';
-        elementRef.current.focus();
-        requestAnimationFrame(() => {
-          restoreCursorPosition();
-          if (
-            elementRef.current &&
-            document.activeElement !== elementRef.current
-          ) {
-            console.warn(
-              `[NodeBasicTag] Focus lost after click for nodeId: ${nodeId}, retrying`
-            );
-            elementRef.current.focus();
-          }
-        });
-        setTimeout(() => {
-          if (
-            elementRef.current &&
-            document.activeElement !== elementRef.current
-          ) {
-            elementRef.current.focus();
-          }
-        }, 0);
-      }
-    }
-    ctx.setClickedNodeId(nodeId);
+      ctx.setClickedNodeId(nodeId);
+    }, 300); // Same as DOUBLE_CLICK_DELAY
+
     if (
       !(
         e.target instanceof HTMLAnchorElement ||
@@ -571,10 +584,17 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   };
 
   const handleDoubleClick = (e: MouseEvent) => {
-    if (!isEditableMode) {
-      ctx.setClickedNodeId(nodeId, true);
-    }
+    e.preventDefault();
     e.stopPropagation();
+
+    // Cancel the pending single-click behavior
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+    }
+
+    // Trigger double-click behavior (style panels)
+    ctx.setClickedNodeId(nodeId, true);
   };
 
   // Determine classes
