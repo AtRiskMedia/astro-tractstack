@@ -31,7 +31,6 @@ if (!brandConfig.SITE_INIT) {
 }
 
 const endpoint = `${goBackend}/api/v1/nodes/storyfragments/slug/${slug}/full-payload`;
-console.log(endpoint)
 
 let loadData;
 try {
@@ -41,7 +40,6 @@ try {
       Cookie: Astro.request.headers.get('cookie') || '',
     },
   });
-  console.log(response)
 
   if (!response.ok) {
     return new Response(null, {
