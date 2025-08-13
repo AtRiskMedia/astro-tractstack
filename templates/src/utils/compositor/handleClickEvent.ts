@@ -45,6 +45,7 @@ export function handleClickEventDefault(
         });
       } else {
         console.log('unhandled BgPane type');
+        settingsPanelStore.set(null);
       }
       break;
     }
@@ -118,11 +119,13 @@ export function handleClickEventDefault(
           break;
         default:
           console.log(`also missed on: ${node.tagName}`);
+          settingsPanelStore.set(null);
       }
       break;
     }
 
     default:
       console.log(`missed on: ${node.nodeType}`, node);
+      settingsPanelStore.set(null);
   }
 }

@@ -69,7 +69,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() {}
+  constructor() { }
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -371,7 +371,7 @@ export class NodesContext {
   private lastProcessedTime = 0;
 
   setClickedNodeId(nodeId: string, dblClick: boolean = false) {
-    settingsPanelStore.set(null);
+    //settingsPanelStore.set(null);
     const now = Date.now();
     // Prevent processing if we're too close to the last event
     if (now - this.lastProcessedTime < 50 || this.isProcessingDoubleClick)
@@ -533,11 +533,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-            node,
-            node.tagName as Tag,
-            tagName,
-            offset ? tagNames[offset - 1] : undefined
-          )
+          node,
+          node.tagName as Tag,
+          tagName,
+          offset ? tagNames[offset - 1] : undefined
+        )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -773,10 +773,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-      {
-        heldBeliefs: {},
-        withheldBeliefs: {},
-      };
+    {
+      heldBeliefs: {},
+      withheldBeliefs: {},
+    };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -860,11 +860,10 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
                 ? addHoverPrefix(classesHoverPayload[0])
                 : ``
-            }`;
+              }`;
           }
           const closestPaneId = this.getClosestNodeTypeFromId(
             nodeId,

@@ -57,8 +57,9 @@ const TransitionOverlay = ({ show }: { show: boolean }) => {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-150 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
+      className={`pointer-events-none absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-150 ease-in-out ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
       style={{
         backgroundColor: 'rgba(167, 177, 183, 0.85)', // Start and end at 50% opacity
       }}
@@ -104,7 +105,7 @@ export const Compositor = (props: CompositorProps) => {
       ROOT_NODE_NAME,
       () => {
         // Trigger the independent fade effect
-        setTriggerTransition(prev => !prev); // Toggle to trigger useEffect
+        setTriggerTransition((prev) => !prev); // Toggle to trigger useEffect
 
         // Update the tree immediately
         setUpdateCounter((prev) => prev + 1);

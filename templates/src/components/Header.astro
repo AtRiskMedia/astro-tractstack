@@ -172,11 +172,7 @@ const authStatus = {
         isEditable ? (
           <a
             data-astro-reload
-            href={
-              !isContext
-                ? `/${slug}/edit`
-                : `/context/${slug}/edit`
-            }
+            href={!isContext ? `/${slug}/edit` : `/context/${slug}/edit`}
             class="text-myblue/80 hover:text-myblue hover:rotate-6"
             title={!isContext ? 'Edit this story' : 'Edit this pane'}
           >

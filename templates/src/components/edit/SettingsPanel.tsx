@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
@@ -20,7 +21,26 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
   }
 
   return (
-    <div className="bg-mydarkgrey animate-fadeIn rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm">
+    <div
+      className="bg-mydarkgrey rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
+      style={
+        {
+          animation: window.matchMedia(
+            '(prefers-reduced-motion: no-preference)'
+          ).matches
+            ? 'fadeInFromHalf 150ms ease-in'
+            : 'none',
+          '--fade-start': '0.5',
+          '--fade-end': '1',
+        } as CSSProperties & { [key: string]: string }
+      }
+    >
+      <style>{`
+    @keyframes fadeInFromHalf {
+      0% { opacity: var(--fade-start, 0.5); }
+      100% { opacity: var(--fade-end, 1); }
+    }
+  `}</style>
       <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl md:p-2.5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-myblue text-lg font-bold">Settings</h3>
