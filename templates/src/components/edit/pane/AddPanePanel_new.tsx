@@ -128,12 +128,12 @@ const AddPaneNewPanel = ({
       const thisTemplate =
         copyMode === 'custom' || (copyMode === 'ai' && aiContentGenerated)
           ? {
-              ...template,
-              markdown: template.markdown && {
-                ...template.markdown,
-                markdownBody: customMarkdown,
-              },
-            }
+            ...template,
+            markdown: template.markdown && {
+              ...template.markdown,
+              markdownBody: customMarkdown,
+            },
+          }
           : template;
       ctx.addTemplatePane('tmp', thisTemplate);
       return { ctx, template: thisTemplate, index };
@@ -177,12 +177,12 @@ const AddPaneNewPanel = ({
         // if custom mode, user markdown is used
         const insertTemplate = [`blank`, `custom`].includes(copyMode)
           ? {
-              ...cloneDeep(template),
-              markdown: template.markdown && {
-                ...template.markdown,
-                markdownBody: copyMode === `blank` ? `...` : customMarkdown,
-              },
-            }
+            ...cloneDeep(template),
+            markdown: template.markdown && {
+              ...template.markdown,
+              markdownBody: copyMode === `blank` ? `...` : customMarkdown,
+            },
+          }
           : cloneDeep(template);
 
         // Get the markdown content for title generation
@@ -445,14 +445,12 @@ const AddPaneNewPanel = ({
               className="inline-flex items-center"
             >
               <Switch.Control
-                className={`${
-                  useOddVariant ? 'bg-cyan-600' : 'bg-gray-200'
-                } relative my-2 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`}
+                className={`${useOddVariant ? 'bg-cyan-600' : 'bg-gray-200'
+                  } relative my-2 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`}
               >
                 <Switch.Thumb
-                  className={`${
-                    useOddVariant ? 'translate-x-6' : 'translate-x-1'
-                  } inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-200`}
+                  className={`${useOddVariant ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-200`}
                 />
               </Switch.Control>
               <Switch.HiddenInput />
@@ -479,17 +477,15 @@ const AddPaneNewPanel = ({
                     isInserting
                       ? undefined
                       : () =>
-                          handleTemplateInsert(preview.template, nodeId, first)
+                        handleTemplateInsert(preview.template, nodeId, first)
                   }
-                  className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${
-                    isInserting
+                  className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${isInserting
                       ? 'cursor-not-allowed opacity-50'
                       : 'cursor-pointer'
-                  } transition-all duration-200 ${
-                    preview.snapshot
+                    } transition-all duration-200 ${preview.snapshot
                       ? 'hover:outline-solid hover:outline hover:outline-4'
                       : ''
-                  }`}
+                    }`}
                   style={{
                     ...(!preview.snapshot ? { minHeight: '200px' } : {}),
                   }}
@@ -542,11 +538,10 @@ const AddPaneNewPanel = ({
                 <button
                   key={index}
                   onClick={() => handlePageChange(index)}
-                  className={`rounded px-3 py-1 text-sm transition-colors ${
-                    currentPage === index
+                  className={`rounded px-3 py-1 text-sm transition-colors ${currentPage === index
                       ? 'bg-cyan-700 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                    }`}
                 >
                   {index + 1}
                 </button>

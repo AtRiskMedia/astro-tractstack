@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { timestampNodeId } from '@/utils/helpers';
-import Node from '../Node';
+import { transformLivePaneForPreview } from '@/utils/etl';
+import * as htmlToImage from 'html-to-image';
 import type { BrandConfig } from '@/types/tractstack';
 import type { NodesContext } from '@/stores/nodes';
+
+const VERBOSE = false;
 
 export type SnapshotData = {
   imageData: string;
@@ -21,11 +24,9 @@ const snapshotCache = new Map<string, SnapshotData>();
 
 export const NodesSnapshotRenderer = (props: NodesSnapshotRendererProps) => {
   const [isGenerating, setIsGenerating] = useState(true);
-  const contentRef = useRef<HTMLDivElement>(null);
   const outputWidth = props.outputWidth || 800;
 
   useEffect(() => {
-    if (!contentRef.current) return;
     if (!isGenerating && !props.forceRegenerate) return;
     if (props.ctx.allNodes.get().size === 0) return;
 
@@ -39,92 +40,168 @@ export const NodesSnapshotRenderer = (props: NodesSnapshotRendererProps) => {
 
     const generateSnapshot = async () => {
       try {
-        // TODO: Replace with backend endpoint call
-        // const response = await fetch('/api/v1/generate-snapshot', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({
-        //     html: contentRef.current?.outerHTML,
-        //     rootNodeId: props.ctx.rootNodeId.get(),
-        //     outputWidth: outputWidth,
-        //     config: props.config
-        //   })
-        // });
-        // const result = await response.json();
-        // const data = { imageData: result.imageData, height: result.height };
+        const rootNodeId = props.ctx.rootNodeId.get();
 
-        // Temporary fallback: create a placeholder image
+        // Get the actual Pane ID, not StoryFragment wrapper
+        let actualPaneId = rootNodeId;
+        const rootNode = props.ctx.allNodes.get().get(rootNodeId);
+
+        if (rootNode?.nodeType === 'StoryFragment') {
+          // Find pane that has this StoryFragment as parent
+          const allNodes = Array.from(props.ctx.allNodes.get().values());
+          const childPanes = allNodes.filter(
+            (node) => node.nodeType === 'Pane' && node.parentId === rootNodeId
+          );
+
+          if (childPanes.length > 0) {
+            actualPaneId = childPanes[0].id;
+            if (VERBOSE)
+              console.log(
+                '🎯 SNAPSHOT - Converting StoryFragment to actual pane:',
+                actualPaneId
+              );
+          } else {
+            throw new Error(`No Pane found under StoryFragment ${rootNodeId}`);
+          }
+        }
+
+        const previewPayload = transformLivePaneForPreview(
+          props.ctx,
+          actualPaneId
+        );
+
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const response = await fetch(`${goBackend}/api/v1/fragments/preview`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
+          },
+          body: JSON.stringify({ panes: [previewPayload] }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Preview API failed: ${response.status}`);
+        }
+
+        const { fragments } = await response.json();
+        const htmlString = fragments[previewPayload.id];
+
+        if (!htmlString) {
+          throw new Error('No HTML returned from preview endpoint');
+        }
+
+        // Create iframe with complete document and CSS at 1500px width
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-99999px';
+        iframe.style.top = '0px';
+        iframe.style.width = '1500px';
+        iframe.style.height = '2000px';
+        iframe.style.border = 'none';
+        iframe.style.background = '#ffffff';
+
+        document.body.appendChild(iframe);
+
+        // Determine CSS paths based on environment (matching Layout.astro logic)
+        const isDev = import.meta.env.DEV;
+        const cssBasePath = isDev ? '/styles' : '/media/css';
+
+        // Get all existing CSS links from current document
+        const existingCssLinks = Array.from(
+          document.querySelectorAll('link[rel="stylesheet"]')
+        )
+          .map((link) => (link as HTMLLinkElement).href)
+          .filter((href) => href);
+
+        // Add storykeep.css (this is the key missing piece)
+        const storykeepCssUrl = `${cssBasePath}/storykeep.css`;
+        const customCssUrl = `${cssBasePath}/custom.css`;
+
+        const iframeDoc = iframe.contentDocument!;
+
+        // Write complete HTML document with proper CSS injection
+        const fullHTML = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link rel="stylesheet" href="${customCssUrl}">
+              <link rel="stylesheet" href="${storykeepCssUrl}">
+              ${existingCssLinks.map((href) => `<link rel="stylesheet" href="${href}">`).join('\n')}
+            </head>
+            <body style="margin: 0; padding: 20px; font-family: system-ui, -apple-system, sans-serif; width: 1500px;">
+              ${htmlString}
+            </body>
+          </html>
+        `;
+
+        iframeDoc.open();
+        iframeDoc.write(fullHTML);
+        iframeDoc.close();
+
+        // Wait for CSS to load
+        await new Promise((resolve) => {
+          if (iframeDoc.readyState === 'complete') {
+            resolve(void 0);
+          } else {
+            iframe.onload = () => resolve(void 0);
+          }
+        });
+
+        // Additional wait for rendering
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        if (!contentRef.current) return;
-
-        const height = contentRef.current.offsetHeight;
-        const scaledHeight = (height * outputWidth) / 1500; // Simulate scaling
-
-        // Create a placeholder base64 image (1x1 white pixel WebP)
-        const placeholderBase64 =
-          'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA';
-
-        const data = {
-          imageData: placeholderBase64,
-          height: Math.max(scaledHeight, 200), // Ensure minimum height
-        };
-
-        if (props.onComplete) {
-          snapshotCache.set(cacheKey, data);
-          props.onComplete(data);
+        // Get the body element for screenshot
+        const bodyElement = iframeDoc.body;
+        if (!bodyElement) {
+          throw new Error('No body element found in iframe');
         }
-      } catch (error) {
-        console.error('Error generating snapshot:', error);
 
-        // Fallback on error
-        const fallbackData = {
-          imageData:
-            'data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA',
-          height: 200,
+        // Generate screenshot at 1500px width
+        const dataUrl = await htmlToImage.toPng(bodyElement, {
+          width: 1500,
+          backgroundColor: '#ffffff',
+          style: {
+            transform: 'scale(1)',
+            transformOrigin: 'top left',
+          },
+        });
+
+        // Get actual height at 1500px
+        const actualHeight = bodyElement.scrollHeight;
+
+        // Clean up
+        document.body.removeChild(iframe);
+
+        const snapshotData: SnapshotData = {
+          imageData: dataUrl,
+          height: actualHeight,
         };
-        props.onComplete?.(fallbackData);
-      } finally {
+
+        // Cache the result
+        snapshotCache.set(cacheKey, snapshotData);
+
+        props.onComplete?.(snapshotData);
         setIsGenerating(false);
+      } catch (error) {
+        console.error('Snapshot generation failed:', error);
+        setIsGenerating(false);
+
+        // Clean up iframe if it exists
+        const existingIframe = document.querySelector(
+          'iframe[style*="-99999px"]'
+        );
+        if (existingIframe) {
+          document.body.removeChild(existingIframe);
+        }
       }
     };
 
     generateSnapshot();
-  }, [props.ctx, props.forceRegenerate, outputWidth]);
+  }, [props.ctx, props.forceRegenerate, props.onComplete, outputWidth]);
 
-  return (
-    <>
-      {(isGenerating || props.forceRegenerate) && (
-        <div className="bg-mylightgrey/10 absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="border-myorange mx-auto h-8 w-8 animate-spin rounded-full border-b-2"></div>
-            <p className="text-mydarkgrey mt-2 text-sm">
-              Generating preview...
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div
-        className="pointer-events-none absolute left-[-9999px] top-[-9999px] opacity-0"
-        aria-hidden="true"
-      >
-        <div
-          ref={contentRef}
-          className="w-[1500px]"
-          style={{
-            backgroundColor: '#FFFFFF',
-            isolation: 'isolate',
-          }}
-        >
-          <Node
-            nodeId={props.ctx.rootNodeId.get()}
-            key={timestampNodeId(props.ctx.rootNodeId.get())}
-            ctx={props.ctx}
-            config={props.config}
-          />
-        </div>
-      </div>
-    </>
-  );
+  return null;
 };

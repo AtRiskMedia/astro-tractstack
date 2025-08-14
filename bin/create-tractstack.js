@@ -172,7 +172,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install visualization dependencies
     execSync(
-      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0 tinycolor2`,
+      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0 tinycolor2 html-to-image`,
       {
         stdio: 'inherit',
       }
@@ -185,7 +185,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2`,
+      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
