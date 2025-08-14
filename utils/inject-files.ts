@@ -534,6 +534,23 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/stores/nodesHistory.ts'),
       dest: 'src/stores/nodesHistory.ts',
     },
+    // Compositor utils - etl
+    {
+      src: resolve('templates/src/utils/etl/index.ts'),
+      dest: 'src/utils/etl/index.ts',
+    },
+    {
+      src: resolve('templates/src/utils/etl/extractor.ts'),
+      dest: 'src/utils/etl/extractor.ts',
+    },
+    {
+      src: resolve('templates/src/utils/etl/transformer.ts'),
+      dest: 'src/utils/etl/transformer.ts',
+    },
+    {
+      src: resolve('templates/src/utils/etl/loader.ts'),
+      dest: 'src/utils/etl/loader.ts',
+    },
     // Compositor utils
     {
       src: resolve('templates/src/utils/compositor/lispLexer.ts'),
