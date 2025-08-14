@@ -8,9 +8,14 @@ import ChevronUpDownIcon from '@heroicons/react/20/solid/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/20/solid/CheckIcon';
 import { NodesContext } from '@/stores/nodes';
 import {
-  NodesSnapshotRenderer,
+  PanesPreviewGenerator,
+  type PanePreviewRequest,
+  type PaneFragmentResult,
+} from '@/components/compositor/preview/PanesPreviewGenerator';
+import {
+  PaneSnapshotGenerator,
   type SnapshotData,
-} from '@/components/compositor/preview/NodesSnapshotRenderer';
+} from '@/components/compositor/preview/PaneSnapshotGenerator';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
 import { cloneDeep } from '@/utils/helpers';
 import {
@@ -41,6 +46,8 @@ interface PreviewPane {
   snapshot?: SnapshotData;
   template: any;
   index: number;
+  htmlFragment?: string;
+  fragmentError?: string;
 }
 
 interface TemplateCategory {
@@ -75,6 +82,7 @@ const AddPaneNewPanel = ({
   );
   const [isInserting, setIsInserting] = useState(false);
   const [aiContentGenerated, setAiContentGenerated] = useState(false);
+  const [fragmentsGenerated, setFragmentsGenerated] = useState(false);
   const shouldShowDesigns = copyMode !== 'ai' || aiContentGenerated;
 
   // Create collection for Ark UI Select
@@ -141,6 +149,7 @@ const AddPaneNewPanel = ({
     setPreviews(newPreviews);
     setCurrentPage(0);
     setRenderedPages(new Set([0]));
+    setFragmentsGenerated(false);
   }, [filteredTemplates, customMarkdown, copyMode, aiContentGenerated]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
@@ -149,6 +158,7 @@ const AddPaneNewPanel = ({
     if (newPage >= 0 && newPage < totalPages) {
       setCurrentPage(newPage);
       setRenderedPages((prev) => new Set([...prev, newPage]));
+      setFragmentsGenerated(false);
     }
   };
 
@@ -156,6 +166,45 @@ const AddPaneNewPanel = ({
     const startIndex = currentPage * ITEMS_PER_PAGE;
     return previews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [previews, currentPage]);
+
+  const fragmentRequests = useMemo((): PanePreviewRequest[] => {
+    return visiblePreviews.map((preview) => ({
+      id: `template-${preview.index}`,
+      ctx: preview.ctx,
+    }));
+  }, [visiblePreviews]);
+
+  const handleFragmentsComplete = (results: PaneFragmentResult[]) => {
+    setPreviews((prevPreviews) => {
+      const updated = [...prevPreviews];
+      results.forEach((result) => {
+        const index = parseInt(result.id.replace('template-', ''));
+        if (updated[index]) {
+          updated[index] = {
+            ...updated[index],
+            htmlFragment: result.htmlString,
+            fragmentError: result.error,
+          };
+        }
+      });
+      return updated;
+    });
+    setFragmentsGenerated(true);
+  };
+
+  const handleSnapshotComplete = (id: string, snapshot: SnapshotData) => {
+    const index = parseInt(id.replace('template-', ''));
+    setPreviews((prevPreviews) => {
+      const updated = [...prevPreviews];
+      if (updated[index]) {
+        updated[index] = {
+          ...updated[index],
+          snapshot,
+        };
+      }
+      return updated;
+    });
+  };
 
   const handleTemplateInsert = async (
     template: any,
@@ -342,132 +391,128 @@ const AddPaneNewPanel = ({
       {shouldShowDesigns && (
         <>
           <h3 className="font-action px-3.5 pb-1.5 pt-4 text-xl font-bold text-black">
-            1. What kind of layout
-          </h3>
-          <div className="max-w-md">
-            <Select.Root
-              collection={categoryCollection}
-              value={[selectedCategory.id]}
-              onValueChange={handleCategoryChange}
-            >
-              <Select.Label className="block text-sm font-bold text-gray-700">
-                Category
-              </Select.Label>
-              <Select.Control className="relative mt-1">
-                <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-                  <Select.ValueText className="block truncate">
-                    {selectedCategory.title}
-                  </Select.ValueText>
-                  <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </Select.Indicator>
-                </Select.Trigger>
-              </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                    {categoryCollection.items.map((category) => (
-                      <Select.Item
-                        key={category.id}
-                        item={category}
-                        className="category-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
-                      >
-                        <Select.ItemText className="block truncate">
-                          {category.title}
-                        </Select.ItemText>
-                        <Select.ItemIndicator className="category-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
-            </Select.Root>
-          </div>
-
-          <h3 className="font-action px-3.5 pb-1.5 pt-4 text-xl font-bold text-black">
-            2. Make it pretty
+            1. Template design settings
           </h3>
 
-          <div className="w-40">
-            <Select.Root
-              collection={themesCollection}
-              value={[selectedTheme]}
-              onValueChange={handleThemeChange}
-            >
-              <Select.Label className="block text-sm font-bold text-gray-700">
-                Theme
-              </Select.Label>
-              <Select.Control className="relative mt-1">
-                <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-600 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-600">
-                  <Select.ValueText className="block truncate capitalize">
-                    {selectedTheme.replace(/-/g, ' ')}
-                  </Select.ValueText>
-                  <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                  </Select.Indicator>
-                </Select.Trigger>
-              </Select.Control>
-              <Portal>
-                <Select.Positioner>
-                  <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                    {themesCollection.items.map((theme) => (
-                      <Select.Item
-                        key={theme}
-                        item={theme}
-                        className="theme-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
-                      >
-                        <Select.ItemText className="block truncate capitalize">
-                          {theme.replace(/-/g, ' ')}
-                        </Select.ItemText>
-                        <Select.ItemIndicator className="theme-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                        </Select.ItemIndicator>
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Positioner>
-              </Portal>
-            </Select.Root>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Switch.Root
-              checked={useOddVariant}
-              onCheckedChange={(details) => setUseOddVariant(details.checked)}
-              className="inline-flex items-center"
-            >
-              <Switch.Control
-                className={`${useOddVariant ? 'bg-cyan-600' : 'bg-gray-200'
-                  } relative my-2 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`}
+          <div className="grid grid-cols-1 gap-4 p-2 md:grid-cols-3">
+            <div className="w-full">
+              <Select.Root
+                collection={themesCollection}
+                value={[selectedTheme]}
+                onValueChange={handleThemeChange}
               >
-                <Switch.Thumb
-                  className={`${useOddVariant ? 'translate-x-6' : 'translate-x-1'
-                    } inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-200`}
-                />
-              </Switch.Control>
-              <Switch.HiddenInput />
-              <div className="flex h-6 items-center">
-                <Switch.Label className="px-4 text-sm text-gray-700">
-                  Use odd variant
-                </Switch.Label>
-              </div>
-            </Switch.Root>
+                <Select.Label className="block text-sm font-bold text-gray-700">
+                  Theme
+                </Select.Label>
+                <Select.Control className="relative mt-1">
+                  <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-cyan-600 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-600">
+                    <Select.ValueText className="block truncate capitalize">
+                      {selectedTheme.replace(/-/g, ' ')}
+                    </Select.ValueText>
+                    <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Select.Indicator>
+                  </Select.Trigger>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                      {themesCollection.items.map((theme) => (
+                        <Select.Item
+                          key={theme}
+                          item={theme}
+                          className="theme-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
+                        >
+                          <Select.ItemText className="block truncate capitalize">
+                            {theme.replace(/-/g, ' ')}
+                          </Select.ItemText>
+                          <Select.ItemIndicator className="theme-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </div>
+
+            <div className="w-full">
+              <Select.Root
+                collection={categoryCollection}
+                value={[selectedCategory.id]}
+                onValueChange={handleCategoryChange}
+              >
+                <Select.Label className="block text-sm font-bold text-gray-700">
+                  Category
+                </Select.Label>
+                <Select.Control className="relative mt-1">
+                  <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                    <Select.ValueText className="block truncate">
+                      {selectedCategory.title}
+                    </Select.ValueText>
+                    <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Select.Indicator>
+                  </Select.Trigger>
+                </Select.Control>
+                <Portal>
+                  <Select.Positioner>
+                    <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                      {categoryCollection.items.map((category) => (
+                        <Select.Item
+                          key={category.id}
+                          item={category}
+                          className="category-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
+                        >
+                          <Select.ItemText className="block truncate">
+                            {category.title}
+                          </Select.ItemText>
+                          <Select.ItemIndicator className="category-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </Select.ItemIndicator>
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select.Positioner>
+                </Portal>
+              </Select.Root>
+            </div>
+
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700">
+                Variant
+              </label>
+              <Switch.Root
+                checked={useOddVariant}
+                onCheckedChange={(details) => setUseOddVariant(details.checked)}
+                className="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 data-[state=checked]:bg-cyan-600 data-[state=unchecked]:bg-gray-200"
+              >
+                <Switch.Thumb className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0" />
+              </Switch.Root>
+              <span className="ml-2 text-sm text-gray-700">
+                {useOddVariant ? 'Odd Variant' : 'Even Variant'}
+              </span>
+            </div>
           </div>
 
           <h3 className="font-action px-3.5 pb-1.5 pt-4 text-xl font-bold text-black">
-            3. Click on the design you wish to use:
+            2. Choose design
           </h3>
-          <p className="italic">
-            Each design can be further customized once selected.
-          </p>
+
+          {!fragmentsGenerated && fragmentRequests.length > 0 && (
+            <PanesPreviewGenerator
+              requests={fragmentRequests}
+              onComplete={handleFragmentsComplete}
+              onError={(error) => console.error('Fragment generation error:', error)}
+            />
+          )}
 
           <div className="grid grid-cols-2 gap-4 p-2 xl:grid-cols-3">
             {visiblePreviews.map((preview) => (
@@ -480,8 +525,8 @@ const AddPaneNewPanel = ({
                         handleTemplateInsert(preview.template, nodeId, first)
                   }
                   className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${isInserting
-                      ? 'cursor-not-allowed opacity-50'
-                      : 'cursor-pointer'
+                    ? 'cursor-not-allowed opacity-50'
+                    : 'cursor-pointer'
                     } transition-all duration-200 ${preview.snapshot
                       ? 'hover:outline-solid hover:outline hover:outline-4'
                       : ''
@@ -493,21 +538,31 @@ const AddPaneNewPanel = ({
                   tabIndex={0}
                   aria-label={preview.template.title}
                 >
-                  {renderedPages.has(currentPage) && !preview.snapshot && (
-                    <NodesSnapshotRenderer
-                      ctx={preview.ctx}
-                      forceRegenerate={false}
-                      onComplete={(data) => {
-                        setPreviews((prev) =>
-                          prev.map((p) =>
-                            p.index === preview.index
-                              ? { ...p, snapshot: data }
-                              : p
-                          )
-                        );
-                      }}
-                    />
+                  {fragmentsGenerated &&
+                    preview.htmlFragment &&
+                    !preview.snapshot &&
+                    !preview.fragmentError && (
+                      <PaneSnapshotGenerator
+                        id={`template-${preview.index}`}
+                        htmlString={preview.htmlFragment}
+                        onComplete={handleSnapshotComplete}
+                        onError={(id, error) => console.error(`Snapshot error for ${id}:`, error)}
+                        outputWidth={800}
+                      />
+                    )}
+
+                  {!fragmentsGenerated && (
+                    <div className="flex items-center justify-center h-48">
+                      <div className="text-gray-500">Loading preview...</div>
+                    </div>
                   )}
+
+                  {fragmentsGenerated && preview.fragmentError && (
+                    <div className="flex items-center justify-center h-48">
+                      <div className="text-red-500">Preview error</div>
+                    </div>
+                  )}
+
                   {preview.snapshot && (
                     <div className="p-0.5">
                       <img
@@ -539,8 +594,8 @@ const AddPaneNewPanel = ({
                   key={index}
                   onClick={() => handlePageChange(index)}
                   className={`rounded px-3 py-1 text-sm transition-colors ${currentPage === index
-                      ? 'bg-cyan-700 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-cyan-700 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
                   {index + 1}

@@ -66,11 +66,18 @@ export const PaneSnapshotGenerator = ({
         }
 
         const isDev = import.meta.env.DEV;
-        const cssBasePath = isDev
-          ? `http://localhost:4321`
-          : `https://${window.location.host}`;
+        const cssBasePath = isDev ? '/styles' : '/media/css';
+        const customCssUrl = `${cssBasePath}/custom.css`;
+        const storykeepCssUrl = `${cssBasePath}/storykeep.css`;
 
         const brandColors = config?.BRAND_COLOURS?.split(',') || [];
+
+        // Get all existing CSS links from current document
+        const existingCssLinks = Array.from(
+          document.querySelectorAll('link[rel="stylesheet"]')
+        )
+          .map((link) => (link as HTMLLinkElement).href)
+          .filter((href) => href);
 
         const fullHtml = `
 <!DOCTYPE html>
@@ -79,8 +86,9 @@ export const PaneSnapshotGenerator = ({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Snapshot Preview</title>
-  <link rel="stylesheet" href="${cssBasePath}/styles/globals.css">
-  <link rel="stylesheet" href="${cssBasePath}/styles/components.css">
+  <link rel="stylesheet" href="${customCssUrl}">
+  <link rel="stylesheet" href="${storykeepCssUrl}">
+  ${existingCssLinks.map((href) => `<link rel="stylesheet" href="${href}">`).join('\n')}
   ${config ? `
   <style>
     :root {
@@ -93,7 +101,8 @@ export const PaneSnapshotGenerator = ({
   <style>
     body { 
       margin: 0; 
-      padding: 0; 
+      padding: 20px; 
+      font-family: system-ui, -apple-system, sans-serif; 
       width: 1500px; 
       background: #ffffff;
       overflow-x: hidden;
@@ -110,19 +119,24 @@ export const PaneSnapshotGenerator = ({
         iframeDoc.write(fullHtml);
         iframeDoc.close();
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for CSS to load
+        await new Promise((resolve) => {
+          if (iframeDoc.readyState === 'complete') {
+            resolve(void 0);
+          } else {
+            iframe.onload = () => resolve(void 0);
+          }
+        });
+
+        // Additional wait for rendering
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         const iframeBody = iframeDoc.body;
         if (!iframeBody) {
           throw new Error('Iframe body not found');
         }
 
-        const contentHeight = Math.max(
-          iframeBody.scrollHeight,
-          iframeBody.offsetHeight,
-          iframeDoc.documentElement.scrollHeight,
-          iframeDoc.documentElement.offsetHeight
-        );
+        const contentHeight = iframeBody.scrollHeight;
 
         const dataUrl = await htmlToImage.toPng(iframeBody, {
           width: 1500,
@@ -130,13 +144,15 @@ export const PaneSnapshotGenerator = ({
           pixelRatio: 1,
           backgroundColor: '#ffffff',
           quality: 0.95,
+          skipFonts: true,
+          skipAutoScale: true,
         });
 
         const scaleFactor = outputWidth / 1500;
         const scaledHeight = Math.round(contentHeight * scaleFactor);
-
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
+
         if (!ctx) {
           throw new Error('Could not get canvas context');
         }
