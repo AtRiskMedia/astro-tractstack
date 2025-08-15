@@ -8,7 +8,7 @@ export const NodeImg = (props: NodeProps) => {
 
   return (
     <img
-      src={node.src}
+      src={node.base64Data || node.src}
       {...(node.srcSet ? { srcSet: node.srcSet } : {})}
       className={getCtx(props).getNodeClasses(
         props.nodeId,

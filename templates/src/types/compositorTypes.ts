@@ -284,10 +284,10 @@ export interface BgImageNode extends PaneFragmentNode {
   src: string;
   srcSet?: string;
   alt?: string;
+  base64Data?: string;
   objectFit: 'cover' | 'contain' | 'fill';
   position?: 'background' | 'left' | 'right' | 'leftBleed' | 'rightBleed';
   size?: 'equal' | 'narrow' | 'wide';
-  base64Data?: string;
 }
 
 export interface VisualBreakData {
@@ -313,6 +313,7 @@ export interface ImageFileNode extends BaseNode {
   srcSet?: string;
   position?: string;
   size?: string;
+  base64Data?: string;
 }
 
 export interface ResourceNode extends BaseNode {
@@ -337,6 +338,7 @@ export interface FlatNode extends BaseNode {
   copy?: string;
   src?: string;
   srcSet?: string;
+  base64Data?: string;
   alt?: string;
   href?: string;
   text?: string;
