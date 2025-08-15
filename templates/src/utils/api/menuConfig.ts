@@ -55,34 +55,3 @@ export async function getMenuById(
   const response = await api.get(`/api/v1/nodes/menus/${menuId}`);
   return response.data as MenuNode;
 }
-
-/**
- * Main save workflow with state update
- * Following the exact pattern from brandConfig.ts
- */
-export async function saveMenuWithStateUpdate(
-  tenantId: string,
-  currentState: MenuNodeState,
-  originalState: MenuNodeState
-): Promise<MenuNodeState> {
-  try {
-    let savedMenu: MenuNode;
-
-    // Determine if this is a create or update operation
-    const isCreate = !currentState.id || currentState.id === '';
-
-    if (isCreate) {
-      // Generate temporary ID for create (backend will assign real ID)
-      const tempState = { ...currentState, id: crypto.randomUUID() };
-      savedMenu = await createMenu(tenantId, tempState);
-    } else {
-      savedMenu = await saveMenu(tenantId, currentState);
-    }
-
-    // Convert the saved menu back to state format
-    return convertToLocalState(savedMenu);
-  } catch (error) {
-    console.error('Menu save failed:', error);
-    throw error;
-  }
-}

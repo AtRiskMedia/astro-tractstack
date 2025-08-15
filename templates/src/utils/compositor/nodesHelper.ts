@@ -319,7 +319,6 @@ export function createEmptyStorykeep(id: string) {
     paneIds: [],
     changed: undefined,
     slug: 'temp',
-    hasMenu: false,
     title: 'temp',
     impressions: [],
     created: undefined,

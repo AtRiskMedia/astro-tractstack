@@ -11,7 +11,9 @@ import {
   type StoryFragmentNode,
   type MenuNode,
 } from '@/types/compositorTypes';
-import { fullContentMapStore } from '@/stores/analytics';
+import MenuForm from '@/components/storykeep/controls/content/MenuForm';
+import { fullContentMapStore, getFullContentMap } from '@/stores/analytics';
+import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryFragmentMenuPanelProps {
   nodeId: string;
@@ -35,18 +37,63 @@ const StoryFragmentMenuPanel = ({
   const [query, setQuery] = useState('');
   const [selectedMenu, setSelectedMenu] = useState<MenuNode | null>(null);
   const [showMenuEditor, setShowMenuEditor] = useState(false);
+  const [contentMap, setContentMap] = useState<FullContentMapItem[]>([]);
 
   useEffect(() => {
-    const fetchMenus = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/turso/getAllMenus');
-        const data = await response.json();
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch menus');
+        // Fetch content map if store is empty
+        const currentContentMap = fullContentMapStore.get();
+        if (
+          !currentContentMap ||
+          !currentContentMap.data ||
+          currentContentMap.data.length === 0
+        ) {
+          const contentMapData = await getFullContentMap(tenantId);
+          setContentMap(contentMapData);
+        } else {
+          setContentMap(currentContentMap.data);
         }
 
-        setMenus(data.data);
+        // Step 1: Get all menu IDs
+        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/menus`, {
+          headers: {
+            'X-Tenant-ID': tenantId,
+          },
+        });
+
+        if (!idsResponse.ok) {
+          throw new Error(
+            `Failed to fetch menu IDs: ${idsResponse.statusText}`
+          );
+        }
+        const { menuIds } = await idsResponse.json();
+
+        if (!menuIds || menuIds.length === 0) {
+          setMenus([]);
+          return;
+        }
+
+        // Step 2: Get menu data by IDs
+        const menusResponse = await fetch(`${goBackend}/api/v1/nodes/menus`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': tenantId,
+          },
+          body: JSON.stringify({ menuIds }),
+        });
+
+        if (!menusResponse.ok) {
+          throw new Error(`Failed to fetch menus: ${menusResponse.statusText}`);
+        }
+
+        const { menus } = await menusResponse.json();
+        setMenus(menus || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch menus');
       } finally {
@@ -54,7 +101,7 @@ const StoryFragmentMenuPanel = ({
       }
     };
 
-    fetchMenus();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -89,7 +136,6 @@ const StoryFragmentMenuPanel = ({
 
     const updatedNode = {
       ...cloneDeep(storyfragmentNode),
-      hasMenu: !!menuId,
       menuId: menuId,
       isChanged: true,
     };
@@ -99,7 +145,6 @@ const StoryFragmentMenuPanel = ({
   const handleUnlinkMenu = () => {
     const updatedNode = {
       ...cloneDeep(storyfragmentNode),
-      hasMenu: false,
       menuId: null,
       isChanged: true,
     };
@@ -176,17 +221,54 @@ const StoryFragmentMenuPanel = ({
             </div>
 
             {showMenuEditor && (
-              <div className="mt-4">
-                TODO: link up menu editor
-                {/* 
-                  // TODO:
-                <MenuEditor
-                  menu={selectedMenu}
-                  create={false}
-                  contentMap={fullContentMapStore.get()}
-                  embedded={true}
-                />
-                */}
+              <div
+                className="fixed inset-0 overflow-y-auto"
+                style={{ zIndex: 9005 }}
+              >
+                <div className="flex min-h-screen items-center justify-center p-1.5">
+                  <div
+                    className="fixed inset-0 bg-black opacity-65"
+                    onClick={() => setShowMenuEditor(false)}
+                  />
+
+                  <div className="relative w-full max-w-4xl rounded-lg bg-white shadow-xl">
+                    <div className="absolute right-4 top-4 z-10">
+                      <button
+                        onClick={() => setShowMenuEditor(false)}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-90 shadow-lg transition-all duration-200 hover:bg-opacity-100"
+                        title="Close Menu Editor"
+                        aria-label="Close Menu Editor"
+                      >
+                        <XMarkIcon className="h-6 w-6" />
+                      </button>
+                    </div>
+
+                    <div className="p-6">
+                      <MenuForm
+                        menu={selectedMenu}
+                        isCreate={false}
+                        contentMap={contentMap}
+                        onClose={async (saved) => {
+                          setShowMenuEditor(false);
+                          if (saved) {
+                            try {
+                              const tenantId =
+                                import.meta.env.PUBLIC_TENANTID || 'default';
+                              const refreshedContentMap =
+                                await getFullContentMap(tenantId);
+                              setContentMap(refreshedContentMap);
+                            } catch (error) {
+                              console.error(
+                                'Failed to refresh content map:',
+                                error
+                              );
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </>

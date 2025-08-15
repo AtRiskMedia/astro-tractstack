@@ -221,7 +221,7 @@ const StoryFragmentConfigPanel = ({
                 onClick={() => setMode(StoryFragmentMode.MENU)}
                 className="text-md flex h-9 items-center gap-1 rounded border border-cyan-200 bg-white px-3 text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white"
               >
-                {storyfragmentNode.hasMenu ? (
+                {storyfragmentNode.menuId ? (
                   <>
                     <CheckIcon className="h-4 w-4" />
                     <span className="font-bold">Has Menu</span>

@@ -229,7 +229,6 @@ export interface PaneNode extends BaseNode {
 export interface StoryFragmentNode extends BaseNode {
   title: string;
   slug: string;
-  hasMenu: boolean;
   paneIds: string[];
   menuId?: string;
   tailwindBgColour?: string;

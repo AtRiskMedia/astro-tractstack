@@ -1,13 +1,10 @@
 import { useStore } from '@nanostores/react';
-import {
-  settingsPanelStore,
-  showHelpStore,
-} from '@/stores/storykeep';
+import { settingsPanelStore, showHelpStore } from '@/stores/storykeep';
 
 const HudDisplay = () => {
   const signal = useStore(settingsPanelStore);
   const showHelp = useStore(showHelpStore);
-  const isVisible = !signal && showHelp
+  const isVisible = !signal && showHelp;
 
   if (!isVisible) {
     return null;

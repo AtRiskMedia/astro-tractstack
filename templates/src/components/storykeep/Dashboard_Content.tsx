@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useStore } from '@nanostores/react';
 import { classNames } from '@/utils/helpers';
 import { TractStackAPI } from '@/utils/api';
 import {
-  contentNavigationStore,
   handleContentSubtabChange,
   restoreTabNavigation,
 } from '@/stores/navigation';
@@ -47,9 +45,6 @@ const StoryKeepDashboard_Content = ({
     status: 'idle',
     error: null,
   });
-
-  // Subscribe to navigation store
-  const contentNavigationState = useStore(contentNavigationStore);
 
   // Restore navigation state when component mounts or when returning to Content tab
   useEffect(() => {

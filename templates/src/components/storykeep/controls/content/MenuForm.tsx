@@ -7,7 +7,8 @@ import {
   removeMenuLink,
   updateMenuLink,
 } from '@/utils/api/menuHelpers';
-import { saveMenuWithStateUpdate } from '@/utils/api/menuConfig';
+import { getCtx } from '@/stores/nodes';
+import { createMenu, saveMenu } from '@/utils/api/menuConfig';
 import StringInput from '@/components/form/StringInput';
 import EnumSelect from '@/components/form/EnumSelect';
 import ActionBuilderField from '@/components/form/ActionBuilderField';
@@ -49,18 +50,22 @@ export default function MenuForm({
     validator: validateMenuNode,
     onSave: async (data) => {
       try {
-        const updatedState = await saveMenuWithStateUpdate(
-          window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          data,
-          formState.originalState
-        );
+        const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
 
-        // Call success callback after save (original pattern)
+        if (!data.id || data.id === '') {
+          await createMenu(tenantId, data);
+        } else {
+          await saveMenu(tenantId, data);
+        }
+
+        const ctx = getCtx();
+        ctx.notifyNode('root');
+
         setTimeout(() => {
           onClose?.(true);
         }, 1000);
 
-        return updatedState;
+        return data; // Return current state for useFormState
       } catch (error) {
         console.error('Menu save failed:', error);
         throw error;
