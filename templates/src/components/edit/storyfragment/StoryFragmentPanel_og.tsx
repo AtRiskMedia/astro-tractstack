@@ -14,18 +14,26 @@ import ArrowUpTrayIcon from '@heroicons/react/24/outline/ArrowUpTrayIcon';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import {
   fullContentMapStore,
-  //  setPendingImageOperation,
-  //  getPendingImageOperation,
+  setPendingImageOperation,
+  getPendingImageOperation,
+  storyFragmentTopicsStore,
 } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep, findUniqueSlug, titleToSlug } from '@/utils/helpers';
 import { isStoryFragmentNode } from '@/utils/compositor/typeGuards';
 import OgImagePreview from '@/components/compositor/preview/OgImagePreview';
+import {
+  validateFile,
+  resizeAndCropImage,
+  getImageDimensions,
+  type FileValidationOptions,
+} from '@/utils/api/fileHelpers';
 import type {
   FullContentMapItem,
   BrandConfig,
   Topic,
 } from '@/types/tractstack';
+import type { ImageDimensions } from '@/types/formTypes';
 import {
   StoryFragmentMode,
   type StoryFragmentNode,
@@ -54,6 +62,8 @@ const StoryFragmentOpenGraphPanel = ({
   config,
 }: StoryFragmentOpenGraphPanelProps) => {
   const $contentMap = useStore(fullContentMapStore);
+  const $storyFragmentTopics = useStore(storyFragmentTopicsStore);
+  const storedData = $storyFragmentTopics[nodeId];
 
   // Local state for draft changes
   const [draftTitle, setDraftTitle] = useState('');
@@ -111,18 +121,16 @@ const StoryFragmentOpenGraphPanel = ({
       bgColor: ogParams.bgColor,
     };
 
-    // TODO:
-    console.log(`TODO: pending image ops`);
-    //const pendingOp = getPendingImageOperation(nodeId);
-    //if (pendingOp) {
-    //  if (pendingOp.type === "upload" && pendingOp.data) {
-    //    setDraftImageData(pendingOp.data);
-    //    setDraftImagePath(pendingOp.path || null);
-    //  } else if (pendingOp.type === "remove") {
-    //    setDraftImagePath(null);
-    //    setDraftImageData(null);
-    //  }
-    //}
+    const pendingOp = getPendingImageOperation(nodeId);
+    if (pendingOp) {
+      if (pendingOp.type === 'upload' && pendingOp.data) {
+        setDraftImageData(pendingOp.data);
+        setDraftImagePath(pendingOp.path || null);
+      } else if (pendingOp.type === 'remove') {
+        setDraftImagePath(null);
+        setDraftImageData(null);
+      }
+    }
   }, [storyfragmentNode.title, storyfragmentNode.socialImagePath, nodeId]);
 
   // Handle color changes from OgImagePreview
@@ -134,12 +142,10 @@ const StoryFragmentOpenGraphPanel = ({
         newBgColor !== initialState.current.bgColor) &&
       draftImagePath?.includes('--')
     ) {
-      // TODO:
-      console.log(`TODO: pending image ops`);
-      //setPendingImageOperation(nodeId, {
-      //  type: "remove",
-      //  path: draftImagePath,
-      //});
+      setPendingImageOperation(nodeId, {
+        type: 'remove',
+        path: draftImagePath,
+      });
       setDraftImagePath(null);
       setDraftImageData(null);
     }
@@ -157,51 +163,14 @@ const StoryFragmentOpenGraphPanel = ({
         draftImagePath?.includes('--') &&
         newTitle !== initialState.current?.title
       ) {
-        // TODO:
-        console.log(`TODO: pending image ops`);
-        //setPendingImageOperation(nodeId, {
-        //  type: "remove",
-        //  path: draftImagePath,
-        //});
+        setPendingImageOperation(nodeId, {
+          type: 'remove',
+          path: draftImagePath,
+        });
         setDraftImagePath(null);
         setDraftImageData(null);
       }
     }
-  };
-
-  const validateImage = (
-    file: File
-  ): Promise<{ isValid: boolean; error?: string }> => {
-    return new Promise((resolve) => {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        resolve({
-          isValid: false,
-          error: 'Please upload only JPG or PNG files',
-        });
-        return;
-      }
-
-      const img = new Image();
-      img.onload = () => {
-        URL.revokeObjectURL(img.src);
-        if (img.width !== TARGET_WIDTH || img.height !== TARGET_HEIGHT) {
-          resolve({
-            isValid: false,
-            error: `Image must be exactly ${TARGET_WIDTH}x${TARGET_HEIGHT} pixels. Uploaded image is ${img.width}x${img.height} pixels.`,
-          });
-        } else {
-          resolve({ isValid: true });
-        }
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(img.src);
-        resolve({
-          isValid: false,
-          error: 'Failed to load image for validation',
-        });
-      };
-      img.src = URL.createObjectURL(file);
-    });
   };
 
   useEffect(() => {
@@ -225,31 +194,40 @@ const StoryFragmentOpenGraphPanel = ({
 
       setExistingTopics(topicsWithIds);
 
-      // Get current storyfragment data from content map
-      const sfContent = $contentMap.find(
-        (item) => item.type === 'StoryFragment' && item.id === nodeId
-      );
-
       let initialTopics: Topic[] = [];
       let initialDescription = '';
 
-      if (sfContent) {
-        // Convert current topics to Topic objects
-        if (sfContent.topics && sfContent.topics.length > 0) {
+      // Check stored draft data first
+      if (storedData) {
+        initialTopics = Array.isArray(storedData.topics)
+          ? storedData.topics.map((t) => ({
+              id: typeof t.id === 'string' ? parseInt(t.id, 10) : (t.id ?? -1),
+              title: t.title,
+            }))
+          : [];
+        initialDescription = storedData.description || '';
+        setDraftTopics(initialTopics);
+        setDraftDetails(initialDescription);
+      } else {
+        // Fall back to content map data
+        const sfContent = $contentMap.find(
+          (item) => item.type === 'StoryFragment' && item.id === nodeId
+        );
+
+        if (sfContent && sfContent.topics && sfContent.topics.length > 0) {
           initialTopics = sfContent.topics.map((topicTitle) => {
             const existingTopic = topicsWithIds.find(
               (t) => t.title.toLowerCase() === topicTitle.toLowerCase()
             );
             return existingTopic || { id: -1, title: topicTitle };
           });
+          initialDescription = sfContent.description || '';
+          setDraftTopics(initialTopics);
+          setDraftDetails(initialDescription);
+        } else {
+          setDraftTopics([]);
+          setDraftDetails('');
         }
-
-        initialDescription = sfContent.description || '';
-        setDraftTopics(initialTopics);
-        setDraftDetails(initialDescription);
-      } else {
-        setDraftTopics([]);
-        setDraftDetails('');
       }
 
       if (initialState.current) {
@@ -264,13 +242,13 @@ const StoryFragmentOpenGraphPanel = ({
     } finally {
       setLoading(false);
     }
-  }, [nodeId, $contentMap, dataFetched]);
+  }, [nodeId, storedData, $contentMap, dataFetched]);
 
   // Detect changes
   useEffect(() => {
     if (!loading && dataFetched && initialState.current) {
       const initial = initialState.current;
-      //const pendingOp = getPendingImageOperation(nodeId);
+      const pendingOp = getPendingImageOperation(nodeId);
 
       const topicsChanged =
         draftTopics.length !== initial.topics.length ||
@@ -280,17 +258,16 @@ const StoryFragmentOpenGraphPanel = ({
             t.id !== initial.topics[i]?.id
         );
 
-      // TODO:
-      console.log(`TODO: pending image ops`);
-      const imageChanged = null; // pendingOp !== null || draftImagePath !== initial.socialImagePath;
+      const imageChanged =
+        pendingOp !== null || draftImagePath !== initial.socialImagePath;
 
-      //const hasChangesDetected =
-      //  draftTitle !== initial.title ||
-      //  draftDetails !== initial.details ||
-      //  topicsChanged ||
-      //  imageChanged;
+      const hasChangesDetected =
+        draftTitle !== initial.title ||
+        draftDetails !== initial.details ||
+        topicsChanged ||
+        imageChanged;
 
-      //setHasChanges(hasChangesDetected);
+      setHasChanges(hasChangesDetected);
     }
   }, [
     draftTopics,
@@ -307,12 +284,10 @@ const StoryFragmentOpenGraphPanel = ({
   };
 
   const handleRemoveImage = () => {
-    // TODO:
-    console.log(`TODO: pending image ops`);
-    //setPendingImageOperation(nodeId, {
-    //  type: "remove",
-    //  path: draftImagePath || undefined,
-    //});
+    setPendingImageOperation(nodeId, {
+      type: 'remove',
+      path: draftImagePath || undefined,
+    });
     setDraftImagePath(null);
     setDraftImageData(null);
     setImageError(null);
@@ -326,34 +301,90 @@ const StoryFragmentOpenGraphPanel = ({
     setImageError(null);
 
     try {
-      const validation = await validateImage(file);
+      // Basic validation first (format, size)
+      const validationOptions: FileValidationOptions = {
+        maxSizeKB: 2048,
+        allowedFormats: ['jpg', 'jpeg', 'png'],
+        allowAnyImageWithWarning: true,
+      };
+
+      const validation = await validateFile(file, validationOptions);
       if (!validation.isValid) {
-        setImageError(validation.error || 'Invalid image');
+        setImageError(validation.error || 'Invalid file');
         setIsProcessing(false);
         return;
       }
 
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = (e) => resolve(e.target?.result as string);
-      });
-      reader.readAsDataURL(file);
-      const base64 = await base64Promise;
+      // Check dimensions
+      const dimensions = await getImageDimensions(file);
+      const needsResize =
+        dimensions.width !== TARGET_WIDTH ||
+        dimensions.height !== TARGET_HEIGHT;
 
-      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const filename = `${nodeId}-${Date.now()}.${fileExtension}`; // Custom upload with -
+      if (needsResize) {
+        // Auto-resize
+        const targetDimensions: ImageDimensions = {
+          width: TARGET_WIDTH,
+          height: TARGET_HEIGHT,
+        };
 
-      // TODO:
-      console.log(`TODO: pending image ops`);
-      //setPendingImageOperation(nodeId, {
-      //  type: "upload",
-      //  data: base64,
-      //  path: `/images/og/${filename}`,
-      //  filename,
-      //});
+        const processResult = await resizeAndCropImage(
+          file,
+          targetDimensions,
+          0.9
+        );
 
-      setDraftImageData(base64);
-      setDraftImagePath(`/images/og/${filename}`);
+        const fileExtension =
+          file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const filename = `${nodeId}-${Date.now()}.${fileExtension}`;
+
+        setPendingImageOperation(nodeId, {
+          type: 'upload',
+          data: processResult.processedFile,
+          path: `/images/og/${filename}`,
+          filename,
+        });
+
+        setDraftImageData(processResult.processedFile);
+        setDraftImagePath(`/images/og/${filename}`);
+
+        // Show resize feedback
+        if (processResult.warnings.length > 0) {
+          setImageError(
+            `✓ Image automatically resized from ${processResult.originalDimensions.width}x${processResult.originalDimensions.height} to ${processResult.finalDimensions.width}x${processResult.finalDimensions.height} pixels. ${processResult.warnings.join(' ')}`
+          );
+        } else {
+          setImageError(
+            `✓ Image automatically resized from ${processResult.originalDimensions.width}x${processResult.originalDimensions.height} to ${processResult.finalDimensions.width}x${processResult.finalDimensions.height} pixels.`
+          );
+        }
+      } else {
+        // Perfect dimensions - use as-is
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+        });
+        reader.readAsDataURL(file);
+        const base64 = await base64Promise;
+
+        const fileExtension =
+          file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        const filename = `${nodeId}-${Date.now()}.${fileExtension}`;
+
+        setPendingImageOperation(nodeId, {
+          type: 'upload',
+          data: base64,
+          path: `/images/og/${filename}`,
+          filename,
+        });
+
+        setDraftImageData(base64);
+        setDraftImagePath(`/images/og/${filename}`);
+
+        setImageError(
+          `✓ Perfect dimensions! Image uploaded at ${dimensions.width}x${dimensions.height} pixels.`
+        );
+      }
     } catch (err) {
       setImageError('Failed to process image');
       console.error('Error processing image:', err);
@@ -412,7 +443,7 @@ const StoryFragmentOpenGraphPanel = ({
     setDraftDetails(e.target.value);
   };
 
-  const handleApplyChanges = async () => {
+  const handleApplyChanges = () => {
     // Update title if changed
     if (draftTitle !== storyfragmentNode.title) {
       const existingSlugs = $contentMap
@@ -432,16 +463,20 @@ const StoryFragmentOpenGraphPanel = ({
       ctx.modifyNodes([updatedNode]);
     }
 
-    // NOTE: V2 doesn't have a topics/metadata save API yet
-    // For now, we'll show a warning to the user that topics/description changes
-    // need to be saved through a different mechanism
+    // Save topics and description to store
+    const topicsArray = Array.isArray(draftTopics) ? draftTopics : [];
+    const storeTopics = topicsArray.map((topic) => ({
+      id:
+        topic.id !== undefined && topic.id !== -1
+          ? String(topic.id)
+          : undefined,
+      title: topic.title,
+    }));
 
-    if (draftTopics.length > 0 || draftDetails.trim().length > 0) {
-      console.warn(
-        'Topics and description changes detected but V2 API for saving these is not yet implemented'
-      );
-      // You could add a toast notification here to inform the user
-    }
+    storyFragmentTopicsStore.setKey(nodeId, {
+      topics: storeTopics,
+      description: draftDetails,
+    });
 
     // Force node update to trigger save even if only title changed
     if (draftTitle === storyfragmentNode.title) {
@@ -462,7 +497,7 @@ const StoryFragmentOpenGraphPanel = ({
           <h3 className="text-lg font-bold">Page SEO</h3>
           <button
             onClick={() => setMode(StoryFragmentMode.DEFAULT)}
-            className="text-blue-600 hover:text-black"
+            className="text-cyan-600 hover:text-black"
           >
             ← Close Panel
           </button>
@@ -579,7 +614,7 @@ const StoryFragmentOpenGraphPanel = ({
             <textarea
               id="description"
               rows={3}
-              className={`w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-blue-600 focus:ring-blue-600`}
+              className="w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
               placeholder="Add a description for this page..."
               value={draftDetails}
               onChange={handleDescriptionChange}
@@ -587,14 +622,6 @@ const StoryFragmentOpenGraphPanel = ({
             <p className="mt-1 text-sm text-gray-500">
               This description helps with SEO and may appear in search results.
             </p>
-            {draftDetails.trim().length > 0 && (
-              <div className="mt-1 rounded-md border border-amber-200 bg-amber-50 p-2">
-                <p className="text-sm text-amber-800">
-                  ⚠️ Note: Description saving is not yet implemented in V2. This
-                  change will not be persisted.
-                </p>
-              </div>
-            )}
           </div>
 
           <div>
@@ -628,7 +655,7 @@ const StoryFragmentOpenGraphPanel = ({
                     onClick={handleUploadClick}
                     disabled={isProcessing}
                     title="Replace image"
-                    className="flex items-center text-sm text-blue-600 hover:text-orange-600 disabled:opacity-50"
+                    className="flex items-center text-sm text-cyan-600 hover:text-orange-600 disabled:opacity-50"
                   >
                     <ArrowUpTrayIcon className="mr-1 h-4 w-4" />
                     {isProcessing ? 'Processing...' : 'Replace Image'}
@@ -648,7 +675,11 @@ const StoryFragmentOpenGraphPanel = ({
                       : draftImagePath}
                   </p>
                   {imageError && (
-                    <p className="mt-2 text-sm text-red-600">{imageError}</p>
+                    <p
+                      className={`mt-2 text-sm ${imageError.startsWith('✓') ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {imageError}
+                    </p>
                   )}
                 </div>
               </div>
@@ -680,7 +711,7 @@ const StoryFragmentOpenGraphPanel = ({
                       onClick={handleUploadClick}
                       disabled={isProcessing}
                       title="Upload image"
-                      className="flex items-center text-sm text-blue-600 hover:text-orange-600 disabled:opacity-50"
+                      className="flex items-center text-sm text-cyan-600 hover:text-orange-600 disabled:opacity-50"
                     >
                       <ArrowUpTrayIcon className="mr-1 h-4 w-4" />
                       {isProcessing ? 'Processing...' : 'Upload Image'}
@@ -695,7 +726,11 @@ const StoryFragmentOpenGraphPanel = ({
                     />
 
                     {imageError && (
-                      <p className="mt-2 text-sm text-red-600">{imageError}</p>
+                      <p
+                        className={`mt-2 text-sm ${imageError.startsWith('✓') ? 'text-green-600' : 'text-red-600'}`}
+                      >
+                        {imageError}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -708,8 +743,12 @@ const StoryFragmentOpenGraphPanel = ({
                   <p>Requirements:</p>
                   <ul className="ml-5 list-disc space-y-1">
                     <li>
-                      Image must be exactly {TARGET_WIDTH}x{TARGET_HEIGHT}{' '}
-                      pixels
+                      <strong>Best results:</strong> Upload images at exactly{' '}
+                      {TARGET_WIDTH}x{TARGET_HEIGHT} pixels
+                    </li>
+                    <li>
+                      Other sizes will be automatically resized (may crop to
+                      fit)
                     </li>
                     <li>Only JPG or PNG formats are accepted</li>
                     <li>Keep important content centered</li>
@@ -727,10 +766,10 @@ const StoryFragmentOpenGraphPanel = ({
                 Topics
               </label>
 
-              <div className="mb-3 flex">
+              <div className="mb-3 flex space-x-1">
                 <input
                   type="text"
-                  className="flex-grow rounded-l-md border border-gray-300 p-2 shadow-sm focus:border-blue-600 focus:ring-blue-600"
+                  className="flex-grow rounded-l-md border border-gray-300 p-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
                   placeholder="Add a new tag..."
                   value={newTopicTitle}
                   onChange={(e) => setNewTopicTitle(e.target.value)}
@@ -745,20 +784,11 @@ const StoryFragmentOpenGraphPanel = ({
                 <button
                   onClick={handleAddTopic}
                   disabled={!newTopicTitle.trim()}
-                  className="rounded-r-md bg-blue-600 px-3 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  className="rounded-r-md bg-cyan-600 px-3 py-2 text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                 >
                   <PlusIcon className="h-5 w-5" />
                 </button>
               </div>
-
-              {draftTopics.length > 0 && (
-                <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 p-2">
-                  <p className="text-sm text-amber-800">
-                    ⚠️ Note: Topic changes are not yet implemented in V2. These
-                    changes will not be persisted.
-                  </p>
-                </div>
-              )}
 
               <div className="flex flex-wrap gap-2">
                 {draftTopics.map((topic) => (
