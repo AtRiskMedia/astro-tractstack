@@ -48,7 +48,6 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
   if (!signal) {
     return null;
   }
-  console.log(signal);
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();

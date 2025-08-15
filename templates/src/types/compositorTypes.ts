@@ -280,13 +280,14 @@ export interface ArtpackImageNode extends PaneFragmentNode {
 
 export interface BgImageNode extends PaneFragmentNode {
   type: 'background-image';
-  fileId: string;
+  fileId: string | 'pending';
   src: string;
   srcSet?: string;
   alt?: string;
   objectFit: 'cover' | 'contain' | 'fill';
   position?: 'background' | 'left' | 'right' | 'leftBleed' | 'rightBleed';
   size?: 'equal' | 'narrow' | 'wide';
+  base64Data?: string;
 }
 
 export interface VisualBreakData {

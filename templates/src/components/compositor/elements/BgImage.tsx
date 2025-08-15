@@ -6,6 +6,9 @@ interface BgImageProps {
 }
 
 export const BgImage = ({ payload, viewportKey }: BgImageProps) => {
+  // Use base64Data if available (pending upload), otherwise use src (uploaded file)
+  const imageSrc = payload.base64Data || payload.src;
+
   // Helper to check if the image should be hidden on a specific viewport
   const isHiddenOnViewport = (
     viewport: 'Mobile' | 'Tablet' | 'Desktop'
@@ -37,7 +40,7 @@ export const BgImage = ({ payload, viewportKey }: BgImageProps) => {
     if (isFlexImage) {
       return (
         <img
-          src={payload.src}
+          src={imageSrc}
           {...(payload.srcSet ? { srcSet: payload.srcSet } : {})}
           alt={payload.alt || 'Background image'}
           className={`h-full w-full object-${payload.objectFit || 'cover'}`}
@@ -50,7 +53,7 @@ export const BgImage = ({ payload, viewportKey }: BgImageProps) => {
       <div
         className="absolute left-0 top-0 h-full w-full"
         style={{
-          backgroundImage: `url(${payload.src})`,
+          backgroundImage: `url(${imageSrc})`,
           backgroundSize: payload.objectFit || 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
@@ -86,7 +89,7 @@ export const BgImage = ({ payload, viewportKey }: BgImageProps) => {
   if (isFlexImage) {
     return (
       <img
-        src={payload.src}
+        src={imageSrc}
         {...(payload.srcSet ? { srcSet: payload.srcSet } : {})}
         alt={payload.alt || 'Background image'}
         className={`h-full w-full object-${payload.objectFit || 'cover'} ${buildResponsiveClass()}`}
@@ -100,7 +103,7 @@ export const BgImage = ({ payload, viewportKey }: BgImageProps) => {
     <div
       className={`absolute left-0 top-0 h-full w-full ${buildResponsiveClass()}`}
       style={{
-        backgroundImage: `url(${payload.src})`,
+        backgroundImage: `url(${imageSrc})`,
         backgroundSize: payload.objectFit || 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',

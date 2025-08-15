@@ -32,7 +32,6 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [files, setFiles] = useState<ImageFileNode[]>([]);
   const [isSelectingFile, setIsSelectingFile] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<ImageFileNode | null>(null);
   const [query, setQuery] = useState('');
   const [bgImageNode, setBgImageNode] = useState<BgImageNode | null>(null);
   const [objectFit, setObjectFit] = useState<'cover' | 'contain' | 'fill'>(
@@ -48,12 +47,38 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
   useEffect(() => {
     const loadFiles = async () => {
       try {
-        const response = await fetch('/api/turso/getAllFiles');
-        if (!response.ok) throw new Error('Failed to fetch files');
-        const { data } = await response.json();
-        setFiles(data);
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+        // First, get all file IDs
+        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/files`, {
+          headers: {
+            'X-Tenant-ID': tenantId,
+          },
+        });
+        if (!idsResponse.ok) throw new Error('Failed to fetch file IDs');
+        const { fileIds } = await idsResponse.json();
+
+        if (fileIds && fileIds.length > 0) {
+          // Then get the actual file objects
+          const filesResponse = await fetch(`${goBackend}/api/v1/nodes/files`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            body: JSON.stringify({ fileIds }),
+          });
+          if (!filesResponse.ok) throw new Error('Failed to fetch files');
+          const { files } = await filesResponse.json();
+          setFiles(files || []);
+        } else {
+          setFiles([]);
+        }
       } catch (error) {
         console.error('[BackgroundImage] Error loading files:', error);
+        setFiles([]);
       }
     };
     loadFiles();
@@ -105,9 +130,11 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     if (!fileId) return;
 
     const file = files.find((f) => f.id === fileId);
-    if (!file) return;
+    if (!file) {
+      console.log('[BackgroundImage] File not found:', fileId);
+      return;
+    }
 
-    setSelectedFile(file);
     setIsSelectingFile(false);
     deleteExistingBgNodes();
 
@@ -115,6 +142,8 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     const defaultAlt = file.filename
       ? `Decorative Image - ${file.filename.split('.').slice(0, -1).join('.')}`
       : 'Decorative Image';
+
+    // For existing files, use normal src (not base64Data)
     const updatedBgNode: BgImageNode = {
       id: bgNodeId,
       nodeType: 'BgPane',
@@ -151,10 +180,8 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
         return;
       }
 
-      const fileId = `file-${ulid()}`;
-      const monthPath = new Date().toISOString().slice(0, 7);
       const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const filename = `${fileId}.${fileExtension}`;
+      const filename = `${ulid()}.${fileExtension}`;
 
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve) => {
@@ -162,32 +189,6 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
       });
       reader.readAsDataURL(file);
       const base64 = await base64Promise;
-
-      const response = await fetch('/api/fs/saveImage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: `/images/${monthPath}`,
-          filename,
-          data: base64,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to upload image');
-      const { path: savedPath } = await response.json();
-
-      await fetch('/api/turso/upsertFileNode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: fileId,
-          nodeType: 'File',
-          parentId: null,
-          filename,
-          altDescription: `Decorative Image - ${filename.split('.').slice(0, -1).join('.')}`,
-          src: savedPath,
-        }),
-      });
 
       deleteExistingBgNodes();
 
@@ -198,8 +199,9 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
         nodeType: 'BgPane',
         parentId: paneId,
         type: 'background-image',
-        fileId: fileId,
-        src: savedPath,
+        fileId: 'pending',
+        src: '',
+        base64Data: base64,
         alt: defaultAlt,
         objectFit,
         position: bgImageNode?.position || 'background',
@@ -314,7 +316,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
   return (
     <div className="w-full space-y-6">
       <div className="flex w-full flex-col space-y-4">
-        {bgImageNode && bgImageNode.src ? (
+        {bgImageNode && (bgImageNode.src || bgImageNode.base64Data) ? (
           <div
             className="relative overflow-hidden rounded-md border border-gray-300 bg-gray-100"
             style={{ width: '100%', height: '160px' }}
@@ -322,7 +324,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
             <div
               className="h-full w-full"
               style={{
-                backgroundImage: `url(${bgImageNode.src})`,
+                backgroundImage: `url(${bgImageNode.base64Data || bgImageNode.src})`,
                 backgroundSize: objectFit,
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
@@ -348,7 +350,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
               <ArrowUpTrayIcon className="mr-1 h-4 w-4" />
               {isProcessing
                 ? 'Processing...'
-                : bgImageNode?.src
+                : bgImageNode?.src || bgImageNode?.base64Data
                   ? 'Replace Image'
                   : 'Upload Background Image'}
             </button>
@@ -431,80 +433,92 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-gray-700">
+            <label
+              htmlFor="altDescription"
+              className="block text-sm font-bold text-gray-700"
+            >
               Alt Description
             </label>
             <input
               type="text"
+              id="altDescription"
               value={localAltDescription}
               onChange={(e) => setLocalAltDescription(e.target.value)}
               onBlur={handleAltDescriptionBlur}
-              className="w-full rounded-md border border-gray-300 p-2"
-              placeholder="Enter alt description"
+              className="border-mylightgrey focus:border-myblue focus:ring-myblue block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+              placeholder="Describe this image for accessibility"
             />
           </div>
         </>
       )}
 
       {isSelectingFile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md rounded-lg bg-white p-4">
-            <style>{comboboxItemStyles}</style>
-            <h3 className="mb-2 text-lg font-bold">Select a file</h3>
-
-            <Combobox.Root
-              collection={collection}
-              value={selectedFile ? [selectedFile.id] : []}
-              onValueChange={handleFileSelect}
-              onInputValueChange={(details) => setQuery(details.inputValue)}
-              loopFocus={true}
-              openOnKeyPress={true}
-              composite={true}
-            >
-              <div className="relative mt-1">
-                <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-cyan-600 sm:text-sm">
-                  <Combobox.Input
-                    className="text-myblack w-full border-none py-2 pl-3 pr-10 text-sm leading-5 focus:ring-0"
-                    placeholder="Search files..."
-                    autoComplete="off"
-                  />
-                  <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon className="text-mydarkgrey h-5 w-5" />
-                  </Combobox.Trigger>
-                </div>
-
-                <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                  {collection.items.length === 0 ? (
-                    <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                      No files found.
-                    </div>
-                  ) : (
-                    collection.items.map((file) => (
-                      <Combobox.Item
-                        key={file.id}
-                        item={file}
-                        className="file-item text-myblack relative cursor-default select-none py-2 pl-10 pr-4"
-                      >
-                        <span className="block truncate">
-                          {file.altDescription || file.filename}
-                        </span>
-                        <span className="file-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                          <CheckIcon className="h-5 w-5" />
-                        </span>
-                      </Combobox.Item>
-                    ))
-                  )}
-                </Combobox.Content>
-              </div>
-            </Combobox.Root>
-
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-700">Select Image</h3>
             <button
-              className="bg-mylightgrey text-myblack mt-4 rounded-md px-4 py-2 text-sm hover:bg-cyan-600 hover:text-white"
               onClick={() => setIsSelectingFile(false)}
+              className="text-mydarkgrey hover:text-gray-500"
             >
-              Cancel
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
+
+          <style dangerouslySetInnerHTML={{ __html: comboboxItemStyles }} />
+
+          <Combobox.Root
+            collection={collection}
+            onValueChange={handleFileSelect}
+            onInputValueChange={(details) => setQuery(details.inputValue)}
+          >
+            <Combobox.Control className="relative">
+              <Combobox.Input
+                placeholder="Search files..."
+                className="border-mylightgrey focus:border-myblue focus:ring-myblue block w-full rounded-md border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-1"
+              />
+              <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon className="text-mydarkgrey h-5 w-5" />
+              </Combobox.Trigger>
+            </Combobox.Control>
+
+            <Combobox.Positioner>
+              <Combobox.Content className="border-mylightgrey max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
+                {collection.items.map((file) => (
+                  <Combobox.Item
+                    key={file.id}
+                    item={file}
+                    className="file-item hover:bg-mylightgrey relative cursor-pointer select-none px-3 py-2 text-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-1 items-center">
+                        <div className="mr-3 h-8 w-12 flex-shrink-0 overflow-hidden rounded bg-gray-100">
+                          <img
+                            src={file.src}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {file.altDescription || file.filename}
+                          </div>
+                          {file.altDescription && (
+                            <div className="text-mydarkgrey text-xs">
+                              {file.filename}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <CheckIcon className="file-indicator text-myblue h-4 w-4 flex-shrink-0" />
+                    </div>
+                  </Combobox.Item>
+                ))}
+              </Combobox.Content>
+            </Combobox.Positioner>
+          </Combobox.Root>
         </div>
       )}
     </div>
