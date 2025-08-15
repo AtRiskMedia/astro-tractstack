@@ -444,20 +444,30 @@ const AddPaneNewPanel = ({
               </Select.Root>
             </div>
 
-            <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700">
-                Variant
-              </label>
+            <div className="flex items-center gap-2">
               <Switch.Root
                 checked={useOddVariant}
                 onCheckedChange={(details) => setUseOddVariant(details.checked)}
-                className="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 data-[state=checked]:bg-cyan-600 data-[state=unchecked]:bg-gray-200"
+                className="inline-flex items-center"
               >
-                <Switch.Thumb className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0" />
+                <Switch.Control
+                  className={`${
+                    useOddVariant ? 'bg-cyan-600' : 'bg-gray-200'
+                  } relative my-2 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`}
+                >
+                  <Switch.Thumb
+                    className={`${
+                      useOddVariant ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 rounded-full bg-white shadow-lg transition-transform duration-200`}
+                  />
+                </Switch.Control>
+                <Switch.HiddenInput />
+                <div className="flex h-6 items-center">
+                  <Switch.Label className="px-4 text-sm text-gray-700">
+                    Use odd variant
+                  </Switch.Label>
+                </div>
               </Switch.Root>
-              <span className="ml-2 text-sm text-gray-700">
-                {useOddVariant ? 'Odd Variant' : 'Even Variant'}
-              </span>
             </div>
           </div>
 

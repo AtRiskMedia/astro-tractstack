@@ -4,6 +4,7 @@ import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/stores/brand';
 import { joinUrlPaths } from '@/utils/helpers';
+import { handleFailedResponse } from '@/utils/backend';
 import { components as codeHookComponents } from '@/custom/CodeHook.astro';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
@@ -41,11 +42,14 @@ try {
     },
   });
 
-  if (!response.ok) {
-    return new Response(null, {
-      status: response.status,
-      statusText: response.statusText,
-    });
+  const failedResponse = await handleFailedResponse(
+    response,
+    goBackend,
+    tenantId,
+    Astro.url.pathname
+  );
+  if (failedResponse) {
+    return failedResponse;
   }
 
   loadData = await response.json();

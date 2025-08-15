@@ -69,7 +69,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() {}
+  constructor() { }
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -534,11 +534,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-            node,
-            node.tagName as Tag,
-            tagName,
-            offset ? tagNames[offset - 1] : undefined
-          )
+          node,
+          node.tagName as Tag,
+          tagName,
+          offset ? tagNames[offset - 1] : undefined
+        )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -774,10 +774,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-      {
-        heldBeliefs: {},
-        withheldBeliefs: {},
-      };
+    {
+      heldBeliefs: {},
+      withheldBeliefs: {},
+    };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -861,11 +861,10 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
                 ? addHoverPrefix(classesHoverPayload[0])
                 : ``
-            }`;
+              }`;
           }
           const closestPaneId = this.getClosestNodeTypeFromId(
             nodeId,
@@ -2279,46 +2278,6 @@ export class NodesContext {
     return nodes
       .filter((node) => !node.parentId || !nodeMap[node.parentId])
       .map((node) => nodeMap[node.id]);
-  }
-
-  private processChildNodesFromPanePayload(
-    nodes: any[],
-    paneId: string
-  ): BaseNode[] {
-    const processedNodes: BaseNode[] = [];
-
-    const processNode = (nodeData: any, parentId: string): BaseNode | null => {
-      if (!nodeData || typeof nodeData !== 'object') return null;
-
-      // Create a properly structured node
-      const node: BaseNode = {
-        id: nodeData.id || ulid(),
-        nodeType: nodeData.nodeType || 'TagElement',
-        parentId: parentId,
-        isChanged: true,
-        ...nodeData, // Spread other properties
-      };
-
-      return node;
-    };
-
-    // Process each node recursively
-    const traverseNodes = (nodeArray: any[], parentId: string) => {
-      nodeArray.forEach((nodeData) => {
-        const node = processNode(nodeData, parentId);
-        if (node) {
-          processedNodes.push(node);
-
-          // Process children if they exist
-          if (nodeData.children && Array.isArray(nodeData.children)) {
-            traverseNodes(nodeData.children, node.id);
-          }
-        }
-      });
-    };
-
-    traverseNodes(nodes, paneId);
-    return processedNodes;
   }
 
   private deleteNodes(nodesList: BaseNode[]): BaseNode[] {

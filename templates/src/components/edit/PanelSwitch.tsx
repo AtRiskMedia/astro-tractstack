@@ -48,6 +48,7 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
   if (!signal) {
     return null;
   }
+  console.log(signal);
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();
@@ -84,45 +85,45 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
       break;
 
     case 'style-parent':
-      if (markdownNode && paneNode && signal.layer)
+      if (markdownNode && paneNode)
         return (
           <StyleParentPanel
             node={markdownNode}
             parentNode={paneNode}
-            layer={signal.layer}
+            layer={signal.layer || 0}
             config={config}
           />
         );
       break;
 
     case 'style-parent-add':
-      if (markdownNode && signal.className && signal.layer)
+      if (markdownNode && signal.className)
         return (
           <StyleParentAddPanel
             node={markdownNode}
-            layer={signal.layer}
+            layer={signal.layer || 0}
             className={signal.className}
           />
         );
       break;
 
     case 'style-parent-remove':
-      if (markdownNode && signal.className && signal.layer)
+      if (markdownNode && signal.className)
         return (
           <StyleParentRemovePanel
             node={markdownNode}
-            layer={signal.layer}
+            layer={signal.layer || 0}
             className={signal.className}
           />
         );
       break;
 
     case 'style-parent-update':
-      if (markdownNode && signal.className && signal.layer)
+      if (markdownNode && signal.className)
         return (
           <StyleParentUpdatePanel
             node={markdownNode}
-            layer={signal.layer}
+            layer={signal.layer || 0}
             className={signal.className}
             config={config}
           />
@@ -130,11 +131,11 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
       break;
 
     case 'style-parent-delete-layer':
-      if (markdownNode && signal.layer)
+      if (markdownNode)
         return (
           <StyleParentDeleteLayerPanel
             node={markdownNode}
-            layer={signal.layer}
+            layer={signal.layer || 0}
           />
         );
       break;
@@ -409,18 +410,18 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
       break;
 
     default:
-      console.log(
-        `SettingsPanel miss`,
-        signal,
-        clickedNode,
-        paneId,
-        paneNode,
-        childNodeIds,
-        childNodes,
-        availableCodeHooks
-      );
+      settingsPanelStore.set(null);
   }
-  settingsPanelStore.set(null);
+  console.log(
+    `SettingsPanel miss`,
+    signal,
+    clickedNode,
+    paneId,
+    paneNode,
+    childNodeIds,
+    childNodes,
+    availableCodeHooks
+  );
   return null;
 };
 

@@ -36,9 +36,6 @@ const StoryKeepHeader = ({
   const canUndo = useStore(canUndoStore);
   const canRedo = useStore(canRedoStore);
 
-  // Determine current viewport key for conditional rendering
-  const viewportKey = viewport === 'auto' ? 'desktop' : viewport;
-
   const handleSave = () => {
     console.log('Save placeholder - will implement later');
   };
