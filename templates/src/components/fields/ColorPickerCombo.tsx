@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
@@ -11,7 +11,7 @@ import {
   findClosestTailwindColor,
   getComputedColor,
 } from '@/utils/compositor/tailwindColors';
-import { debounce } from '@/utils/helpers';
+import { debounce, useDropdownDirection } from '@/utils/helpers';
 import type { BrandConfig } from '@/types/tractstack';
 
 export interface ColorPickerProps {
@@ -39,6 +39,10 @@ const ColorPickerCombo = ({
     useState(initialTailwindColor);
   const [query, setQuery] = useState('');
   const [initialRender, setInitialRender] = useState(true);
+
+  // Add ref and useDropdownDirection hook
+  const comboboxRef = useRef<HTMLDivElement>(null);
+  const { openAbove, maxHeight } = useDropdownDirection(comboboxRef);
 
   // Get all available Tailwind color options
   const allTailwindColorOptions = useMemo(() => {
@@ -220,7 +224,7 @@ const ColorPickerCombo = ({
               onInputValueChange={handleInputChange}
               selectionBehavior="replace"
             >
-              <div className="relative max-w-48">
+              <div ref={comboboxRef} className="relative max-w-48">
                 <Combobox.Input
                   className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full rounded-md py-2 pl-3 pr-10 shadow-sm"
                   placeholder="Search Tailwind colors..."
@@ -232,7 +236,12 @@ const ColorPickerCombo = ({
                     aria-hidden="true"
                   />
                 </Combobox.Trigger>
-                <Combobox.Content className="xs:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <Combobox.Content
+                  className={`xs:text-sm absolute z-10 mt-1 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
+                    openAbove ? 'bottom-full mb-1' : 'top-full'
+                  }`}
+                  style={{ maxHeight }}
+                >
                   {filteredColors.length === 0 ? (
                     <div className="relative cursor-default select-none py-2 pl-3 pr-4 text-black">
                       Nothing found.
