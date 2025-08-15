@@ -5,9 +5,14 @@ import { createListCollection } from '@ark-ui/react/collection';
 import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/20/solid';
 import { NodesContext } from '@/stores/nodes';
 import {
-  NodesSnapshotRenderer,
+  PanesPreviewGenerator,
+  type PanePreviewRequest,
+  type PaneFragmentResult,
+} from '@/components/compositor/preview/PanesPreviewGenerator';
+import {
+  PaneSnapshotGenerator,
   type SnapshotData,
-} from '@/components/compositor/preview/NodesSnapshotRenderer';
+} from '@/components/compositor/preview/PaneSnapshotGenerator';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
 import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
 import {
@@ -31,6 +36,8 @@ interface PreviewPane {
   template: any;
   index: number;
   variant: string;
+  htmlFragment?: string;
+  fragmentError?: string;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -72,11 +79,13 @@ const AddPaneBreakPanel = ({
 }: AddPaneBreakPanelProps) => {
   const [previews, setPreviews] = useState<PreviewPane[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set([0]));
+  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
   const [variantQuery, setVariantQuery] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<string>('all');
+  const [fragmentsToGenerate, setFragmentsToGenerate] = useState<
+    PanePreviewRequest[]
+  >([]);
 
-  // Create collection for Ark UI Combobox with filtered variants
   const collection = useMemo(() => {
     const allVariants = ['all', ...VARIANTS];
     const filteredVariants =
@@ -93,44 +102,90 @@ const AddPaneBreakPanel = ({
     });
   }, [variantQuery]);
 
-  const templates = useMemo(() => {
-    if (selectedVariant === 'all') {
-      return VARIANTS.flatMap((variant) =>
-        templateCategory
-          .getTemplatesByVariant(variant)
-          .map((template) => ({ ...template, variant }))
-      );
-    }
-    return templateCategory
-      .getTemplatesByVariant(selectedVariant)
-      .map((template) => ({ ...template, variant: selectedVariant }));
+  const filteredVariants = useMemo(() => {
+    return selectedVariant === 'all'
+      ? VARIANTS
+      : [selectedVariant as (typeof VARIANTS)[number]];
   }, [selectedVariant]);
 
   useEffect(() => {
-    const newPreviews = templates.map((template, index) => {
+    const newPreviews = filteredVariants.map((variant, index: number) => {
       const ctx = new NodesContext();
       ctx.addNode(createEmptyStorykeep('tmp'));
+      const template = templateCategory.getTemplatesByVariant(variant)[0];
       ctx.addTemplatePane('tmp', template);
-      return { ctx, template, index, variant: template.variant };
+      return { ctx, template, index, variant };
     });
     setPreviews(newPreviews);
     setCurrentPage(0);
-    setRenderedPages(new Set([0]));
-  }, [templates]);
+    setRenderedPages(new Set());
+  }, [filteredVariants]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 0 && newPage < totalPages) {
-      setCurrentPage(newPage);
-      setRenderedPages((prev) => new Set([...prev, newPage]));
-    }
-  };
 
   const visiblePreviews = useMemo(() => {
     const startIndex = currentPage * ITEMS_PER_PAGE;
     return previews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [previews, currentPage]);
+
+  useEffect(() => {
+    const pageHasBeenRendered = renderedPages.has(currentPage);
+    const previewsOnThisPageNeedFetching = visiblePreviews.some(
+      (p) => !p.htmlFragment && !p.fragmentError
+    );
+
+    if (previewsOnThisPageNeedFetching && !pageHasBeenRendered) {
+      const newRequests = visiblePreviews
+        .filter((p) => !p.htmlFragment && !p.fragmentError)
+        .map((p) => ({
+          id: `template-${p.index}`,
+          ctx: p.ctx,
+        }));
+      setFragmentsToGenerate(newRequests);
+    } else {
+      setFragmentsToGenerate([]);
+    }
+  }, [currentPage, visiblePreviews, renderedPages]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handleFragmentsComplete = (results: PaneFragmentResult[]) => {
+    setPreviews((prevPreviews) => {
+      const updated = [...prevPreviews];
+      results.forEach((result) => {
+        const index = parseInt(result.id.replace('template-', ''));
+        const previewIndex = updated.findIndex((p) => p.index === index);
+        if (previewIndex !== -1) {
+          updated[previewIndex] = {
+            ...updated[previewIndex],
+            htmlFragment: result.htmlString,
+            fragmentError: result.error,
+          };
+        }
+      });
+      return updated;
+    });
+    setRenderedPages((prev) => new Set(prev).add(currentPage));
+  };
+
+  const handleSnapshotComplete = (id: string, snapshot: SnapshotData) => {
+    const index = parseInt(id.replace('template-', ''));
+    setPreviews((prevPreviews) => {
+      const updated = [...prevPreviews];
+      const previewIndex = updated.findIndex((p) => p.index === index);
+      if (previewIndex !== -1) {
+        updated[previewIndex] = {
+          ...updated[previewIndex],
+          snapshot,
+        };
+      }
+      return updated;
+    });
+  };
 
   const handleVisualBreakInsert = (
     variant: string,
@@ -138,34 +193,24 @@ const AddPaneBreakPanel = ({
     first: boolean
   ) => {
     if (!ctx) return;
-    const rawTemplate = getTemplateVisualBreakPane(variant);
 
-    // Cast as TemplatePane to match the expected type
-    const template: TemplatePane = {
-      ...rawTemplate,
-      bgColour: 'white', // Will be overridden below
-    };
+    const template = getTemplateVisualBreakPane(variant) as TemplatePane;
 
-    // If isStoryFragment, nodeId is already the owner, otherwise need to get storyfragment
     const ownerId = isStoryFragment
       ? nodeId
       : ctx.getClosestNodeTypeFromId(nodeId, 'StoryFragment');
     const owner = ctx.allNodes.get().get(ownerId);
 
-    // Get adjacent colors based on whether it's a storyFragment/contextPane vs regular pane
     let aboveColor = 'white';
     let belowColor = 'white';
 
     if (isStoryFragment) {
-      // Working with storyfragment/contextPane directly
       const sf = owner as StoryFragmentNode;
       if (sf.paneIds.length > 0) {
         if (first) {
-          // Inserting before first pane
           const firstPane = ctx.allNodes.get().get(sf.paneIds[0]) as PaneNode;
           belowColor = firstPane?.bgColour || 'white';
         } else {
-          // Inserting after last pane
           const lastPane = ctx.allNodes
             .get()
             .get(sf.paneIds[sf.paneIds.length - 1]) as PaneNode;
@@ -173,11 +218,9 @@ const AddPaneBreakPanel = ({
         }
       }
     } else {
-      // Working with existing pane
       const sf = ctx.allNodes.get().get(ownerId) as StoryFragmentNode;
       const currentIndex = sf.paneIds.indexOf(nodeId);
       if (first) {
-        // Inserting before current pane
         const abovePaneId =
           currentIndex > 0 ? sf.paneIds[currentIndex - 1] : null;
         const abovePane = abovePaneId
@@ -187,7 +230,6 @@ const AddPaneBreakPanel = ({
         aboveColor = abovePane?.bgColour || 'white';
         belowColor = currentPane?.bgColour || 'white';
       } else {
-        // Inserting after current pane
         const belowPaneId =
           currentIndex < sf.paneIds.length - 1
             ? sf.paneIds[currentIndex + 1]
@@ -201,7 +243,6 @@ const AddPaneBreakPanel = ({
       }
     }
 
-    // Override the template colors
     template.bgColour = belowColor;
     const svgFill = aboveColor === belowColor ? 'black' : aboveColor;
 
@@ -219,13 +260,11 @@ const AddPaneBreakPanel = ({
       }
     }
 
-    // Add the modified template
     ctx.addTemplatePane(ownerId, template, nodeId, first ? 'before' : 'after');
     ctx.notifyNode(`root`);
     setMode(PaneAddMode.DEFAULT);
   };
 
-  // CSS to properly style the combobox items with hover and selection
   const comboboxItemStyles = `
     .variant-item[data-highlighted] {
       background-color: #0891b2; /* bg-cyan-600 */
@@ -323,6 +362,16 @@ const AddPaneBreakPanel = ({
         Click on a break design to use:
       </h3>
 
+      {fragmentsToGenerate.length > 0 && (
+        <PanesPreviewGenerator
+          requests={fragmentsToGenerate}
+          onComplete={handleFragmentsComplete}
+          onError={(error) =>
+            console.error('Fragment generation error:', error)
+          }
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-6 p-2 xl:grid-cols-3">
         {visiblePreviews.map((preview) => (
           <div
@@ -336,23 +385,35 @@ const AddPaneBreakPanel = ({
                 : ''
             }`}
             style={{
-              ...(!preview.snapshot ? { minHeight: '100px' } : {}),
+              ...(!preview.snapshot ? { minHeight: '75px' } : {}),
             }}
           >
-            {renderedPages.has(currentPage) && !preview.snapshot && (
-              <NodesSnapshotRenderer
-                ctx={preview.ctx}
-                forceRegenerate={false}
-                outputWidth={400}
-                onComplete={(data) => {
-                  setPreviews((prev) =>
-                    prev.map((p) =>
-                      p.index === preview.index ? { ...p, snapshot: data } : p
-                    )
-                  );
-                }}
-              />
+            {preview.htmlFragment &&
+              !preview.snapshot &&
+              !preview.fragmentError && (
+                <PaneSnapshotGenerator
+                  id={`template-${preview.index}`}
+                  htmlString={preview.htmlFragment}
+                  onComplete={handleSnapshotComplete}
+                  onError={(id, error) =>
+                    console.error(`Snapshot error for ${id}:`, error)
+                  }
+                  outputWidth={400}
+                />
+              )}
+
+            {!preview.htmlFragment && !preview.fragmentError && (
+              <div className="flex h-24 items-center justify-center">
+                <div className="text-gray-500">Loading preview...</div>
+              </div>
             )}
+
+            {preview.fragmentError && (
+              <div className="flex h-24 items-center justify-center">
+                <div className="text-red-500">Preview error</div>
+              </div>
+            )}
+
             {preview.snapshot && (
               <>
                 <div className="mb-4 p-3.5">

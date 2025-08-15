@@ -1051,55 +1051,55 @@ export class NodesContext {
     return '';
   }
 
-  addPaneToStoryFragment(
-    nodeId: string,
-    pane: PaneNode,
-    location: 'before' | 'after'
-  ) {
-    const node = this.allNodes.get().get(nodeId) as BaseNode;
-    if (
-      !node ||
-      (node.nodeType !== 'StoryFragment' && node.nodeType !== 'Pane')
-    ) {
-      return;
-    }
+  //addPaneToStoryFragment(
+  //  nodeId: string,
+  //  pane: PaneNode,
+  //  location: 'before' | 'after'
+  ///) {
+  //  const node = this.allNodes.get().get(nodeId) as BaseNode;
+  //  if (
+  //    !node ||
+  //    (node.nodeType !== 'StoryFragment' && node.nodeType !== 'Pane')
+  //  ) {
+  //    return;
+  //  }
 
-    pane.id = ulid();
-    this.addNode(pane);
+  //  pane.id = ulid();
+  //  this.addNode(pane);
 
-    if (node.nodeType === 'Pane') {
-      const storyFragmentId = this.getClosestNodeTypeFromId(
-        nodeId,
-        'StoryFragment'
-      );
-      const storyFragment = this.allNodes
-        .get()
-        .get(storyFragmentId) as StoryFragmentNode;
-      if (storyFragment) {
-        pane.parentId = storyFragmentId;
-        const originalPaneIndex = storyFragment.paneIds.indexOf(pane.parentId);
-        let insertIdx = -1;
-        if (location === 'before')
-          insertIdx = Math.max(0, originalPaneIndex - 1);
-        else
-          insertIdx = Math.min(
-            storyFragment.paneIds.length - 1,
-            originalPaneIndex + 1
-          );
-        storyFragment.paneIds.splice(insertIdx, 0, pane.id);
-      }
-    } else if (node.nodeType !== 'StoryFragment') {
-      const storyFragment = node as StoryFragmentNode;
-      if (storyFragment) {
-        pane.parentId = node.id;
-        if (location === 'after') {
-          storyFragment.paneIds.push(pane.id);
-        } else {
-          storyFragment.paneIds.unshift(pane.id);
-        }
-      }
-    }
-  }
+  //  if (node.nodeType === 'Pane') {
+  //    const storyFragmentId = this.getClosestNodeTypeFromId(
+  //      nodeId,
+  //      'StoryFragment'
+  //    );
+  //    const storyFragment = this.allNodes
+  //      .get()
+  //      .get(storyFragmentId) as StoryFragmentNode;
+  //    if (storyFragment) {
+  //      pane.parentId = storyFragmentId;
+  //      const originalPaneIndex = storyFragment.paneIds.indexOf(pane.parentId);
+  //      let insertIdx = -1;
+  //      if (location === 'before')
+  //        insertIdx = Math.max(0, originalPaneIndex - 1);
+  //      else
+  //        insertIdx = Math.min(
+  //          storyFragment.paneIds.length - 1,
+  //          originalPaneIndex + 1
+  //        );
+  //      storyFragment.paneIds.splice(insertIdx, 0, pane.id);
+  //    }
+  //  } else if (node.nodeType !== 'StoryFragment') {
+  //    const storyFragment = node as StoryFragmentNode;
+  //    if (storyFragment) {
+  //      pane.parentId = node.id;
+  //      if (location === 'after') {
+  //        storyFragment.paneIds.push(pane.id);
+  //      } else {
+  //        storyFragment.paneIds.unshift(pane.id);
+  //      }
+  //    }
+  //  }
+  //}
 
   addContextTemplatePane(ownerId: string, pane: TemplatePane) {
     const ownerNode = this.allNodes.get().get(ownerId);
@@ -2006,43 +2006,30 @@ export class NodesContext {
       return;
     }
 
-    const oldPaneIds = [...storyfragment.paneIds];
+    const newPaneIds = [...storyfragment.paneIds];
 
-    // If no insert reference, just append
     if (!insertId) {
-      storyfragment.paneIds.push(paneId);
+      newPaneIds.push(paneId);
     } else {
-      const insertIdx = storyfragment.paneIds.indexOf(insertId);
+      const insertIdx = newPaneIds.indexOf(insertId);
       if (insertIdx === -1) {
-        console.warn('Insert reference pane not found in storyfragment');
-        return;
+        console.warn('Insert reference pane not found, adding to end.');
+        newPaneIds.push(paneId);
+      } else {
+        const targetIdx = location === 'before' ? insertIdx : insertIdx + 1;
+        newPaneIds.splice(targetIdx, 0, paneId);
       }
-
-      const targetIdx = location === 'before' ? insertIdx : insertIdx + 1;
-      storyfragment.paneIds.splice(targetIdx, 0, paneId);
     }
 
-    // Mark storyfragment as changed
-    storyfragment.isChanged = true;
+    // Create the updated node object with a clear type
+    const updatedStoryFragment: StoryFragmentNode = {
+      ...storyfragment,
+      paneIds: newPaneIds,
+      isChanged: true,
+    };
 
-    // Add to history
-    this.history.addPatch({
-      op: PatchOp.REPLACE,
-      undo: (ctx) => {
-        const sf = ctx.allNodes.get().get(storyfragmentId) as StoryFragmentNode;
-        if (sf) {
-          sf.paneIds = oldPaneIds;
-          sf.isChanged = true;
-        }
-      },
-      redo: (ctx) => {
-        const sf = ctx.allNodes.get().get(storyfragmentId) as StoryFragmentNode;
-        if (sf) {
-          sf.paneIds = [...storyfragment.paneIds];
-          sf.isChanged = true;
-        }
-      },
-    });
+    // Pass the correctly typed object to modifyNodes
+    this.modifyNodes([updatedStoryFragment]);
   }
 
   isSlugValid(
@@ -2292,6 +2279,46 @@ export class NodesContext {
     return nodes
       .filter((node) => !node.parentId || !nodeMap[node.parentId])
       .map((node) => nodeMap[node.id]);
+  }
+
+  private processChildNodesFromPanePayload(
+    nodes: any[],
+    paneId: string
+  ): BaseNode[] {
+    const processedNodes: BaseNode[] = [];
+
+    const processNode = (nodeData: any, parentId: string): BaseNode | null => {
+      if (!nodeData || typeof nodeData !== 'object') return null;
+
+      // Create a properly structured node
+      const node: BaseNode = {
+        id: nodeData.id || ulid(),
+        nodeType: nodeData.nodeType || 'TagElement',
+        parentId: parentId,
+        isChanged: true,
+        ...nodeData, // Spread other properties
+      };
+
+      return node;
+    };
+
+    // Process each node recursively
+    const traverseNodes = (nodeArray: any[], parentId: string) => {
+      nodeArray.forEach((nodeData) => {
+        const node = processNode(nodeData, parentId);
+        if (node) {
+          processedNodes.push(node);
+
+          // Process children if they exist
+          if (nodeData.children && Array.isArray(nodeData.children)) {
+            traverseNodes(nodeData.children, node.id);
+          }
+        }
+      });
+    };
+
+    traverseNodes(nodes, paneId);
+    return processedNodes;
   }
 
   private deleteNodes(nodesList: BaseNode[]): BaseNode[] {

@@ -22,13 +22,11 @@ import {
   brandColourStore,
   preferredThemeStore,
   hasAssemblyAIStore,
-  fullContentMapStore,
 } from '@/stores/storykeep';
 import { templateCategories } from '@/utils/compositor/templateMarkdownStyles';
 import { AddPanePanel_newAICopy } from './AddPanePanel_newAICopy';
 import { AddPaneNewCopyMode, type CopyMode } from './AddPanePanel_newCopyMode';
 import { AddPaneNewCustomCopy } from './AddPanePanel_newCustomCopy';
-//import { getTitleSlug } from '@/utils/aai/getTitleSlug';
 import { themes, type Theme } from '@/types/tractstack';
 import { PaneAddMode } from '@/types/compositorTypes';
 
@@ -72,7 +70,7 @@ const AddPaneNewPanel = ({
   const [customMarkdown, setCustomMarkdown] = useState<string>(`...`);
   const [previews, setPreviews] = useState<PreviewPane[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set([0]));
+  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
   const [selectedTheme, setSelectedTheme] = useState<Theme>(
     preferredThemeStore.get()
   );
@@ -82,15 +80,14 @@ const AddPaneNewPanel = ({
   );
   const [isInserting, setIsInserting] = useState(false);
   const [aiContentGenerated, setAiContentGenerated] = useState(false);
-  const [fragmentsGenerated, setFragmentsGenerated] = useState(false);
+  const [fragmentsToGenerate, setFragmentsToGenerate] = useState<
+    PanePreviewRequest[]
+  >([]);
   const shouldShowDesigns = copyMode !== 'ai' || aiContentGenerated;
 
-  // Create collection for Ark UI Select
   const categoryCollection = useMemo(() => {
-    // Filter categories based on copy mode
     const categories =
       copyMode === `ai` ? [templateCategories[1]] : templateCategories;
-
     return createListCollection({
       items: categories,
       itemToValue: (item) => item.id,
@@ -98,7 +95,6 @@ const AddPaneNewPanel = ({
     });
   }, [copyMode]);
 
-  // Create collection for Ark UI Listbox (themes)
   const themesCollection = useMemo(() => {
     return createListCollection({
       items: themes,
@@ -114,7 +110,6 @@ const AddPaneNewPanel = ({
         brand,
         useOddVariant
       );
-
     return selectedCategory.getTemplates(selectedTheme, brand, useOddVariant);
   }, [selectedTheme, useOddVariant, selectedCategory, copyMode, isContextPane]);
 
@@ -136,52 +131,62 @@ const AddPaneNewPanel = ({
       const thisTemplate =
         copyMode === 'custom' || (copyMode === 'ai' && aiContentGenerated)
           ? {
-            ...template,
-            markdown: template.markdown && {
-              ...template.markdown,
-              markdownBody: customMarkdown,
-            },
-          }
+              ...template,
+              markdown: template.markdown && {
+                ...template.markdown,
+                markdownBody: customMarkdown,
+              },
+            }
           : template;
       ctx.addTemplatePane('tmp', thisTemplate);
       return { ctx, template: thisTemplate, index };
     });
     setPreviews(newPreviews);
     setCurrentPage(0);
-    setRenderedPages(new Set([0]));
-    setFragmentsGenerated(false);
+    setRenderedPages(new Set());
   }, [filteredTemplates, customMarkdown, copyMode, aiContentGenerated]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 0 && newPage < totalPages) {
-      setCurrentPage(newPage);
-      setRenderedPages((prev) => new Set([...prev, newPage]));
-      setFragmentsGenerated(false);
-    }
-  };
 
   const visiblePreviews = useMemo(() => {
     const startIndex = currentPage * ITEMS_PER_PAGE;
     return previews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [previews, currentPage]);
 
-  const fragmentRequests = useMemo((): PanePreviewRequest[] => {
-    return visiblePreviews.map((preview) => ({
-      id: `template-${preview.index}`,
-      ctx: preview.ctx,
-    }));
-  }, [visiblePreviews]);
+  useEffect(() => {
+    const pageHasBeenRendered = renderedPages.has(currentPage);
+    const previewsOnThisPageNeedFetching = visiblePreviews.some(
+      (p) => !p.htmlFragment && !p.fragmentError
+    );
+
+    if (previewsOnThisPageNeedFetching && !pageHasBeenRendered) {
+      const newRequests = visiblePreviews
+        .filter((p) => !p.htmlFragment && !p.fragmentError)
+        .map((p) => ({
+          id: `template-${p.index}`,
+          ctx: p.ctx,
+        }));
+      setFragmentsToGenerate(newRequests);
+    } else {
+      setFragmentsToGenerate([]);
+    }
+  }, [currentPage, visiblePreviews, renderedPages]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   const handleFragmentsComplete = (results: PaneFragmentResult[]) => {
     setPreviews((prevPreviews) => {
       const updated = [...prevPreviews];
       results.forEach((result) => {
         const index = parseInt(result.id.replace('template-', ''));
-        if (updated[index]) {
-          updated[index] = {
-            ...updated[index],
+        const previewIndex = updated.findIndex((p) => p.index === index);
+        if (previewIndex !== -1) {
+          updated[previewIndex] = {
+            ...updated[previewIndex],
             htmlFragment: result.htmlString,
             fragmentError: result.error,
           };
@@ -189,16 +194,17 @@ const AddPaneNewPanel = ({
       });
       return updated;
     });
-    setFragmentsGenerated(true);
+    setRenderedPages((prev) => new Set(prev).add(currentPage));
   };
 
   const handleSnapshotComplete = (id: string, snapshot: SnapshotData) => {
     const index = parseInt(id.replace('template-', ''));
     setPreviews((prevPreviews) => {
       const updated = [...prevPreviews];
-      if (updated[index]) {
-        updated[index] = {
-          ...updated[index],
+      const previewIndex = updated.findIndex((p) => p.index === index);
+      if (previewIndex !== -1) {
+        updated[previewIndex] = {
+          ...updated[previewIndex],
           snapshot,
         };
       }
@@ -211,63 +217,42 @@ const AddPaneNewPanel = ({
     nodeId: string,
     first: boolean
   ) => {
-    if (isInserting) return; // Prevent multiple clicks (as per your previous request)
+    if (isInserting) return;
     setIsInserting(true);
 
     try {
       if (ctx) {
-        // Check if the template has markdown content
         const hasMarkdownContent =
           template?.markdown?.markdownBody &&
           template.markdown.markdownBody.trim() !== '...' &&
           template.markdown.markdownBody.trim().length > 0;
 
-        // If in blank mode, create a copy of template and wipe markdown content
-        // if custom mode, user markdown is used
         const insertTemplate = [`blank`, `custom`].includes(copyMode)
           ? {
-            ...cloneDeep(template),
-            markdown: template.markdown && {
-              ...template.markdown,
-              markdownBody: copyMode === `blank` ? `...` : customMarkdown,
-            },
-          }
+              ...cloneDeep(template),
+              markdown: template.markdown && {
+                ...template.markdown,
+                markdownBody: copyMode === `blank` ? `...` : customMarkdown,
+              },
+            }
           : cloneDeep(template);
 
-        // Get the markdown content for title generation
         const markdownContent = [`blank`].includes(copyMode)
           ? null
           : copyMode === `custom`
             ? customMarkdown
             : insertTemplate?.markdown?.markdownBody;
 
-        // Initialize title and slug
         insertTemplate.title = '';
         insertTemplate.slug = '';
 
-        // Only attempt title generation if we have real content and AssemblyAI is available
         if (
           copyMode === `ai` &&
           hasAssemblyAI &&
           markdownContent &&
           hasMarkdownContent
         ) {
-          //const existingSlugs = fullContentMapStore
-          //  .get()
-          //  .filter((item) => ['Pane', 'StoryFragment'].includes(item.type))
-          //  .map((item) => item.slug);
-
-          // TODO:
           console.log(`TODO: fix aai`);
-          const titleSlugResult = 'title'; /* await getTitleSlug(
-            markdownContent,
-            existingSlugs
-          ); */
-
-          //if (titleSlugResult) {
-          //  insertTemplate.title = titleSlugResult.title;
-          //  insertTemplate.slug = titleSlugResult.slug;
-          //}
         }
 
         const ownerId =
@@ -296,7 +281,6 @@ const AddPaneNewPanel = ({
     }
   };
 
-  // Handle theme selection with Ark UI
   const handleThemeChange = (details: { value: string[] }) => {
     const newTheme = details.value[0] as Theme;
     if (newTheme) {
@@ -304,7 +288,6 @@ const AddPaneNewPanel = ({
     }
   };
 
-  // Handle category selection with Ark UI
   const handleCategoryChange = (details: { value: string[] }) => {
     const id = details.value[0];
     if (id) {
@@ -313,41 +296,17 @@ const AddPaneNewPanel = ({
     }
   };
 
-  // CSS to properly style the select items with hover and selection
   const customStyles = `
-    .category-item[data-highlighted] {
-      background-color: #0891b2; /* bg-cyan-600 */
-      color: white;
-    }
-    .category-item[data-highlighted] .category-indicator {
-      color: white;
-    }
-    .category-item[data-state="checked"] .category-indicator {
-      display: flex;
-    }
-    .category-item .category-indicator {
-      display: none;
-    }
-    .category-item[data-state="checked"] {
-      font-weight: bold;
-    }
-    
-    .theme-item[data-highlighted] {
-      background-color: #0891b2; /* bg-cyan-600 */
-      color: white;
-    }
-    .theme-item[data-highlighted] .theme-indicator {
-      color: white;
-    }
-    .theme-item[data-state="checked"] .theme-indicator {
-      display: flex;
-    }
-    .theme-item .theme-indicator {
-      display: none;
-    }
-    .theme-item[data-state="checked"] {
-      font-weight: bold;
-    }
+    .category-item[data-highlighted] { background-color: #0891b2; color: white; }
+    .category-item[data-highlighted] .category-indicator { color: white; }
+    .category-item[data-state="checked"] .category-indicator { display: flex; }
+    .category-item .category-indicator { display: none; }
+    .category-item[data-state="checked"] { font-weight: bold; }
+    .theme-item[data-highlighted] { background-color: #0891b2; color: white; }
+    .theme-item[data-highlighted] .theme-indicator { color: white; }
+    .theme-item[data-state="checked"] .theme-indicator { display: flex; }
+    .theme-item .theme-indicator { display: none; }
+    .theme-item[data-state="checked"] { font-weight: bold; }
   `;
 
   return (
@@ -506,11 +465,13 @@ const AddPaneNewPanel = ({
             2. Choose design
           </h3>
 
-          {!fragmentsGenerated && fragmentRequests.length > 0 && (
+          {fragmentsToGenerate.length > 0 && (
             <PanesPreviewGenerator
-              requests={fragmentRequests}
+              requests={fragmentsToGenerate}
               onComplete={handleFragmentsComplete}
-              onError={(error) => console.error('Fragment generation error:', error)}
+              onError={(error) =>
+                console.error('Fragment generation error:', error)
+              }
             />
           )}
 
@@ -522,43 +483,46 @@ const AddPaneNewPanel = ({
                     isInserting
                       ? undefined
                       : () =>
-                        handleTemplateInsert(preview.template, nodeId, first)
+                          handleTemplateInsert(preview.template, nodeId, first)
                   }
-                  className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${isInserting
-                    ? 'cursor-not-allowed opacity-50'
-                    : 'cursor-pointer'
-                    } transition-all duration-200 ${preview.snapshot
+                  className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${
+                    isInserting
+                      ? 'cursor-not-allowed opacity-50'
+                      : 'cursor-pointer'
+                  } transition-all duration-200 ${
+                    preview.snapshot
                       ? 'hover:outline-solid hover:outline hover:outline-4'
                       : ''
-                    }`}
+                  }`}
                   style={{
-                    ...(!preview.snapshot ? { minHeight: '200px' } : {}),
+                    ...(!preview.snapshot ? { minHeight: '150px' } : {}),
                   }}
                   role="button"
                   tabIndex={0}
                   aria-label={preview.template.title}
                 >
-                  {fragmentsGenerated &&
-                    preview.htmlFragment &&
+                  {preview.htmlFragment &&
                     !preview.snapshot &&
                     !preview.fragmentError && (
                       <PaneSnapshotGenerator
                         id={`template-${preview.index}`}
                         htmlString={preview.htmlFragment}
                         onComplete={handleSnapshotComplete}
-                        onError={(id, error) => console.error(`Snapshot error for ${id}:`, error)}
+                        onError={(id, error) =>
+                          console.error(`Snapshot error for ${id}:`, error)
+                        }
                         outputWidth={800}
                       />
                     )}
 
-                  {!fragmentsGenerated && (
-                    <div className="flex items-center justify-center h-48">
+                  {!preview.htmlFragment && !preview.fragmentError && (
+                    <div className="flex h-48 items-center justify-center">
                       <div className="text-gray-500">Loading preview...</div>
                     </div>
                   )}
 
-                  {fragmentsGenerated && preview.fragmentError && (
-                    <div className="flex items-center justify-center h-48">
+                  {preview.fragmentError && (
+                    <div className="flex h-48 items-center justify-center">
                       <div className="text-red-500">Preview error</div>
                     </div>
                   )}
@@ -593,10 +557,11 @@ const AddPaneNewPanel = ({
                 <button
                   key={index}
                   onClick={() => handlePageChange(index)}
-                  className={`rounded px-3 py-1 text-sm transition-colors ${currentPage === index
-                    ? 'bg-cyan-700 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                  className={`rounded px-3 py-1 text-sm transition-colors ${
+                    currentPage === index
+                      ? 'bg-cyan-700 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   {index + 1}
                 </button>

@@ -52,7 +52,9 @@ export const PanesPreviewGenerator = ({
             if (childPanes.length > 0) {
               actualPaneId = childPanes[0].id;
             } else {
-              throw new Error(`No Pane found under StoryFragment ${rootNodeId}`);
+              throw new Error(
+                `No Pane found under StoryFragment ${rootNodeId}`
+              );
             }
           }
 
@@ -65,7 +67,8 @@ export const PanesPreviewGenerator = ({
           requestMap.set(previewPayload.id, request.id);
         }
 
-        const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
         const response = await fetch(`${goBackend}/api/v1/fragments/preview`, {
           method: 'POST',
           headers: {
@@ -105,7 +108,6 @@ export const PanesPreviewGenerator = ({
         }
 
         onComplete(results);
-
       } catch (error) {
         console.error('Batch fragment generation failed:', error);
         onError?.(error instanceof Error ? error.message : 'Unknown error');

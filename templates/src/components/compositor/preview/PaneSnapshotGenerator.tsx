@@ -60,7 +60,8 @@ export const PaneSnapshotGenerator = ({
           }
         });
 
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        const iframeDoc =
+          iframe.contentDocument || iframe.contentWindow?.document;
         if (!iframeDoc) {
           throw new Error('Could not access iframe document');
         }
@@ -89,7 +90,9 @@ export const PaneSnapshotGenerator = ({
   <link rel="stylesheet" href="${customCssUrl}">
   <link rel="stylesheet" href="${storykeepCssUrl}">
   ${existingCssLinks.map((href) => `<link rel="stylesheet" href="${href}">`).join('\n')}
-  ${config ? `
+  ${
+    config
+      ? `
   <style>
     :root {
       --brand-primary: ${brandColors[0] || '#000000'};
@@ -97,7 +100,9 @@ export const PaneSnapshotGenerator = ({
       --brand-accent: ${brandColors[2] || '#cccccc'};
     }
   </style>
-  ` : ''}
+  `
+      : ''
+  }
   <style>
     body { 
       margin: 0; 
@@ -129,7 +134,7 @@ export const PaneSnapshotGenerator = ({
         });
 
         // Additional wait for rendering
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const iframeBody = iframeDoc.body;
         if (!iframeBody) {
@@ -181,7 +186,6 @@ export const PaneSnapshotGenerator = ({
 
         snapshotCache.set(cacheKey, snapshotData);
         onComplete(id, snapshotData);
-
       } catch (error) {
         console.error(`Snapshot generation failed for ${id}:`, error);
         onError?.(id, error instanceof Error ? error.message : 'Unknown error');

@@ -5,7 +5,7 @@ import AddPaneNewPanel from './AddPanePanel_new';
 import AddPaneBreakPanel from './AddPanePanel_break';
 import AddPaneReUsePanel from './AddPanePanel_reuse';
 import AddPaneCodeHookPanel from './AddPanePanel_codehook';
-import { NodesContext, ROOT_NODE_NAME } from '@/stores/nodes';
+import { NodesContext, ROOT_NODE_NAME, getCtx } from '@/stores/nodes'; // Import getCtx
 import { PaneAddMode } from '@/types/compositorTypes';
 
 interface AddPanePanelProps {
@@ -26,14 +26,16 @@ const AddPanePanel = ({
   const [reset, setReset] = useState(false);
   const lookup = first ? `${nodeId}-0` : nodeId;
 
-  const nodesCtx = typeof ctx !== `undefined` ? ctx : null;
-  const activePaneMode =
-    typeof ctx !== `undefined` ? useStore(ctx.activePaneMode) : null;
-  const hasPanes = typeof ctx !== `undefined` ? useStore(ctx.hasPanes) : false;
+  // Always get a valid context, either from props or the global getter
+  const nodesCtx = ctx || getCtx();
+
+  // Use the guaranteed context to subscribe to stores
+  const activePaneMode = useStore(nodesCtx.activePaneMode);
+  const hasPanes = useStore(nodesCtx.hasPanes);
+  const isTemplate = useStore(nodesCtx.isTemplate);
+
   const isActive =
     activePaneMode?.panel === 'add' && activePaneMode?.paneId === lookup;
-  const isTemplate =
-    typeof ctx !== `undefined` ? useStore(ctx.isTemplate) : false;
 
   const mode =
     isActive && activePaneMode?.mode
@@ -44,8 +46,8 @@ const AddPanePanel = ({
 
   const setMode = (newMode: PaneAddMode, reset?: boolean) => {
     setReset(true);
-    nodesCtx?.setPanelMode(lookup, 'add', newMode);
-    if (reset) nodesCtx?.notifyNode(ROOT_NODE_NAME);
+    nodesCtx.setPanelMode(lookup, 'add', newMode); // No longer needs optional chaining
+    if (reset) nodesCtx.notifyNode(ROOT_NODE_NAME);
     settingsPanelStore.set(null);
   };
 
@@ -57,7 +59,7 @@ const AddPanePanel = ({
           nodeId={nodeId}
           first={first}
           setMode={setMode}
-          ctx={ctx}
+          ctx={nodesCtx}
           isStoryFragment={isStoryFragment}
           isContextPane={isContextPane}
         />
@@ -66,11 +68,16 @@ const AddPanePanel = ({
           nodeId={nodeId}
           first={first}
           setMode={setMode}
-          ctx={ctx}
+          ctx={nodesCtx}
           isStoryFragment={isStoryFragment}
         />
       ) : mode === PaneAddMode.REUSE && !isContextPane ? (
-        <AddPaneReUsePanel nodeId={nodeId} first={first} setMode={setMode} />
+        <AddPaneReUsePanel
+          nodeId={nodeId}
+          first={first}
+          setMode={setMode}
+          //ctx={nodesCtx}
+        />
       ) : mode === PaneAddMode.CODEHOOK ? (
         <AddPaneCodeHookPanel
           nodeId={nodeId}
