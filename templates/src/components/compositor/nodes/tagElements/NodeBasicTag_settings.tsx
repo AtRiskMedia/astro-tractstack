@@ -16,13 +16,8 @@ export const NodeBasicTagSettings = (props: NodeTagProps) => {
   const Tag = props.tagName;
 
   const canMove = (/*direction: "before" | "after"*/): boolean => {
-    // TODO:
-    console.log(`TODO: wire into allowInsert for proper signal`);
-    const hasCodeChildren = getCtx(props).getChildNodeByTagNames(nodeId, [
-      'code',
-    ]);
-    // only ul/ol can move code nodes
-    if (hasCodeChildren && node.tagName === 'li') {
+    // only block level can move
+    if (node.tagName === 'li') {
       return false;
     }
     return true;
