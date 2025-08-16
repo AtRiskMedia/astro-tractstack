@@ -536,6 +536,13 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/stores/nodesHistory.ts'),
       dest: 'src/stores/nodesHistory.ts',
     },
+
+    // AAI utils
+    {
+      src: resolve('templates/src/utils/aai/getTitleSlug.ts'),
+      dest: 'src/utils/aai/getTitleSlug.ts',
+    },
+
     // Compositor utils - etl
     {
       src: resolve('templates/src/utils/etl/index.ts'),

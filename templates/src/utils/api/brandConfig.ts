@@ -59,6 +59,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
           GTAG: '',
           STYLES_VER: 1,
           KNOWN_RESOURCES: {},
+          HAS_AAI: false,
         } as BrandConfig;
       }
       throw new Error(response.error || 'Failed to get brand configuration');
@@ -90,6 +91,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
         GTAG: '',
         STYLES_VER: 1,
         KNOWN_RESOURCES: {},
+        HAS_AAI: false,
       } as BrandConfig;
     }
     throw error;

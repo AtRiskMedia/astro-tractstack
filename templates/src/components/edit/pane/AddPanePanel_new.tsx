@@ -27,6 +27,8 @@ import { templateCategories } from '@/utils/compositor/templateMarkdownStyles';
 import { AddPanePanel_newAICopy } from './AddPanePanel_newAICopy';
 import { AddPaneNewCopyMode, type CopyMode } from './AddPanePanel_newCopyMode';
 import { AddPaneNewCustomCopy } from './AddPanePanel_newCustomCopy';
+import { getTitleSlug } from '@/utils/aai/getTitleSlug';
+import { fullContentMapStore } from '@/stores/storykeep';
 import { themes, type Theme } from '@/types/tractstack';
 import { PaneAddMode } from '@/types/compositorTypes';
 
@@ -252,7 +254,20 @@ const AddPaneNewPanel = ({
           markdownContent &&
           hasMarkdownContent
         ) {
-          console.log(`TODO: fix aai`);
+          const existingSlugs = fullContentMapStore
+            .get()
+            .filter((item) => ['Pane', 'StoryFragment'].includes(item.type))
+            .map((item) => item.slug);
+
+          const titleSlugResult = await getTitleSlug(
+            markdownContent,
+            existingSlugs
+          );
+
+          if (titleSlugResult) {
+            insertTemplate.title = titleSlugResult.title;
+            insertTemplate.slug = titleSlugResult.slug;
+          }
         }
 
         const ownerId =

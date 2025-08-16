@@ -196,6 +196,7 @@ export interface BrandConfig {
   FAVICON_BASE64?: string;
   GTAG: string;
   KNOWN_RESOURCES?: KnownResourcesConfig;
+  HAS_AAI: boolean;
 }
 
 export interface BrandConfigState {
@@ -227,6 +228,7 @@ export interface BrandConfigState {
   faviconBase64?: string;
   gtag: string;
   knownResources: KnownResourcesConfig;
+  hasAAI: boolean;
 }
 
 // Form validation types

@@ -37,6 +37,7 @@ export function convertToLocalState(
     gtag: brandConfig.GTAG ?? '',
     stylesVer: brandConfig.STYLES_VER ?? 1,
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
+    hasAAI: brandConfig.HAS_AAI ?? false,
   };
 }
 
@@ -75,6 +76,7 @@ export function convertToBackendFormat(
     OGLOGO_BASE64: localState.oglogoBase64,
     FAVICON_BASE64: localState.faviconBase64,
     KNOWN_RESOURCES: localState.knownResources,
+    HAS_AAI: localState.hasAAI,
   };
 }
 
