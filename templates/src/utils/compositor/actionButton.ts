@@ -1,6 +1,4 @@
 import { preParseClicked } from './preParse_Clicked';
-import { preParseBunny } from './preParse_Bunny';
-import { dispatchUpdateVideoEvent } from './domHelpers';
 import type { BrandConfig } from '@/types/tractstack';
 
 interface ActionButtonParams {
@@ -10,30 +8,59 @@ interface ActionButtonParams {
   config: BrandConfig;
 }
 
+// Import the sendAnalyticsEvent function to send events to backend
+async function sendAnalyticsEvent(event: {
+  contentId: string;
+  contentType: 'Pane' | 'StoryFragment';
+  eventVerb: string;
+  duration?: number;
+}): Promise<void> {
+  try {
+    const config = window.TRACTSTACK_CONFIG;
+    if (!config || !config.sessionId) return;
+
+    const sessionId = config.sessionId;
+    const formData: { [key: string]: string } = {
+      beliefId: event.contentId,
+      beliefType: event.contentType,
+      beliefValue: event.eventVerb,
+      paneId: '',
+    };
+
+    if (event.duration !== undefined) {
+      formData.duration = event.duration.toString();
+    }
+
+    await fetch(`${config.backendUrl}/api/v1/state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Tenant-ID': config.tenantId,
+        'X-TractStack-Session-ID': sessionId,
+        'X-StoryFragment-ID': config.storyfragmentId,
+      },
+      body: new URLSearchParams(formData),
+    });
+  } catch (error) {
+    console.error('⛔ API ERROR: Analytics event failed', error, event);
+  }
+}
+
 export function handleActionButtonClick({
   callbackPayload,
   targetUrl,
   paneId,
   config,
 }: ActionButtonParams): void {
-  const bunny = preParseBunny(callbackPayload);
   const event = preParseClicked(paneId, callbackPayload, config);
 
-  // Handle bunny video events
-  if (bunny) {
-    if (bunny.videoId) {
-      dispatchUpdateVideoEvent(`${bunny.t}s`, bunny.videoId);
-    } else {
-      // Fallback to legacy behavior for backward compatibility
-      const videoContainer = document.getElementById('video-container');
-      if (videoContainer) {
-        dispatchUpdateVideoEvent(`${bunny.t}s`);
-      }
-    }
-
-    // TODO:
-    console.log(`did not send event`, event);
-    return;
+  if (event) {
+    console.log(event);
+    sendAnalyticsEvent({
+      contentId: event.targetId || event.targetSlug || event.id,
+      contentType: 'Pane',
+      eventVerb: event.verb,
+    });
   }
 
   // Handle URL navigation and scroll

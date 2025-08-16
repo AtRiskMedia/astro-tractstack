@@ -342,9 +342,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        'templates/src/components/compositor/elements/ButtonIsland.tsx'
+        'templates/src/components/compositor/elements/PlayButton.tsx'
       ),
-      dest: 'src/components/compositor/elements/ButtonIsland.tsx',
+      dest: 'src/components/compositor/elements/PlayButton.tsx',
     },
     // Compositor panels
     {

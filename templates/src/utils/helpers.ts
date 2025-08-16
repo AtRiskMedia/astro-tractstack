@@ -79,7 +79,7 @@ export function createStoryKeepMenu(params: {
   isAuthenticated: boolean;
   isAdmin: boolean;
 }): MenuNode {
-  const { isAuthenticated, isAdmin } = params;
+  const { isAuthenticated } = params;
 
   const links = [];
 
@@ -91,10 +91,8 @@ export function createStoryKeepMenu(params: {
       featured: true,
       actionLisp: '(goto (storykeep login))',
     });
-  }
-
-  // Add Logout link for authenticated users
-  if (isAuthenticated) {
+  } else {
+    // Add Logout link for authenticated users
     links.unshift({
       name: 'Logout',
       description: 'Close this session',
@@ -124,7 +122,6 @@ export function startLoadingAnimation() {
   const loadingIndicator = document.getElementById(
     'loading-indicator'
   ) as HTMLElement;
-  const content = document.getElementById('content') as HTMLElement;
 
   if (
     window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
