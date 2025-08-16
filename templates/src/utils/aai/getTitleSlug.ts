@@ -22,30 +22,13 @@ export async function getTitleSlug(
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
     const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
-    const token =
-      localStorage.getItem('auth_token') ||
-      sessionStorage.getItem('auth_token') ||
-      document.cookie
-        .split(';')
-        .find((row) => row.startsWith('admin_auth='))
-        ?.split('=')[1] ||
-      document.cookie
-        .split(';')
-        .find((row) => row.startsWith('editor_auth='))
-        ?.split('=')[1];
-
-    if (!token) {
-      console.error('No auth token found for Assembly AI request');
-      return null;
-    }
-
     const response = await fetch(`${backendUrl}/api/v1/aai/askLemur`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
         'X-Tenant-ID': tenantId,
       },
+      credentials: 'include',
       body: JSON.stringify({
         prompt: `Generate a concise title (maximum 40-50 characters) and a URL-friendly slug (lowercase, only letters, numbers, and dashes, no spaces) that captures the essence of this markdown content. Return only a JSON object with "title" and "slug" keys. 
 

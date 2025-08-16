@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-//import type { FinalModel } from '@/utils/aai/askLemur';
 import { paneFormatPrompt, formatPrompt } from '@/constants/prompts.json';
 
 interface GenerationResponse {
@@ -46,7 +45,6 @@ export const AddPanePanel_newAICopy_modal = ({
     if (generationStatus === 'success' && generatedContent && !details.open) {
       onChange(generatedContent);
       onClose();
-      // Reset state after closing
       setGenerationStatus('idle');
       setGeneratedContent(null);
       setError(null);
@@ -60,7 +58,6 @@ export const AddPanePanel_newAICopy_modal = ({
     if (generationStatus === 'success' && generatedContent) {
       onChange(generatedContent);
       onClose();
-      // Reset state after closing
       setGenerationStatus('idle');
       setGeneratedContent(null);
       setError(null);
@@ -82,38 +79,47 @@ ${prompt}
 Additional Instructions:
 ${additionalInstructions}`;
 
-    // TODO:
-    console.log(`TODO: fix aai`);
-    //try {
-    //  const response = await fetch('/api/aai/askLemur', {
-    //    method: 'POST',
-    //    headers: {
-    //      'Content-Type': 'application/json',
-    //    },
-    //    body: JSON.stringify({
-    //      prompt: finalPrompt,
-    //      input_text: referenceContext,
-    //      final_model: 'anthropic/claude-3-sonnet' as FinalModel,
-    //      temperature: 0.7,
-    //    }),
-    //  });
+    try {
+      const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+      const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
-    //  if (!response.ok) {
-    //    throw new Error('Generation failed');
-    //  }
+      const response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          input_text: referenceContext,
+          final_model: 'anthropic/claude-3-5-sonnet',
+          temperature: 0.7,
+          max_tokens: 4000,
+        }),
+      });
 
-    //  const result = (await response.json()) as GenerationResponse;
+      if (!response.ok) {
+        throw new Error('Generation failed');
+      }
 
-    //  if (!result.success || !result.data?.response) {
-    //    throw new Error(result.error || 'Generation failed');
-    //  }
+      const result = await response.json();
 
-    //  setGeneratedContent(result.data.response);
-    //  setGenerationStatus('success');
-    //} catch (err) {
-    //  setError(err instanceof Error ? err.message : 'An error occurred');
-    //  setGenerationStatus('error');
-    //}
+      if (!result.success || !result.data?.response) {
+        throw new Error(result.error || 'Generation failed');
+      }
+
+      let content = result.data.response;
+      if (typeof content === 'object') {
+        content = JSON.stringify(content, null, 2);
+      }
+
+      setGeneratedContent(content);
+      setGenerationStatus('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setGenerationStatus('error');
+    }
   };
 
   useEffect(() => {
@@ -122,7 +128,6 @@ ${additionalInstructions}`;
     }
   }, [show]);
 
-  // CSS for Dialog styles
   const dialogStyles = `
     [data-part="backdrop"] {
       background-color: rgba(0, 0, 0, 0.3);

@@ -37,7 +37,7 @@ export const Compositor = (props: CompositorProps) => {
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
   fullContentMapStore.set(props.fullContentMap);
-  hasAssemblyAIStore.set(false); // TODO: Must add to BRAND_CONFIG !!
+  hasAssemblyAIStore.set(props.config.HAS_AAI);
   urlParamsStore.set(props.urlParams);
   canonicalURLStore.set(props.fullCanonicalURL);
   preferredThemeStore.set(props.config.THEME as Theme);
@@ -95,9 +95,8 @@ export const Compositor = (props: CompositorProps) => {
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${
-        isLoading ? 'opacity-60' : 'opacity-100'
-      }`}
+      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
+        }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),
