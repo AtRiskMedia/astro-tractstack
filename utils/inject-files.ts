@@ -64,6 +64,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/Compositor.tsx',
     },
     {
+      src: resolve(
+        'templates/src/components/compositor/PanelVisibilityWrapper.tsx'
+      ),
+      dest: 'src/components/compositor/PanelVisibilityWrapper.tsx',
+    },
+    {
       src: resolve('templates/src/components/compositor/Node.tsx'),
       dest: 'src/components/compositor/Node.tsx',
     },
@@ -562,10 +568,6 @@ export async function injectTemplateFiles(
     },
     // Compositor utils
     {
-      src: resolve('templates/src/utils/compositor/lispLexer.ts'),
-      dest: 'src/utils/compositor/lispLexer.ts',
-    },
-    {
       src: resolve('templates/src/utils/compositor/processMarkdown.ts'),
       dest: 'src/utils/compositor/processMarkdown.ts',
     },
@@ -588,18 +590,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/utils/compositor/typeGuards.ts'),
       dest: 'src/utils/compositor/typeGuards.ts',
-    },
-    {
-      src: resolve('templates/src/utils/compositor/preParse_Action.ts'),
-      dest: 'src/utils/compositor/preParse_Action.ts',
-    },
-    {
-      src: resolve('templates/src/utils/compositor/preParse_Clicked.ts'),
-      dest: 'src/utils/compositor/preParse_Clicked.ts',
-    },
-    {
-      src: resolve('templates/src/utils/compositor/preParse_Bunny.ts'),
-      dest: 'src/utils/compositor/preParse_Bunny.ts',
     },
     {
       src: resolve('templates/src/utils/compositor/domHelpers.ts'),
@@ -676,11 +666,28 @@ export async function injectTemplateFiles(
       dest: 'src/stores/navigation.ts',
     },
 
-    // Utilities
+    // Action utilities
     {
-      src: resolve('templates/src/utils/actions.ts'),
-      dest: 'src/utils/actions.ts',
+      src: resolve('templates/src/utils/actions/lispLexer.ts'),
+      dest: 'src/utils/actions/lispLexer.ts',
     },
+    {
+      src: resolve('templates/src/utils/actions/preParse_Action.ts'),
+      dest: 'src/utils/actions/preParse_Action.ts',
+    },
+    {
+      src: resolve('templates/src/utils/actions/preParse_Clicked.ts'),
+      dest: 'src/utils/actions/preParse_Clicked.ts',
+    },
+    {
+      src: resolve('templates/src/utils/actions/preParse_Impression.ts'),
+      dest: 'src/utils/actions/preParse_Impression.ts',
+    },
+    {
+      src: resolve('templates/src/utils/actions/preParse_Bunny.ts'),
+      dest: 'src/utils/actions/preParse_Bunny.ts',
+    },
+
     {
       src: resolve('templates/src/utils/backend.ts'),
       dest: 'src/utils/backend.ts',
@@ -708,6 +715,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/utils/helpers.ts'),
       dest: 'src/utils/helpers.ts',
+    },
+    {
+      src: resolve('templates/src/utils/useInterval.ts'),
+      dest: 'src/utils/useInterval.ts',
     },
     {
       src: resolve('templates/src/utils/profileStorage.ts'),
@@ -1185,6 +1196,14 @@ export async function injectTemplateFiles(
     },
 
     // Widget Components
+    {
+      src: resolve('templates/src/components/widgets/Impression.tsx'),
+      dest: 'src/components/widgets/Impression.tsx',
+    },
+    {
+      src: resolve('templates/src/components/widgets/ImpressionWrapper.tsx'),
+      dest: 'src/components/widgets/ImpressionWrapper.tsx',
+    },
     {
       src: resolve('templates/src/components/widgets/BunnyVideoHero.astro'),
       dest: 'src/components/widgets/BunnyVideoHero.astro',

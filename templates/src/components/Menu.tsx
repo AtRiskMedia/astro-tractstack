@@ -1,8 +1,8 @@
 import { Menu } from '@ark-ui/react';
 import { Portal } from '@ark-ui/react/portal';
 import ChevronDownIcon from '@heroicons/react/20/solid/ChevronDownIcon';
-import { lispLexer } from '@/utils/actions';
-import { preParseAction } from '@/utils/compositor/preParse_Action';
+import { lispLexer } from '@/utils/actions/lispLexer';
+import { preParseAction } from '@/utils/actions//preParse_Action';
 
 // CSS to style the menu items with hover and selection states
 const menuStyles = `

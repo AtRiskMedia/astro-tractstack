@@ -95,8 +95,9 @@ export const Compositor = (props: CompositorProps) => {
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
-        }`}
+      className={`transition-all duration-300 ${
+        isLoading ? 'opacity-60' : 'opacity-100'
+      }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),

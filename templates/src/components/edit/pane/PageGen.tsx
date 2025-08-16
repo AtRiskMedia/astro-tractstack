@@ -1,8 +1,11 @@
-import { useState, useRef } from "react";
-import { Dialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react/portal";
-import { RadioGroup, type RadioGroup as RadioGroupNamespace } from "@ark-ui/react/radio-group";
-import CheckCircleIcon from "@heroicons/react/20/solid/CheckIcon";
+import { useState, useRef } from 'react';
+import { Dialog } from '@ark-ui/react/dialog';
+import { Portal } from '@ark-ui/react/portal';
+import {
+  RadioGroup,
+  type RadioGroup as RadioGroupNamespace,
+} from '@ark-ui/react/radio-group';
+import CheckCircleIcon from '@heroicons/react/20/solid/CheckIcon';
 import {
   formatPrompt,
   pagePrompts,
@@ -26,7 +29,7 @@ interface GenerationResponse {
   error?: string;
 }
 
-type GenerationStatus = "idle" | "generating" | "success" | "error";
+type GenerationStatus = 'idle' | 'generating' | 'success' | 'error';
 
 interface PageCreationGenProps {
   nodeId: string;
@@ -34,21 +37,27 @@ interface PageCreationGenProps {
 }
 
 export const PageCreationGen = ({ nodeId, ctx }: PageCreationGenProps) => {
-  const [selectedPromptType, setSelectedPromptType] = useState<PromptType>("landing");
-  const [customizedPrompt, setCustomizedPrompt] = useState(pagePrompts[selectedPromptType]);
-  const [referenceContext, setReferenceContext] = useState("");
-  const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [selectedPromptType, setSelectedPromptType] =
+    useState<PromptType>('landing');
+  const [customizedPrompt, setCustomizedPrompt] = useState(
+    pagePrompts[selectedPromptType]
+  );
+  const [referenceContext, setReferenceContext] = useState('');
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
-  const [generationStatus, setGenerationStatus] = useState<GenerationStatus>("idle");
+  const [generationStatus, setGenerationStatus] =
+    useState<GenerationStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   const dialogButtonRef = useRef<HTMLButtonElement>(null);
 
-  const handlePromptTypeChange = (details: RadioGroupNamespace.ValueChangeDetails) => {
+  const handlePromptTypeChange = (
+    details: RadioGroupNamespace.ValueChangeDetails
+  ) => {
     if (!details.value) return;
 
     const type = details.value as PromptType;
@@ -58,7 +67,7 @@ export const PageCreationGen = ({ nodeId, ctx }: PageCreationGenProps) => {
 
   const handleGenerate = async () => {
     setShowModal(true);
-    setGenerationStatus("generating");
+    setGenerationStatus('generating');
     setError(null);
 
     const finalPrompt = `${formatPrompt}
@@ -70,54 +79,55 @@ Additional Instructions:
 ${additionalInstructions}`;
 
     try {
-      const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+      const goBackend =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
       const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
       const response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "X-Tenant-ID": tenantId,
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
         },
         credentials: 'include',
         body: JSON.stringify({
           prompt: finalPrompt,
           input_text: referenceContext,
-          final_model: "anthropic/claude-3-5-sonnet",
+          final_model: 'anthropic/claude-3-5-sonnet',
           temperature: 0.7,
           max_tokens: 4000,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Generation failed");
+        throw new Error('Generation failed');
       }
 
       const result = (await response.json()) as GenerationResponse;
 
       if (!result.success || !result.data?.response) {
-        throw new Error(result.error || "Generation failed");
+        throw new Error(result.error || 'Generation failed');
       }
 
       setGeneratedContent(result.data.response);
-      setGenerationStatus("success");
+      setGenerationStatus('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      setGenerationStatus("error");
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setGenerationStatus('error');
     }
   };
 
   const handleModalClose = (details: { open: boolean }) => {
-    if (generationStatus === "generating") {
+    if (generationStatus === 'generating') {
       return;
     }
-    if (generationStatus === "success" && !details.open) {
+    if (generationStatus === 'success' && !details.open) {
       setShowModal(false);
       setShowPreview(true);
       return;
     }
     setShowModal(false);
-    setGenerationStatus("idle");
+    setGenerationStatus('idle');
   };
 
   const handlePreviewApply = async (
@@ -131,7 +141,9 @@ ${additionalInstructions}`;
 
     try {
       // Get preview storyfragment and its panes
-      const previewStoryfragment = previewCtx.allNodes.get().get("tmp") as StoryFragmentNode;
+      const previewStoryfragment = previewCtx.allNodes
+        .get()
+        .get('tmp') as StoryFragmentNode;
       if (!previewStoryfragment) {
         setIsApplying(false);
         return;
@@ -139,7 +151,13 @@ ${additionalInstructions}`;
 
       // Process our markdown content into sections
       const processedPage = parsePageMarkdown(markdownContent);
-      const paneIds = await createPagePanes(processedPage, design, ctx, true, nodeId);
+      const paneIds = await createPagePanes(
+        processedPage,
+        design,
+        ctx,
+        true,
+        nodeId
+      );
 
       // Update the storyfragment with the new panes
       const storyfragment = ctx.allNodes.get().get(nodeId) as StoryFragmentNode;
@@ -147,12 +165,12 @@ ${additionalInstructions}`;
         storyfragment.paneIds = paneIds;
         storyfragment.isChanged = true;
         ctx.modifyNodes([storyfragment]);
-        ctx.notifyNode("root");
+        ctx.notifyNode('root');
       }
 
       setShowPreview(false);
     } catch (error) {
-      console.error("Error applying design:", error);
+      console.error('Error applying design:', error);
     } finally {
       setIsApplying(false);
     }
@@ -213,8 +231,8 @@ ${additionalInstructions}`;
     <div className="p-0.5 shadow-inner">
       <style>{dialogStyles}</style>
       <style>{radioGroupStyles}</style>
-      <div className="p-6 bg-white rounded-md w-full">
-        <h2 className="text-2xl font-bold text-gray-900 font-action mb-6">
+      <div className="w-full rounded-md bg-white p-6">
+        <h2 className="font-action mb-6 text-2xl font-bold text-gray-900">
           Generate Page Content with AI
         </h2>
 
@@ -225,10 +243,10 @@ ${additionalInstructions}`;
               defaultValue={selectedPromptType}
               onValueChange={handlePromptTypeChange}
             >
-              <RadioGroup.Label className="block text-sm font-bold text-gray-900 mb-4">
+              <RadioGroup.Label className="mb-4 block text-sm font-bold text-gray-900">
                 Select Page Type
               </RadioGroup.Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {Object.entries(pagePromptsDetails).map(([key, details]) => (
                   <RadioGroup.Item
                     key={key}
@@ -240,14 +258,16 @@ ${additionalInstructions}`;
                         <RadioGroup.ItemControl className="hidden" />
                         <RadioGroup.ItemText>
                           <div className="text-sm">
-                            <p className="font-bold text-black">{details.title}</p>
-                            <span className="inline text-gray-500 radio-description">
+                            <p className="font-bold text-black">
+                              {details.title}
+                            </p>
+                            <span className="radio-description inline text-gray-500">
                               {details.description}
                             </span>
                           </div>
                         </RadioGroup.ItemText>
                       </div>
-                      <div className="shrink-0 text-white check-icon">
+                      <div className="check-icon shrink-0 text-white">
                         <CheckCircleIcon className="h-6 w-6" />
                       </div>
                     </div>
@@ -260,13 +280,16 @@ ${additionalInstructions}`;
 
           {/* Customizable Prompt */}
           <div>
-            <label htmlFor="customPrompt" className="block text-sm font-bold text-gray-900 mb-2">
+            <label
+              htmlFor="customPrompt"
+              className="mb-2 block text-sm font-bold text-gray-900"
+            >
               Customize Writing Style (Optional)
             </label>
             <textarea
               id="customPrompt"
               rows={6}
-              className="p-3.5 w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+              className="w-full rounded-md border-gray-300 p-3.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
               value={customizedPrompt}
               onChange={(e) => setCustomizedPrompt(e.target.value)}
               maxLength={1000}
@@ -275,13 +298,17 @@ ${additionalInstructions}`;
 
           {/* Reference Context */}
           <div>
-            <label htmlFor="referenceContext" className="block text-sm font-bold text-gray-900">
-              Reference Content &ndash; copy and paste dump here; no formatting required...
+            <label
+              htmlFor="referenceContext"
+              className="block text-sm font-bold text-gray-900"
+            >
+              Reference Content &ndash; copy and paste dump here; no formatting
+              required...
             </label>
             <textarea
               id="referenceContext"
               rows={8}
-              className="p-3.5 w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+              className="w-full rounded-md border-gray-300 p-3.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
               value={referenceContext}
               onChange={(e) => setReferenceContext(e.target.value)}
               maxLength={200000}
@@ -293,14 +320,14 @@ ${additionalInstructions}`;
           <div>
             <label
               htmlFor="additionalInstructions"
-              className="block text-sm font-bold text-gray-900 mb-2"
+              className="mb-2 block text-sm font-bold text-gray-900"
             >
               Additional Instructions (Optional)
             </label>
             <textarea
               id="additionalInstructions"
               rows={4}
-              className="p-3.5 w-full rounded-md border-gray-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+              className="w-full rounded-md border-gray-300 p-3.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
               value={additionalInstructions}
               onChange={(e) => setAdditionalInstructions(e.target.value)}
               maxLength={2000}
@@ -309,65 +336,76 @@ ${additionalInstructions}`;
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end items-center pt-4">
+          <div className="flex items-center justify-end pt-4">
             <div className="flex gap-4">
               <button
                 type="button"
                 onClick={() => {
-                  ctx.setPanelMode(nodeId, "add", "DEFAULT");
-                  ctx.notifyNode("root");
+                  ctx.setPanelMode(nodeId, 'add', 'DEFAULT');
+                  ctx.notifyNode('root');
                 }}
-                className="px-4 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleGenerate}
-                disabled={!referenceContext.trim() || generationStatus === "generating"}
-                className={`px-4 py-2 text-sm font-bold text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${referenceContext.trim() && generationStatus !== "generating"
-                    ? "bg-cyan-600 hover:bg-cyan-700"
-                    : "bg-gray-300 cursor-not-allowed"
-                  }`}
+                disabled={
+                  !referenceContext.trim() || generationStatus === 'generating'
+                }
+                className={`rounded-md px-4 py-2 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                  referenceContext.trim() && generationStatus !== 'generating'
+                    ? 'bg-cyan-600 hover:bg-cyan-700'
+                    : 'cursor-not-allowed bg-gray-300'
+                }`}
               >
-                {generationStatus === "generating" ? "Generating..." : "Generate Content"}
+                {generationStatus === 'generating'
+                  ? 'Generating...'
+                  : 'Generate Content'}
               </button>
             </div>
           </div>
         </div>
 
         {/* Generation Result Modal */}
-        <Dialog.Root open={showModal} onOpenChange={handleModalClose} modal={true}>
+        <Dialog.Root
+          open={showModal}
+          onOpenChange={handleModalClose}
+          modal={true}
+        >
           <Portal>
             <Dialog.Backdrop className="fixed inset-0" />
-            <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4 z-50">
+            <Dialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <Dialog.Content className="w-full max-w-md overflow-hidden text-left align-middle">
                 <Dialog.Title>
-                  {generationStatus === "error"
-                    ? "Generation Error"
-                    : generationStatus === "success"
-                      ? "Content Generated"
-                      : "Generating Content"}
+                  {generationStatus === 'error'
+                    ? 'Generation Error'
+                    : generationStatus === 'success'
+                      ? 'Content Generated'
+                      : 'Generating Content'}
                 </Dialog.Title>
 
                 <div className="mt-2">
-                  {generationStatus === "error" ? (
+                  {generationStatus === 'error' ? (
                     <p className="text-sm text-red-600">{error}</p>
-                  ) : generationStatus === "success" ? (
+                  ) : generationStatus === 'success' ? (
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600">
                         Content has been generated successfully!
                       </p>
-                      <div className="max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-md">
-                        <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+                      <div className="max-h-60 overflow-y-auto rounded-md bg-gray-50 p-3">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-800">
                           {generatedContent}
                         </pre>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-cyan-600"></div>
-                      <p className="text-sm text-gray-500">Generating your page content...</p>
+                      <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-cyan-600"></div>
+                      <p className="text-sm text-gray-500">
+                        Generating your page content...
+                      </p>
                     </div>
                   )}
                 </div>
@@ -376,25 +414,25 @@ ${additionalInstructions}`;
                   <button
                     ref={dialogButtonRef}
                     type="button"
-                    className="inline-flex justify-center px-4 py-2 text-sm font-bold text-white bg-cyan-600 border border-transparent rounded-md hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-cyan-500"
+                    className="inline-flex justify-center rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                     onClick={() => {
-                      if (generationStatus === "success") {
+                      if (generationStatus === 'success') {
                         setShowModal(false);
                         setShowPreview(true);
-                      } else if (generationStatus === "error") {
+                      } else if (generationStatus === 'error') {
                         setShowModal(false);
-                        setGenerationStatus("idle");
+                        setGenerationStatus('idle');
                       } else {
                         // Don't close if still generating
                       }
                     }}
-                    disabled={generationStatus === "generating"}
+                    disabled={generationStatus === 'generating'}
                   >
-                    {generationStatus === "error"
-                      ? "Try Again"
-                      : generationStatus === "success"
-                        ? "Continue"
-                        : "Cancel"}
+                    {generationStatus === 'error'
+                      ? 'Try Again'
+                      : generationStatus === 'success'
+                        ? 'Continue'
+                        : 'Cancel'}
                   </button>
                 </div>
               </Dialog.Content>

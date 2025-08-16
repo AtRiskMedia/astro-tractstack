@@ -1,7 +1,9 @@
 ---
 import Menu from './Menu';
 import { isAuthenticated, isAdmin, getUserRole } from '@/utils/auth';
+import ImpressionWrapper from '@/components/widgets/ImpressionWrapper';
 import type { MenuNode } from '@/types/tractstack';
+import type { ImpressionNode } from '@/types/compositorTypes';
 
 export interface Props {
   title: string;
@@ -12,7 +14,8 @@ export interface Props {
   isEditable?: boolean;
   menu?: MenuNode | null;
   sessionId?: string;
-  impressions?: any[]; // TODO: Implement when backend ready
+  storyfragmentId?: string;
+  impressions?: ImpressionNode[];
 }
 
 const {
@@ -24,7 +27,8 @@ const {
   isEditable = false,
   menu,
   sessionId = '',
-  impressions = [], // TODO: Remove when backend implemented
+  storyfragmentId = undefined,
+  impressions = [],
 } = Astro.props;
 
 const isHome = slug === brandConfig?.HOME_SLUG;
@@ -280,13 +284,15 @@ const authStatus = {
         ) : null
       }
 
-      {/* Impressions placeholder */}
       {
-        impressions?.length ? (
-          <div class="text-myblue/80 hover:text-myblue">
-            <span class="text-xs">📬 {impressions.length}</span>
-          </div>
-        ) : null
+        impressions?.length > 0 && (
+          <ImpressionWrapper
+            payload={impressions}
+            currentPage={{ id: storyfragmentId, slug, title }}
+            config={brandConfig}
+            client:load
+          />
+        )
       }
     </div>
   </div>
@@ -464,14 +470,14 @@ const authStatus = {
       });
 
       function closeModal() {
-        modal.classList.add('hidden');
-        modal.setAttribute('aria-hidden', 'true');
+        modal?.classList.add('hidden');
+        modal?.setAttribute('aria-hidden', 'true');
 
         // Restore body scroll
         document.body.style.overflow = '';
 
         // Return focus to heart button for accessibility
-        heartBtn.focus();
+        heartBtn?.focus();
       }
 
       // Handle iframe load events for better UX

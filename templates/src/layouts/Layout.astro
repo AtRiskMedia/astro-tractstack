@@ -5,6 +5,7 @@ import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/stores/brand';
 import { getOrSetSessionId } from '@/lib/session';
 import type { MenuNode } from '@/types/tractstack';
+import type { ImpressionNode } from '@/types/compositorTypes';
 
 export interface Props {
   title: string;
@@ -16,7 +17,6 @@ export interface Props {
   pubDatetime?: Date;
   modDatetime?: Date | null;
   ogImage?: string;
-  id?: string;
   isContext?: boolean;
   isStoryKeep?: boolean;
   isEditor?: boolean;
@@ -24,6 +24,7 @@ export interface Props {
   brandConfig?: any;
   storyfragmentId?: string;
   sessionId?: string;
+  impressions?: ImpressionNode[];
 }
 
 const {
@@ -43,6 +44,7 @@ const {
   brandConfig: propBrandConfig,
   storyfragmentId = '',
   sessionId = '',
+  impressions = [],
 } = Astro.props;
 
 const isDev = import.meta.env.DEV;
@@ -253,6 +255,8 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
           isEditable={isEditable}
           sessionId={sessionId}
           menu={menu}
+          storyfragmentId={storyfragmentId}
+          impressions={impressions}
         />
       )
     }

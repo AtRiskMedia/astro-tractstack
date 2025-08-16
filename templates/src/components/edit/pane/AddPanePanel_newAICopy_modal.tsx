@@ -80,7 +80,8 @@ Additional Instructions:
 ${additionalInstructions}`;
 
     try {
-      const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+      const goBackend =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
       const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
       const response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {

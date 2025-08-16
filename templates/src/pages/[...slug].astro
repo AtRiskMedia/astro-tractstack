@@ -11,13 +11,8 @@ const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const { slug } = Astro.params || {};
 const lookup = slug || '';
-
 const sessionId = await getOrSetSessionId(Astro, tenantId);
-
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const endpoint = lookup
-  ? `${goBackend}/api/v1/nodes/storyfragments/slug/${lookup}`
-  : `${goBackend}/api/v1/nodes/storyfragments/home`;
 
 let storyData;
 try {
@@ -101,8 +96,9 @@ if (!brandConfig.SITE_INIT) {
   isStoryKeep={false}
   isEditable={true}
   brandConfig={brandConfig}
-  storyfragmentId={storyfragmentId}
   sessionId={sessionId}
+  impressions={storyData.impressions || []}
+  storyfragmentId={storyfragmentId}
 >
   <main id="main-content" class="min-h-screen w-full">
     <div class="panes-container">

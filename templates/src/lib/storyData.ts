@@ -1,5 +1,6 @@
 import type { AstroGlobal } from 'astro';
 import { handleFailedResponse } from '@/utils/backend';
+import type { ImpressionNode } from '@/types/compositorTypes';
 
 export interface StoryData {
   id: string;
@@ -7,6 +8,7 @@ export interface StoryData {
   slug: string;
   paneIds: string[];
   codeHookTargets: Record<string, string>;
+  impressions: ImpressionNode[];
   fragments: Record<string, string>;
   menu: any;
   isHome: boolean;
