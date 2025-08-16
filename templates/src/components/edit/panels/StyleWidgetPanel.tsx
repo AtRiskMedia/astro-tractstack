@@ -40,11 +40,12 @@ const StyleWidgetPanel = ({
     parentNode.defaultClasses?.[outerContainerNode.tagName];
   const outerOverrideClasses = outerContainerNode.overrideClasses;
 
-  const widgetId = 'identifyAs(someValue)'.substring(
-    0,
-    'identifyAs(someValue)'.indexOf('(')
-  );
-  const widgetName = widgetMeta[widgetId].title || `Widget`;
+  // Extract the widget type from the node's copy
+  const regexpHook =
+    /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|signup)\((.*)\)$/;
+  const hookMatch = node.copy?.match(regexpHook);
+  const widgetId = hookMatch ? hookMatch[1] : 'unknown';
+  const widgetName = widgetMeta[widgetId]?.title || `Widget`;
 
   // Merge classes for widget
   const mergedImgClasses = useMemo(() => {

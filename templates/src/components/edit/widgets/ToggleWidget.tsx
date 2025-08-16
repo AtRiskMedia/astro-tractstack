@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import BeakerIcon from '@heroicons/react/24/outline/BeakerIcon';
-import { ulid } from 'ulid';
 import SingleParam from '@/components/fields/SingleParam';
 import { widgetMeta } from '@/constants';
 import type { FlatNode, BeliefNode } from '@/types/compositorTypes';
@@ -12,8 +10,6 @@ interface ToggleWidgetProps {
 
 export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
-  const [editingBeliefId, setEditingBeliefId] = useState<string | null>(null);
-  const [isCreatingBelief, setIsCreatingBelief] = useState(false);
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
@@ -37,16 +33,60 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
     setIsInitialized(true);
   }, [beliefTag, prompt, isPlaceholder]);
 
+  // Fetch beliefs using new Go backend pattern
   useEffect(() => {
-    async function fetchBeliefs() {
-      const response = await fetch('/api/turso/getAllBeliefNodes', {
-        method: 'GET',
-      });
-      if (!response.ok) return;
-      const result = await response.json();
-      if (result.success) setBeliefs(result.data);
-    }
-    fetchBeliefs();
+    const fetchData = async () => {
+      try {
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+        // Step 1: Get all belief IDs
+        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
+          headers: {
+            'X-Tenant-ID': tenantId,
+          },
+        });
+
+        if (!idsResponse.ok) {
+          throw new Error(
+            `Failed to fetch belief IDs: ${idsResponse.statusText}`
+          );
+        }
+        const { beliefIds } = await idsResponse.json();
+
+        if (!beliefIds || beliefIds.length === 0) {
+          setBeliefs([]);
+          return;
+        }
+
+        // Step 2: Get belief data by IDs
+        const beliefsResponse = await fetch(
+          `${goBackend}/api/v1/nodes/beliefs`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            body: JSON.stringify({ beliefIds }),
+          }
+        );
+
+        if (!beliefsResponse.ok) {
+          throw new Error(
+            `Failed to fetch beliefs: ${beliefsResponse.statusText}`
+          );
+        }
+
+        const { beliefs } = await beliefsResponse.json();
+        setBeliefs(beliefs || []);
+      } catch (err) {
+        console.error('Failed to fetch beliefs:', err);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleBeliefChange = (selectedValue: string) => {
@@ -65,60 +105,6 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
     const tagToUse = selectedBeliefTag || (isPlaceholder ? '' : beliefTag);
     onUpdate([tagToUse, sanitizedValue]);
   };
-
-  if (isCreatingBelief || editingBeliefId) {
-    const belief: BeliefNode = isCreatingBelief
-      ? {
-          id: ulid(),
-          nodeType: 'Belief',
-          parentId: null,
-          title: '',
-          slug: '',
-          scale: 'yn',
-        }
-      : beliefs.find((b) => b.id === editingBeliefId) || {
-          id: '',
-          nodeType: 'Belief',
-          parentId: null,
-          title: '',
-          slug: '',
-          scale: 'yn',
-        };
-
-    return (
-      <div className="my-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold">
-            {isCreatingBelief ? 'Create New Belief' : 'Edit Belief'}
-          </h3>
-          <button
-            onClick={() => {
-              setIsCreatingBelief(false);
-              setEditingBeliefId(null);
-            }}
-            className="text-cyan-700 hover:text-black"
-          >
-            ← Back
-          </button>
-        </div>
-        Belief Editor Here
-      </div>
-    );
-  }
-  // TODO:
-  //<BeliefEditor
-  //  belief={belief}
-  //  create={isCreatingBelief}
-  //  isEmbedded={true}
-  //  onComplete={() => {
-  //    setIsCreatingBelief(false);
-  //    setEditingBeliefId(null);
-  //  }}
-  //  onCancel={() => {
-  //    setIsCreatingBelief(false);
-  //    setEditingBeliefId(null);
-  //  }}
-  ///>
 
   // Show beliefs that can be selected for the toggle
   const filteredBeliefs = beliefs.filter(
@@ -152,25 +138,6 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
             </option>
           ))}
         </select>
-        {hasRealSelection && !isPlaceholder ? (
-          <button
-            onClick={() => {
-              const belief = beliefs.find((b) => b.slug === selectValue);
-              if (belief) setEditingBeliefId(belief.id);
-            }}
-            className="text-cyan-700 hover:text-black"
-            title="Edit belief"
-          >
-            <BeakerIcon className="h-5 w-5" />
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsCreatingBelief(true)}
-            className="rounded bg-cyan-700 px-4 py-2 text-white hover:bg-cyan-800"
-          >
-            Create New Belief
-          </button>
-        )}
       </div>
 
       {(hasRealSelection || selectedBeliefTag) && (
