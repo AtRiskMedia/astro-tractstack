@@ -9,6 +9,7 @@ interface ActionBuilderFieldProps {
   contentMap: FullContentMapItem[];
   label?: string;
   error?: string;
+  slug?: string;
 }
 
 export default function ActionBuilderField({
@@ -17,12 +18,13 @@ export default function ActionBuilderField({
   contentMap,
   label = 'Navigation Action',
   error,
+  slug,
 }: ActionBuilderFieldProps) {
   const [selectedTarget, setSelectedTarget] = useState<string>('');
   const [selectedSubcommand, setSelectedSubcommand] = useState<string>('');
   const [param1, setParam1] = useState<string>('');
   const [param2, setParam2] = useState<string>('');
-  const [param3, setParam3] = useState<string>('');
+  //const [param3, setParam3] = useState<string>('');
 
   // Parse existing value on mount/change
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function ActionBuilderField({
             } else {
               if (parts.length > 1) setParam1(parts[1]);
               if (parts.length > 2) setParam2(parts[2]);
-              if (parts.length > 3) setParam3(parts[3]);
+              //if (parts.length > 3) setParam3(parts[3]);
             }
           }
         }
@@ -89,7 +91,7 @@ export default function ActionBuilderField({
     setSelectedSubcommand('');
     setParam1('');
     setParam2('');
-    setParam3('');
+    //setParam3('');
     updateValue(newTarget);
   };
 
@@ -168,6 +170,25 @@ export default function ActionBuilderField({
           )
         );
 
+      case 'bunny':
+        if (isParam1 && slug) {
+          if (!currentValue) setParam1(slug);
+          return (
+            <ActionBuilderSlugSelector
+              type="storyFragment"
+              value={currentValue || slug}
+              onSelect={(newValue) => {
+                setParam1(newValue);
+                setParam2(''); // Reset time selection when story fragment changes
+                updateValue(selectedTarget, '', newValue, '');
+              }}
+              label="Select Story Fragment"
+              contentMap={contentMap}
+            />
+          );
+        }
+        return null;
+
       case 'url':
         return (
           isParam1 && (
@@ -216,6 +237,7 @@ export default function ActionBuilderField({
             </option>
           ))}
         </select>
+
         {GOTO_TARGETS[selectedTarget] && (
           <p className="mt-1 text-sm text-gray-500">
             {GOTO_TARGETS[selectedTarget].description}
@@ -242,12 +264,13 @@ export default function ActionBuilderField({
         </div>
       )}
 
-      {/* Parameter Inputs */}
+      {/* Parameter 1 */}
       {selectedTarget &&
         GOTO_TARGETS[selectedTarget]?.requiresParam &&
         !GOTO_TARGETS[selectedTarget].subcommands &&
         renderParamInput('param1')}
 
+      {/* Parameter 2 */}
       {selectedTarget &&
         GOTO_TARGETS[selectedTarget]?.requiresSecondParam &&
         param1 &&

@@ -177,10 +177,9 @@ const StyleLinkConfigPanel = ({ node, config }: StyleLinkConfigPanelProps) => {
         );
       case 'goto':
       default:
-        // TODO:
-        console.log(`TODO: ActionBuilderField does not take slug`);
         return (
           <ActionBuilderField
+            slug={slug}
             value={callbackPayload}
             onChange={handleChange}
             contentMap={fullContentMapStore.get()}
