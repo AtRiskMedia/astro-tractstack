@@ -34,10 +34,10 @@ export type CompositorProps = {
 export const Compositor = (props: CompositorProps) => {
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
   fullContentMapStore.set(props.fullContentMap);
-  hasAssemblyAIStore.set(props.config.HAS_AAI);
+  hasAssemblyAIStore.set(false); // TODO: Must add to BRAND_CONFIG !!
   urlParamsStore.set(props.urlParams);
   canonicalURLStore.set(props.fullCanonicalURL);
   preferredThemeStore.set(props.config.THEME as Theme);
@@ -63,6 +63,12 @@ export const Compositor = (props: CompositorProps) => {
     getCtx(props).buildNodesTreeFromRowDataMadeNodes(props.nodes);
     setInitialized(true);
 
+    // Stop initial loading after initialization
+    setTimeout(() => {
+      setIsLoading(false);
+      stopLoadingAnimation();
+    }, 300);
+
     const unsubscribe = getCtx(props).notifications.subscribe(
       ROOT_NODE_NAME,
       () => {
@@ -86,35 +92,39 @@ export const Compositor = (props: CompositorProps) => {
     };
   }, []);
 
-  if (!initialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-600">Compositing page...</div>
-      </div>
-    );
-  }
-
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${
-        isLoading ? 'opacity-60' : 'opacity-100'
-      }`}
+      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
+        }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),
         maxWidth: `${viewportMaxWidth}px`,
         margin: '0 auto',
         background: isLoading ? 'rgba(167, 177, 183, 0.2)' : 'white',
+        minHeight: '100vh',
       }}
     >
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="flex items-center space-x-2 text-gray-600">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+            <span>{initialized ? 'Updating...' : 'Compositing page...'}</span>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
-      <Node
-        nodeId={props.id}
-        key={`${props.id}-${updateCounter}`}
-        ctx={props.ctx}
-        config={props.config}
-      />
+      {initialized && (
+        <Node
+          nodeId={props.id}
+          key={`${props.id}-${updateCounter}`}
+          ctx={props.ctx}
+          config={props.config}
+        />
+      )}
     </div>
   );
 };
