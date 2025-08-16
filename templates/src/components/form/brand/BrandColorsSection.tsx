@@ -13,9 +13,9 @@ function getContrastRatio(color1: string, color2: string): number {
   // Convert hex to RGB
   const hexToRgb = (hex: string) => {
     const cleanHex = hex.replace('#', '');
-    const r = parseInt(cleanHex.substr(0, 2), 16);
-    const g = parseInt(cleanHex.substr(2, 2), 16);
-    const b = parseInt(cleanHex.substr(4, 2), 16);
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
     return { r, g, b };
   };
 
@@ -48,7 +48,7 @@ function checkContrastPairs(colors: string[]): string[] {
 
   const issues: string[] = [];
 
-  // Key pairs from brandThemes.ts TODO comments:
+  // Key pairs from brandThemes.ts
   // - 1-2, 1-8 (text on backgrounds) should be >7:1 (WCAG AAA)
   // - 5-2, 5-6, 5-8 (content on backgrounds) should be >4.5:1 (WCAG AA)
 
@@ -136,13 +136,13 @@ export default function BrandColorsSection({
           </div>
           {!hasContrastIssues ? (
             <p className="text-sm text-green-600">
-              ✓ All colors properly contrasted
+              All colors properly contrasted
             </p>
           ) : (
             <div className="space-y-1">
               {contrastIssues.map((issue, index) => (
                 <p key={index} className="text-mydarkgrey text-sm">
-                  ⚠ {issue}
+                  {issue}
                 </p>
               ))}
             </div>
