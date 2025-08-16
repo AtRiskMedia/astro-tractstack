@@ -201,42 +201,32 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeImg.tsx',
     },
-    // Compositor widgets
+    // Edit widgets
     {
-      src: resolve(
-        'templates/src/components/compositor/widgets/BeliefWidget.tsx'
-      ),
-      dest: 'src/components/compositor/widgets/BeliefWidget.tsx',
+      src: resolve('templates/src/components/edit/widgets/BeliefWidget.tsx'),
+      dest: 'src/components/edit/widgets/BeliefWidget.tsx',
     },
     {
       src: resolve(
-        'templates/src/components/compositor/widgets/IdentifyAsWidget.tsx'
+        'templates/src/components/edit/widgets/IdentifyAsWidget.tsx'
       ),
-      dest: 'src/components/compositor/widgets/IdentifyAsWidget.tsx',
+      dest: 'src/components/edit/widgets/IdentifyAsWidget.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/widgets/ToggleWidget.tsx'
-      ),
-      dest: 'src/components/compositor/widgets/ToggleWidget.tsx',
+      src: resolve('templates/src/components/edit/widgets/ToggleWidget.tsx'),
+      dest: 'src/components/edit/widgets/ToggleWidget.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/widgets/BunnyWidget.tsx'
-      ),
-      dest: 'src/components/compositor/widgets/BunnyWidget.tsx',
+      src: resolve('templates/src/components/edit/widgets/BunnyWidget.tsx'),
+      dest: 'src/components/edit/widgets/BunnyWidget.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/widgets/SignupWidget.tsx'
-      ),
-      dest: 'src/components/compositor/widgets/SignupWidget.tsx',
+      src: resolve('templates/src/components/edit/widgets/SignupWidget.tsx'),
+      dest: 'src/components/edit/widgets/SignupWidget.tsx',
     },
     {
-      src: resolve(
-        'templates/src/components/compositor/widgets/YouTubeWidget.tsx'
-      ),
-      dest: 'src/components/compositor/widgets/YouTubeWidget.tsx',
+      src: resolve('templates/src/components/edit/widgets/YouTubeWidget.tsx'),
+      dest: 'src/components/edit/widgets/YouTubeWidget.tsx',
     },
     // Compositor fields
     {

@@ -2,24 +2,20 @@ import { classNames } from '@/utils/helpers';
 
 const SingleIdentifyAs = ({
   value,
-  target,
   noprompt,
 }: {
   value: { slug: string; target: string; extra: string };
-  target: string;
   noprompt: boolean;
 }) => {
   const thisTitle = noprompt ? `Tell me more!` : value.target;
 
   return (
     <div className="mt-3 block w-fit">
-      <button
-        type="button"
+      <div
         className={classNames(
           `bg-gray-100 ring-orange-500 hover:bg-orange-200`,
           `rounded-md px-3 py-2 text-lg text-black shadow-sm ring-1 ring-inset`
         )}
-        disabled
       >
         <div className="flex items-center">
           <span
@@ -34,7 +30,7 @@ const SingleIdentifyAs = ({
             {thisTitle}
           </span>
         </div>
-      </button>
+      </div>
     </div>
   );
 };
@@ -61,7 +57,6 @@ export const IdentifyAs = ({
           <SingleIdentifyAs
             key={`${value.slug}-${index}`}
             value={{ ...value, target }}
-            target={target}
             noprompt={noprompt}
           />
         ))}

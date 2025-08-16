@@ -5,12 +5,12 @@ import { widgetMeta } from '@/constants';
 import SingleParam from '@/components/fields/SingleParam';
 import BooleanParam from '@/components/fields/BooleanParam';
 import MultiParam from '@/components/fields/MultiParam';
-import BeliefWidget from '@/components/compositor/widgets/BeliefWidget';
-import BunnyWidget from '@/components/compositor/widgets/BunnyWidget';
-import IdentifyAsWidget from '@/components/compositor/widgets/IdentifyAsWidget';
-import SignupWidget from '@/components/compositor/widgets/SignupWidget';
-import ToggleWidget from '@/components/compositor/widgets/ToggleWidget';
-import YouTubeWidget from '@/components/compositor/widgets/YouTubeWidget';
+import BeliefWidget from '@/components/edit/widgets/BeliefWidget';
+import BunnyWidget from '@/components/edit/widgets/BunnyWidget';
+import IdentifyAsWidget from '@/components/edit/widgets/IdentifyAsWidget';
+import SignupWidget from '@/components/edit/widgets/SignupWidget';
+import ToggleWidget from '@/components/edit/widgets/ToggleWidget';
+import YouTubeWidget from '@/components/edit/widgets/YouTubeWidget';
 import type { FlatNode } from '@/types/compositorTypes';
 
 interface StyleWidgetConfigPanelProps {
