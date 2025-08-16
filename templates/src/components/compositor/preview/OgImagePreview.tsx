@@ -22,8 +22,6 @@ const OgImagePreview = ({
   config,
   onColorChange,
 }: OgImagePreviewProps) => {
-  // TODO: Replace with backend state management
-  // For now, use local state with sensible defaults
   const [fontSize, setFontSize] = useState<number>(48);
   const [textColor, setTextColor] = useState('#ffffff');
   const [bgColor, setBgColor] = useState('#1f2937');
@@ -31,16 +29,6 @@ const OgImagePreview = ({
   useEffect(() => {
     if (!title) return;
 
-    // TODO: Replace with backend call for optimal font size calculation
-    // const response = await fetch('/api/v1/og-image/calculate-font-size', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ title, nodeId })
-    // });
-    // const result = await response.json();
-    // setFontSize(result.optimalFontSize);
-
-    // Temporary: Simple font size calculation based on title length
     const baseSize = 48;
     const titleLength = title.length;
     let calculatedSize = baseSize;
@@ -54,27 +42,11 @@ const OgImagePreview = ({
 
   const handleTextColorChange = (color: string) => {
     setTextColor(color);
-
-    // TODO: Replace with backend state update
-    // await fetch('/api/v1/og-image/update-params', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ nodeId, textColor: color })
-    // });
-
     onColorChange?.(color, bgColor);
   };
 
   const handleBgColorChange = (color: string) => {
     setBgColor(color);
-
-    // TODO: Replace with backend state update
-    // await fetch('/api/v1/og-image/update-params', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ nodeId, bgColor: color })
-    // });
-
     onColorChange?.(textColor, color);
   };
 
