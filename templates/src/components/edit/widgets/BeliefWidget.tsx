@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import BeakerIcon from '@heroicons/react/24/outline/BeakerIcon';
-import { ulid } from 'ulid';
 import SingleParam from '@/components/fields/SingleParam';
 import { widgetMeta } from '@/constants';
 import type { FlatNode, BeliefNode } from '@/types/compositorTypes';
@@ -12,8 +10,6 @@ interface BeliefWidgetProps {
 
 export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
-  const [editingBeliefId, setEditingBeliefId] = useState<string | null>(null);
-  const [isCreatingBelief, setIsCreatingBelief] = useState(false);
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [currentScaleType, setCurrentScaleType] = useState<string>('');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
@@ -41,16 +37,60 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
     setIsInitialized(true);
   }, [beliefTag, scaleType, prompt, isPlaceholder]);
 
+  // Fetch beliefs using new Go backend 2.0 pattern
   useEffect(() => {
-    async function fetchBeliefs() {
-      const response = await fetch('/api/turso/getAllBeliefNodes', {
-        method: 'GET',
-      });
-      if (!response.ok) return;
-      const result = await response.json();
-      if (result.success) setBeliefs(result.data);
-    }
-    fetchBeliefs();
+    const fetchData = async () => {
+      try {
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+        // Step 1: Get all belief IDs
+        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
+          headers: {
+            'X-Tenant-ID': tenantId,
+          },
+        });
+
+        if (!idsResponse.ok) {
+          throw new Error(
+            `Failed to fetch belief IDs: ${idsResponse.statusText}`
+          );
+        }
+        const { beliefIds } = await idsResponse.json();
+
+        if (!beliefIds || beliefIds.length === 0) {
+          setBeliefs([]);
+          return;
+        }
+
+        // Step 2: Get belief data by IDs
+        const beliefsResponse = await fetch(
+          `${goBackend}/api/v1/nodes/beliefs`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            body: JSON.stringify({ beliefIds }),
+          }
+        );
+
+        if (!beliefsResponse.ok) {
+          throw new Error(
+            `Failed to fetch beliefs: ${beliefsResponse.statusText}`
+          );
+        }
+
+        const { beliefs } = await beliefsResponse.json();
+        setBeliefs(beliefs || []);
+      } catch (err) {
+        console.error('Failed to fetch beliefs:', err);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleBeliefChange = (selectedValue: string) => {
@@ -76,62 +116,15 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
     onUpdate([tagToUse, currentScaleType, sanitizedValue]);
   };
 
-  if (isCreatingBelief || editingBeliefId) {
-    const belief: BeliefNode = isCreatingBelief
-      ? {
-          id: ulid(),
-          nodeType: 'Belief',
-          parentId: null,
-          title: '',
-          slug: '',
-          scale: '',
-        }
-      : beliefs.find((b) => b.id === editingBeliefId) || {
-          id: '',
-          nodeType: 'Belief',
-          parentId: null,
-          title: '',
-          slug: '',
-          scale: '',
-        };
-
-    return (
-      <div className="my-4">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold">
-            {isCreatingBelief ? 'Create New Belief' : 'Edit Belief'}
-          </h3>
-          <button
-            onClick={() => {
-              setIsCreatingBelief(false);
-              setEditingBeliefId(null);
-            }}
-            className="text-cyan-700 hover:text-black"
-          >
-            ← Back
-          </button>
-        </div>
-        Belief editor here
-      </div>
-    );
-  }
-  // TODO: belief editor?
-  //  <BeliefEditor
-  //    belief={belief}
-  //    create={isCreatingBelief}
-  //    isEmbedded={true}
-  //    onComplete={() => {
-  //      setIsCreatingBelief(false);
-  //      setEditingBeliefId(null);
-  //    }}
-  //    onCancel={() => {
-  //      setIsCreatingBelief(false);
-  //      setEditingBeliefId(null);
-  //    }}
-  //  />
+  // Filter beliefs to only show supported scale types (exclude custom)
+  const filteredBeliefs = beliefs.filter(
+    (b) =>
+      b.scale &&
+      ['likert', 'agreement', 'interest', 'yn', 'tf'].includes(b.scale)
+  );
 
   // Find the selected belief (if any)
-  const selectedBelief = beliefs.find(
+  const selectedBelief = filteredBeliefs.find(
     (b) => b.slug === (selectedBeliefTag || (isPlaceholder ? '' : beliefTag))
   );
 
@@ -148,6 +141,7 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
     agreement: 'Agreement (2-point)',
     interest: 'Interest (2-point)',
     tf: 'True/False',
+    custom: 'Custom Values',
   };
 
   return (
@@ -160,59 +154,29 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
           disabled={hasRealSelection && !isPlaceholder}
         >
           <option value="">Select a belief</option>
-          {beliefs.map((b) => (
+          {filteredBeliefs.map((b) => (
             <option key={b.slug} value={b.slug}>
               {b.title}
             </option>
           ))}
         </select>
-        {hasRealSelection && !isPlaceholder ? (
-          <button
-            onClick={() => {
-              const belief = beliefs.find((b) => b.slug === selectValue);
-              if (belief) setEditingBeliefId(belief.id);
-            }}
-            className="text-cyan-700 hover:text-black"
-            title="Edit belief"
-          >
-            <BeakerIcon className="h-5 w-5" />
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsCreatingBelief(true)}
-            className="rounded bg-cyan-700 px-4 py-2 text-white hover:bg-cyan-800"
-          >
-            Create New Belief
-          </button>
-        )}
       </div>
 
-      {hasRealSelection && (
-        <>
-          <div className="space-y-1">
-            <label className="block text-sm text-gray-600">
-              {widgetInfo.parameters[1].label}
-            </label>
-            <select
-              value={selectedBelief?.scale || currentScaleType}
-              className="w-full rounded-md border-0 bg-gray-100 px-2.5 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300"
-              disabled={true}
-            >
-              {Object.entries(scaleTypeNames).map(([value, name]) => (
-                <option key={value} value={value}>
-                  {name}
-                </option>
-              ))}
-              <option value="custom">Custom Values</option>
-            </select>
-          </div>
+      {selectedBelief && (
+        <div className="rounded-md bg-blue-50 p-3">
+          <p className="text-sm text-blue-700">
+            <strong>Scale:</strong>{' '}
+            {scaleTypeNames[selectedBelief.scale] || selectedBelief.scale}
+          </p>
+        </div>
+      )}
 
-          <SingleParam
-            label={widgetInfo.parameters[2].label}
-            value={currentPrompt}
-            onChange={handlePromptChange}
-          />
-        </>
+      {(hasRealSelection || selectedBeliefTag) && (
+        <SingleParam
+          label={widgetInfo.parameters[2].label}
+          value={currentPrompt}
+          onChange={handlePromptChange}
+        />
       )}
     </div>
   );
