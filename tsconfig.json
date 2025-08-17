@@ -1,16 +1,10 @@
 {
-  // This is the most important line. It inherits Astro's recommended TypeScript settings.
-  "extends": "astro/tsconfigs/base",
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    // Your project-specific build options are kept.
-    "declaration": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    // Your React settings are preserved.
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "jsxImportSource": "react",
-    // Your custom path aliases are also preserved.
     "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["templates/src/*"],
       "@/components/*": ["templates/src/components/*"],
@@ -21,20 +15,11 @@
       "@/stores/*": ["templates/src/stores/*"],
       "@/constants/*": ["templates/src/constants/*"],
       "@/hooks/*": ["templates/src/hooks/*"],
-      "@/client/*": ["templates/src/client/*"]
+      "@/client/*": ["templates/src/client/*"],
+      "@/lib/*": ["templates/src/lib/*"],
+      "@/custom/*": ["templates/src/custom/*"]
     }
   },
-  // Your "include" and "exclude" arrays remain, as they are specific to your project's file structure.
-  "include": [
-    "index.ts",
-    "config.ts",
-    "types.ts",
-    "virtual.d.ts",
-    "utils/**/*.ts",
-    "bin/**/*.js",
-    "templates/**/*",
-    "templates/src/**/*",
-    "templates/src/types/astro.d.ts"
-  ],
-  "exclude": ["node_modules", "templates", "dist"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

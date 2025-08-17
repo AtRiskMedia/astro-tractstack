@@ -1,5 +1,4 @@
-// config.ts - Updated with authentication configuration options
-import type { TractStackConfig } from './types.js';
+import type { TractStackConfig } from '@/types/astro';
 
 export interface AuthConfig {
   // Session configuration

@@ -1,7 +1,8 @@
 // templates/src/types/astro.d.ts
 
+/// <reference types="astro/client" />
+
 import type { FullContentMapItem, PlayerJS } from './tractstack';
-export {};
 
 declare global {
   interface ImportMeta {
@@ -11,17 +12,6 @@ declare global {
       PUBLIC_ENABLE_MULTI_TENANT?: string;
       DEV?: boolean;
       PROD?: boolean;
-    };
-  }
-
-  interface Locals {
-    session?: Record<string, any>;
-    fullContentMap?: FullContentMapItem[];
-    tenant?: {
-      id: string;
-      domain: string | null;
-      isMultiTenant: boolean;
-      isLocalhost: boolean;
     };
   }
 
@@ -50,3 +40,18 @@ declare global {
     HTMX_CONFIGURED?: boolean;
   }
 }
+
+declare namespace App {
+  interface Locals {
+    session?: Record<string, any>;
+    fullContentMap?: FullContentMapItem[];
+    tenant?: {
+      id: string;
+      domain: string | null;
+      isMultiTenant: boolean;
+      isLocalhost: boolean;
+    };
+  }
+}
+
+export {};

@@ -1,4 +1,4 @@
-import type { APIContext, MiddlewareNext } from 'astro';
+import type { APIContext, MiddlewareNext } from '@/types/astro';
 
 interface Locals {
   session?: Record<string, any>;

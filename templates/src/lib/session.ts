@@ -1,4 +1,4 @@
-import type { AstroGlobal } from 'astro';
+import type { AstroGlobal } from '@/types/astro';
 
 /**
  * Calls the backend's /api/v1/auth/visit endpoint to create a new session.

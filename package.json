@@ -10,18 +10,16 @@
   "files": [
     "index.ts",
     "config.ts",
-    "types.ts",
     "templates/",
     "utils/",
     "bin/"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "vite build && tsc -p tsconfig.dts.json",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "tsc": "tsc --noEmit --pretty",
-    "prepublishOnly": "pnpm format && pnpm tsc"
+    "dev": "vite build --watch",
+    "check": "astro check",
+    "prepublishOnly": "pnpm format && pnpm check && pnpm build"
   },
   "keywords": [
     "astro",
@@ -66,10 +64,13 @@
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
     "@types/tinycolor2": "^1.4.6",
+    "astro": "^5.0.0",
     "prettier": "3.3.3",
     "prettier-plugin-astro": "0.14.1",
     "prettier-plugin-tailwindcss": "0.6.8",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vite": "^7.1.2",
+    "vite-plugin-dts": "^4.5.4"
   },
   "engines": {
     "node": ">=18.14.1"

@@ -1,4 +1,4 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 import { getBrandConfig } from '@/stores/brand';
 
 export const GET: APIRoute = async ({ request }) => {
@@ -108,7 +108,7 @@ Content last updated: ${new Date().toISOString()}`.trim();
   });
 };
 
-export const HEAD: APIRoute = async ({ request }) => {
+export const HEAD: APIRoute = async () => {
   // For HEAD requests, return the same headers but no body
   return new Response(null, {
     headers: {

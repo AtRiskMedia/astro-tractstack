@@ -1,5 +1,4 @@
-import type { AstroIntegration } from 'astro';
-import type { TractStackConfig } from '@/types/tractstack';
+import type { TractStackConfig, AstroIntegration } from '@/types/astro';
 import { createResolver } from './utils/create-resolver.js';
 import { validateConfig } from './utils/validate-config.js';
 import { injectTemplateFiles } from './utils/inject-files.js';
@@ -14,7 +13,7 @@ export default function tractstack(
     name: 'astro-tractstack',
     hooks: {
       'astro:config:setup': async ({ config, updateConfig, logger }) => {
-        const tractStackConfig = validateConfig(userConfig, logger);
+        validateConfig(userConfig, logger);
 
         // Check for multi-tenant environment variable
         const enableMultiTenant = userConfig.enableMultiTenant || false;
@@ -61,6 +60,10 @@ export default function tractstack(
                 '@/components': resolve(process.cwd(), 'src/components'),
                 '@/utils': resolve(process.cwd(), 'src/utils'),
                 '@/types': resolve(process.cwd(), 'src/types'),
+                '@/lib': resolve(process.cwd(), 'src/lib'),
+                '@/hooks': resolve(process.cwd(), 'src/hooks'),
+                '@/constants': resolve(process.cwd(), 'src/constants'),
+                '@/stores': resolve(process.cwd(), 'src/stores'),
                 '@/layouts': resolve(process.cwd(), 'src/layouts'),
                 '@/pages': resolve(process.cwd(), 'src/pages'),
               },

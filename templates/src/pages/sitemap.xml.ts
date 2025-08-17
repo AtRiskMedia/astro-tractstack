@@ -1,4 +1,4 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 import { getBrandConfig } from '@/stores/brand';
 
 // Helper functions for date formatting
@@ -105,7 +105,7 @@ export const GET: APIRoute = async ({ request }) => {
   });
 };
 
-export const HEAD: APIRoute = async ({ request }) => {
+export const HEAD: APIRoute = async () => {
   // For HEAD requests, return the same headers but no body
   return new Response(null, {
     headers: {

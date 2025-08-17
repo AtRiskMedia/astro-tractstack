@@ -1,7 +1,4 @@
-// templates/src/pages/api/auth/profile/decode.ts
-// Astro SSR API endpoint to proxy profile decode requests to Go backend
-
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 
 export const GET: APIRoute = async ({ request }) => {
   const goBackend =

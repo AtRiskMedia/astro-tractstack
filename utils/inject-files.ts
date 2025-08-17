@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { AstroIntegrationLogger } from 'astro';
+import type { AstroIntegrationLogger } from '@/types/astro';
 
 interface InjectFilesConfig {
   includeExamples?: boolean;
@@ -43,6 +43,12 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/constants/stopWords.ts'),
       dest: 'src/constants/stopWords.ts',
+    },
+
+    // Types
+    {
+      src: resolve('astro.d.ts'),
+      dest: 'astro.d.ts',
     },
     {
       src: resolve('templates/src/types/tractstack.ts'),

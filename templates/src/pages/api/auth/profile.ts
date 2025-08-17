@@ -1,4 +1,4 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 
 export const POST: APIRoute = async ({ request }) => {
   const GO_BACKEND =

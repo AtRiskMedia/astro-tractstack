@@ -50,26 +50,6 @@ export interface FragmentReference {
   lazy?: boolean;
 }
 
-// Configuration from virtual module
-export interface TractStackConfig {
-  goBackend?: string;
-  tenantId?: string;
-  enableMultiTenant?: boolean;
-  includeExamples?: boolean;
-  theme?: {
-    colorScheme: 'light' | 'dark' | 'auto';
-    customCss?: string;
-  };
-  htmx?: {
-    version: string;
-    extensions: string[];
-  };
-  dev?: {
-    debug: boolean;
-  };
-  isDev?: boolean;
-}
-
 // Event types for tracking and analytics
 export interface TractStackEvent {
   type: string;

@@ -1,4 +1,4 @@
-import type { AstroGlobal } from 'astro';
+import type { AstroGlobal } from '@/types/astro';
 import { handleFailedResponse } from '@/utils/backend';
 import type { ImpressionNode } from '@/types/compositorTypes';
 

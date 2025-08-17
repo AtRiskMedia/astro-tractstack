@@ -1,35 +1,19 @@
 // utils/validate-config.ts
-import type { AstroIntegrationLogger } from 'astro';
-import type {
-  TractStackConfigWithAuth,
-  TractStackConfigComplete,
-} from '../config.js';
-import { defineConfig } from '../config.js';
+import type { TractStackConfig, AstroIntegrationLogger } from '@/types/astro';
 
 export function validateConfig(
-  userConfig: TractStackConfigWithAuth,
+  userConfig: TractStackConfig,
   logger: AstroIntegrationLogger
-): TractStackConfigComplete {
-  // Use defineConfig to merge with defaults and validate
-  const config = defineConfig(userConfig);
-
+): TractStackConfig {
   // Log configuration summary
-  logger.info('TractStack auth configuration applied');
+  logger.info('TractStack configuration applied');
 
-  if (config.auth.enableDebugMode) {
-    logger.info(
-      'Debug mode enabled - detailed logs will be available in browser console'
-    );
+  if (userConfig.enableMultiTenant) {
+    logger.info('Multi-tenant mode enabled');
   }
 
-  if (config.auth.requireConsent) {
-    logger.info('Consent required for session persistence');
-  }
-
-  if (!config.auth.enableAutoSession) {
-    logger.warn(
-      'Auto-session disabled - you must manually trigger session initialization'
-    );
+  if (userConfig.includeExamples) {
+    logger.info('Example components will be included');
   }
 
   // Validate environment at build time (non-blocking warnings)
@@ -55,5 +39,5 @@ export function validateConfig(
     logger.info(`Tenant ID validated: ${tenantId}`);
   }
 
-  return config;
+  return userConfig;
 }

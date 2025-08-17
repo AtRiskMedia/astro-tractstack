@@ -1,4 +1,4 @@
-import type { AstroGlobal } from 'astro';
+import type { AstroGlobal } from '@/types/astro';
 
 /**
  * Admin/Editor Authentication Utilities

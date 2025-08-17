@@ -1,4 +1,4 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 import { getBrandConfig } from '@/stores/brand';
 
 export const GET: APIRoute = async ({ request }) => {

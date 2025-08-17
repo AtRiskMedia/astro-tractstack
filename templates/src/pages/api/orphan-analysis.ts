@@ -1,8 +1,8 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from '@/types/astro';
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ request, cookies }) => {
+export const GET: APIRoute = async ({ request }) => {
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 

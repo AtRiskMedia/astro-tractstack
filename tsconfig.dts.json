@@ -1,0 +1,23 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": [
+        "templates/src/*"
+      ]
+    }
+  },
+  "include": [
+    "index.ts",
+    "config.ts",
+    "utils/**/*.ts"
+  ],
+  "exclude": [
+    "templates/src/**/*"
+  ]
+}

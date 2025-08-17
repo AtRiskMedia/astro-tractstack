@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent, useId } from 'react';
+import { useState, useId, type KeyboardEvent } from 'react';
 import { classNames } from '@/utils/helpers';
 
 interface StringArrayInputProps {
