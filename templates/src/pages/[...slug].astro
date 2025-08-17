@@ -22,7 +22,9 @@ try {
     return error; // This handles both redirects and failed responses
   }
   console.error('Error fetching storyfragment:', error);
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const storyfragmentId = storyData.id;
