@@ -937,12 +937,27 @@ export class NodesContext {
       const node = newData[i];
       const currentNodeData = this.allNodes.get().get(node.id) as BaseNode;
       if (!currentNodeData) {
-        console.warn("Trying to modify node that doesn't exist", node.id);
         continue;
       }
-      if (isDeepEqual(currentNodeData, node, ['isChanged'])) {
+
+      // Check if only isChanged differs - if so, update without history
+      const deepEqualWithoutExclusions = isDeepEqual(currentNodeData, node);
+
+      if (deepEqualWithoutExclusions) {
+        const newNodes = new Map(this.allNodes.get());
+        newNodes.set(node.id, node);
+        this.allNodes.set(newNodes);
         this.notifyNode(node.id);
-        continue; // data is the same; skip modify, only notify
+        continue;
+      }
+
+      const deepEqualWithExclusions = isDeepEqual(currentNodeData, node, [
+        'isChanged',
+      ]);
+
+      if (deepEqualWithExclusions) {
+        this.notifyNode(node.id);
+        continue;
       }
 
       switch (node.nodeType) {
@@ -991,28 +1006,18 @@ export class NodesContext {
       this.notifyNode(node.id);
     }
 
-    this.history.addPatch({
-      op: PatchOp.REPLACE,
-      undo: (ctx) => {
-        undoList.forEach((fn) => fn(ctx));
-      },
-      redo: (ctx) => {
-        redoList.forEach((fn) => fn(ctx));
-      },
-    });
+    if (undoList.length > 0) {
+      this.history.addPatch({
+        op: PatchOp.REPLACE,
+        undo: (ctx) => {
+          undoList.forEach((fn) => fn(ctx));
+        },
+        redo: (ctx) => {
+          redoList.forEach((fn) => fn(ctx));
+        },
+      });
+    }
   }
-
-  //private checkAnyNodeDifferent(newData: BaseNode[]) {
-  //  let isAnyNodeDifferent = false;
-  //  newData.forEach((nodeData) => {
-  //    const node = nodeData;
-  //    const currentNodeData = this.allNodes.get().get(node.id) as BaseNode;
-  //    if (!isDeepEqual(currentNodeData, node, ["isChanged"])) {
-  //      isAnyNodeDifferent = true;
-  //    }
-  //  });
-  //  return isAnyNodeDifferent;
-  //}
 
   getNodeStringStyles(nodeId: string): string {
     const node = this.allNodes.get().get(nodeId);

@@ -1,106 +1,88 @@
+import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon';
 import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
-import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIcon';
-import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
-import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
-import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon';
-
-import {
-  viewportModeStore,
-  showHelpStore,
-  canUndoStore,
-  canRedoStore,
-  setViewportMode,
-  toggleShowHelp,
-  setCanUndo,
-  setCanRedo,
-} from '@/stores/storykeep';
+import { showHelpStore, settingsPanelStore } from '@/stores/storykeep';
+import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
 
 interface StoryKeepHeaderProps {
-  nodeId: string;
+  viewportSelector: React.ReactNode;
   slug: string;
-  isContext: boolean;
 }
 
-const StoryKeepHeader = ({
-  nodeId,
-  slug,
-  isContext = false,
-}: StoryKeepHeaderProps) => {
-  // Connect to stores
-  const viewport = useStore(viewportModeStore);
+const StoryKeepHeader = ({ viewportSelector, slug }: StoryKeepHeaderProps) => {
   const showHelp = useStore(showHelpStore);
-  const canUndo = useStore(canUndoStore);
-  const canRedo = useStore(canRedoStore);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  const ctx = getCtx();
+
+  useEffect(() => {
+    const updateUndoRedo = () => {
+      setCanUndo(ctx.history.canUndo());
+      setCanRedo(ctx.history.canRedo());
+    };
+    ctx.history.headIndex.listen(updateUndoRedo);
+    ctx.history.history.listen(updateUndoRedo);
+  }, [ctx.history]);
+
+  const toggleShowHelp = () => {
+    showHelpStore.set(!showHelp);
+  };
 
   const handleSave = () => {
-    console.log('Save placeholder - will implement later');
+    // TODO: Implement save functionality
+    console.log('Save clicked');
   };
 
   const handleCancel = () => {
-    console.log('Cancel placeholder - will navigate to /storykeep');
-    window.location.href = '/storykeep';
+    // TODO: Implement cancel/exit functionality
+    console.log('Exit clicked');
   };
 
   const handleUndo = () => {
-    console.log('Undo placeholder');
-    setCanUndo(false);
+    settingsPanelStore.set(null);
+    ctx.history.undo();
+    ctx.notifyNode(ROOT_NODE_NAME);
   };
 
   const handleRedo = () => {
-    console.log('Redo placeholder');
-    setCanRedo(false);
+    settingsPanelStore.set(null);
+    ctx.history.redo();
+    ctx.notifyNode(ROOT_NODE_NAME);
   };
 
   const activeIconClassName =
     '-rotate-2 w-8 h-8 text-white rounded bg-myblue p-1';
   const iconClassName =
-    'w-8 h-8 text-myblue hover:text-myblue hover:bg-gray-200 rounded-xl hover:rounded bg-white p-1 cursor-pointer transition-all';
-
-  // Viewport options and their corresponding icons
-  const viewportOptions = [
-    { value: 'auto', Icon: ViewfinderCircleIcon, title: 'Auto Viewport' },
-    { value: 'mobile', Icon: DevicePhoneMobileIcon, title: 'Mobile Viewport' },
-    { value: 'tablet', Icon: DeviceTabletIcon, title: 'Tablet Viewport' },
-    { value: 'desktop', Icon: ComputerDesktopIcon, title: 'Desktop Viewport' },
-  ];
+    'w-8 h-8 text-myblue hover:text-white hover:bg-myblue rounded-xl hover:rounded bg-white p-1';
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
       {/* Viewport Selector */}
-      <div className="flex flex-wrap items-center justify-center gap-1">
-        {viewportOptions.map(({ value, Icon, title }) => (
-          <button
-            key={value}
-            onClick={() =>
-              setViewportMode(value as 'auto' | 'mobile' | 'tablet' | 'desktop')
-            }
-            title={title}
-            className={viewport === value ? activeIconClassName : iconClassName}
-          >
-            <Icon />
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {viewportSelector}
       </div>
 
       {/* Undo/Redo */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <ArrowUturnLeftIcon
-          title="Undo"
-          style={{ visibility: canUndo ? 'visible' : 'hidden' }}
-          className={iconClassName}
-          onClick={handleUndo}
-        />
-        <ArrowUturnRightIcon
-          title="Redo"
-          style={{ visibility: canRedo ? 'visible' : 'hidden' }}
-          className={iconClassName}
-          onClick={handleRedo}
-        />
-      </div>
+      {(canUndo || canRedo) && (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <ArrowUturnLeftIcon
+            title="Undo"
+            style={{ visibility: canUndo ? 'visible' : 'hidden' }}
+            className={iconClassName}
+            onClick={handleUndo}
+          />
+          <ArrowUturnRightIcon
+            title="Redo"
+            style={{ visibility: canRedo ? 'visible' : 'hidden' }}
+            className={iconClassName}
+            onClick={handleRedo}
+          />
+        </div>
+      )}
 
       {/* Save/Exit Controls */}
       <div className="flex flex-wrap items-center justify-center gap-2 text-sm">

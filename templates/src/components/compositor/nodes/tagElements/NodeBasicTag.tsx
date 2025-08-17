@@ -18,6 +18,7 @@ import {
   getTemplateNode,
 } from '@/utils/compositor/nodesHelper';
 import { cloneDeep } from '@/utils/helpers';
+import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
@@ -127,7 +128,17 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             console.log(
               `[NodeBasicTag] Deleting empty placeholder nodeId: ${nodeId}`
             );
-          ctx.deleteNode(nodeId);
+          const nodeToDelete = ctx.allNodes.get().get(nodeId);
+          if (nodeToDelete) {
+            ctx.deleteNode(nodeId);
+
+            // Add history for auto-deletion
+            ctx.history.addPatch({
+              op: PatchOp.REMOVE,
+              undo: (ctx) => ctx.addNode(nodeToDelete),
+              redo: (ctx) => ctx.deleteNode(nodeId),
+            });
+          }
         }
       }, 100);
       return () => clearTimeout(timer);
@@ -276,8 +287,34 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         );
 
         if (parsedNodes.length > 0) {
-          ctx.deleteChildren(nodeId);
+          const originalChildren = ctx.deleteChildren(nodeId);
           ctx.addNodes(parsedNodes);
+
+          // Add history for this operation
+          ctx.history.addPatch({
+            op: PatchOp.REPLACE,
+            undo: (ctx) => {
+              ctx.deleteChildren(nodeId);
+              ctx.addNodes(originalChildren);
+            },
+            redo: (ctx) => {
+              ctx.deleteChildren(nodeId);
+              ctx.addNodes(parsedNodes);
+            },
+          });
+
+          // Add history for this operation
+          ctx.history.addPatch({
+            op: PatchOp.REPLACE,
+            undo: (ctx) => {
+              ctx.deleteChildren(nodeId);
+              ctx.addNodes(originalChildren);
+            },
+            redo: (ctx) => {
+              ctx.deleteChildren(nodeId);
+              ctx.addNodes(parsedNodes);
+            },
+          });
 
           if (isPlaceholder) {
             const updatedNode = {
@@ -312,7 +349,17 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     if (elementRef.current?.textContent?.trim() === '') {
       if (VERBOSE)
         console.log(`[NodeBasicTag] Deleting empty nodeId: ${nodeId}`);
-      ctx.deleteNode(nodeId);
+      const nodeToDelete = ctx.allNodes.get().get(nodeId);
+      if (nodeToDelete) {
+        ctx.deleteNode(nodeId);
+
+        // Add history for deletion
+        ctx.history.addPatch({
+          op: PatchOp.REMOVE,
+          undo: (ctx) => ctx.addNode(nodeToDelete),
+          redo: (ctx) => ctx.deleteNode(nodeId),
+        });
+      }
     }
   };
 

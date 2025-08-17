@@ -19,6 +19,8 @@ export class NodesHistory {
 
   protected _ctx: NodesContext;
   protected _maxBuffer: number;
+  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private _pendingPatch: HistoryPatch | null = null;
 
   constructor(ctx: NodesContext, maxBuffer: number) {
     this._ctx = ctx;
@@ -37,16 +39,29 @@ export class NodesHistory {
   }
 
   addPatch(patch: HistoryPatch) {
-    while (this.headIndex.get() !== 0) {
-      this.history.get().shift();
-      this.headIndex.set(this.headIndex.get() - 1);
+    this._pendingPatch = patch;
+
+    if (this._debounceTimer) {
+      clearTimeout(this._debounceTimer);
     }
 
-    this.history.get().unshift(patch);
-    if (this.history.get().length > this._maxBuffer) {
-      this.history.get().pop();
-    }
-    this.history.set([...this.history.get()]);
+    this._debounceTimer = setTimeout(() => {
+      if (this._pendingPatch) {
+        // Original addPatch logic
+        while (this.headIndex.get() !== 0) {
+          this.history.get().shift();
+          this.headIndex.set(this.headIndex.get() - 1);
+        }
+
+        this.history.get().unshift(this._pendingPatch);
+        if (this.history.get().length > this._maxBuffer) {
+          this.history.get().pop();
+        }
+        this.history.set([...this.history.get()]);
+
+        this._pendingPatch = null;
+      }
+    }, 300);
   }
 
   undo() {
