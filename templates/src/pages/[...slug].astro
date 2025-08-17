@@ -19,7 +19,7 @@ try {
   storyData = await getStoryData(Astro, lookup, sessionId, tenantId);
 } catch (error) {
   if (error instanceof Response) {
-    return error; // This handles both redirects and failed responses
+    return error;
   }
   console.error('Error fetching storyfragment:', error);
   return Astro.redirect(

@@ -1,4 +1,3 @@
-import type { AstroGlobal } from '@/types/astro';
 import { handleFailedResponse } from '@/utils/backend';
 import type { ImpressionNode } from '@/types/compositorTypes';
 
@@ -16,7 +15,7 @@ export interface StoryData {
 }
 
 export async function getStoryData(
-  astro: AstroGlobal,
+  astro: any,
   lookup: string,
   sessionId: string,
   tenantId: string

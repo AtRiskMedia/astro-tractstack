@@ -1,5 +1,3 @@
-import type { AstroGlobal } from '@/types/astro';
-
 /**
  * Calls the backend's /api/v1/auth/visit endpoint to create a new session.
  * This function is decoupled from Astro-specific objects.
@@ -50,7 +48,12 @@ export async function createBackendSession(tenantId: string): Promise<string> {
  * This is the main function that should be used in [...slug].astro
  */
 export async function getOrSetSessionId(
-  astro: AstroGlobal,
+  astro: {
+    cookies: {
+      get: (name: string) => { value?: string } | undefined;
+      set: (name: string, value: string, options?: any) => void;
+    };
+  },
   tenantId: string
 ): Promise<string> {
   // Check if we already have a session ID in the cookie
