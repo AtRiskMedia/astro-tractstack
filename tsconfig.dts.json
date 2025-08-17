@@ -7,17 +7,9 @@
     "baseUrl": ".",
     "skipLibCheck": true,
     "paths": {
-      "@/*": [
-        "templates/src/*"
-      ]
+      "@/*": ["templates/src/*"]
     }
   },
-  "include": [
-    "index.ts",
-    "config.ts",
-    "utils/**/*.ts"
-  ],
-  "exclude": [
-    "templates/src/**/*"
-  ]
+  "include": ["index.ts", "config.ts", "utils/**/*.ts"],
+  "exclude": ["templates/src/**/*"]
 }
