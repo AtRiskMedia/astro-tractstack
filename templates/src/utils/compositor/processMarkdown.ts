@@ -1,7 +1,7 @@
 import { ulid } from 'ulid';
 import { NodesContext } from '@/stores/nodes';
 import { fullContentMapStore } from '@/stores/storykeep';
-//import { getTitleSlug } from "@/utils/aai/getTitleSlug";
+import { findUniqueSlug } from '@/utils/helpers';
 import type {
   PageDesign,
   PaneNode,
@@ -18,6 +18,82 @@ interface PageSection {
   type: PageSectionType;
   content: string;
   children?: PageSection[]; // Optional because only content sections can have children
+}
+
+interface TitleSlugResponse {
+  title: string;
+  slug: string;
+}
+
+/**
+ * Generate title and slug using askLemur API
+ */
+async function getTitleSlug(
+  markdownContent: string,
+  existingSlugs: string[]
+): Promise<TitleSlugResponse | null> {
+  if (
+    !markdownContent ||
+    markdownContent.trim() === '...' ||
+    markdownContent.trim().length === 0
+  ) {
+    return null;
+  }
+
+  try {
+    const backendUrl =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+    const response = await fetch(`${backendUrl}/api/v1/aai/askLemur`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': tenantId,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        prompt: `Generate a concise title (maximum 40-50 characters) and a URL-friendly slug (lowercase, only letters, numbers, and dashes, no spaces) that captures the essence of this markdown content. Return only a JSON object with "title" and "slug" keys. 
+
+Example response format:
+{
+  "title": "Short Descriptive Title",
+  "slug": "short-descriptive-title"
+}`,
+        input_text: markdownContent,
+        final_model: 'anthropic/claude-3-5-sonnet',
+        temperature: 0.3,
+        max_tokens: 200,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data?.response) {
+        let titleData;
+        try {
+          if (typeof data.data.response === 'string') {
+            titleData = JSON.parse(data.data.response);
+          } else {
+            titleData = data.data.response;
+          }
+
+          if (titleData.title && titleData.slug) {
+            return {
+              title: findUniqueSlug(titleData.title, existingSlugs),
+              slug: findUniqueSlug(titleData.slug, existingSlugs),
+            };
+          }
+        } catch (parseError) {
+          console.error('Error parsing title data:', parseError);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error generating title:', error);
+  }
+
+  return null;
 }
 
 export function parsePageMarkdown(markdown: string): ProcessedPage {
@@ -150,13 +226,16 @@ export async function createPagePanes(
 
     // Generate title and slug if needed
     if (generateTitle && introPane.markdown.markdownBody.trim().length > 0) {
-      const titleSlugResult = ''; // TODO: await getTitleSlug(introPane.markdown.markdownBody, existingSlugs);
+      const titleSlugResult = await getTitleSlug(
+        introPane.markdown.markdownBody,
+        existingSlugs
+      );
 
       if (titleSlugResult) {
-        introPane.title = 'title'; // titleSlugResult.title;
-        introPane.slug = 'slug'; // titleSlugResult.slug;
+        introPane.title = titleSlugResult.title;
+        introPane.slug = titleSlugResult.slug;
         // Add to existing slugs to ensure uniqueness for subsequent panes
-        existingSlugs.push('slug' /* titleSlugResult.slug */);
+        existingSlugs.push(titleSlugResult.slug);
       }
     }
 
@@ -183,7 +262,7 @@ export async function createPagePanes(
       const lastPaneId = paneIds[paneIds.length - 1];
 
       if (lastPaneId) {
-        // Get colors from surrounding panes
+        // Get colors for final break
         const abovePane = ctx.allNodes.get().get(lastPaneId) as PaneNode;
         const aboveColor = abovePane?.bgColour || 'white';
 
@@ -191,7 +270,7 @@ export async function createPagePanes(
         const nextContentPane = design.contentDesign(!isEven);
         const belowColor = nextContentPane.bgColour;
 
-        // Regular breaks - take color of section above, SVG is color of section below
+        // Final break - inverted colors for bottom edge
         breakTemplate.bgColour = aboveColor;
         const svgFill = belowColor;
 
@@ -219,39 +298,68 @@ export async function createPagePanes(
       }
     }
 
-    // Add the content section
-    const isEven = index % 2 !== 0;
-    const contentPane = design.contentDesign(!isEven);
+    // Create the content pane with alternating styles
+    const useOdd = index % 2 === 0;
+    const contentPane = design.contentDesign(useOdd);
     contentPane.id = ulid();
     contentPane.slug = '';
     contentPane.title = '';
+    contentPane.markdown.markdownBody = section.content || '';
 
-    let markdown = '';
-    if (section.content) markdown += section.content + '\n\n';
-    section.children?.forEach((child) => {
-      markdown += child.content + '\n\n';
-    });
-    contentPane.markdown.markdownBody = markdown.trim();
-
-    // Generate title and slug if needed
+    // Generate title and slug for content sections if needed
     if (generateTitle && contentPane.markdown.markdownBody.trim().length > 0) {
-      const titleSlugResult = ''; // await getTitleSlug(contentPane.markdown.markdownBody, existingSlugs);
+      const titleSlugResult = await getTitleSlug(
+        contentPane.markdown.markdownBody,
+        existingSlugs
+      );
 
       if (titleSlugResult) {
-        contentPane.title = 'title'; // titleSlugResult.title;
-        contentPane.slug = 'slug'; // titleSlugResult.slug;
-        // Add to existing slugs to ensure uniqueness for subsequent panes
-        existingSlugs.push('slug' /*titleSlugResult.slug */);
+        contentPane.title = titleSlugResult.title;
+        contentPane.slug = titleSlugResult.slug;
+        existingSlugs.push(titleSlugResult.slug);
       }
     }
 
-    const paneId = ctx.addTemplatePane(ownerId, contentPane);
-    if (paneId) {
-      paneIds.push(paneId);
+    const contentPaneId = ctx.addTemplatePane(ownerId, contentPane);
+    if (contentPaneId) {
+      paneIds.push(contentPaneId);
     }
 
-    // Add visual break after last content section if we have breaks defined
-    if (design.visualBreaks && index === contentSections.length - 1) {
+    // Handle subcontent sections (H4 headings)
+    if (section.children && section.children.length > 0) {
+      for (const subSection of section.children) {
+        const subContentPane = design.contentDesign(!useOdd);
+        subContentPane.id = ulid();
+        subContentPane.slug = '';
+        subContentPane.title = '';
+        subContentPane.markdown.markdownBody = subSection.content || '';
+
+        // Generate title and slug for subcontent if needed
+        if (
+          generateTitle &&
+          subContentPane.markdown.markdownBody.trim().length > 0
+        ) {
+          const titleSlugResult = await getTitleSlug(
+            subContentPane.markdown.markdownBody,
+            existingSlugs
+          );
+
+          if (titleSlugResult) {
+            subContentPane.title = titleSlugResult.title;
+            subContentPane.slug = titleSlugResult.slug;
+            existingSlugs.push(titleSlugResult.slug);
+          }
+        }
+
+        const subContentPaneId = ctx.addTemplatePane(ownerId, subContentPane);
+        if (subContentPaneId) {
+          paneIds.push(subContentPaneId);
+        }
+      }
+    }
+
+    // Add visual break after content section if we have breaks defined and it's not the last section
+    if (design.visualBreaks && index < contentSections.length - 1) {
       const isEven = index % 2 === 0;
       const breakTemplate = isEven
         ? design.visualBreaks.even()
@@ -300,6 +408,30 @@ export async function createPagePanes(
 }
 
 /**
+ * Builds a complete page preview in the provided context
+ */
+export async function buildPagePreview(
+  markdown: string,
+  design: PageDesign,
+  ctx: NodesContext
+): Promise<void> {
+  // Parse markdown into sections
+  const processedPage = parsePageMarkdown(markdown);
+
+  // Create story fragment node - add proper type assertion
+  const pageNode = ctx.allNodes.get().get('tmp') as StoryFragmentNode;
+  if (!pageNode) return;
+
+  // Create all panes using design
+  const paneIds = await createPagePanes(processedPage, design, ctx, false);
+
+  // Update story fragment with panes
+  pageNode.title = '';
+  pageNode.slug = 'preview';
+  pageNode.paneIds = paneIds;
+}
+
+/**
  * Validates markdown structure matches expected page format
  */
 export function validatePageMarkdown(markdown: string): boolean {
@@ -339,28 +471,4 @@ export function getPagePreview(markdown: string): string {
   });
 
   return preview;
-}
-
-/**
- * Builds a complete page preview in the provided context
- */
-export async function buildPagePreview(
-  markdown: string,
-  design: PageDesign,
-  ctx: NodesContext
-): Promise<void> {
-  // Parse markdown into sections
-  const processedPage = parsePageMarkdown(markdown);
-
-  // Create story fragment node - add proper type assertion
-  const pageNode = ctx.allNodes.get().get('tmp') as StoryFragmentNode;
-  if (!pageNode) return;
-
-  // Create all panes using design
-  const paneIds = await createPagePanes(processedPage, design, ctx, false);
-
-  // Update story fragment with panes
-  pageNode.title = '';
-  pageNode.slug = 'preview';
-  pageNode.paneIds = paneIds;
 }
