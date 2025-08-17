@@ -4,22 +4,44 @@
     "jsx": "preserve",
     "jsxImportSource": "react",
     "baseUrl": ".",
-    "skipLibCheck": true,
+    //"skipLibCheck": true,
     "paths": {
-      "@/*": ["templates/src/*"],
-      "@/components/*": ["templates/src/components/*"],
-      "@/utils/*": ["templates/src/utils/*"],
-      "@/types/*": ["templates/src/types/*"],
-      "@/layouts/*": ["templates/src/layouts/*"],
-      "@/pages/*": ["templates/src/pages/*"],
-      "@/stores/*": ["templates/src/stores/*"],
-      "@/constants/*": ["templates/src/constants/*"],
-      "@/hooks/*": ["templates/src/hooks/*"],
-      "@/client/*": ["templates/src/client/*"],
-      "@/lib/*": ["templates/src/lib/*"],
-      "@/custom/*": ["templates/src/custom/*"]
+      "@/*": [
+        "templates/src/*"
+      ],
+      "@/components/*": [
+        "templates/src/components/*"
+      ],
+      "@/utils/*": [
+        "templates/src/utils/*"
+      ],
+      "@/types/*": [
+        "templates/src/types/*"
+      ],
+      "@/layouts/*": [
+        "templates/src/layouts/*"
+      ],
+      "@/pages/*": [
+        "templates/src/pages/*"
+      ],
+      "@/stores/*": [
+        "templates/src/stores/*"
+      ],
+      "@/constants/*": [
+        "templates/src/constants/*"
+      ],
+      "@/hooks/*": [
+        "templates/src/hooks/*"
+      ],
+      "@/client/*": [
+        "templates/src/client/*"
+      ],
+      "@/lib/*": [
+        "templates/src/lib/*"
+      ],
+      "@/custom/*": [
+        "templates/src/custom/*"
+      ]
     }
-  },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.d.ts"],
-  "exclude": ["node_modules", "dist"]
+  }
 }

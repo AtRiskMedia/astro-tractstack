@@ -22,7 +22,6 @@ try {
     return error; // This handles both redirects and failed responses
   }
   console.error('Error fetching storyfragment:', error);
-  const currentPath = Astro.url.pathname;
   return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
 }
 
@@ -68,13 +67,15 @@ try {
   }
 } catch (error) {
   console.error('Error fetching fragments:', error);
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 if (!fragmentsData) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const fullContentMap = await getFullContentMap(tenantId);

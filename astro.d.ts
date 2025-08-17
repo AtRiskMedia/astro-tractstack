@@ -1,5 +1,3 @@
-// templates/src/types/astro.d.ts
-
 /// <reference types="astro/client" />
 
 import type { FullContentMapItem, PlayerJS } from './tractstack';
@@ -54,4 +52,16 @@ declare namespace App {
   }
 }
 
-export {};
+// Astro script attributes
+declare global {
+  namespace astroHTML.JSX {
+    interface ScriptHTMLAttributes {
+      'is:inline'?: boolean;
+      'is:persist'?: boolean;
+      'define:vars'?: Record<string, any>;
+      crossorigin?: string;
+    }
+  }
+}
+
+export { };

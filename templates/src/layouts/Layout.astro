@@ -222,10 +222,10 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
 
         const currentStoryfragmentId = storyfragmentMeta
           ? storyfragmentMeta.content
-          : storyfragmentId;
+          : null;
         const currentSessionId = sessionMeta ? sessionMeta.content : sessionId;
 
-        if (window.TRACTSTACK_CONFIG) {
+        if (window.TRACTSTACK_CONFIG && currentStoryfragmentId) {
           window.TRACTSTACK_CONFIG.storyfragmentId = currentStoryfragmentId;
           window.TRACTSTACK_CONFIG.sessionId = currentSessionId;
         } else {
