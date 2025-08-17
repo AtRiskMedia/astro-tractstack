@@ -436,6 +436,7 @@ export interface BasePanelProps {
   className?: string;
   childId?: string;
   availableCodeHooks?: string[];
+  onTitleChange?: (title: string) => void;
 }
 
 interface WidgetParameterDefinition {

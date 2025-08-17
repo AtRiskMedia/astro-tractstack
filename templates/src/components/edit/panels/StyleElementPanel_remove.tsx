@@ -8,7 +8,9 @@ import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
+import { tagTitles } from '@/types/compositorTypes';
 import type {
+  Tag,
   BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
@@ -18,6 +20,7 @@ const StyleElementRemovePanel = ({
   node,
   parentNode,
   className,
+  onTitleChange,
 }: BasePanelProps) => {
   if (!className || !node?.tagName) return null;
 
@@ -99,6 +102,14 @@ const StyleElementRemovePanel = ({
   };
 
   useEffect(() => {
+    if (node?.tagName && onTitleChange) {
+      const tagTitle =
+        tagTitles[node.tagName as Tag] || node.tagName.toUpperCase();
+      onTitleChange(`Style ${tagTitle}`);
+    }
+  }, [node?.tagName, onTitleChange]);
+
+  useEffect(() => {
     if (className && node?.tagName) {
       styleElementInfoStore.set({
         markdownParentId: parentNode?.id || null,
@@ -115,9 +126,9 @@ const StyleElementRemovePanel = ({
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">
+      <h3 className="text-xl font-bold">
         Remove <span className="font-bold">{friendlyName}</span>?
-      </h2>
+      </h3>
       <div className="space-y-4 rounded bg-slate-50 p-6">
         <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
           <li>

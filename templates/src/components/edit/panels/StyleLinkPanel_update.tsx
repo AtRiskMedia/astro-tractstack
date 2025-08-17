@@ -81,9 +81,9 @@ const StyleLinkUpdatePanel = ({ node, className, config }: BasePanelProps) => {
   return (
     <div className="isolate z-50 space-y-4">
       <div className="flex flex-row flex-nowrap justify-between">
-        <h2 className="text-xl font-bold">
+        <h3 className="text-xl font-bold">
           {friendlyName} ({isHoverMode ? 'Hover' : 'Button'} State)
-        </h2>
+        </h3>
         <button
           className="text-myblue hover:text-black"
           title="Return to link panel"

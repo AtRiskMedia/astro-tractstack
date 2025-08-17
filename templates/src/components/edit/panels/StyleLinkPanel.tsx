@@ -208,10 +208,6 @@ const StyleLinkPanel = ({ node }: BasePanelProps) => {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">
-          Edit Link {node.tagName === 'button' ? 'Button' : ''} Styles
-        </h2>
-
         <div className="pb-2">
           <div className="text-myblack hover:bg-mygreen/20 w-fit rounded border border-slate-200 p-2 text-sm">
             <div

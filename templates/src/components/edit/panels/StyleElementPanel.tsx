@@ -17,9 +17,14 @@ import type {
 interface StyleElementPanelProps {
   node: FlatNode;
   parentNode: MarkdownPaneFragmentNode;
+  onTitleChange?: (title: string) => void;
 }
 
-const StyleElementPanel = ({ node, parentNode }: StyleElementPanelProps) => {
+const StyleElementPanel = ({
+  node,
+  parentNode,
+  onTitleChange,
+}: StyleElementPanelProps) => {
   if (!node?.tagName || !isMarkdownPaneFragmentNode(parentNode)) {
     return null;
   }
@@ -119,12 +124,16 @@ const StyleElementPanel = ({ node, parentNode }: StyleElementPanelProps) => {
     };
   }, [parentNode.id, node.tagName]);
 
+  useEffect(() => {
+    if (node?.tagName && onTitleChange) {
+      const tagTitle =
+        tagTitles[node.tagName as Tag] || node.tagName.toUpperCase();
+      onTitleChange(`Style ${tagTitle}`);
+    }
+  }, [node?.tagName, onTitleChange]);
+
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">
-        Style {tagTitles[node.tagName as Tag]}
-      </h2>
-
       {Object.keys(mergedClasses).length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {Object.entries(mergedClasses).map(([className, values]) => (

@@ -113,8 +113,6 @@ const StyleBreakPanel = ({ node, parentNode, config }: BasePanelProps) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Visual Break Settings</h2>
-
       {collections.length > 1 && (
         <div className="space-y-2">
           <span className="text-mydarkgrey block text-sm">Collection</span>

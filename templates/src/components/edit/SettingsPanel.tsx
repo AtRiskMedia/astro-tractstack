@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
@@ -12,6 +12,7 @@ interface SettingsPanelProps {
 }
 
 const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
+  const [panelTitle, setPanelTitle] = useState('Settings');
   const signal = useStore(settingsPanelStore);
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
@@ -43,7 +44,7 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
   `}</style>
       <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl md:p-2.5">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-myblue text-lg font-bold">Settings</h3>
+          <h3 className="text-myblue text-lg font-bold">{panelTitle}</h3>
           <button
             onClick={() => settingsPanelStore.set(null)}
             className="hover:text-myblue text-gray-500"
@@ -57,6 +58,7 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
             <PanelSwitch
               config={config}
               availableCodeHooks={availableCodeHooks}
+              onTitleChange={setPanelTitle}
             />
           </div>
         </div>

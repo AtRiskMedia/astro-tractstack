@@ -9,7 +9,9 @@ import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { getCtx } from '@/stores/nodes';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
+import { tagTitles } from '@/types/compositorTypes';
 import type {
+  Tag,
   BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
@@ -19,6 +21,7 @@ const StyleElementUpdatePanel = ({
   node,
   parentNode,
   className,
+  onTitleChange,
   config,
 }: BasePanelProps) => {
   if (
@@ -78,7 +81,14 @@ const StyleElementUpdatePanel = ({
     }
   }, [node, parentNode, className]);
 
-  // Effect to handle style updates after state changes
+  useEffect(() => {
+    if (node?.tagName && onTitleChange) {
+      const tagTitle =
+        tagTitles[node.tagName as Tag] || node.tagName.toUpperCase();
+      onTitleChange(`Style ${tagTitle}`);
+    }
+  }, [node?.tagName, onTitleChange]);
+
   useEffect(() => {
     if (!pendingUpdate) return;
 
@@ -253,7 +263,7 @@ const StyleElementUpdatePanel = ({
   return (
     <div className="isolate z-50 space-y-4">
       <div className="flex flex-row flex-nowrap justify-between">
-        <h2 className="text-xl font-bold">{friendlyName}</h2>
+        <h3 className="text-xl font-bold">{friendlyName}</h3>
         <button
           className="text-myblue hover:text-black"
           title="Return to preview pane"

@@ -303,3 +303,77 @@ export function useDropdownDirection(
 
   return state;
 }
+
+export function getSettingsPanelTitle(action: string): string {
+  switch (action) {
+    case 'style-break':
+      return 'Style Visual Break';
+
+    case 'style-parent':
+    case 'style-parent-add':
+    case 'style-parent-remove':
+    case 'style-parent-update':
+    case 'style-parent-delete-layer':
+      return 'Style Outer Container';
+
+    case 'style-link':
+      return 'Style/Configure Link';
+
+    case 'style-link-config':
+      return 'Configure Link';
+
+    case 'style-link-add':
+    case 'style-link-add-hover':
+    case 'style-link-update':
+    case 'style-link-update-hover':
+    case 'style-link-remove':
+    case 'style-link-remove-hover':
+      return 'Style Link';
+
+    case 'style-element':
+    case 'style-element-add':
+    case 'style-element-remove':
+    case 'style-element-update':
+      return ''; // "Style Element";
+
+    case 'style-image':
+    case 'style-img-add':
+    case 'style-img-container-add':
+    case 'style-img-outer-add':
+    case 'style-img-update':
+    case 'style-img-container-update':
+    case 'style-img-outer-update':
+    case 'style-img-remove':
+    case 'style-img-container-remove':
+    case 'style-img-outer-remove':
+      return 'Style Image';
+
+    case 'style-widget':
+      return 'Style/Configure Widget';
+
+    case 'style-code-config':
+    case 'setup-codehook':
+      return 'Configure Widget';
+
+    case 'style-code-add':
+    case 'style-code-container-add':
+    case 'style-code-outer-add':
+    case 'style-code-update':
+    case 'style-code-container-update':
+    case 'style-code-outer-update':
+    case 'style-code-remove':
+    case 'style-code-container-remove':
+    case 'style-code-outer-remove':
+    case 'style-li-element':
+    case 'style-li-element-add':
+    case 'style-li-container-add':
+    case 'style-li-element-update':
+    case 'style-li-container-update':
+    case 'style-li-element-remove':
+    case 'style-li-container-remove':
+      return 'Style Widget';
+
+    default:
+      return 'Settings';
+  }
+}

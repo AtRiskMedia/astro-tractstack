@@ -192,7 +192,6 @@ const StyleLinkConfigPanel = ({ node, config }: StyleLinkConfigPanelProps) => {
     <div className="relative">
       <div className="w-full max-w-md space-y-4">
         <div className="flex flex-row flex-nowrap justify-between">
-          <h2 className="text-xl font-bold">Link Settings</h2>
           <button
             className="text-myblue hover:text-black"
             title="Return to style panel"

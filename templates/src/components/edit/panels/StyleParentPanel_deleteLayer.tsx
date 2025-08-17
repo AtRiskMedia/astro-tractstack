@@ -76,9 +76,9 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: BasePanelProps) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">
+      <h3 className="text-xl font-bold">
         Remove Layer <span className="font-bold">{layer}</span>?
-      </h2>
+      </h3>
       <div className="space-y-4 rounded bg-slate-50 p-6">
         <p className="text-myorange font-bold">
           This layer has {count} classes.

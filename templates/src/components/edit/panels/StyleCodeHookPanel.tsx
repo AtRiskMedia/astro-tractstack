@@ -297,7 +297,6 @@ const StyleCodeHookPanel = ({
 
       {/* Header section */}
       <div className="flex flex-row flex-nowrap justify-between">
-        <h2 className="text-xl font-bold">Code Hook Settings</h2>
         <button
           className="text-myblue hover:text-black"
           title="Return to preview pane"

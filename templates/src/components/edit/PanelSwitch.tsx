@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
@@ -31,6 +32,7 @@ import StyleLiElementAddPanel from './panels/StyleLiElementPanel_add';
 import StyleLiElementUpdatePanel from './panels/StyleLiElementPanel_update';
 import StyleLiElementRemovePanel from './panels/StyleLiElementPanel_remove';
 import StyleCodeHookPanel from './panels/StyleCodeHookPanel';
+import { getSettingsPanelTitle } from '@/utils/helpers';
 import type { BrandConfig } from '@/types/tractstack';
 import type {
   FlatNode,
@@ -40,14 +42,26 @@ import type {
 interface SettingsPanelProps {
   config: BrandConfig;
   availableCodeHooks: string[];
+  onTitleChange?: (title: string) => void;
 }
 
-const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
+const PanelSwitch = ({
+  config,
+  availableCodeHooks,
+  onTitleChange,
+}: SettingsPanelProps) => {
   const signal = useStore(settingsPanelStore);
 
   if (!signal) {
     return null;
   }
+
+  useEffect(() => {
+    if (signal?.action && onTitleChange) {
+      const title = getSettingsPanelTitle(signal.action);
+      if (title) onTitleChange(title);
+    }
+  }, [signal?.action, onTitleChange]);
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();
@@ -180,6 +194,7 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
           <StyleElementPanel
             node={clickedNode}
             parentNode={markdownNode as MarkdownPaneFragmentNode}
+            onTitleChange={onTitleChange}
           />
         );
       break;
@@ -191,6 +206,7 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
             node={clickedNode}
             parentNode={markdownNode}
             className={signal.className}
+            onTitleChange={onTitleChange}
           />
         );
       break;
@@ -202,6 +218,7 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
             node={clickedNode}
             parentNode={markdownNode}
             className={signal.className}
+            onTitleChange={onTitleChange}
           />
         );
       break;
@@ -213,6 +230,7 @@ const PanelSwitch = ({ config, availableCodeHooks }: SettingsPanelProps) => {
             node={clickedNode}
             parentNode={markdownNode}
             className={signal.className}
+            onTitleChange={onTitleChange}
             config={config}
           />
         );

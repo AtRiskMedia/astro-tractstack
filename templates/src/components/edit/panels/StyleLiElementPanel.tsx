@@ -182,9 +182,9 @@ const StyleLiElementPanel = ({
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">
+        <h3 className="text-xl font-bold">
           Style this {tagTitles[node.tagName as Tag]}
-        </h2>
+        </h3>
 
         {Object.keys(mergedLiClasses).length > 0 ? (
           <div className="flex flex-wrap gap-2">

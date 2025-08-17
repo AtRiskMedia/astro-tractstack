@@ -281,7 +281,7 @@ const StyleWidgetPanel = ({
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">Setup {widgetName}</h2>
+        <h3 className="text-xl font-bold">Setup {widgetName}</h3>
 
         <div className="pb-2">
           <div className="text-myblack hover:bg-mygreen/20 w-fit rounded border border-slate-200 p-2 text-sm">

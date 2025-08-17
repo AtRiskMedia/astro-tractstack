@@ -168,9 +168,6 @@ const StyleLinkPanelAdd = ({ node }: BasePanelProps) => {
       <style>{comboboxItemStyles}</style>
 
       <div className="flex flex-row flex-nowrap justify-between">
-        <h2 className="text-xl font-bold">
-          Add Style ({isHoverMode ? 'Hover' : 'Button'} State)
-        </h2>
         <button
           title="Return to preview pane"
           onClick={handleCancel}

@@ -10,7 +10,11 @@ import {
 } from '@/stores/storykeep';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
-import type { BasePanelProps } from '@/types/compositorTypes';
+import {
+  tagTitles,
+  type Tag,
+  type BasePanelProps,
+} from '@/types/compositorTypes';
 
 const RECOMMENDED_STYLES: {
   [key: string]: Array<{ key: string; title: string }>;
@@ -114,7 +118,11 @@ interface StyleOption {
   values: string[];
 }
 
-const StyleElementPanelAdd = ({ node, parentNode }: BasePanelProps) => {
+const StyleElementPanelAdd = ({
+  node,
+  parentNode,
+  onTitleChange,
+}: BasePanelProps) => {
   const [query, setQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -200,6 +208,14 @@ const StyleElementPanelAdd = ({ node, parentNode }: BasePanelProps) => {
   };
 
   useEffect(() => {
+    if (node?.tagName && onTitleChange) {
+      const tagTitle =
+        tagTitles[node.tagName as Tag] || node.tagName.toUpperCase();
+      onTitleChange(`Style ${tagTitle}`);
+    }
+  }, [node?.tagName, onTitleChange]);
+
+  useEffect(() => {
     styleElementInfoStore.set({
       markdownParentId: parentNode.id,
       tagName: node.tagName,
@@ -237,9 +253,6 @@ const StyleElementPanelAdd = ({ node, parentNode }: BasePanelProps) => {
       <style>{comboboxItemStyles}</style>
 
       <div className="flex flex-row flex-nowrap justify-between">
-        <h2 className="text-xl font-bold">
-          Add Style ({node.tagName.toUpperCase()})
-        </h2>
         <button
           title="Return to preview pane"
           onClick={handleCancel}
