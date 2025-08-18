@@ -92,7 +92,6 @@ const StoryKeepHeader = ({
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
-      {/* Viewport Selector */}
       <div className="flex flex-wrap items-center justify-center gap-1">
         {viewportOptions.map(({ value, Icon, title }) => (
           <button
@@ -108,7 +107,17 @@ const StoryKeepHeader = ({
         ))}
       </div>
 
-      {/* Undo/Redo */}
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        <QuestionMarkCircleIcon
+          onClick={toggleShowHelp}
+          title="Toggle Help Text"
+          className={showHelp ? activeIconClassName : iconClassName}
+        />
+        <a href={`/${slug}`} title="Visit Page">
+          <ArrowTopRightOnSquareIcon className={iconClassName} />
+        </a>
+      </div>
+
       {(canUndo || canRedo) && (
         <div className="flex flex-wrap items-center justify-center gap-2">
           <ArrowUturnLeftIcon
@@ -132,33 +141,16 @@ const StoryKeepHeader = ({
         </div>
       )}
 
-      {/* Save/Exit Controls */}
-      <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-        <button
-          onClick={handleSave}
-          className="text-myblue font-action bg-white px-2 py-1 font-bold hover:underline"
-        >
-          Save
-        </button>
-        <button
-          onClick={handleCancel}
-          className="text-myblue font-action bg-white px-2 py-1 font-bold hover:underline"
-        >
-          Exit
-        </button>
-      </div>
-
-      {/* Control Icons */}
-      <div className="flex flex-wrap items-center justify-center gap-1">
-        <QuestionMarkCircleIcon
-          onClick={toggleShowHelp}
-          title="Toggle Help Text"
-          className={showHelp ? activeIconClassName : iconClassName}
-        />
-        <a href={`/${slug}`} title="Visit Page">
-          <ArrowTopRightOnSquareIcon className={iconClassName} />
-        </a>
-      </div>
+      {canUndo && (
+        <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+          <button
+            onClick={handleSave}
+            className="font-action bg-myblue hover:bg-myorange rounded-md px-3.5 py-1.5 font-bold text-white"
+          >
+            Save
+          </button>
+        </div>
+      )}
     </div>
   );
 };
