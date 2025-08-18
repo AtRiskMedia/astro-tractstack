@@ -1,6 +1,5 @@
 import {
   settingsPanelOpenStore,
-  addPanelOpenStore,
   headerPositionStore,
   setHeaderPosition,
   setMobileHeaderFaded,
@@ -41,7 +40,6 @@ export function setupLayoutObservers(): void {
   const mainContent = document.getElementById('mainContent');
   const settingsControls = document.getElementById('settingsControls');
   const standardHeader = document.querySelector('header');
-  const hudElement = document.getElementById('hud');
 
   if (!header) return;
 
@@ -65,22 +63,6 @@ export function setupLayoutObservers(): void {
       const maxHeight =
         viewportHeight - storyKeepHeaderHeight - bottomOffset - 20;
       settingsControls.style.maxHeight = `${maxHeight}px`;
-    }
-  };
-
-  const updateHudVisibility = () => {
-    const isSettingsOpen = settingsPanelOpenStore.get();
-    const isAddPanelOpen = addPanelOpenStore.get();
-
-    if (hudElement) {
-      if (isSettingsOpen || isAddPanelOpen) {
-        // Hide HUD when settings panel is open OR add panel is open
-        hudElement.style.display = 'none';
-      } else {
-        // Show HUD when both panels are closed
-        hudElement.style.display = 'block';
-        hudElement.style.marginBottom = '';
-      }
     }
   };
 
@@ -147,9 +129,6 @@ export function setupLayoutObservers(): void {
         }
       }
     }
-
-    // Update HUD visibility based on settings panel state
-    updateHudVisibility();
   };
 
   // Handle resize events
@@ -182,9 +161,6 @@ export function setupLayoutObservers(): void {
     if (!isSettingsOpen) {
       hasScrolledForSettingsPanel = false;
     }
-
-    // Update HUD visibility immediately when settings panel state changes
-    updateHudVisibility();
   };
 
   // Set up event listeners
@@ -197,7 +173,6 @@ export function setupLayoutObservers(): void {
   // Initial setup
   updateHeaderHeight();
   updateSettingsMargin();
-  updateHudVisibility();
   handleScroll();
 }
 

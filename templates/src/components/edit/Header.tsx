@@ -8,12 +8,9 @@ import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIc
 import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
 import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
 import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon';
-
 import {
   viewportModeStore,
-  showHelpStore,
   setViewportMode,
-  toggleShowHelp,
   settingsPanelStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
@@ -30,11 +27,11 @@ const StoryKeepHeader = ({
   isContext = false,
 }: StoryKeepHeaderProps) => {
   const viewport = useStore(viewportModeStore);
-  const showHelp = useStore(showHelpStore);
+  const ctx = getCtx();
+  const hasTitle = useStore(ctx.hasTitle);
+  const hasPanes = useStore(ctx.hasPanes);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-
-  const ctx = getCtx();
 
   useEffect(() => {
     const updateUndoRedo = () => {
@@ -74,6 +71,7 @@ const StoryKeepHeader = ({
     { value: 'desktop', Icon: ComputerDesktopIcon, title: 'Desktop Viewport' },
   ];
 
+  if (!hasTitle && !hasPanes) return null;
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
       <div className="flex flex-wrap items-center justify-center gap-1">
@@ -89,17 +87,6 @@ const StoryKeepHeader = ({
             <Icon />
           </button>
         ))}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-1">
-        <QuestionMarkCircleIcon
-          onClick={toggleShowHelp}
-          title="Toggle Help Text"
-          className={showHelp ? activeIconClassName : iconClassName}
-        />
-        <a href={`/${slug}`} title="Visit Page">
-          <ArrowTopRightOnSquareIcon className={iconClassName} />
-        </a>
       </div>
 
       {(canUndo || canRedo) && (

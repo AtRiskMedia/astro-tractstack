@@ -52,16 +52,34 @@ export function extractPaneSubtree(
       bgColour: paneNode.bgColour,
     });
 
-  // Use existing NodesContext method to get all child nodes
-  const allNodes = ctx.getNodesRecursively(paneNode);
+  // --- START: REPLACEMENT FOR getNodesRecursively ---
+  // Use a safe, non-recursive breadth-first traversal to gather all descendant
+  // nodes, which preserves the correct sibling order.
+  const allDescendantNodes: BaseNode[] = [];
+  const queue: string[] = [...ctx.getChildNodeIDs(paneNode.id)]; // Start queue with direct children
+
+  while (queue.length > 0) {
+    const currentId = queue.shift();
+    if (!currentId) continue;
+
+    const currentNode = ctx.allNodes.get().get(currentId);
+    if (currentNode) {
+      allDescendantNodes.push(currentNode);
+      // Add this node's children to the end of the queue to continue the traversal
+      const childrenIds = ctx.getChildNodeIDs(currentId);
+      queue.push(...childrenIds);
+    }
+  }
+  // --- END: REPLACEMENT FOR getNodesRecursively ---
+
   if (VERBOSE)
     console.log(
-      '📋 EXTRACTOR - All nodes from getNodesRecursively:',
-      allNodes.map((n) => ({ id: n.id, nodeType: n.nodeType }))
+      '📋 EXTRACTOR - All nodes from new traversal:',
+      allDescendantNodes.map((n) => ({ id: n.id, nodeType: n.nodeType }))
     );
 
-  // FIXED: Filter out Pane and StoryFragment nodes - only include actual content nodes
-  const allChildNodes = allNodes.filter(
+  // Filter out Pane and StoryFragment nodes - only include actual content nodes
+  const allChildNodes = allDescendantNodes.filter(
     (node) => node.nodeType !== 'Pane' && node.nodeType !== 'StoryFragment'
   );
 

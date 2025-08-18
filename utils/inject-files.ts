@@ -1446,10 +1446,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/edit/panels/StyleWidgetPanel_update.tsx',
     },
-    {
-      src: resolve('templates/src/components/edit/HudDisplay.tsx'),
-      dest: 'src/components/edit/HudDisplay.tsx',
-    },
 
     // Styles
     {

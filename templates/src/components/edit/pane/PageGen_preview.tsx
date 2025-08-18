@@ -6,10 +6,6 @@ import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/20/solid';
 import { NodesContext } from '@/stores/nodes';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
 import { brandColourStore, preferredThemeStore } from '@/stores/storykeep';
-import {
-  NodesSnapshotRenderer,
-  type SnapshotData,
-} from '@/components/compositor/preview/NodesSnapshotRenderer';
 import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
 import {
   getJustCopyDesign,
@@ -18,11 +14,19 @@ import {
 } from '@/utils/compositor/templateMarkdownStyles';
 import {
   parsePageMarkdown,
-  createPagePanes,
   validatePageMarkdown,
 } from '@/utils/compositor/processMarkdown';
 import { themes, type Theme } from '@/types/tractstack';
-import type { PageDesign, StoryFragmentNode } from '@/types/compositorTypes';
+import type { PageDesign, TemplatePane } from '@/types/compositorTypes';
+import {
+  PanesPreviewGenerator,
+  type PanePreviewRequest,
+  type PaneFragmentResult,
+} from '@/components/compositor/preview/PanesPreviewGenerator';
+import {
+  PaneSnapshotGenerator,
+  type SnapshotData,
+} from '@/components/compositor/preview/PaneSnapshotGenerator';
 
 function getPageDesigns(brand: string, theme: Theme): PageDesign[] {
   return [
@@ -149,20 +153,9 @@ function getPageDesigns(brand: string, theme: Theme): PageDesign[] {
   ];
 }
 
-interface PreviewPane {
-  ctx: NodesContext;
-  snapshot?: SnapshotData;
-  design: PageDesign;
-  index: number;
-}
-
 interface PageCreationPreviewProps {
   markdownContent: string;
-  onComplete: (
-    previewCtx: NodesContext,
-    markdownContent: string,
-    design: PageDesign
-  ) => void;
+  onComplete: (markdownContent: string, design: PageDesign) => void;
   onBack: () => void;
   isApplying?: boolean;
 }
@@ -171,18 +164,23 @@ export const PageCreationPreview = ({
   markdownContent,
   onComplete,
   onBack,
+  isApplying,
 }: PageCreationPreviewProps) => {
   const [selectedTheme, setSelectedTheme] = useState<Theme>(
     preferredThemeStore.get()
   );
   const [selectedDesignIndex, setSelectedDesignIndex] = useState(0);
-  const [preview, setPreview] = useState<PreviewPane | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [paneRequests, setPaneRequests] = useState<PanePreviewRequest[]>([]);
+  const [paneFragments, setPaneFragments] = useState<PaneFragmentResult[]>([]);
+  const [snapshots, setSnapshots] = useState<Map<string, SnapshotData>>(
+    new Map()
+  );
 
   const brand = brandColourStore.get();
   const pageDesigns = getPageDesigns(brand, selectedTheme);
 
-  // Create collections for Ark UI Selects
   const themesCollection = createListCollection({
     items: themes,
     itemToValue: (item) => item,
@@ -198,110 +196,135 @@ export const PageCreationPreview = ({
   useEffect(() => {
     if (!markdownContent) return;
 
-    try {
-      if (!validatePageMarkdown(markdownContent)) {
-        setError('Invalid page structure');
-        return;
-      }
+    setPaneRequests([]);
+    setPaneFragments([]);
+    setSnapshots(new Map());
 
-      const previewCtx = new NodesContext();
-      previewCtx.addNode(createEmptyStorykeep('tmp'));
-
-      const processedPage = parsePageMarkdown(markdownContent);
-      const design = pageDesigns[selectedDesignIndex];
-
-      // Use async/await in a self-executing async function
-      (async () => {
-        const paneIds = await createPagePanes(
-          processedPage,
-          design,
-          previewCtx,
-          false
-        );
-
-        const pageNode = previewCtx.allNodes
-          .get()
-          .get('tmp') as StoryFragmentNode;
-        if (pageNode) {
-          pageNode.paneIds = paneIds;
+    const createIsolatedPaneRequests = () => {
+      try {
+        if (!validatePageMarkdown(markdownContent)) {
+          setError('Invalid page structure');
+          return;
         }
 
-        setPreview({
-          ctx: previewCtx,
-          design: design,
-          index: selectedDesignIndex,
+        const processedPage = parsePageMarkdown(markdownContent);
+        const design = pageDesigns[selectedDesignIndex];
+        const requests: PanePreviewRequest[] = [];
+        const paneTemplates: TemplatePane[] = [];
+        let isOdd = true;
+
+        const introSection = processedPage.sections.find(
+          (s) => s.type === 'intro'
+        );
+        if (introSection) {
+          const ctx = new NodesContext();
+          ctx.addNode(createEmptyStorykeep('tmp'));
+          const introTemplate = design.introDesign();
+          introTemplate.markdown.markdownBody = introSection.content;
+          paneTemplates.push(introTemplate);
+          const paneId =
+            ctx.addTemplatePane('tmp', introTemplate) ||
+            `req-${requests.length}`;
+          requests.push({ id: paneId, ctx });
+        }
+
+        const contentSections = processedPage.sections.filter(
+          (s) => s.type === 'content'
+        );
+        contentSections.forEach((section, index) => {
+          if (design.visualBreaks && index > 0) {
+            const aboveTemplate = paneTemplates[paneTemplates.length - 1];
+            const aboveColor = aboveTemplate?.bgColour || 'white';
+
+            const nextContentTemplate = design.contentDesign(isOdd);
+            const belowColor = nextContentTemplate.bgColour;
+
+            const breakTemplate = isOdd
+              ? design.visualBreaks.odd()
+              : design.visualBreaks.even();
+
+            breakTemplate.bgColour = aboveColor;
+            const svgFill = belowColor;
+            if (breakTemplate.bgPane) {
+              if (breakTemplate.bgPane.breakDesktop) {
+                breakTemplate.bgPane.breakDesktop.svgFill = svgFill;
+              }
+              if (breakTemplate.bgPane.breakTablet) {
+                breakTemplate.bgPane.breakTablet.svgFill = svgFill;
+              }
+              if (breakTemplate.bgPane.breakMobile) {
+                breakTemplate.bgPane.breakMobile.svgFill = svgFill;
+              }
+            }
+
+            paneTemplates.push(breakTemplate);
+
+            const breakCtx = new NodesContext();
+            breakCtx.addNode(createEmptyStorykeep('tmp'));
+            const breakPaneId =
+              breakCtx.addTemplatePane('tmp', breakTemplate) ||
+              `req-${requests.length}`;
+            requests.push({ id: breakPaneId, ctx: breakCtx });
+          }
+
+          const contentCtx = new NodesContext();
+          contentCtx.addNode(createEmptyStorykeep('tmp'));
+          const contentTemplate = design.contentDesign(isOdd);
+          contentTemplate.markdown.markdownBody = section.content;
+          paneTemplates.push(contentTemplate);
+          const contentPaneId =
+            contentCtx.addTemplatePane('tmp', contentTemplate) ||
+            `req-${requests.length}`;
+          requests.push({ id: contentPaneId, ctx: contentCtx });
+
+          isOdd = !isOdd;
         });
 
+        setPaneRequests(requests);
         setError(null);
-      })();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to generate preview'
-      );
-    }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to generate preview'
+        );
+      }
+    };
+
+    createIsolatedPaneRequests();
   }, [markdownContent, selectedTheme, selectedDesignIndex]);
 
-  // Handle theme selection with Ark UI
   const handleThemeChange = (details: { value: string[] }) => {
     const newTheme = details.value[0] as Theme;
-    if (newTheme) {
-      setSelectedTheme(newTheme);
-    }
+    if (newTheme) setSelectedTheme(newTheme);
   };
 
-  // Handle design selection with Ark UI
   const handleDesignChange = (details: { value: string[] }) => {
     const newDesignIndex = parseInt(details.value[0], 10);
-    if (!isNaN(newDesignIndex)) {
-      setSelectedDesignIndex(newDesignIndex);
-    }
+    if (!isNaN(newDesignIndex)) setSelectedDesignIndex(newDesignIndex);
   };
 
-  // CSS to properly style the select items with hover and selection
+  const handleSnapshotComplete = (id: string, data: SnapshotData) => {
+    setSnapshots((prev) => new Map(prev).set(id, data));
+  };
+
   const customStyles = `
-    .theme-item[data-highlighted] {
-      background-color: #0891b2; /* bg-cyan-600 */
-      color: white;
-    }
-    .theme-item[data-highlighted] .theme-indicator {
-      color: white;
-    }
-    .theme-item[data-state="checked"] .theme-indicator {
-      display: flex;
-    }
-    .theme-item .theme-indicator {
-      display: none;
-    }
-    .theme-item[data-state="checked"] {
-      font-weight: bold;
-    }
-    
-    .design-item[data-highlighted] {
-      background-color: #0891b2; /* bg-cyan-600 */
-      color: white;
-    }
-    .design-item[data-highlighted] .design-indicator {
-      color: white;
-    }
-    .design-item[data-state="checked"] .design-indicator {
-      display: flex;
-    }
-    .design-item .design-indicator {
-      display: none;
-    }
-    .design-item[data-state="checked"] {
-      font-weight: bold;
-    }
+    .theme-item[data-highlighted] { background-color: #0891b2; color: white; }
+    .theme-item[data-highlighted] .theme-indicator { color: white; }
+    .theme-item[data-state="checked"] .theme-indicator { display: flex; }
+    .theme-item .theme-indicator { display: none; }
+    .theme-item[data-state="checked"] { font-weight: bold; }
+    .design-item[data-highlighted] { background-color: #0891b2; color: white; }
+    .design-item[data-highlighted] .design-indicator { color: white; }
+    .design-item[data-state="checked"] .design-indicator { display: flex; }
+    .design-item .indicator { display: none; }
+    .design-item[data-state="checked"] { font-weight: bold; }
   `;
 
   return (
     <div className="rounded-md bg-white p-6">
       <style>{customStyles}</style>
-      {/* Controls */}
       <div className="mb-6 space-y-4">
         <div className="flex items-center gap-6">
-          {/* Theme Selector */}
-          <div className="bg- w-48">
+          <div className="w-48">
             <Select.Root
               collection={themesCollection}
               defaultValue={[selectedTheme]}
@@ -316,10 +339,7 @@ export const PageCreationPreview = ({
                     {selectedTheme.replace(/-/g, ' ')}
                   </Select.ValueText>
                   <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
+                    <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
                   </Select.Indicator>
                 </Select.Trigger>
               </Select.Control>
@@ -336,7 +356,7 @@ export const PageCreationPreview = ({
                           {theme.replace(/-/g, ' ')}
                         </Select.ItemText>
                         <Select.ItemIndicator className="theme-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          <CheckIcon className="h-5 w-5" />
                         </Select.ItemIndicator>
                       </Select.Item>
                     ))}
@@ -345,8 +365,6 @@ export const PageCreationPreview = ({
               </Portal>
             </Select.Root>
           </div>
-
-          {/* Layout Selector */}
           <div className="w-64">
             <Select.Root
               collection={designsCollection}
@@ -362,10 +380,7 @@ export const PageCreationPreview = ({
                     {pageDesigns[selectedDesignIndex].title}
                   </Select.ValueText>
                   <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
+                    <ChevronUpDownIcon className="h-5 w-5 text-gray-400" />
                   </Select.Indicator>
                 </Select.Trigger>
               </Select.Control>
@@ -382,7 +397,7 @@ export const PageCreationPreview = ({
                           {item.design.title}
                         </Select.ItemText>
                         <Select.ItemIndicator className="design-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-amber-600">
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          <CheckIcon className="h-5 w-5" />
                         </Select.ItemIndicator>
                       </Select.Item>
                     ))}
@@ -392,7 +407,6 @@ export const PageCreationPreview = ({
             </Select.Root>
           </div>
         </div>
-
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">
             {error ? (
@@ -401,65 +415,78 @@ export const PageCreationPreview = ({
               'Please select a theme and design template'
             )}
           </div>
-
           <div className="flex gap-2">
             <button
               onClick={onBack}
               className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
+              disabled={isApplying}
             >
               Back
             </button>
             <button
-              onClick={() =>
-                preview?.ctx &&
-                onComplete(
-                  preview.ctx,
-                  markdownContent,
-                  pageDesigns[selectedDesignIndex]
-                )
-              }
+              // --- FIX APPLIED HERE ---
+              // The onClick handler now sends the correct parameters.
+              onClick={() => {
+                if (onComplete) {
+                  onComplete(markdownContent, pageDesigns[selectedDesignIndex]);
+                }
+              }}
               className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
-              disabled={!preview?.ctx || !!error}
+              disabled={!!error || isApplying || paneRequests.length === 0}
             >
-              Apply Design
+              {isApplying ? 'Applying...' : 'Apply Design'}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Preview Area */}
-      <div className="rounded-lg bg-gray-100 p-4">
-        {!preview ? (
-          <div className="flex h-96 flex-col items-center justify-center rounded-lg bg-white shadow-lg">
+      {paneRequests.length > 0 && (
+        <PanesPreviewGenerator
+          requests={paneRequests}
+          onComplete={setPaneFragments}
+          onError={(e) => setError(e)}
+        />
+      )}
+
+      <div className="overflow-hidden rounded-lg bg-white p-4 shadow-lg">
+        {paneRequests.length > 0 && paneFragments.length === 0 && !error && (
+          <div className="flex h-48 flex-col items-center justify-center">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
-            <p className="text-sm text-gray-500">Generating preview...</p>
-          </div>
-        ) : (
-          <div className="bg-white shadow-lg">
-            {preview.snapshot ? (
-              <div className="p-0.5">
-                <img
-                  src={preview.snapshot.imageData}
-                  alt={`Design ${preview.index + 1}`}
-                  className="w-full"
-                />
-              </div>
-            ) : (
-              <div className="h-96">
-                <NodesSnapshotRenderer
-                  ctx={preview.ctx}
-                  forceRegenerate={false}
-                  onComplete={(data) => {
-                    setPreview((prev) =>
-                      prev ? { ...prev, snapshot: data } : null
-                    );
-                  }}
-                  outputWidth={800}
-                />
-              </div>
-            )}
+            <p className="text-sm text-gray-500">Generating fragments...</p>
           </div>
         )}
+
+        {paneFragments.map((fragment) => {
+          const snapshot = snapshots.get(fragment.id);
+          return (
+            <div key={fragment.id}>
+              {snapshot ? (
+                <img
+                  src={snapshot.imageData}
+                  alt={`Preview for pane ${fragment.id}`}
+                  className="block w-full"
+                />
+              ) : (
+                fragment.htmlString && (
+                  <div style={{ minHeight: '200px' }}>
+                    <PaneSnapshotGenerator
+                      id={fragment.id}
+                      htmlString={fragment.htmlString}
+                      onComplete={handleSnapshotComplete}
+                      outputWidth={800}
+                    />
+                  </div>
+                )
+              )}
+              {fragment.error && (
+                <div className="p-4 text-red-500">
+                  Error generating preview for pane {fragment.id}:{' '}
+                  {fragment.error}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

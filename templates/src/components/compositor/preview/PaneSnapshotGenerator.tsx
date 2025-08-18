@@ -106,10 +106,9 @@ export const PaneSnapshotGenerator = ({
   <style>
     body { 
       margin: 0; 
-      padding: 20px; 
+      padding: 0;
       font-family: system-ui, -apple-system, sans-serif; 
       width: 1500px; 
-      background: #ffffff;
       overflow-x: hidden;
     }
     * { box-sizing: border-box; }

@@ -2286,6 +2286,36 @@ export class NodesContext {
       .map((node) => nodeMap[node.id]);
   }
 
+  /**
+   * Executes a series of updates on a temporary context and then applies the
+   * results to the main context in a single operation, triggering one UI update.
+   * @param work - An async function that receives the temporary context and performs modifications.
+   */
+  async applyAtomicUpdate(
+    work: (tmpCtx: NodesContext) => Promise<void>
+  ): Promise<void> {
+    // 1. Create a temporary, "off-screen" context
+    const tmpCtx = new NodesContext();
+    // Prime the temp context with the same root ID and other relevant state
+    tmpCtx.rootNodeId.set(this.rootNodeId.get());
+    tmpCtx.allNodes.set(new Map(this.allNodes.get()));
+    tmpCtx.parentNodes.set(new Map(this.parentNodes.get()));
+
+    // 2. Execute the long-running work on the temporary context
+    await work(tmpCtx);
+
+    // 3. Get the results from the temporary context
+    const newNodes = tmpCtx.allNodes.get();
+    const newParentRelations = tmpCtx.parentNodes.get();
+
+    // 4. Swap/Merge the results into the main context
+    this.allNodes.set(newNodes);
+    this.parentNodes.set(newParentRelations);
+
+    // 5. Trigger a single notification to re-render the UI
+    this.notifyNode('root');
+  }
+
   private deleteNodes(nodesList: BaseNode[]): BaseNode[] {
     const deletedNodes: BaseNode[] = [];
 

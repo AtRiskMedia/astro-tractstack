@@ -11,7 +11,6 @@ import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
 import SettingsPanel from '@/components/edit/SettingsPanel';
-import HudDisplay from '@/components/edit/HudDisplay';
 import { Compositor } from '@/components/compositor/Compositor';
 import { requireAdminOrEditor } from '@/utils/auth';
 
@@ -130,7 +129,6 @@ for (const [key, value] of Astro.url.searchParams) {
 
 <Layout
   title={title}
-  description={description}
   slug={contextSlug}
   canonicalURL={canonicalURL}
   pubDatetime={pubDatetime}
@@ -209,9 +207,6 @@ for (const [key, value] of Astro.url.searchParams) {
         client:only="react"
       />
     </div>
-    <div id="hud" class="pointer-events-auto">
-      <HudDisplay client:only="react" />
-    </div>
   </aside>
 </Layout>
 
@@ -220,10 +215,3 @@ for (const [key, value] of Astro.url.searchParams) {
   setupLayoutStyles();
   setupLayoutObservers();
 </script>
-
-<style>
-  #hud:hover {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-</style>

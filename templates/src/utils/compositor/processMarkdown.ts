@@ -200,12 +200,29 @@ export async function createPagePanes(
   design: PageDesign,
   ctx: NodesContext,
   generateTitle: boolean,
-  nodeId?: string
+  nodeId?: string,
+  onProgress?: (current: number, total: number) => void
 ): Promise<string[]> {
   const ownerId = nodeId || ctx.rootNodeId.get();
   const paneIds: string[] = [];
+  let panesCreated = 0;
 
-  // Get existing slugs to avoid duplicates (used when generating titles)
+  // --- 1. Calculate the total number of panes for the progress bar ---
+  const introSection = processedPage.sections.find((s) => s.type === 'intro');
+  const contentSections = processedPage.sections.filter(
+    (s) => s.type === 'content'
+  );
+  const subContentSections = contentSections.flatMap((s) => s.children || []);
+  let totalPanes = 0;
+  if (introSection) totalPanes++;
+  totalPanes += contentSections.length;
+  totalPanes += subContentSections.length;
+  if (design.visualBreaks && contentSections.length > 0) {
+    // A break is added between each content section
+    totalPanes += contentSections.length - 1;
+  }
+  onProgress?.(0, totalPanes); // Report initial progress
+
   const existingSlugs = generateTitle
     ? fullContentMapStore
         .get()
@@ -215,8 +232,7 @@ export async function createPagePanes(
         .map((item: { slug: string }) => item.slug)
     : [];
 
-  // Intro section uses the introDesign function with useOdd set to false
-  const introSection = processedPage.sections.find((s) => s.type === 'intro');
+  // --- 2. Create Panes and Report Progress After Each Step ---
   if (introSection) {
     const introPane = design.introDesign();
     introPane.id = ulid();
@@ -224,17 +240,14 @@ export async function createPagePanes(
     introPane.title = '';
     introPane.markdown.markdownBody = introSection.content || '';
 
-    // Generate title and slug if needed
     if (generateTitle && introPane.markdown.markdownBody.trim().length > 0) {
       const titleSlugResult = await getTitleSlug(
         introPane.markdown.markdownBody,
         existingSlugs
       );
-
       if (titleSlugResult) {
         introPane.title = titleSlugResult.title;
         introPane.slug = titleSlugResult.slug;
-        // Add to existing slugs to ensure uniqueness for subsequent panes
         existingSlugs.push(titleSlugResult.slug);
       }
     }
@@ -242,18 +255,15 @@ export async function createPagePanes(
     const paneId = ctx.addTemplatePane(ownerId, introPane);
     if (paneId) {
       paneIds.push(paneId);
+      panesCreated++;
+      onProgress?.(panesCreated, totalPanes); // Report progress
     }
   }
 
-  // Content sections - use the contentDesign function with alternating useOdd
-  const contentSections = processedPage.sections.filter(
-    (s) => s.type === 'content'
-  );
-
   for (let index = 0; index < contentSections.length; index++) {
     const section = contentSections[index];
+    const useOdd = index % 2 === 0;
 
-    // Add visual break before content section if we have breaks defined and it's not the first content section
     if (design.visualBreaks && index > 0) {
       const isEven = (index - 1) % 2 === 0;
       const breakTemplate = isEven
@@ -262,18 +272,12 @@ export async function createPagePanes(
       const lastPaneId = paneIds[paneIds.length - 1];
 
       if (lastPaneId) {
-        // Get colors for final break
         const abovePane = ctx.allNodes.get().get(lastPaneId) as PaneNode;
         const aboveColor = abovePane?.bgColour || 'white';
-
-        // Get the next content pane color by creating temp template
-        const nextContentPane = design.contentDesign(!isEven);
+        const nextContentPane = design.contentDesign(!useOdd);
         const belowColor = nextContentPane.bgColour;
-
-        // Final break - inverted colors for bottom edge
         breakTemplate.bgColour = aboveColor;
         const svgFill = belowColor;
-
         if (breakTemplate.bgPane) {
           if (breakTemplate.bgPane.breakDesktop) {
             breakTemplate.bgPane.breakDesktop.svgFill = svgFill;
@@ -285,7 +289,6 @@ export async function createPagePanes(
             breakTemplate.bgPane.breakMobile.svgFill = svgFill;
           }
         }
-
         const breakPaneId = ctx.addTemplatePane(
           ownerId,
           breakTemplate,
@@ -294,25 +297,23 @@ export async function createPagePanes(
         );
         if (breakPaneId) {
           paneIds.push(breakPaneId);
+          panesCreated++;
+          onProgress?.(panesCreated, totalPanes); // Report progress
         }
       }
     }
 
-    // Create the content pane with alternating styles
-    const useOdd = index % 2 === 0;
     const contentPane = design.contentDesign(useOdd);
     contentPane.id = ulid();
     contentPane.slug = '';
     contentPane.title = '';
     contentPane.markdown.markdownBody = section.content || '';
 
-    // Generate title and slug for content sections if needed
     if (generateTitle && contentPane.markdown.markdownBody.trim().length > 0) {
       const titleSlugResult = await getTitleSlug(
         contentPane.markdown.markdownBody,
         existingSlugs
       );
-
       if (titleSlugResult) {
         contentPane.title = titleSlugResult.title;
         contentPane.slug = titleSlugResult.slug;
@@ -323,9 +324,10 @@ export async function createPagePanes(
     const contentPaneId = ctx.addTemplatePane(ownerId, contentPane);
     if (contentPaneId) {
       paneIds.push(contentPaneId);
+      panesCreated++;
+      onProgress?.(panesCreated, totalPanes); // Report progress
     }
 
-    // Handle subcontent sections (H4 headings)
     if (section.children && section.children.length > 0) {
       for (const subSection of section.children) {
         const subContentPane = design.contentDesign(!useOdd);
@@ -334,7 +336,6 @@ export async function createPagePanes(
         subContentPane.title = '';
         subContentPane.markdown.markdownBody = subSection.content || '';
 
-        // Generate title and slug for subcontent if needed
         if (
           generateTitle &&
           subContentPane.markdown.markdownBody.trim().length > 0
@@ -343,7 +344,6 @@ export async function createPagePanes(
             subContentPane.markdown.markdownBody,
             existingSlugs
           );
-
           if (titleSlugResult) {
             subContentPane.title = titleSlugResult.title;
             subContentPane.slug = titleSlugResult.slug;
@@ -354,51 +354,8 @@ export async function createPagePanes(
         const subContentPaneId = ctx.addTemplatePane(ownerId, subContentPane);
         if (subContentPaneId) {
           paneIds.push(subContentPaneId);
-        }
-      }
-    }
-
-    // Add visual break after content section if we have breaks defined and it's not the last section
-    if (design.visualBreaks && index < contentSections.length - 1) {
-      const isEven = index % 2 === 0;
-      const breakTemplate = isEven
-        ? design.visualBreaks.even()
-        : design.visualBreaks.odd();
-      const lastPaneId = paneIds[paneIds.length - 1];
-
-      if (lastPaneId) {
-        // Get colors for final break
-        const abovePane = ctx.allNodes.get().get(lastPaneId) as PaneNode;
-        const aboveColor = abovePane?.bgColour || 'white';
-
-        // Get the next content pane color by creating temp template
-        const nextContentPane = design.contentDesign(!isEven);
-        const belowColor = nextContentPane.bgColour;
-
-        // Final break - inverted colors for bottom edge
-        breakTemplate.bgColour = aboveColor;
-        const svgFill = belowColor;
-
-        if (breakTemplate.bgPane) {
-          if (breakTemplate.bgPane.breakDesktop) {
-            breakTemplate.bgPane.breakDesktop.svgFill = svgFill;
-          }
-          if (breakTemplate.bgPane.breakTablet) {
-            breakTemplate.bgPane.breakTablet.svgFill = svgFill;
-          }
-          if (breakTemplate.bgPane.breakMobile) {
-            breakTemplate.bgPane.breakMobile.svgFill = svgFill;
-          }
-        }
-
-        const breakPaneId = ctx.addTemplatePane(
-          ownerId,
-          breakTemplate,
-          lastPaneId,
-          'after'
-        );
-        if (breakPaneId) {
-          paneIds.push(breakPaneId);
+          panesCreated++;
+          onProgress?.(panesCreated, totalPanes); // Report progress
         }
       }
     }

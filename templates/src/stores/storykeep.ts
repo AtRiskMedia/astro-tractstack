@@ -62,8 +62,6 @@ export const viewportKeyStore = map<{
   value: 'mobile',
 });
 
-export const showHelpStore = atom<boolean>(true);
-export const activeHelpKeyStore = atom<string | null>(null);
 export const isEditingStore = atom<boolean>(false);
 
 export const showAnalyticsStore = atom<boolean>(false);
@@ -120,10 +118,6 @@ export const setViewportMode = (mode: ViewportKey) => {
   }
 };
 
-export const toggleShowHelp = () => {
-  showHelpStore.set(!showHelpStore.get());
-};
-
 export const toggleShowAnalytics = () => {
   showAnalyticsStore.set(!showAnalyticsStore.get());
 };
@@ -147,7 +141,6 @@ export const setCanRedo = (canRedo: boolean) => {
 // Reset to default state
 export const resetStoryKeepState = () => {
   viewportModeStore.set('auto');
-  showHelpStore.set(true);
   showAnalyticsStore.set(false);
   headerPositionStore.set('normal');
   settingsPanelOpenStore.set(false);
@@ -242,7 +235,6 @@ export const storyFragmentTopicsStore = map<{
 
 // Admin & UI State Flags
 export const isAdminStore = atom<boolean>(false);
-export const activeHelpTemplateStore = atom<string | null>(null);
 export const viewportSetStore = atom<boolean>(false);
 
 export const resetStyleElementInfo = () => {
