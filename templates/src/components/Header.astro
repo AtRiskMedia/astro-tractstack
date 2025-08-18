@@ -301,28 +301,8 @@ const authStatus = {
       }
     </div>
   </div>
-  {
-    isContext && (
-      <div class="border-t bg-gray-50 px-4 py-2 md:px-8">
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-gray-600">
-            <span class="font-bold">Context:</span> {title}
-          </p>
-          {isEditable && (
-            <a
-              href={`/storykeep/edit/context/${slug}`}
-              class="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Edit Context
-            </a>
-          )}
-        </div>
-      </div>
-    )
-  }
 </header>
 
-{/* Admin Modal - Only render for admins */}
 {
   authStatus.isAdmin && (
     <div

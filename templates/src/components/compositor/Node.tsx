@@ -176,7 +176,18 @@ const getElement = (
         return (
           <>
             {!isPreview && !(paneNode.slug && paneNode.title) ? (
-              <ContextPaneTitlePanel nodeId={node.id} />
+              <div
+                className="fixed inset-0 overflow-y-auto bg-black bg-opacity-75"
+                style={{ zIndex: 9005 }}
+              >
+                <div className="flex min-h-screen items-center justify-center p-1.5">
+                  <div className="relative w-full max-w-4xl rounded-lg bg-white shadow-xl">
+                    <div className="p-6">
+                      <ContextPaneTitlePanel nodeId={props.nodeId} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : !isPreview ? (
               <ContextPanePanel nodeId={node.id} />
             ) : null}

@@ -78,7 +78,7 @@ const AddPaneNewPanel = ({
   );
   const [useOddVariant, setUseOddVariant] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>(
-    templateCategories[first ? 4 : 0]
+    templateCategories[isContextPane ? 1 : first ? 4 : 0]
   );
   const [isInserting, setIsInserting] = useState(false);
   const [aiContentGenerated, setAiContentGenerated] = useState(false);
@@ -89,13 +89,16 @@ const AddPaneNewPanel = ({
 
   const categoryCollection = useMemo(() => {
     const categories =
-      copyMode === `ai` ? [templateCategories[1]] : templateCategories;
+      copyMode === `ai` || isContextPane
+        ? [templateCategories[1]]
+        : templateCategories;
+
     return createListCollection({
       items: categories,
       itemToValue: (item) => item.id,
       itemToString: (item) => item.title,
     });
-  }, [copyMode]);
+  }, [copyMode, isContextPane]);
 
   const themesCollection = useMemo(() => {
     return createListCollection({
@@ -107,6 +110,12 @@ const AddPaneNewPanel = ({
 
   const filteredTemplates = useMemo(() => {
     if (copyMode === `ai` || isContextPane)
+      return templateCategories[1].getTemplates(
+        selectedTheme,
+        brand,
+        useOddVariant
+      );
+    if (isContextPane)
       return templateCategories[1].getTemplates(
         selectedTheme,
         brand,
@@ -414,50 +423,55 @@ const AddPaneNewPanel = ({
               </Select.Root>
             </div>
 
-            <div className="w-full">
-              <Select.Root
-                collection={categoryCollection}
-                value={[selectedCategory.id]}
-                onValueChange={handleCategoryChange}
-              >
-                <Select.Label className="block text-sm font-bold text-gray-700">
-                  Category
-                </Select.Label>
-                <Select.Control className="relative mt-1">
-                  <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-                    <Select.ValueText className="block truncate">
-                      {selectedCategory.title}
-                    </Select.ValueText>
-                    <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
-                      <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </Select.Indicator>
-                  </Select.Trigger>
-                </Select.Control>
-                <Portal>
-                  <Select.Positioner>
-                    <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                      {categoryCollection.items.map((category) => (
-                        <Select.Item
-                          key={category.id}
-                          item={category}
-                          className="category-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
-                        >
-                          <Select.ItemText className="block truncate">
-                            {category.title}
-                          </Select.ItemText>
-                          <Select.ItemIndicator className="category-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      ))}
-                    </Select.Content>
-                  </Select.Positioner>
-                </Portal>
-              </Select.Root>
-            </div>
+            {!isContextPane && (
+              <div className="w-full">
+                <Select.Root
+                  collection={categoryCollection}
+                  value={[selectedCategory.id]}
+                  onValueChange={handleCategoryChange}
+                >
+                  <Select.Label className="block text-sm font-bold text-gray-700">
+                    Category
+                  </Select.Label>
+                  <Select.Control className="relative mt-1">
+                    <Select.Trigger className="relative w-full cursor-default rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                      <Select.ValueText className="block truncate">
+                        {selectedCategory.title}
+                      </Select.ValueText>
+                      <Select.Indicator className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        <ChevronUpDownIcon
+                          className="h-5 w-5 text-gray-400"
+                          aria-hidden="true"
+                        />
+                      </Select.Indicator>
+                    </Select.Trigger>
+                  </Select.Control>
+                  <Portal>
+                    <Select.Positioner>
+                      <Select.Content className="z-50 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                        {categoryCollection.items.map((category) => (
+                          <Select.Item
+                            key={category.id}
+                            item={category}
+                            className="category-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
+                          >
+                            <Select.ItemText className="block truncate">
+                              {category.title}
+                            </Select.ItemText>
+                            <Select.ItemIndicator className="category-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                              <CheckIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Content>
+                    </Select.Positioner>
+                  </Portal>
+                </Select.Root>
+              </div>
+            )}
 
             <div className="flex items-center gap-2">
               <Switch.Root

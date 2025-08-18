@@ -795,6 +795,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/context/[...contextSlug].astro',
     },
     {
+      src: resolve('templates/src/pages/context/[...contextSlug]/edit.astro'),
+      dest: 'src/pages/context/[...contextSlug]/edit.astro',
+    },
+    {
       src: resolve('templates/src/pages/storykeep.astro'),
       dest: 'src/pages/storykeep.astro',
     },

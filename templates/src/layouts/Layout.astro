@@ -8,7 +8,6 @@ import type { ImpressionNode } from '@/types/compositorTypes';
 
 export interface Props {
   title: string;
-  description?: string;
   slug?: string;
   menu?: MenuNode | null;
   created?: string;
@@ -28,7 +27,7 @@ export interface Props {
 
 const {
   title,
-  description = 'TractStack dynamic website',
+  description = '',
   slug = '',
   menu = null,
   created,

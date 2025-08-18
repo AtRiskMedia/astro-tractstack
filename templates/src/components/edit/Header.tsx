@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { navigate } from 'astro:transitions/client';
 import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon';
@@ -47,22 +46,7 @@ const StoryKeepHeader = ({
   }, [ctx.history]);
 
   const handleSave = () => {
-    console.log('Save placeholder - will implement later');
-  };
-
-  const handleCancel = () => {
-    settingsPanelStore.set(null);
-    if (canUndo) {
-      if (
-        window.confirm(
-          'You have unsaved changes. Are you sure you want to leave?'
-        )
-      ) {
-        navigate(`/storykeep`);
-      }
-    } else {
-      navigate(`/storykeep`);
-    }
+    console.log('SAVING NOT IMPLEMENTED', nodeId, isContext, slug);
   };
 
   const handleUndo = () => {

@@ -47,8 +47,9 @@ try {
   }
 } catch (error) {
   console.error('Error fetching context pane:', error);
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const paneId = contextPaneData.id;
@@ -82,8 +83,9 @@ try {
   }
 } catch (error) {
   console.error('Error fetching context fragment:', error);
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 // Get supporting data
@@ -97,7 +99,6 @@ if (!brandConfig.SITE_INIT) {
 
 <Layout
   title={paneTitle}
-  description={`Context: ${paneTitle}`}
   slug={contextSlug}
   menu={null}
   created={contextPaneData.created}
