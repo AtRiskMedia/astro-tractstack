@@ -185,7 +185,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image`,
+      `${addCommand} -D @types/node @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
@@ -199,7 +199,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
     );
     console.log(
       kleur.cyan(
-        `${addCommand} -D @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
+        `${addCommand} -D @types/node @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
       )
     );
     process.exit(1);
@@ -291,10 +291,7 @@ src/content/generated/
     }
 
     try {
-      const content = readFileSync(configFile, 'utf-8');
-
       let newContent;
-
       if (configFile.endsWith('.ts')) {
         newContent = `import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
@@ -372,7 +369,7 @@ export default defineConfig({
 
   // Create tsconfig.json
   const tsConfig = `{
-    "extends": "astro/tsconfigs/strictest",
+    "extends": "astro/tsconfigs/strict",
     "compilerOptions": {
       "baseUrl": ".",
       "paths": { "@/*": ["src/*"] },
