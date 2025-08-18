@@ -1,4 +1,5 @@
 ---
+import { ulid } from 'ulid';
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
@@ -31,38 +32,69 @@ if (!brandConfig.SITE_INIT) {
   return Astro.redirect('/storykeep');
 }
 
-const endpoint = `${goBackend}/api/v1/nodes/storyfragments/slug/${slug}/full-payload`;
-
 let loadData;
-try {
-  const response = await fetch(endpoint, {
-    headers: {
-      'X-Tenant-ID': tenantId,
-      Cookie: Astro.request.headers.get('cookie') || '',
-    },
-  });
+let storyFragment;
+let title;
+let storyFragmentID;
 
-  const failedResponse = await handleFailedResponse(
-    response,
-    goBackend,
-    tenantId,
-    Astro.url.pathname
-  );
-  if (failedResponse) {
-    return failedResponse;
+// Handle create mode
+if (slug === 'create') {
+  // Create empty storyfragment in memory
+  const emptyStoryFragment = {
+    id: ulid(),
+    nodeType: 'StoryFragment' as const,
+    parentId: null,
+    title: '',
+    slug: '',
+    paneIds: [],
+    isChanged: false,
+    created: new Date(),
+    changed: new Date(),
+  };
+
+  loadData = {
+    storyfragmentNodes: [emptyStoryFragment],
+  };
+
+  storyFragment = emptyStoryFragment;
+  title = 'Create New Page - TractStack Editor';
+  storyFragmentID = emptyStoryFragment.id;
+} else {
+  // Existing backend fetch logic
+  const endpoint = `${goBackend}/api/v1/nodes/storyfragments/slug/${slug}/full-payload`;
+
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        'X-Tenant-ID': tenantId,
+        Cookie: Astro.request.headers.get('cookie') || '',
+      },
+    });
+
+    const failedResponse = await handleFailedResponse(
+      response,
+      goBackend,
+      tenantId,
+      Astro.url.pathname
+    );
+    if (failedResponse) {
+      return failedResponse;
+    }
+
+    loadData = await response.json();
+  } catch (error) {
+    console.error('Error fetching storyfragment full payload:', error);
+    return Astro.redirect(
+      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+    );
   }
 
-  loadData = await response.json();
-} catch (error) {
-  console.error('Error fetching storyfragment full payload:', error);
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  // Extract data from the response
+  storyFragment = loadData?.storyfragmentNodes.at(0);
+  title = storyFragment?.title || `Editor`;
+  storyFragmentID = storyFragment?.id;
 }
 
-// Extract data from the response
-const storyFragment = loadData?.storyfragmentNodes.at(0);
-const title = storyFragment?.title || `Editor`;
-const storyFragmentID = storyFragment?.id;
 const description = `Edit ${title} - TractStack Editor`;
 const canonicalURL = slug === brandConfig?.HOME_SLUG ? '/' : `/${slug}`;
 const fullCanonicalURL = brandConfig?.SITE_URL
@@ -101,7 +133,6 @@ for (const [key, value] of Astro.url.searchParams) {
   pubDatetime={pubDatetime}
   modDatetime={modDatetime}
   ogImage={ogImage}
-  id={storyFragmentID}
   brandConfig={brandConfig}
   storyfragmentId={storyFragmentID}
   isEditor={true}
@@ -133,16 +164,7 @@ for (const [key, value] of Astro.url.searchParams) {
 
   <div class="flex min-h-screen">
     <!-- Tool Navigation (mobile bottom, desktop side) -->
-    <nav
-      id="mainNav"
-      class="bg-mywhite z-102 fixed bottom-0 left-0 right-0 pt-1.5 md:static md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-16 md:pt-0"
-    >
-      <div
-        class="flex flex-wrap justify-around gap-4 py-3.5 md:mt-0 md:flex-col md:items-center md:gap-8 md:space-x-0 md:space-y-2 md:py-2"
-      >
-        <StoryKeepToolMode isContext={false} client:only="react" />
-      </div>
-    </nav>
+    <StoryKeepToolMode isContext={false} client:only="react" />
 
     <!-- Main Content Area -->
     <main id="mainContent" class="relative flex-1">

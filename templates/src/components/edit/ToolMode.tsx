@@ -54,13 +54,12 @@ interface StoryKeepToolModeProps {
 }
 
 const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
-  const signal = useStore(settingsPanelStore);
+  //const signal = useStore(settingsPanelStore);
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
-  // Placeholder state - these would come from actual content data
-  const hasTitle = true;
-  const hasPanes = true;
+  const hasTitle = useStore(ctx.hasTitle);
+  const hasPanes = useStore(ctx.hasPanes);
 
   const className =
     'w-8 h-8 py-1 rounded-xl bg-white text-myblue hover:bg-mygreen/20 hover:text-black hover:rotate-3 cursor-pointer transition-all';
@@ -94,23 +93,28 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   if (!hasTitle || (!hasPanes && !isContext)) return null;
 
   return (
-    <>
-      <div className="text-mydarkgrey h-16 text-center text-sm font-bold">
-        mode:
-        <div className="font-action text-myblue pt-1.5 text-center text-xs">
-          {currentToolMode.title}
+    <nav
+      id="mainNav"
+      className="bg-mywhite z-102 fixed bottom-0 left-0 right-0 pt-1.5 md:static md:bottom-auto md:left-0 md:top-0 md:h-screen md:w-16 md:pt-0"
+    >
+      <div className="flex flex-wrap justify-around gap-4 py-3.5 md:mt-0 md:flex-col md:items-center md:gap-8 md:space-x-0 md:space-y-2 md:py-2">
+        <div className="text-mydarkgrey h-16 text-center text-sm font-bold">
+          mode:
+          <div className="font-action text-myblue pt-1.5 text-center text-xs">
+            {currentToolMode.title}
+          </div>
         </div>
+        {storykeepToolModes.map(({ key, Icon, description }) => (
+          <div title={description} key={key}>
+            {key === toolModeVal ? (
+              <Icon className={classNameActive} />
+            ) : (
+              <Icon className={className} onClick={() => handleClick(key)} />
+            )}
+          </div>
+        ))}
       </div>
-      {storykeepToolModes.map(({ key, Icon, description }) => (
-        <div title={description} key={key}>
-          {key === toolModeVal ? (
-            <Icon className={classNameActive} />
-          ) : (
-            <Icon className={className} onClick={() => handleClick(key)} />
-          )}
-        </div>
-      ))}
-    </>
+    </nav>
   );
 };
 

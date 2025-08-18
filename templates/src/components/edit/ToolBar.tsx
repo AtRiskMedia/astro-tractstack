@@ -71,12 +71,8 @@ const StoryKeepToolBar = () => {
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const { value: toolAddModeVal } = useStore(ctx.toolAddModeStore);
 
-  // Placeholder state - these would come from actual content data
-  const hasTitle = true;
-  const hasPanes = true;
-
   // Only show when in insert mode
-  if (toolModeVal !== 'insert' || !hasTitle || !hasPanes) {
+  if (toolModeVal !== 'insert') {
     return null;
   }
 

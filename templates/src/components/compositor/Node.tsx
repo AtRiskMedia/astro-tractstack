@@ -97,10 +97,50 @@ const getElement = (
     case 'StoryFragment': {
       const sf = node as StoryFragmentNode;
       if (!isPreview) getCtx(props).hasTitle.set(!(!sf.slug || !sf.title));
+
       return (
         <>
           {!(sf.slug && sf.title) ? (
-            <StoryFragmentTitlePanel nodeId={props.nodeId} />
+            <div
+              className="fixed inset-0 overflow-y-auto bg-black bg-opacity-75"
+              style={{ zIndex: 9005 }}
+            >
+              <div className="flex min-h-screen items-center justify-center p-1.5">
+                <div
+                  className="fixed inset-0 bg-black opacity-65"
+                  onClick={() => (window.location.href = '/storykeep')}
+                />
+
+                <div className="relative w-full max-w-4xl rounded-lg bg-white shadow-xl">
+                  <div className="absolute right-4 top-4 z-10">
+                    <button
+                      onClick={() => (window.location.href = '/storykeep')}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-90 shadow-lg transition-all duration-200 hover:bg-opacity-100"
+                      title="Cancel and return to StoryKeep"
+                      aria-label="Cancel and return to StoryKeep"
+                    >
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="p-6">
+                    <StoryFragmentTitlePanel nodeId={props.nodeId} />
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : !hasPanes && sf.slug && sf.title && !isPreview ? (
             <PageCreationSelector
               nodeId={props.nodeId}
