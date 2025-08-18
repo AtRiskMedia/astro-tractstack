@@ -64,11 +64,6 @@
           }
           tractStackKeys.forEach((key) => localStorage.removeItem(key));
 
-          // Clear global session reference
-          if (typeof window !== 'undefined') {
-            window.tractStackSessionId = undefined;
-          }
-
           console.log('TractStack: Complete logout finished');
 
           // Redirect to home page

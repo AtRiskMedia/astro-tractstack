@@ -90,25 +90,20 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
       <div className="rounded-lg bg-white p-6 shadow">
         <h2 className="mb-4 text-xl font-bold text-gray-900">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <button
-            onClick={() => (window.location.href = '/create/edit')}
+          <a
+            href="/create/edit"
             className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600"
           >
             <div className="text-lg font-bold">+ New Story Fragment</div>
             <div className="text-sm text-gray-500">Create Page</div>
-          </button>
-          <button className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600">
-            <div className="text-lg font-bold">+ New Pane</div>
-            <div className="text-sm text-gray-500">Create Content Block</div>
-          </button>
-          <button className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600">
-            <div className="text-lg font-bold">+ New Menu</div>
-            <div className="text-sm text-gray-500">Create Navigation</div>
-          </button>
-          <button className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600">
-            <div className="text-lg font-bold">+ New Resource</div>
-            <div className="text-sm text-gray-500">Create Resource</div>
-          </button>
+          </a>
+          <a
+            href="/context/create/edit"
+            className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600"
+          >
+            <div className="text-lg font-bold">+ New Context Page</div>
+            <div className="text-sm text-gray-500">Create Page</div>
+          </a>
         </div>
       </div>
 

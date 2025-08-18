@@ -36,7 +36,11 @@ const isHome = slug === brandConfig?.HOME_SLUG;
 // Enhanced asset path resolution - always prefer brandConfig over isDev fallbacks
 const isDev = import.meta.env.DEV;
 
-const getAssetPath = (configPath, devFallback, prodFallback) => {
+const getAssetPath = (
+  configPath: string,
+  devFallback: string,
+  prodFallback: string
+) => {
   // Always prioritize brandConfig values when they exist
   if (configPath && configPath !== '') {
     return configPath;
@@ -120,7 +124,7 @@ const authStatus = {
     class="bg-mywhite flex flex-row flex-nowrap justify-between px-4 pb-3 pt-4 shadow-inner md:px-8"
   >
     <h1 class="text-mydarkgrey truncate text-xl">{title}</h1>
-    <div class="flex flex-row flex-nowrap gap-x-2">
+    <div class="flex flex-row flex-nowrap items-center gap-x-2">
       {/* Home Icon */}
       {
         !isHome ? (
@@ -262,8 +266,9 @@ const authStatus = {
       {/* Logout Icon - Admin/Editor Only */}
       {
         authStatus.isAdmin || authStatus.userRole === 'editor' ? (
-          <button
+          <a
             id="logout-btn"
+            href="/storykeep/logout"
             class="text-myblue/80 hover:rotate-6 hover:text-red-600"
             title="Logout"
           >
@@ -280,7 +285,7 @@ const authStatus = {
                 d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
               />
             </svg>
-          </button>
+          </a>
         ) : null
       }
 
@@ -367,7 +372,9 @@ const authStatus = {
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const logoutBtn = document.getElementById('logout-btn');
+    const logoutBtn = document.getElementById(
+      'logout-btn'
+    ) as HTMLButtonElement | null;
 
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async function (e) {
@@ -375,7 +382,6 @@ const authStatus = {
 
         // Disable button during logout process
         logoutBtn.disabled = true;
-        logoutBtn.textContent = 'Logging out...';
 
         try {
           // Call the logout API
@@ -400,11 +406,6 @@ const authStatus = {
               }
             }
             tractStackKeys.forEach((key) => localStorage.removeItem(key));
-
-            // Clear global session reference
-            if (typeof window !== 'undefined') {
-              window.tractStackSessionId = undefined;
-            }
 
             console.log('TractStack: Complete logout finished');
 

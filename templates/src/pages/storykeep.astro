@@ -24,12 +24,14 @@ try {
   });
 
   if (!statusResponse.ok) {
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+    return Astro.redirect(
+      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+    );
   }
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const userIsAuthenticated = isAuthenticated(Astro);
@@ -52,8 +54,9 @@ try {
   );
   homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 ---
 

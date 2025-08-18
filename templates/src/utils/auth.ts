@@ -1,5 +1,3 @@
-import type { AstroGlobal } from '@/types/astro';
-
 /**
  * Admin/Editor Authentication Utilities
  * Uses role-specific cookies for secure admin authentication
@@ -16,7 +14,7 @@ export interface AdminAuthClaims {
 /**
  * Check if user is authenticated (either admin or editor)
  */
-export function isAuthenticated(astro: AstroGlobal): boolean {
+export function isAuthenticated(astro: any): boolean {
   const adminCookie = astro.cookies.get('admin_auth');
   const editorCookie = astro.cookies.get('editor_auth');
 
@@ -36,7 +34,7 @@ export function isAuthenticated(astro: AstroGlobal): boolean {
 /**
  * Check if user has admin role
  */
-export function isAdmin(astro: AstroGlobal): boolean {
+export function isAdmin(astro: any): boolean {
   const adminCookie = astro.cookies.get('admin_auth');
   if (!adminCookie?.value) return false;
 
@@ -47,7 +45,7 @@ export function isAdmin(astro: AstroGlobal): boolean {
 /**
  * Check if user has editor role
  */
-export function isEditor(astro: AstroGlobal): boolean {
+export function isEditor(astro: any): boolean {
   const editorCookie = astro.cookies.get('editor_auth');
   if (!editorCookie?.value) return false;
 
@@ -58,7 +56,7 @@ export function isEditor(astro: AstroGlobal): boolean {
 /**
  * Get user role (admin, editor, or null)
  */
-export function getUserRole(astro: AstroGlobal): 'admin' | 'editor' | null {
+export function getUserRole(astro: any): 'admin' | 'editor' | null {
   const adminCookie = astro.cookies.get('admin_auth');
   if (adminCookie?.value) {
     const claims = validateAdminToken(adminCookie.value);
@@ -78,7 +76,7 @@ export function getUserRole(astro: AstroGlobal): 'admin' | 'editor' | null {
  * Page-level protection: Require admin role
  * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireAdmin(astro: AstroGlobal): Response | undefined {
+export function requireAdmin(astro: any): Response | undefined {
   if (!isAdmin(astro)) {
     return astro.redirect('/storykeep/login');
   }
@@ -88,7 +86,7 @@ export function requireAdmin(astro: AstroGlobal): Response | undefined {
  * Page-level protection: Require editor role
  * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireEditor(astro: AstroGlobal): Response | undefined {
+export function requireEditor(astro: any): Response | undefined {
   if (!isEditor(astro)) {
     return astro.redirect('/storykeep/login');
   }
@@ -98,7 +96,7 @@ export function requireEditor(astro: AstroGlobal): Response | undefined {
  * Page-level protection: Require admin OR editor role
  * Returns redirect response if unauthorized, undefined if authorized
  */
-export function requireAdminOrEditor(astro: AstroGlobal): Response | undefined {
+export function requireAdminOrEditor(astro: any): Response | undefined {
   if (!isAuthenticated(astro)) {
     return astro.redirect('/storykeep/login');
   }
@@ -108,7 +106,7 @@ export function requireAdminOrEditor(astro: AstroGlobal): Response | undefined {
  * Get admin token for API requests
  * Returns the JWT token from the appropriate cookie
  */
-export function getAdminToken(astro: AstroGlobal): string | null {
+export function getAdminToken(astro: any): string | null {
   const adminCookie = astro.cookies.get('admin_auth');
   if (adminCookie?.value) {
     const claims = validateAdminToken(adminCookie.value);

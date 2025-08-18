@@ -114,21 +114,6 @@ const StoryFragmentTable = ({
     }
   };
 
-  // Handle create new story fragment
-  const handleCreate = () => {
-    window.location.href = '/storykeep/edit';
-  };
-
-  // Handle view story fragment
-  const handleView = (slug: string) => {
-    window.open(`/${slug}`, '_blank');
-  };
-
-  // Handle edit story fragment
-  const handleEdit = (slug: string) => {
-    window.location.href = `/storykeep/edit/${slug}`;
-  };
-
   // Handle delete story fragment
   const handleDelete = async (id: string, title: string) => {
     if (
@@ -172,8 +157,8 @@ const StoryFragmentTable = ({
             Manage pages and content on your site
           </p>
         </div>
-        <button
-          onClick={handleCreate}
+        <a
+          href="/create/edit"
           className="flex items-center rounded-md border border-transparent bg-cyan-700 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         >
           <svg
@@ -190,7 +175,7 @@ const StoryFragmentTable = ({
             />
           </svg>
           Create Story Fragment
-        </button>
+        </a>
       </div>
 
       {/* Search */}
@@ -237,12 +222,12 @@ const StoryFragmentTable = ({
                   Story fragments are the pages and content sections of your
                   site.
                 </p>
-                <button
-                  onClick={handleCreate}
+                <a
+                  href="/create/edit"
                   className="mt-4 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
                 >
                   Create Story Fragment
-                </button>
+                </a>
               </>
             )}
           </div>
@@ -309,20 +294,20 @@ const StoryFragmentTable = ({
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold md:px-6">
                         <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleView(item.slug)}
+                          <a
+                            href={`/${item.slug}`}
                             className="text-gray-600 hover:text-gray-900"
                             title="View story fragment"
                           >
                             View
-                          </button>
-                          <button
-                            onClick={() => handleEdit(item.slug)}
+                          </a>
+                          <a
+                            href={`/${item.slug}/edit`}
                             className="text-cyan-600 hover:text-cyan-900"
                             title="Edit story fragment"
                           >
                             <PencilIcon className="h-5 w-5" />
-                          </button>
+                          </a>
                           <button
                             onClick={() =>
                               canDelete && handleDelete(item.id, item.title)
