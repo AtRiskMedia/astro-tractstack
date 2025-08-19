@@ -44,18 +44,47 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
   const fetchBeliefs = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/turso/getAllBeliefNodes', {
+      const goBackend =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+      const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+      // Get all belief IDs first
+      const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
+        },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch beliefs');
+      if (!idsResponse.ok) throw new Error('Failed to fetch belief IDs');
 
-      const result = await response.json();
-      if (result.success) {
-        setAvailableBeliefs(result.data);
+      const idsResult = await idsResponse.json();
+      // CORRECTED: The key from the backend is "beliefIds", not "beliefs"
+      if (!idsResult.beliefIds || idsResult.beliefIds.length === 0) {
+        setAvailableBeliefs([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get full belief data
+      const beliefsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
+        },
+        // CORRECTED: Pass the array from the correct key "beliefIds"
+        body: JSON.stringify({ beliefIds: idsResult.beliefIds }),
+      });
+
+      if (!beliefsResponse.ok) throw new Error('Failed to fetch beliefs');
+
+      const beliefsResult = await beliefsResponse.json();
+      if (beliefsResult.beliefs) {
+        setAvailableBeliefs(beliefsResult.beliefs);
       } else {
-        throw new Error(result.error || 'Failed to fetch beliefs');
+        throw new Error('Failed to fetch beliefs');
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -127,17 +156,27 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
           customValues,
         };
 
-        const response = await fetch('/api/turso/upsertBeliefNode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedBelief),
-        });
+        const goBackend =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+
+        const response = await fetch(
+          `${goBackend}/api/v1/nodes/beliefs/${beliefId}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            body: JSON.stringify(updatedBelief),
+          }
+        );
 
         if (!response.ok) throw new Error('Failed to save custom values');
 
         const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to save custom values');
+        if (!result) {
+          throw new Error('Failed to save custom values');
         }
 
         // Update available beliefs with new custom values
@@ -166,43 +205,6 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
       </div>
     );
   }
-
-  //if (isCreatingBelief) {
-  //  const emptyBelief: BeliefNode = {
-  //    id: ulid(),
-  //    nodeType: "Belief",
-  //    parentId: null,
-  //    title: "",
-  //    slug: "",
-  //    scale: "",
-  //  };
-
-  //  return (
-  //    <div className="px-1.5 py-6 bg-white rounded-b-md w-full group mb-4 shadow-inner">
-  //      <div className="px-3.5">
-  //        <div className="flex justify-between mb-4">
-  //          <h3 className="text-lg font-bold">Create New Belief</h3>
-  //          <button
-  //            onClick={() => setIsCreatingBelief(false)}
-  //            className="text-cyan-700 hover:text-black"
-  //          >
-  //            ← Back to Magic Paths
-  //          </button>
-  //        </div>
-  //        <BeliefEditor
-  //          belief={emptyBelief}
-  //          create={true}
-  //          isEmbedded={true}
-  //          onComplete={() => {
-  //            setIsCreatingBelief(false);
-  //            fetchBeliefs();
-  //          }}
-  //          onCancel={() => setIsCreatingBelief(false)}
-  //        />
-  //      </div>
-  //    </div>
-  //  );
-  //}
 
   return (
     <div className="group mb-4 w-full rounded-b-md bg-white px-1.5 py-6 shadow-inner">
