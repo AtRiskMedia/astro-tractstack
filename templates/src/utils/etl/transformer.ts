@@ -66,7 +66,6 @@ export function transformToOptionsPayload(
           tagName: flatNode.tagName,
           copy: flatNode.copy,
           elementCss: computedCSS,
-          isChanged: flatNode.isChanged,
           isPlaceholder: flatNode.isPlaceholder,
           src: flatNode.src,
           href: flatNode.href,
@@ -105,6 +104,7 @@ export function transformToOptionsPayload(
           type: markdownNode.type,
           markdownId: markdownNode.markdownId,
           defaultClasses: markdownNode.defaultClasses,
+          parentClasses: markdownNode.parentClasses,
           parentCss: parentCss,
           hiddenViewportMobile: markdownNode.hiddenViewportMobile,
           hiddenViewportTablet: markdownNode.hiddenViewportTablet,
@@ -148,13 +148,10 @@ export function transformToOptionsPayload(
             objectFit: artpackNode.objectFit,
             position: artpackNode.position,
             size: artpackNode.size,
-            hiddenViewportMobile: artpackNode.hiddenViewportMobile,
-            hiddenViewportTablet: artpackNode.hiddenViewportTablet,
-            hiddenViewportDesktop: artpackNode.hiddenViewportDesktop,
           };
           if (VERBOSE)
             console.log(
-              '✅ TRANSFORMER - BgPane (artpack) result:',
+              '✅ TRANSFORMER - BgPane (artpack-image) result:',
               transformedNode
             );
           return transformedNode;
@@ -169,46 +166,48 @@ export function transformToOptionsPayload(
             src: bgImageNode.src,
             srcSet: bgImageNode.srcSet,
             alt: bgImageNode.alt,
+            base64Data: bgImageNode.base64Data,
             objectFit: bgImageNode.objectFit,
             position: bgImageNode.position,
             size: bgImageNode.size,
-            hiddenViewportMobile: bgImageNode.hiddenViewportMobile,
-            hiddenViewportTablet: bgImageNode.hiddenViewportTablet,
-            hiddenViewportDesktop: bgImageNode.hiddenViewportDesktop,
           };
           if (VERBOSE)
             console.log(
-              '✅ TRANSFORMER - BgPane (bgImage) result:',
+              '✅ TRANSFORMER - BgPane (background-image) result:',
               transformedNode
             );
           return transformedNode;
         }
+
+        // Fallback for unknown BgPane types
+        if (VERBOSE)
+          console.warn('⚠️ TRANSFORMER - Unknown BgPane type:', node);
+        return baseNode;
       }
 
-      if (VERBOSE)
-        console.log(
-          '⚠️ TRANSFORMER - Unknown node type, returning baseNode:',
-          baseNode
-        );
+      // Unknown node type - return base node
+      if (VERBOSE) console.warn('⚠️ TRANSFORMER - Unknown node type:', node);
       return baseNode;
     })
     .filter((node) => node !== null);
 
-  if (VERBOSE)
-    console.log('📦 TRANSFORMER - Final flattened nodes:', flattenedNodes);
-
-  // 2. Build complete OptionsPayload structure with SAFE defaults
-  const optionsPayload = {
-    nodes: flattenedNodes,
-    isDecorative: subtree.paneNode.isDecorative ?? false,
-    bgColour: subtree.paneNode.bgColour || undefined,
-    heldBeliefs: subtree.paneNode.heldBeliefs,
-    withheldBeliefs: subtree.paneNode.withheldBeliefs,
+  // 2. Build final OptionsPayload
+  const optionsPayload: OptionsPayload = {
+    bgColour: subtree.paneNode.bgColour,
+    isDecorative: subtree.paneNode.isDecorative,
     codeHookTarget: subtree.paneNode.codeHookTarget,
+    heldBeliefs: subtree.paneNode.heldBeliefs ?? {},
+    withheldBeliefs: subtree.paneNode.withheldBeliefs ?? {},
     codeHookPayload: subtree.paneNode.codeHookPayload,
+    nodes: flattenedNodes,
   };
 
   if (VERBOSE)
-    console.log('✅ TRANSFORMER COMPLETE - optionsPayload:', optionsPayload);
+    console.log('✅ TRANSFORMER COMPLETE - Final payload:', {
+      nodeCount: optionsPayload.nodes.length,
+      bgColour: optionsPayload.bgColour,
+      isDecorative: optionsPayload.isDecorative,
+    });
+
   return optionsPayload;
 }

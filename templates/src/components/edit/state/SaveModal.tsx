@@ -114,7 +114,8 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
           for (let i = 0; i < nodesWithPendingFiles.length; i++) {
             const fileNode = nodesWithPendingFiles[i];
             addDebugMessage(
-              `Processing file ${i + 1}/${nodesWithPendingFiles.length
+              `Processing file ${i + 1}/${
+                nodesWithPendingFiles.length
               }: ${fileNode.id}`
             );
             console.log('[PAYLOAD] File create (NOT SENT):', fileNode);
@@ -139,7 +140,8 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
             try {
               const payload = transformLivePaneForSave(ctx, paneNode.id);
               addDebugMessage(
-                `[PAYLOAD] Would send to /api/v1/nodes/panes/${payload.id ? 'PUT' : 'POST'
+                `[PAYLOAD] Would send to /api/v1/nodes/panes/${
+                  payload.id ? 'PUT' : 'POST'
                 }:`
               );
               console.log('[PAYLOAD] Pane save (NOT SENT):', payload);
@@ -155,10 +157,15 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
 
         if (dirtyStoryFragments.length > 0) {
           setStage('SAVING_STORY_FRAGMENTS');
-          setStageProgress({ currentStep: 0, totalSteps: dirtyStoryFragments.length });
+          setStageProgress({
+            currentStep: 0,
+            totalSteps: dirtyStoryFragments.length,
+          });
           for (let i = 0; i < dirtyStoryFragments.length; i++) {
             const fragment = dirtyStoryFragments[i];
-            addDebugMessage(`Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id}`);
+            addDebugMessage(
+              `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id}`
+            );
             console.log('[PAYLOAD] StoryFragment save (NOT SENT):', fragment);
             await new Promise((resolve) => setTimeout(resolve, 200));
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
@@ -170,9 +177,12 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
         setStage('PROCESSING_STYLES');
         setStageProgress({ currentStep: 1, totalSteps: 1 });
         addDebugMessage('Starting V2 Tailwind pipeline...');
-        const { dirtyPaneIds, classes: dirtyClasses } = ctx.getDirtyNodesClassData();
+        const { dirtyPaneIds, classes: dirtyClasses } =
+          ctx.getDirtyNodesClassData();
         try {
-          addDebugMessage(`[PAYLOAD] Would send to /api/tailwind: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes.`);
+          addDebugMessage(
+            `[PAYLOAD] Would send to /api/tailwind: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes.`
+          );
           await fetch('/api/tailwind', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -187,10 +197,13 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
 
         setProgress(100);
         setStage('COMPLETED');
-        addDebugMessage('V2 save process completed successfully (simulation mode)');
+        addDebugMessage(
+          'V2 save process completed successfully (simulation mode)'
+        );
       } catch (err) {
         setStage('ERROR');
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        const errorMessage =
+          err instanceof Error ? err.message : 'Unknown error occurred';
         setError(errorMessage);
         addDebugMessage(`Save process failed: ${errorMessage}`);
       }
@@ -205,14 +218,22 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
         ? ` (${stageProgress.currentStep}/${stageProgress.totalSteps})`
         : '';
     switch (stage) {
-      case 'PREPARING': return 'Preparing changes...';
-      case 'SAVING_PENDING_FILES': return `Saving pending files...${getProgressText()}`;
-      case 'SAVING_PANES': return `Saving pane content...${getProgressText()}`;
-      case 'SAVING_STORY_FRAGMENTS': return `Updating story fragments...${getProgressText()}`;
-      case 'PROCESSING_STYLES': return 'Processing styles...';
-      case 'COMPLETED': return 'Save completed successfully! (Simulation Mode)';
-      case 'ERROR': return `Error: ${error}`;
-      default: return '';
+      case 'PREPARING':
+        return 'Preparing changes...';
+      case 'SAVING_PENDING_FILES':
+        return `Saving pending files...${getProgressText()}`;
+      case 'SAVING_PANES':
+        return `Saving pane content...${getProgressText()}`;
+      case 'SAVING_STORY_FRAGMENTS':
+        return `Updating story fragments...${getProgressText()}`;
+      case 'PROCESSING_STYLES':
+        return 'Processing styles...';
+      case 'COMPLETED':
+        return 'Save completed successfully! (Simulation Mode)';
+      case 'ERROR':
+        return `Error: ${error}`;
+      default:
+        return '';
     }
   };
 
@@ -230,8 +251,14 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
       preventScroll={true}
     >
       <Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-black bg-opacity-75" style={{ zIndex: 9005 }} />
-        <Dialog.Positioner className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 9005 }}>
+        <Dialog.Backdrop
+          className="fixed inset-0 bg-black bg-opacity-75"
+          style={{ zIndex: 9005 }}
+        />
+        <Dialog.Positioner
+          className="fixed inset-0 flex items-center justify-center p-4"
+          style={{ zIndex: 9005 }}
+        >
           <Dialog.Content
             className="w-full max-w-2xl overflow-hidden rounded-lg bg-white shadow-xl"
             style={{ maxHeight: '90vh' }}
@@ -258,12 +285,13 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${stage === 'COMPLETED'
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      stage === 'COMPLETED'
                         ? 'bg-green-500'
                         : stage === 'ERROR'
                           ? 'bg-red-500'
                           : 'bg-blue-500'
-                      }`}
+                    }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -277,7 +305,10 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
 
             {showDebug && (
               <div className="border-t border-gray-200 bg-gray-50">
-                <div className="overflow-y-auto px-6 py-4" style={{ maxHeight: '20rem' }}>
+                <div
+                  className="overflow-y-auto px-6 py-4"
+                  style={{ maxHeight: '20rem' }}
+                >
                   <h3 className="mb-2 text-sm font-bold text-gray-900">
                     Debug Log
                   </h3>
@@ -309,10 +340,11 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
                   )}
                   <Dialog.CloseTrigger asChild>
                     <button
-                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${stage === 'COMPLETED'
+                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                        stage === 'COMPLETED'
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
+                      }`}
                     >
                       {stage === 'COMPLETED' ? 'Close' : 'Cancel'}
                     </button>

@@ -38,7 +38,6 @@ export interface OptionsPayload {
     tagName?: string | undefined;
     copy?: string | undefined;
     elementCss?: string | undefined;
-    isChanged?: boolean | undefined;
     isPlaceholder?: boolean | undefined;
     src?: string | undefined;
     href?: string | undefined;
@@ -65,6 +64,7 @@ export interface OptionsPayload {
     position?: string | undefined;
     size?: string | undefined;
     srcSet?: string | undefined;
+    base64Data?: string | undefined;
 
     // For Markdown nodes:
     markdownId?: string | undefined;
@@ -77,6 +77,7 @@ export interface OptionsPayload {
           };
         }
       | undefined;
+    parentClasses?: any | undefined;
     parentCss?: string[] | undefined;
     hiddenViewportMobile?: boolean | undefined;
     hiddenViewportTablet?: boolean | undefined;
