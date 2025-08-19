@@ -930,9 +930,17 @@ export class NodesContext {
     }
   }
 
-  modifyNodes(newData: BaseNode[]) {
+  modifyNodes(
+    newData: BaseNode[],
+    options?: {
+      notify?: boolean;
+      recordHistory?: boolean;
+    }
+  ) {
     const undoList: ((ctx: NodesContext) => void)[] = [];
     const redoList: ((ctx: NodesContext) => void)[] = [];
+    const shouldNotify = options?.notify ?? true;
+    const shouldRecordHistory = options?.recordHistory ?? true;
 
     for (let i = 0; i < newData.length; i++) {
       const node = newData[i];
@@ -941,31 +949,23 @@ export class NodesContext {
         continue;
       }
 
-      // 1. If the new node data is absolutely identical to the old, do nothing.
       if (isDeepEqual(currentNodeData, node)) {
         continue;
       }
 
-      // 2. The node has changed. Immediately update it in the main store.
-      //    This is the key fix: it ensures the `isChanged: true` state is saved
-      //    during the recursive call before any logic can skip it.
       const newNodes = new Map(this.allNodes.get());
       newNodes.set(node.id, node);
       this.allNodes.set(newNodes);
 
-      // 3. Check if the *only* change was the `isChanged` flag.
-      //    If so, we notify the UI but skip adding a redundant undo/redo history entry.
       const deepEqualWithExclusions = isDeepEqual(currentNodeData, node, [
         'isChanged',
       ]);
 
       if (deepEqualWithExclusions) {
-        this.notifyNode(node.id);
-        continue; // Skip history entry and bubbling logic for this simple change.
+        if (shouldNotify) this.notifyNode(node.id);
+        continue;
       }
 
-      // 4. The change was substantive. Proceed with bubbling the dirty flag
-      //    up to the parent Pane and adding an entry to the undo/redo history.
       switch (node.nodeType) {
         case `TagElement`:
         case `BgPane`:
@@ -974,14 +974,14 @@ export class NodesContext {
           const paneNode = cloneDeep(
             this.allNodes.get().get(paneNodeId)
           ) as PaneNode;
-          // This recursive call will now work correctly because of the logic above.
-          this.modifyNodes([{ ...paneNode, isChanged: true }]);
+          this.modifyNodes([{ ...paneNode, isChanged: true }], {
+            notify: false,
+          });
           break;
         }
         case `Menu`:
         case `Pane`:
         case `StoryFragment`:
-          // do nothing *already set isChanged
           break;
 
         default:
@@ -992,24 +992,29 @@ export class NodesContext {
         const newNodes = new Map(ctx.allNodes.get());
         newNodes.set(node.id, currentNodeData);
         ctx.allNodes.set(newNodes);
-        const parentNode = this.nodeToNotify(node.id, node.nodeType);
-        if (parentNode) this.notifyNode(parentNode);
+        if (shouldNotify) {
+          const parentNode = this.nodeToNotify(node.id, node.nodeType);
+          if (parentNode) this.notifyNode(parentNode);
+        }
       });
       redoList.push((ctx: NodesContext) => {
         const newNodes = new Map(ctx.allNodes.get());
         newNodes.set(node.id, node);
         ctx.allNodes.set(newNodes);
-        const parentNode = this.nodeToNotify(node.id, node.nodeType);
-        if (parentNode) this.notifyNode(parentNode);
+        if (shouldNotify) {
+          const parentNode = this.nodeToNotify(node.id, node.nodeType);
+          if (parentNode) this.notifyNode(parentNode);
+        }
       });
 
-      // notify self to trigger rerender; unless StoryFragment
-      if ([`Menu`, `StoryFragment`].includes(node.nodeType))
-        this.notifyNode(ROOT_NODE_NAME);
-      this.notifyNode(node.id);
+      if (shouldNotify) {
+        if ([`Menu`, `StoryFragment`].includes(node.nodeType))
+          this.notifyNode(ROOT_NODE_NAME);
+        this.notifyNode(node.id);
+      }
     }
 
-    if (undoList.length > 0) {
+    if (undoList.length > 0 && shouldRecordHistory) {
       this.history.addPatch({
         op: PatchOp.REPLACE,
         undo: (ctx) => {
@@ -1424,33 +1429,58 @@ export class NodesContext {
     insertNodeId?: string,
     location?: 'before' | 'after'
   ): string | null {
-    const targetNode = this.allNodes.get().get(targetId) as BaseNode;
+    let targetNode = this.allNodes.get().get(targetId) as BaseNode;
+
+    // 1. VALIDATE TARGET NODE
+    // Allow Pane, Markdown, or TagElement as valid targets.
     if (
       !targetNode ||
-      (targetNode.nodeType !== 'Markdown' &&
+      (targetNode.nodeType !== 'Pane' &&
+        targetNode.nodeType !== 'Markdown' &&
         targetNode.nodeType !== 'TagElement')
     ) {
+      console.error('addTemplateNode received an invalid targetId.');
       return null;
     }
 
-    const parentId = this.getClosestNodeTypeFromId(targetId, 'Markdown');
+    // 2. PREPARE PARENT AND STATE VARIABLES
+    let parentId =
+      targetNode.nodeType === 'Markdown' || targetNode.nodeType === 'Pane'
+        ? targetId
+        : this.getClosestNodeTypeFromId(targetId, 'Markdown');
+    const paneNodeId = this.getClosestNodeTypeFromId(targetId, 'Pane');
+    const originalPaneNode = this.allNodes.get().get(paneNodeId)
+      ? cloneDeep(this.allNodes.get().get(paneNodeId) as PaneNode)
+      : null;
+
+    let autoCreatedMarkdownNode: MarkdownPaneFragmentNode | null = null;
+
+    // 3. HANDLE EMPTY PANE BY AUTO-CREATING A MARKDOWN NODE
+    if (targetNode.nodeType === 'Pane') {
+      // Create a minimal markdown node to act as the container
+      const newMarkdownNode: MarkdownPaneFragmentNode = {
+        id: ulid(),
+        nodeType: 'Markdown',
+        parentId: targetId,
+        type: 'markdown',
+        markdownId: ulid(),
+        defaultClasses: {},
+      };
+
+      autoCreatedMarkdownNode = newMarkdownNode;
+
+      // Add the new markdown node to the state
+      this.addNode(newMarkdownNode);
+
+      // Update the parentId to be this new markdown node for the next step
+      parentId = newMarkdownNode.id;
+    }
+
+    // 4. PREPARE THE NEW ELEMENT NODES
     const duplicatedNodes = cloneDeep(node) as TemplateNode;
     let flattenedNodes: TemplateNode[] = [];
 
-    // mark pane as changed
-    const paneNodeId = this.getClosestNodeTypeFromId(targetId, 'Pane');
-    if (paneNodeId) {
-      const paneNode = cloneDeep(
-        this.allNodes.get().get(paneNodeId)
-      ) as PaneNode;
-      if (paneNode) {
-        this.modifyNodes([{ ...paneNode, isChanged: true }]);
-      }
-    }
-
-    // Check if we need to wrap in ul/li structure
     if (['img', 'code'].includes(duplicatedNodes.tagName)) {
-      // Look for existing ul parent
       let closestListNode = '';
       if (
         'tagName' in targetNode &&
@@ -1462,14 +1492,12 @@ export class NodesContext {
       }
 
       if (!closestListNode) {
-        // Create new ul wrapper if none exists
         const ulNode: TemplateNode = {
           id: ulid(),
           nodeType: 'TagElement',
           tagName: 'ul',
           parentId: parentId,
         };
-
         const liNode: TemplateNode = {
           id: ulid(),
           nodeType: 'TagElement',
@@ -1477,49 +1505,13 @@ export class NodesContext {
           tagNameCustom: duplicatedNodes.tagName,
           parentId: ulNode.id,
         };
-
         duplicatedNodes.parentId = liNode.id;
-
-        // Create flattened node structure
         flattenedNodes = [
           ulNode,
           liNode,
           ...this.setupTemplateNodeRecursively(duplicatedNodes, liNode.id),
         ];
-
-        this.addNodes(flattenedNodes);
-        this.history.addPatch({
-          op: PatchOp.ADD,
-          undo: (ctx) => ctx.deleteNodes(flattenedNodes),
-          redo: (ctx) => ctx.addNodes(flattenedNodes),
-        });
-
-        // Handle insertion position
-        const newNodeId = ulNode.id;
-        const parentNodes = this.parentNodes.get().get(parentId);
-        if (
-          insertNodeId &&
-          parentNodes &&
-          parentNodes?.indexOf(insertNodeId) !== -1
-        ) {
-          const spliceIdx = parentNodes.indexOf(newNodeId);
-          if (spliceIdx !== -1) {
-            parentNodes.splice(spliceIdx, 1);
-          }
-          if (location === 'before') {
-            parentNodes.splice(parentNodes.indexOf(insertNodeId), 0, newNodeId);
-          } else {
-            parentNodes.splice(
-              parentNodes.indexOf(insertNodeId) + 1,
-              0,
-              newNodeId
-            );
-          }
-        }
-        this.notifyNode(this.getClosestNodeTypeFromId(targetId, 'Markdown'));
-        return duplicatedNodes.id;
       } else {
-        // We found an existing ul, create a new li wrapper
         const liNode: TemplateNode = {
           id: ulid(),
           nodeType: 'TagElement',
@@ -1527,89 +1519,108 @@ export class NodesContext {
           tagNameCustom: duplicatedNodes.tagName,
           parentId: closestListNode,
         };
-
-        // Set up proper parent relationships
         duplicatedNodes.parentId = liNode.id;
-
-        // Flatten all nodes with proper hierarchy
         flattenedNodes = [
           liNode,
           ...this.setupTemplateNodeRecursively(duplicatedNodes, liNode.id),
         ];
-
-        this.addNodes(flattenedNodes);
-        this.history.addPatch({
-          op: PatchOp.ADD,
-          undo: (ctx) => ctx.deleteNodes(flattenedNodes),
-          redo: (ctx) => ctx.addNodes(flattenedNodes),
-        });
-
-        // Handle insertion position
-        const parentNodes = this.parentNodes.get().get(closestListNode);
-        if (
-          insertNodeId &&
-          parentNodes &&
-          parentNodes?.indexOf(insertNodeId) !== -1
-        ) {
-          const spliceIdx = parentNodes.indexOf(liNode.id);
-          if (spliceIdx !== -1) {
-            parentNodes.splice(spliceIdx, 1);
-          }
-          if (location === 'before') {
-            parentNodes.splice(parentNodes.indexOf(insertNodeId), 0, liNode.id);
-          } else {
-            parentNodes.splice(
-              parentNodes.indexOf(insertNodeId) + 1,
-              0,
-              liNode.id
-            );
-          }
-        }
-        this.notifyNode(this.getClosestNodeTypeFromId(targetId, 'Markdown'));
-        return duplicatedNodes.id;
       }
     } else {
-      // For non-img/code nodes, just flatten and add normally
       flattenedNodes = this.setupTemplateNodeRecursively(
         duplicatedNodes,
         parentId
       );
-      this.addNodes(flattenedNodes);
-      this.history.addPatch({
-        op: PatchOp.ADD,
-        undo: (ctx) => ctx.deleteNodes(flattenedNodes),
-        redo: (ctx) => ctx.addNodes(flattenedNodes),
-      });
+    }
 
-      let newNodeId;
-      const parentNodes = this.parentNodes.get().get(parentId);
-      // Handle insertion for normal nodes
-      if (
-        insertNodeId &&
-        parentNodes &&
-        parentNodes?.indexOf(insertNodeId) !== -1
-      ) {
-        const newNode = parentNodes.splice(
-          parentNodes.indexOf(duplicatedNodes.id, 1)
+    // 5. PERFORM REMAINING STATE MUTATIONS
+    if (originalPaneNode) {
+      this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+        notify: false,
+        recordHistory: false,
+      });
+    }
+
+    this.addNodes(flattenedNodes);
+
+    const newTopLevelNodes = flattenedNodes.filter(
+      (n) => n.parentId === parentId
+    );
+    const newTopLevelIds = newTopLevelNodes.map((n) => n.id);
+
+    const parentNodesMap = this.parentNodes.get();
+    const parentChildren = parentNodesMap.get(parentId);
+
+    if (insertNodeId && location && parentChildren) {
+      const insertIndex = parentChildren.indexOf(insertNodeId);
+      if (insertIndex !== -1) {
+        const currentChildren = parentChildren.filter(
+          (id) => !newTopLevelIds.includes(id)
         );
-        newNodeId = newNode.at(0);
         if (location === 'before') {
-          parentNodes.splice(parentNodes.indexOf(insertNodeId), 0, ...newNode);
+          currentChildren.splice(insertIndex, 0, ...newTopLevelIds);
         } else {
-          parentNodes.splice(
-            parentNodes.indexOf(insertNodeId) + 1,
-            0,
-            ...newNode
-          );
+          currentChildren.splice(insertIndex + 1, 0, ...newTopLevelIds);
         }
-      }
-      if (newNodeId) {
-        this.notifyNode(this.getClosestNodeTypeFromId(targetId, 'Markdown'));
-        return newNodeId;
+        parentNodesMap.set(parentId, currentChildren);
       }
     }
 
-    return null;
+    // 6. RECORD THE ENTIRE ATOMIC OPERATION in a single history patch.
+    this.history.addPatch({
+      op: PatchOp.ADD,
+      undo: (ctx) => {
+        // Undo all changes: delete the element and the auto-created markdown node (if it exists)
+        ctx.deleteNodes(flattenedNodes);
+        if (autoCreatedMarkdownNode) {
+          ctx.deleteNodes([autoCreatedMarkdownNode]);
+        }
+        if (originalPaneNode) {
+          const newNodes = new Map(ctx.allNodes.get());
+          newNodes.set(originalPaneNode.id, originalPaneNode);
+          ctx.allNodes.set(newNodes);
+        }
+        if (paneNodeId) ctx.notifyNode(paneNodeId);
+      },
+      redo: (ctx) => {
+        // Redo all changes in the correct order
+        if (originalPaneNode) {
+          ctx.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+            notify: false,
+            recordHistory: false,
+          });
+        }
+        if (autoCreatedMarkdownNode) {
+          ctx.addNode(autoCreatedMarkdownNode);
+        }
+        ctx.addNodes(flattenedNodes);
+
+        // Re-apply insertion logic
+        const parentNodesMap = ctx.parentNodes.get();
+        const parentChildren = parentNodesMap.get(parentId);
+        if (insertNodeId && location && parentChildren) {
+          const insertIndex = parentChildren.indexOf(insertNodeId);
+          if (insertIndex !== -1) {
+            const currentChildren = parentChildren.filter(
+              (id) => !newTopLevelIds.includes(id)
+            );
+            if (location === 'before') {
+              currentChildren.splice(insertIndex, 0, ...newTopLevelIds);
+            } else {
+              currentChildren.splice(insertIndex + 1, 0, ...newTopLevelIds);
+            }
+            parentNodesMap.set(parentId, currentChildren);
+          }
+        }
+        if (paneNodeId) ctx.notifyNode(paneNodeId);
+      },
+    });
+
+    // 7. SEND A SINGLE NOTIFICATION to update the UI.
+    if (paneNodeId) {
+      this.notifyNode(paneNodeId);
+    }
+
+    return flattenedNodes.length > 0 ? flattenedNodes[0].id : null;
   }
 
   setupTemplateNodeRecursively(node: TemplateNode, parentId: string) {
