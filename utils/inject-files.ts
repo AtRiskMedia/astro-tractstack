@@ -510,12 +510,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        'templates/src/components/compositor/preview/NodesSnapshotRenderer.tsx'
-      ),
-      dest: 'src/components/compositor/preview/NodesSnapshotRenderer.tsx',
-    },
-    {
-      src: resolve(
         'templates/src/components/compositor/preview/OgImagePreview.tsx'
       ),
       dest: 'src/components/compositor/preview/OgImagePreview.tsx',
