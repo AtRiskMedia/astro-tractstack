@@ -977,6 +977,7 @@ export class NodesContext {
           this.modifyNodes([{ ...paneNode, isChanged: true }], {
             notify: false,
           });
+          this.notifyNode(ROOT_NODE_NAME);
           break;
         }
         case `Menu`:

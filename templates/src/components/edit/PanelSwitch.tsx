@@ -252,6 +252,7 @@ const PanelSwitch = ({
             );
         }
       }
+      break;
     }
 
     case 'style-img-add':

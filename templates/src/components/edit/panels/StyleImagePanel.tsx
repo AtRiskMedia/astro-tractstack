@@ -6,9 +6,7 @@ import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import ImageUpload, { type ImageParams } from '@/components/fields/ImageUpload';
-import { tagTitles } from '@/types/compositorTypes';
 import type {
-  Tag,
   FlatNode,
   MarkdownPaneFragmentNode,
 } from '@/types/compositorTypes';
@@ -187,6 +185,7 @@ const StyleImagePanel = ({
     settingsPanelStore.set({
       action: `style-img-add`,
       nodeId: node.id,
+      childId: node.id,
       expanded: true,
     });
   };
@@ -306,10 +305,6 @@ const StyleImagePanel = ({
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">
-          Style this {tagTitles[node.tagName as Tag]}
-        </h3>
-
         <ImageUpload
           currentFileId={node.fileId}
           onUpdate={handleImageUpdate}
