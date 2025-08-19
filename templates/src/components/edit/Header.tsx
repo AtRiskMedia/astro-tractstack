@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import QuestionMarkCircleIcon from '@heroicons/react/24/outline/QuestionMarkCircleIcon';
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ArrowUturnRightIcon from '@heroicons/react/24/outline/ArrowUturnRightIcon';
-import ArrowTopRightOnSquareIcon from '@heroicons/react/24/outline/ArrowTopRightOnSquareIcon';
 import ViewfinderCircleIcon from '@heroicons/react/24/outline/ViewfinderCircleIcon';
 import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
 import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
@@ -14,6 +12,7 @@ import {
   settingsPanelStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
+import SaveModal from '@/components/edit/state/SaveModal';
 
 interface StoryKeepHeaderProps {
   nodeId: string;
@@ -32,6 +31,7 @@ const StoryKeepHeader = ({
   const hasPanes = useStore(ctx.hasPanes);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   useEffect(() => {
     const updateUndoRedo = () => {
@@ -43,7 +43,11 @@ const StoryKeepHeader = ({
   }, [ctx.history]);
 
   const handleSave = () => {
-    console.log('SAVING NOT IMPLEMENTED', nodeId, isContext, slug);
+    setShowSaveModal(true);
+  };
+
+  const handleCloseSaveModal = () => {
+    setShowSaveModal(false);
   };
 
   const handleUndo = () => {
@@ -72,57 +76,66 @@ const StoryKeepHeader = ({
   ];
 
   if (!hasTitle && !hasPanes) return null;
+
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
-      <div className="flex flex-wrap items-center justify-center gap-1">
-        {viewportOptions.map(({ value, Icon, title }) => (
-          <button
-            key={value}
-            onClick={() =>
-              setViewportMode(value as 'auto' | 'mobile' | 'tablet' | 'desktop')
-            }
-            title={title}
-            className={viewport === value ? activeIconClassName : iconClassName}
-          >
-            <Icon />
-          </button>
-        ))}
+    <>
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
+        <div className="flex flex-wrap items-center justify-center gap-1">
+          {viewportOptions.map(({ value, Icon, title }) => (
+            <button
+              key={value}
+              onClick={() =>
+                setViewportMode(
+                  value as 'auto' | 'mobile' | 'tablet' | 'desktop'
+                )
+              }
+              title={title}
+              className={
+                viewport === value ? activeIconClassName : iconClassName
+              }
+            >
+              <Icon />
+            </button>
+          ))}
+        </div>
+
+        {(canUndo || canRedo) && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <ArrowUturnLeftIcon
+              title="Undo"
+              style={{
+                visibility: canUndo ? 'visible' : 'hidden',
+                display: canUndo ? 'block' : 'none',
+              }}
+              className={iconClassName}
+              onClick={handleUndo}
+            />
+            <ArrowUturnRightIcon
+              title="Redo"
+              style={{
+                visibility: canRedo ? 'visible' : 'hidden',
+                display: canRedo ? 'block' : 'none',
+              }}
+              className={iconClassName}
+              onClick={handleRedo}
+            />
+          </div>
+        )}
+
+        {canUndo && (
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+            <button
+              onClick={handleSave}
+              className="bg-myblue font-action hover:bg-myorange rounded-md px-3.5 py-1.5 font-bold text-white"
+            >
+              Save
+            </button>
+          </div>
+        )}
       </div>
 
-      {(canUndo || canRedo) && (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <ArrowUturnLeftIcon
-            title="Undo"
-            style={{
-              visibility: canUndo ? 'visible' : 'hidden',
-              display: canUndo ? 'block' : 'none',
-            }}
-            className={iconClassName}
-            onClick={handleUndo}
-          />
-          <ArrowUturnRightIcon
-            title="Redo"
-            style={{
-              visibility: canRedo ? 'visible' : 'hidden',
-              display: canRedo ? 'block' : 'none',
-            }}
-            className={iconClassName}
-            onClick={handleRedo}
-          />
-        </div>
-      )}
-
-      {canUndo && (
-        <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-          <button
-            onClick={handleSave}
-            className="font-action bg-myblue hover:bg-myorange rounded-md px-3.5 py-1.5 font-bold text-white"
-          >
-            Save
-          </button>
-        </div>
-      )}
-    </div>
+      <SaveModal show={showSaveModal} onClose={handleCloseSaveModal} />
+    </>
   );
 };
 

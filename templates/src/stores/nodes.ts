@@ -44,6 +44,7 @@ import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassN
 import { ulid } from 'ulid';
 import { NotificationSystem } from '@/stores/notificationSystem';
 import { cloneDeep, isDeepEqual } from '@/utils/helpers';
+import { extractClassesFromNodes } from '@/utils/compositor/nodesHelper';
 import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
 import allowInsert from '@/utils/compositor/allowInsert';
 import { reservedSlugs } from '@/constants';
@@ -69,7 +70,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() {}
+  constructor() { }
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -534,11 +535,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-            node,
-            node.tagName as Tag,
-            tagName,
-            offset ? tagNames[offset - 1] : undefined
-          )
+          node,
+          node.tagName as Tag,
+          tagName,
+          offset ? tagNames[offset - 1] : undefined
+        )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -774,10 +775,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-      {
-        heldBeliefs: {},
-        withheldBeliefs: {},
-      };
+    {
+      heldBeliefs: {},
+      withheldBeliefs: {},
+    };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -861,11 +862,10 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
                 ? addHoverPrefix(classesHoverPayload[0])
                 : ``
-            }`;
+              }`;
           }
           const closestPaneId = this.getClosestNodeTypeFromId(
             nodeId,
@@ -940,26 +940,31 @@ export class NodesContext {
         continue;
       }
 
-      // Check if only isChanged differs - if so, update without history
-      const deepEqualWithoutExclusions = isDeepEqual(currentNodeData, node);
-
-      if (deepEqualWithoutExclusions) {
-        const newNodes = new Map(this.allNodes.get());
-        newNodes.set(node.id, node);
-        this.allNodes.set(newNodes);
-        this.notifyNode(node.id);
+      // 1. If the new node data is absolutely identical to the old, do nothing.
+      if (isDeepEqual(currentNodeData, node)) {
         continue;
       }
 
+      // 2. The node has changed. Immediately update it in the main store.
+      //    This is the key fix: it ensures the `isChanged: true` state is saved
+      //    during the recursive call before any logic can skip it.
+      const newNodes = new Map(this.allNodes.get());
+      newNodes.set(node.id, node);
+      this.allNodes.set(newNodes);
+
+      // 3. Check if the *only* change was the `isChanged` flag.
+      //    If so, we notify the UI but skip adding a redundant undo/redo history entry.
       const deepEqualWithExclusions = isDeepEqual(currentNodeData, node, [
         'isChanged',
       ]);
 
       if (deepEqualWithExclusions) {
         this.notifyNode(node.id);
-        continue;
+        continue; // Skip history entry and bubbling logic for this simple change.
       }
 
+      // 4. The change was substantive. Proceed with bubbling the dirty flag
+      //    up to the parent Pane and adding an entry to the undo/redo history.
       switch (node.nodeType) {
         case `TagElement`:
         case `BgPane`:
@@ -968,6 +973,7 @@ export class NodesContext {
           const paneNode = cloneDeep(
             this.allNodes.get().get(paneNodeId)
           ) as PaneNode;
+          // This recursive call will now work correctly because of the logic above.
           this.modifyNodes([{ ...paneNode, isChanged: true }]);
           break;
         }
@@ -980,10 +986,6 @@ export class NodesContext {
         default:
           console.warn(`must dirty check missed on `, node.nodeType);
       }
-
-      const newNodes = new Map(this.allNodes.get());
-      newNodes.set(node.id, node);
-      this.allNodes.set(newNodes);
 
       undoList.push((ctx: NodesContext) => {
         const newNodes = new Map(ctx.allNodes.get());
@@ -2284,6 +2286,16 @@ export class NodesContext {
     return nodes
       .filter((node) => !node.parentId || !nodeMap[node.parentId])
       .map((node) => nodeMap[node.id]);
+  }
+
+  getDirtyNodesClassData(): { dirtyPaneIds: string[]; classes: string[] } {
+    const dirtyNodes = this.getDirtyNodes();
+    const dirtyPaneIds = dirtyNodes
+      .filter((node) => node.nodeType === 'Pane')
+      .map((node) => node.id);
+    const classes = extractClassesFromNodes(dirtyNodes);
+
+    return { dirtyPaneIds, classes };
   }
 
   /**

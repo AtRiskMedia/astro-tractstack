@@ -834,6 +834,10 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/pages/sitemap.xml.ts'),
       dest: 'src/pages/sitemap.xml.ts',
     },
+    {
+      src: resolve('templates/src/pages/api/tailwind.ts'),
+      dest: 'src/pages/api/tailwind.ts',
+    },
 
     // Authentication Pages
     {
@@ -1257,7 +1261,7 @@ export async function injectTemplateFiles(
       dest: 'src/utils/layout.ts',
     },
 
-    // StoryKeep Components (add new section)
+    // StoryKeep Components
     {
       src: resolve('templates/src/components/edit/Header.tsx'),
       dest: 'src/components/edit/Header.tsx',
@@ -1277,6 +1281,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/components/edit/PanelSwitch.tsx'),
       dest: 'src/components/edit/PanelSwitch.tsx',
+    },
+    {
+      src: resolve('templates/src/components/edit/state/SaveModal.tsx'),
+      dest: 'src/components/edit/state/SaveModal.tsx',
     },
     {
       src: resolve('templates/src/components/edit/state/StylesMemory.tsx'),
@@ -1726,16 +1734,16 @@ export default function Placeholder() {
 export const placeholder = "${filePath}";`;
   }
 
-  if (filePath.endsWith('.cjs')) {
-    return `/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-};`;
-  }
+  //  if (filePath.endsWith('.cjs')) {
+  //    return `/** @type {import('tailwindcss').Config} */
+  //module.exports = {
+  //  content: ["./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}"],
+  //  theme: {
+  //    extend: {},
+  //  },
+  //  plugins: [],
+  //};`;
+  //  }
 
   return `# TractStack placeholder: ${filePath}`;
 }

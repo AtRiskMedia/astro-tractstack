@@ -465,3 +465,27 @@ export function calculateSimilarity(a: string, b: string): number {
 
   return intersection.size / union.size;
 }
+
+export function extractClassesFromNodes(dirtyNodes: BaseNode[]): string[] {
+  const uniqueClasses = new Set<string>();
+
+  dirtyNodes.forEach((node) => {
+    // Extract from parentCss arrays (like legacy getTailwindWhitelist)
+    if ('parentCss' in node && Array.isArray(node.parentCss)) {
+      node.parentCss.forEach((classString: string) => {
+        classString.split(' ').forEach((className: string) => {
+          if (className.trim()) uniqueClasses.add(className.trim());
+        });
+      });
+    }
+
+    // Extract from elementCss strings (like legacy getTailwindWhitelist)
+    if ('elementCss' in node && typeof node.elementCss === 'string') {
+      node.elementCss.split(' ').forEach((className: string) => {
+        if (className.trim()) uniqueClasses.add(className.trim());
+      });
+    }
+  });
+
+  return Array.from(uniqueClasses);
+}

@@ -270,7 +270,7 @@ const StyleImageUpdatePanel = ({
           type="checkbox"
           checked={isOverridden}
           onChange={(e) => handleToggleOverride(e.target.checked)}
-          className="text-myorange focus:ring-myorange border-mydarkgrey h-4 w-4 rounded"
+          className="border-mydarkgrey text-myorange focus:ring-myorange h-4 w-4 rounded"
         />
         <span className="text-mydarkgrey text-sm">
           {isOverridden

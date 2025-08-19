@@ -185,7 +185,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/node @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image`,
+      `${addCommand} -D @types/node @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image @mhsdesign/jit-browser-tailwindcss`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
@@ -199,7 +199,7 @@ PUBLIC_TENANTID="${responses.tenantId}"
     );
     console.log(
       kleur.cyan(
-        `${addCommand} -D @types/node @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript`
+        `${addCommand} -D @types/node @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript @mhsdesign/jit-browser-tailwindcss`
       )
     );
     process.exit(1);

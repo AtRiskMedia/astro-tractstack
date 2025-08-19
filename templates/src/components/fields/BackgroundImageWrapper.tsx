@@ -137,7 +137,7 @@ const BackgroundImageWrapper = ({
                     value={pos}
                     checked={position === pos}
                     onChange={() => handlePositionChange(pos)}
-                    className="focus:ring-myblue text-myblue h-4 w-4 border-gray-300"
+                    className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {pos}
@@ -162,7 +162,7 @@ const BackgroundImageWrapper = ({
                       value={s}
                       checked={size === s}
                       onChange={() => handleSizeChange(s)}
-                      className="focus:ring-myblue text-myblue h-4 w-4 border-gray-300"
+                      className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
                     />
                     <span className="ml-2 text-sm capitalize text-gray-700">
                       {s === 'narrow'

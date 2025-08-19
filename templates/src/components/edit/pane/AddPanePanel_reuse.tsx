@@ -358,7 +358,7 @@ const AddPaneReUsePanel = ({
           <div key={preview.pane.id} className="flex flex-col items-center">
             <div
               onClick={() => handlePaneReuse(preview.pane.id, nodeId, first)}
-              className="bg-mywhite hover:outline-solid group relative w-full cursor-pointer rounded-sm shadow-inner transition-all duration-200 hover:outline hover:outline-4"
+              className="hover:outline-solid bg-mywhite group relative w-full cursor-pointer rounded-sm shadow-inner transition-all duration-200 hover:outline hover:outline-4"
               style={{
                 ...(!preview.snapshot ? { minHeight: '75px' } : {}),
               }}

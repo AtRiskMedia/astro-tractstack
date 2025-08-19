@@ -42,6 +42,7 @@
     "@astrojs/node": "^9.0.0",
     "@heroicons/react": "^2.1.1",
     "@internationalized/date": "^3.8.2",
+    "@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
     "@nanostores/persistent": "^1.1.0",
     "@nanostores/react": "^1.0.0",
     "d3": "^7.9.0",

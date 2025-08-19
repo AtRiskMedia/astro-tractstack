@@ -4,11 +4,11 @@
     "jsx": "preserve",
     "jsxImportSource": "react",
     "baseUrl": ".",
-    //"skipLibCheck": true,
     "paths": {
       "@/*": ["templates/src/*"],
       "@/components/*": ["templates/src/components/*"],
       "@/utils/*": ["templates/src/utils/*"],
+      "@/config/*": ["templates/src/config/*"],
       "@/types/*": ["templates/src/types/*"],
       "@/layouts/*": ["templates/src/layouts/*"],
       "@/pages/*": ["templates/src/pages/*"],

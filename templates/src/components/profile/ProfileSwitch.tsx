@@ -213,7 +213,7 @@ export const ProfileSwitch = () => {
   if (isLoading) {
     return (
       <div className="py-12">
-        <div className="bg-mywhite border-myblue/20 border border-dashed">
+        <div className="border-myblue/20 bg-mywhite border border-dashed">
           <div className="p-6">
             <div className="flex items-center justify-center py-12">
               <div className="text-mydarkgrey">Loading profile...</div>
@@ -236,7 +236,7 @@ export const ProfileSwitch = () => {
 
   return (
     <div className="py-12">
-      <div className="bg-mywhite border-myblue/20 border border-dashed">
+      <div className="border-myblue/20 bg-mywhite border border-dashed">
         <div className="p-6">
           {mode === 'create' && (
             <ProfileCreate onSuccess={handleProfileSuccess} />

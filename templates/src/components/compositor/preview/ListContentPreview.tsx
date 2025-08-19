@@ -197,7 +197,7 @@ const ListContentPreview = ({
               Previous
             </button>
             <button
-              className="bg-myblue border-myblue hover:bg-myblue-dark rounded-r-md border px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-myblue-dark border-myblue bg-myblue rounded-r-md border px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((prev) => prev + 1)}
             >

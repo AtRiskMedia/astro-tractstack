@@ -300,7 +300,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                     onChange={() =>
                       handleObjectFitChange(fit as 'cover' | 'contain' | 'fill')
                     }
-                    className="focus:ring-myblue text-myblue h-4 w-4 border-gray-300"
+                    className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {fit}
@@ -328,7 +328,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                         e.target.checked
                       )
                     }
-                    className="focus:ring-myblue text-myblue h-4 w-4 rounded border-gray-300"
+                    className="text-myblue focus:ring-myblue h-4 w-4 rounded border-gray-300"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {viewport}

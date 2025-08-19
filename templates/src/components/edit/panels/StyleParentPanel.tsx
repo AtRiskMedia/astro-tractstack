@@ -185,7 +185,7 @@ const StyleParentPanel = ({
                   className={`min-w-[32px] rounded-md px-3 py-1.5 text-sm font-bold transition-colors ${
                     currentLayer === num
                       ? 'bg-myblue text-white shadow-sm'
-                      : 'hover:bg-mydarkgrey/10 text-mydarkgrey bg-white hover:text-black'
+                      : 'text-mydarkgrey hover:bg-mydarkgrey/10 bg-white hover:text-black'
                   }`}
                   onClick={() => setCurrentLayer(num)}
                 >
