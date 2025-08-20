@@ -84,6 +84,7 @@ export default function SaveModal({
       isSaving.current = true;
       const ctx = getCtx();
       const allDirtyNodes = ctx.getDirtyNodes();
+      console.log(allDirtyNodes);
 
       try {
         setStage('PREPARING');
@@ -107,11 +108,7 @@ export default function SaveModal({
         }
 
         const nodesWithPendingFiles = allDirtyNodes.filter(
-          (node) =>
-            'fileId' in node &&
-            node.fileId === 'pending' &&
-            'base64Data' in node &&
-            node.base64Data
+          (node) => 'base64Data' in node && node.base64Data
         );
 
         // Check for story fragments with pending OG image operations

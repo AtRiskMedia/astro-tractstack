@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, type ChangeEvent } from 'react';
+import { ulid } from 'ulid';
 import { useDropdownDirection } from '@/utils/helpers';
 import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
@@ -9,7 +10,6 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
-import { ulid } from 'ulid';
 import type { ImageFileNode, FlatNode } from '@/types/compositorTypes';
 
 const missingAlt = `This image requires a description!!`;
@@ -25,12 +25,14 @@ export interface ImageParams {
 
 interface ImageUploadProps {
   currentFileId: string | undefined;
+  nodeId: string;
   onUpdate: (params: ImageParams) => void;
   onRemove: () => void;
 }
 
 export const ImageUpload = ({
   currentFileId,
+  nodeId,
   onUpdate,
   onRemove,
 }: ImageUploadProps) => {
@@ -48,9 +50,11 @@ export const ImageUpload = ({
   const { openAbove, maxHeight } = useDropdownDirection(comboboxRef);
 
   // Find the current image node
-  const currentImageNode = Array.from(allNodes.values()).find(
-    (node) => 'fileId' in node && node.fileId === currentFileId
-  ) as FlatNode | undefined;
+  const currentImageNode = nodeId
+    ? (allNodes.get(nodeId) as FlatNode | undefined)
+    : (Array.from(allNodes.values()).find(
+        (node) => 'fileId' in node && node.fileId === currentFileId
+      ) as FlatNode | undefined);
 
   useEffect(() => {
     const loadFiles = async () => {
@@ -181,9 +185,8 @@ export const ImageUpload = ({
       // Update local state to show the image immediately
       setCurrentImage(base64);
       setSelectedFile(null);
-
       onUpdate({
-        fileId: 'pending',
+        fileId: ulid(),
         src: base64, // Use base64 as src for immediate display
         altDescription: defaultAlt,
       });
@@ -191,8 +194,7 @@ export const ImageUpload = ({
       // Update the node with base64Data
       if (currentImageNode) {
         const updatedNode = cloneDeep(currentImageNode);
-        updatedNode.fileId = 'pending';
-        updatedNode.src = base64; // Set src to base64 for immediate display
+        (updatedNode.fileId = ulid()), (updatedNode.src = base64); // Set src to base64 for immediate display
         updatedNode.base64Data = base64;
         updatedNode.alt = defaultAlt;
         updatedNode.isChanged = true;
@@ -269,9 +271,9 @@ export const ImageUpload = ({
               </div>
             )}
 
-            {currentImageNode?.fileId === 'pending' && (
+            {currentImageNode?.base64Data && (
               <div className="text-sm text-orange-600">
-                ⏳ Pending upload - will be saved when you save the page
+                Pending upload - will be saved when you save the page
               </div>
             )}
           </div>

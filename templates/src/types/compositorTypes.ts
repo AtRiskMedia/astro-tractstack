@@ -281,7 +281,7 @@ export interface ArtpackImageNode extends PaneFragmentNode {
 
 export interface BgImageNode extends PaneFragmentNode {
   type: 'background-image';
-  fileId: string | 'pending';
+  fileId: string;
   src: string;
   srcSet?: string;
   alt?: string;

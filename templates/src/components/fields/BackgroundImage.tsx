@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import type { ChangeEvent } from 'react';
+import { useState, useRef, useEffect, useMemo, type ChangeEvent } from 'react';
+import { ulid } from 'ulid';
 import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
@@ -9,7 +9,6 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
-import { ulid } from 'ulid';
 import type {
   ImageFileNode,
   BgImageNode,
@@ -200,7 +199,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
         nodeType: 'BgPane',
         parentId: paneId,
         type: 'background-image',
-        fileId: 'pending',
+        fileId: ulid(),
         src: '',
         base64Data: base64,
         alt: defaultAlt,

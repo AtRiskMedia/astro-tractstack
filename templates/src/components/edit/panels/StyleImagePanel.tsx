@@ -308,6 +308,7 @@ const StyleImagePanel = ({
       <div className="space-y-4">
         <ImageUpload
           currentFileId={node.fileId}
+          nodeId={node.id}
           onUpdate={handleImageUpdate}
           onRemove={handleImageRemove}
         />
