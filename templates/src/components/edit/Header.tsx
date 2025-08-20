@@ -134,7 +134,12 @@ const StoryKeepHeader = ({
         )}
       </div>
 
-      <SaveModal show={showSaveModal} onClose={handleCloseSaveModal} />
+      <SaveModal
+        slug={slug}
+        isContext={isContext}
+        show={showSaveModal}
+        onClose={handleCloseSaveModal}
+      />
     </>
   );
 };

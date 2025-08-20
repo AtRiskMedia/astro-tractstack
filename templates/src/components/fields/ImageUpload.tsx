@@ -87,18 +87,26 @@ export const ImageUpload = ({
         console.error('Failed to load files:', error);
         setFiles([]);
       }
-
-      if (currentFileId) {
-        const currentFile = files.find(
-          (f: ImageFileNode) => f.id === currentFileId
-        );
-        if (currentFile) {
-          setCurrentImage(currentFile.src);
-        }
-      }
     };
     loadFiles();
-  }, [currentFileId]);
+  }, []);
+
+  // Update currentImage when currentFileId changes or files load
+  useEffect(() => {
+    if (currentImageNode?.base64Data) {
+      // Show pending upload
+      setCurrentImage(currentImageNode.base64Data);
+    } else if (currentFileId && files.length > 0) {
+      const currentFile = files.find((f) => f.id === currentFileId);
+      if (currentFile) {
+        setCurrentImage(currentFile.src);
+        setSelectedFile(currentFile);
+      }
+    } else {
+      setCurrentImage('/static.jpg');
+      setSelectedFile(null);
+    }
+  }, [currentFileId, files, currentImageNode?.base64Data]);
 
   // Create collection for Ark UI Combobox
   const collection = useMemo(() => {
@@ -169,9 +177,13 @@ export const ImageUpload = ({
 
       const defaultAlt = `Image - ${filename.split('.').slice(0, -1).join('.')}`;
 
+      // Update local state to show the image immediately
+      setCurrentImage(base64);
+      setSelectedFile(null);
+
       onUpdate({
         fileId: 'pending',
-        src: '',
+        src: base64, // Use base64 as src for immediate display
         altDescription: defaultAlt,
       });
 
@@ -179,12 +191,11 @@ export const ImageUpload = ({
       if (currentImageNode) {
         const updatedNode = cloneDeep(currentImageNode);
         updatedNode.fileId = 'pending';
-        updatedNode.src = '';
+        updatedNode.src = base64; // Set src to base64 for immediate display
         updatedNode.base64Data = base64;
         updatedNode.alt = defaultAlt;
         updatedNode.isChanged = true;
         ctx.modifyNodes([updatedNode]);
-        setCurrentImage(base64);
       }
     } catch (err) {
       setImageError('Failed to process image');
@@ -229,45 +240,58 @@ export const ImageUpload = ({
     }
   `;
 
+  // Use currentImage state for display
+  const hasImage = currentImage !== '/static.jpg';
+
   return (
     <div className="w-full space-y-6">
       <div className="flex w-full flex-col space-y-4">
-        {currentImageNode &&
-        (currentImageNode.src || currentImageNode.base64Data) ? (
-          <div
-            className="relative overflow-hidden rounded-md border border-gray-300 bg-gray-100"
-            style={{ width: '100%', height: '160px' }}
-          >
-            <div
-              className="h-full w-full"
-              style={{
-                backgroundImage: `url(${currentImageNode.base64Data || currentImageNode.src})`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center',
-              }}
-            ></div>
-            <button
-              onClick={handleRemoveImage}
-              disabled={isProcessing}
-              className="hover:bg-mylightgrey absolute right-2 top-2 rounded-full bg-white p-1 shadow-md disabled:opacity-50"
-            >
-              <XMarkIcon className="text-mydarkgrey h-4 w-4" />
-            </button>
-          </div>
-        ) : null}
+        {hasImage ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <img
+                src={currentImage}
+                alt={currentImageNode?.alt || 'Selected image'}
+                className="h-48 w-full rounded-md border object-cover"
+              />
+              <button
+                onClick={handleRemoveImage}
+                className="absolute right-2 top-2 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-4">
+            {selectedFile && (
+              <div className="text-sm text-gray-600">
+                Current: {selectedFile.altDescription || selectedFile.filename}
+              </div>
+            )}
+
+            {currentImageNode?.fileId === 'pending' && (
+              <div className="text-sm text-orange-600">
+                ⏳ Pending upload - will be saved when you save the page
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-md border-2 border-dashed border-gray-300 p-8 text-center">
+            <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">No image selected</p>
+          </div>
+        )}
+
+        <div className="flex space-x-4">
+          <div className="flex-1">
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className={`text-myblue flex items-center text-sm hover:text-cyan-600`}
+              className="w-full rounded-md bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700 disabled:opacity-50"
             >
-              <ArrowUpTrayIcon className="mr-1 h-4 w-4" />
+              <ArrowUpTrayIcon className="mr-2 inline h-4 w-4" />
               {isProcessing
                 ? 'Processing...'
-                : currentImageNode?.src || currentImageNode?.base64Data
+                : hasImage
                   ? 'Replace Image'
                   : 'Upload New'}
             </button>
@@ -369,6 +393,8 @@ export const ImageUpload = ({
           </div>
         </div>
       )}
+
+      <style>{comboboxItemStyles}</style>
     </div>
   );
 };

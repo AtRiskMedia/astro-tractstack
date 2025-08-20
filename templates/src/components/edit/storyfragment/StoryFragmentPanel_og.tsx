@@ -41,7 +41,6 @@ import {
 
 const TARGET_WIDTH = 1200;
 const TARGET_HEIGHT = 630;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
 interface StoryFragmentOpenGraphPanelProps {
   nodeId: string;
@@ -478,10 +477,13 @@ const StoryFragmentOpenGraphPanel = ({
       description: draftDetails,
     });
 
-    // Force node update to trigger save even if only title changed
-    if (draftTitle === storyfragmentNode.title) {
+    // FORCE node update to trigger undo history for ANY changes
+    // Even if only description/topics/image changed, we need the node to be dirty
+    // We'll update the changed timestamp to force a meaningful change
+    if (hasChanges) {
       const updatedNode = cloneDeep({
         ...storyfragmentNode,
+        changed: new Date(), // Force a meaningful change
         isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);

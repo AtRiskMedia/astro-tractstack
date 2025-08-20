@@ -112,3 +112,5 @@ export function transformLivePaneForPreview(
   // 3. Format for preview endpoint
   return formatForPreview(subtree.paneNode, optionsPayload);
 }
+
+export { transformStoryFragmentForSave } from './transformer';

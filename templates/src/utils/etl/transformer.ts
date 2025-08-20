@@ -1,3 +1,7 @@
+import {
+  storyFragmentTopicsStore,
+  getPendingImageOperation,
+} from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
 import type {
   FlatNode,
@@ -5,6 +9,7 @@ import type {
   VisualBreakNode,
   ArtpackImageNode,
   BgImageNode,
+  StoryFragmentNode,
 } from '@/types/compositorTypes';
 import type { PaneSubtree } from './extractor';
 import type { OptionsPayload } from './index';
@@ -210,4 +215,28 @@ export function transformToOptionsPayload(
     });
 
   return optionsPayload;
+}
+
+export function transformStoryFragmentForSave(
+  ctx: NodesContext,
+  fragmentId: string
+): any {
+  const node = ctx.allNodes.get().get(fragmentId) as StoryFragmentNode;
+  const seoData = storyFragmentTopicsStore.get()[fragmentId];
+  const pendingImageOp = getPendingImageOperation(fragmentId);
+
+  const payload = {
+    ...node,
+    // Add deferred SEO data if available
+    ...(seoData && {
+      topics: seoData.topics?.map((t) => t.title) || [],
+      description: seoData.description || '',
+    }),
+    // Add pending image operation if available
+    ...(pendingImageOp && {
+      pendingImageOperation: pendingImageOp,
+    }),
+  };
+
+  return payload;
 }

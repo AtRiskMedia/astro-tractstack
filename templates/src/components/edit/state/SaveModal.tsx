@@ -2,11 +2,15 @@ import { useState, useEffect, useRef } from 'react';
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { getCtx } from '@/stores/nodes';
-import { transformLivePaneForSave } from '@/utils/etl/index';
+import {
+  transformLivePaneForSave,
+  transformStoryFragmentForSave,
+} from '@/utils/etl/index';
 
 type SaveStage =
   | 'PREPARING'
   | 'SAVING_PENDING_FILES'
+  | 'PROCESSING_OG_IMAGES'
   | 'SAVING_PANES'
   | 'SAVING_STORY_FRAGMENTS'
   | 'PROCESSING_STYLES'
@@ -20,10 +24,17 @@ interface SaveStageProgress {
 
 interface SaveModalProps {
   show: boolean;
+  slug: string;
+  isContext: boolean;
   onClose: () => void;
 }
 
-export default function SaveModal({ show, onClose }: SaveModalProps) {
+export default function SaveModal({
+  show,
+  slug,
+  isContext,
+  onClose,
+}: SaveModalProps) {
   const [stage, setStage] = useState<SaveStage>('PREPARING');
   const [progress, setProgress] = useState(0);
   const [stageProgress, setStageProgress] = useState<SaveStageProgress>({
@@ -34,6 +45,14 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
   const [showDebug, setShowDebug] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const isSaving = useRef(false);
+
+  // Determine if we're in create mode
+  const isCreateMode = slug === 'create';
+
+  // Get backend URL
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
   const addDebugMessage = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -63,14 +82,24 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
       try {
         setStage('PREPARING');
         setProgress(5);
-        addDebugMessage('Starting V2 save process...');
+        addDebugMessage(
+          `Starting V2 save process... (${isContext ? 'Context' : 'StoryFragment'} mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
+        );
 
-        const dirtyPanes = allDirtyNodes.filter(
+        // Filter nodes based on context mode
+        let dirtyPanes = allDirtyNodes.filter(
           (node) => node.nodeType === 'Pane'
         );
-        const dirtyStoryFragments = allDirtyNodes.filter(
+        let dirtyStoryFragments = allDirtyNodes.filter(
           (node) => node.nodeType === 'StoryFragment'
         );
+
+        // In context mode, we only care about panes, not story fragments
+        if (isContext) {
+          dirtyStoryFragments = [];
+          addDebugMessage('Context mode: Ignoring StoryFragment nodes');
+        }
+
         const nodesWithPendingFiles = allDirtyNodes.filter(
           (node) =>
             node.nodeType === 'TagElement' &&
@@ -80,13 +109,28 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
             node.base64Data
         );
 
+        // Check for story fragments with pending OG image operations
+        const storyFragmentsWithPendingImages = dirtyStoryFragments.filter(
+          (fragment) => {
+            const payload = transformStoryFragmentForSave(ctx, fragment.id);
+            return payload.pendingImageOperation;
+          }
+        );
+
         const relevantNodeCount =
           dirtyPanes.length + dirtyStoryFragments.length;
         addDebugMessage(
           `Found ${relevantNodeCount} relevant dirty nodes to save (${dirtyPanes.length} Panes, ${dirtyStoryFragments.length} StoryFragments)`
         );
+        addDebugMessage(
+          `Found ${storyFragmentsWithPendingImages.length} story fragments with pending OG image operations`
+        );
 
-        if (relevantNodeCount === 0 && nodesWithPendingFiles.length === 0) {
+        if (
+          relevantNodeCount === 0 &&
+          nodesWithPendingFiles.length === 0 &&
+          storyFragmentsWithPendingImages.length === 0
+        ) {
           addDebugMessage('No changes to save');
           setStage('COMPLETED');
           setProgress(100);
@@ -95,16 +139,18 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
 
         const totalSteps =
           nodesWithPendingFiles.length +
+          storyFragmentsWithPendingImages.length +
           dirtyPanes.length +
           dirtyStoryFragments.length +
           1;
 
         addDebugMessage(
-          `Save plan: ${nodesWithPendingFiles.length} files, ${dirtyPanes.length} panes, ${dirtyStoryFragments.length} story fragments, 1 styles = ${totalSteps} total steps`
+          `Save plan: ${nodesWithPendingFiles.length} files, ${storyFragmentsWithPendingImages.length} og images, ${dirtyPanes.length} panes, ${dirtyStoryFragments.length} story fragments, 1 styles = ${totalSteps} total steps`
         );
 
         let completedSteps = 1;
 
+        // Handle pending files
         if (nodesWithPendingFiles.length > 0) {
           setStage('SAVING_PENDING_FILES');
           setStageProgress({
@@ -113,12 +159,59 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
           });
           for (let i = 0; i < nodesWithPendingFiles.length; i++) {
             const fileNode = nodesWithPendingFiles[i];
+            const endpoint = `${goBackend}/api/v1/nodes/files/create`;
             addDebugMessage(
-              `Processing file ${i + 1}/${
-                nodesWithPendingFiles.length
-              }: ${fileNode.id}`
+              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${fileNode.id} -> POST ${endpoint}`
             );
-            console.log('[PAYLOAD] File create (NOT SENT):', fileNode);
+            console.log(
+              `[PAYLOAD] File create (NOT SENT) POST ${endpoint}:`,
+              fileNode
+            );
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
+            completedSteps++;
+            setProgress((completedSteps / totalSteps) * 80);
+          }
+        }
+
+        // Handle OG image operations for story fragments
+        if (storyFragmentsWithPendingImages.length > 0) {
+          setStage('PROCESSING_OG_IMAGES');
+          setStageProgress({
+            currentStep: 0,
+            totalSteps: storyFragmentsWithPendingImages.length,
+          });
+          for (let i = 0; i < storyFragmentsWithPendingImages.length; i++) {
+            const fragment = storyFragmentsWithPendingImages[i];
+            const payload = transformStoryFragmentForSave(ctx, fragment.id);
+            const pendingImageOp = payload.pendingImageOperation;
+
+            addDebugMessage(
+              `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length}: ${fragment.id} -> ${pendingImageOp.type}`
+            );
+
+            if (pendingImageOp.type === 'upload' && pendingImageOp.data) {
+              addDebugMessage(
+                `OG image upload: ${pendingImageOp.filename} -> POST [OG_UPLOAD_ENDPOINT]`
+              );
+              console.log(`[PAYLOAD] OG image upload (NOT SENT):`, {
+                path: pendingImageOp.path,
+                filename: pendingImageOp.filename,
+                data:
+                  pendingImageOp.data.substring(0, 100) +
+                  '...[base64 data truncated]',
+                fullDataLength: pendingImageOp.data.length,
+              });
+            } else if (pendingImageOp.type === 'remove') {
+              addDebugMessage(
+                `OG image removal: ${payload.socialImagePath} -> DELETE [OG_DELETE_ENDPOINT]`
+              );
+              console.log(`[PAYLOAD] OG image delete (NOT SENT):`, {
+                path: payload.socialImagePath,
+              });
+            }
+
             await new Promise((resolve) => setTimeout(resolve, 200));
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
             completedSteps++;
@@ -126,6 +219,7 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
           }
         }
 
+        // Handle panes
         if (dirtyPanes.length > 0) {
           setStage('SAVING_PANES');
           setStageProgress({
@@ -134,28 +228,42 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
           });
           for (let i = 0; i < dirtyPanes.length; i++) {
             const paneNode = dirtyPanes[i];
-            addDebugMessage(
-              `Processing pane ${i + 1}/${dirtyPanes.length}: ${paneNode.id}`
-            );
+
             try {
               const payload = transformLivePaneForSave(ctx, paneNode.id);
+
+              // Determine endpoint based on create mode
+              const isCreatePaneMode = isCreateMode;
+              const endpoint = isCreatePaneMode
+                ? `${goBackend}/api/v1/nodes/panes/create`
+                : `${goBackend}/api/v1/nodes/panes/${payload.id}`;
+              const method = isCreatePaneMode ? 'POST' : 'PUT';
+
               addDebugMessage(
-                `[PAYLOAD] Would send to /api/v1/nodes/panes/${
-                  payload.id ? 'PUT' : 'POST'
-                }:`
+                `Processing pane ${i + 1}/${dirtyPanes.length}: ${paneNode.id} -> ${method} ${endpoint}`
               );
-              console.log('[PAYLOAD] Pane save (NOT SENT):', payload);
+              console.log(
+                `[PAYLOAD] Pane save (NOT SENT) ${method} ${endpoint}:`,
+                payload
+              );
+
+              // Simulate API call
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              addDebugMessage(`Pane ${paneNode.id} save simulated`);
             } catch (etlError) {
-              addDebugMessage(`ETL error for pane ${paneNode.id}: ${etlError}`);
+              addDebugMessage(
+                `ETL error for pane ${paneNode.id}: ${etlError instanceof Error ? etlError.message : String(etlError)}`
+              );
             }
-            await new Promise((resolve) => setTimeout(resolve, 200));
+
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
             completedSteps++;
             setProgress((completedSteps / totalSteps) * 80);
           }
         }
 
-        if (dirtyStoryFragments.length > 0) {
+        // Handle story fragments (only in non-context mode)
+        if (!isContext && dirtyStoryFragments.length > 0) {
           setStage('SAVING_STORY_FRAGMENTS');
           setStageProgress({
             currentStep: 0,
@@ -163,35 +271,64 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
           });
           for (let i = 0; i < dirtyStoryFragments.length; i++) {
             const fragment = dirtyStoryFragments[i];
-            addDebugMessage(
-              `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id}`
-            );
-            console.log('[PAYLOAD] StoryFragment save (NOT SENT):', fragment);
-            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            try {
+              const payload = transformStoryFragmentForSave(ctx, fragment.id);
+
+              // Determine endpoint based on create mode
+              const endpoint = isCreateMode
+                ? `${goBackend}/api/v1/nodes/storyfragments/create`
+                : `${goBackend}/api/v1/nodes/storyfragments/${payload.id}/complete`;
+              const method = isCreateMode ? 'POST' : 'PUT';
+
+              addDebugMessage(
+                `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id} -> ${method} ${endpoint}`
+              );
+              console.log(
+                `[PAYLOAD] StoryFragment save (NOT SENT) ${method} ${endpoint}:`,
+                payload
+              );
+
+              // Simulate API call
+              await new Promise((resolve) => setTimeout(resolve, 200));
+              addDebugMessage(`StoryFragment ${fragment.id} save simulated`);
+            } catch (etlError) {
+              addDebugMessage(
+                `ETL error for story fragment ${fragment.id}: ${etlError instanceof Error ? etlError.message : String(etlError)}`
+              );
+            }
+
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
             completedSteps++;
             setProgress((completedSteps / totalSteps) * 80);
           }
         }
 
+        // Handle styles
         setStage('PROCESSING_STYLES');
         setStageProgress({ currentStep: 1, totalSteps: 1 });
         addDebugMessage('Starting V2 Tailwind pipeline...');
+
         const { dirtyPaneIds, classes: dirtyClasses } =
           ctx.getDirtyNodesClassData();
+        const tailwindEndpoint = `${goBackend}/api/v1/tailwind/update`;
+
         try {
           addDebugMessage(
-            `[PAYLOAD] Would send to /api/tailwind: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes.`
+            `Processing styles: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes -> POST ${tailwindEndpoint}`
           );
-          await fetch('/api/tailwind', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dirtyPaneIds, dirtyClasses }),
-          });
+          console.log(
+            `[PAYLOAD] Tailwind update (NOT SENT) POST ${tailwindEndpoint}:`,
+            { dirtyPaneIds, dirtyClasses }
+          );
+          await new Promise((resolve) => setTimeout(resolve, 200));
         } catch (styleError) {
-          addDebugMessage(`Style processing error: ${styleError}`);
+          addDebugMessage(
+            `Style processing error: ${styleError instanceof Error ? styleError.message : String(styleError)}`
+          );
         }
 
+        // Clean dirty nodes (commented out for simulation)
         addDebugMessage(`Cleaning ${allDirtyNodes.length} dirty nodes...`);
         // ctx.cleanDirtyNodes(allDirtyNodes);
 
@@ -200,6 +337,13 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
         addDebugMessage(
           'V2 save process completed successfully (simulation mode)'
         );
+
+        // If we're in create mode, we might want to redirect to the edit URL
+        if (isCreateMode) {
+          addDebugMessage(
+            'Create mode completed - consider redirecting to edit URL'
+          );
+        }
       } catch (err) {
         setStage('ERROR');
         const errorMessage =
@@ -210,26 +354,32 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
     };
 
     runSaveProcess();
-  }, [show]);
+  }, [show, slug, isContext, isCreateMode, goBackend, tenantId]);
 
   const getStageDescription = () => {
     const getProgressText = () =>
       stageProgress.totalSteps > 0
         ? ` (${stageProgress.currentStep}/${stageProgress.totalSteps})`
         : '';
+
+    const modeText = isContext ? 'Context Pane' : 'Story Fragment';
+    const actionText = isCreateMode ? 'Creating' : 'Updating';
+
     switch (stage) {
       case 'PREPARING':
-        return 'Preparing changes...';
+        return `Preparing ${actionText.toLowerCase()} ${modeText.toLowerCase()}...`;
       case 'SAVING_PENDING_FILES':
         return `Saving pending files...${getProgressText()}`;
+      case 'PROCESSING_OG_IMAGES':
+        return `Processing OG images...${getProgressText()}`;
       case 'SAVING_PANES':
-        return `Saving pane content...${getProgressText()}`;
+        return `${actionText} pane content...${getProgressText()}`;
       case 'SAVING_STORY_FRAGMENTS':
-        return `Updating story fragments...${getProgressText()}`;
+        return `${actionText} story fragments...${getProgressText()}`;
       case 'PROCESSING_STYLES':
         return 'Processing styles...';
       case 'COMPLETED':
-        return 'Save completed successfully! (Simulation Mode)';
+        return `${actionText} ${modeText.toLowerCase()} completed successfully! (Simulation Mode)`;
       case 'ERROR':
         return `Error: ${error}`;
       default:
@@ -266,7 +416,8 @@ export default function SaveModal({ show, onClose }: SaveModalProps) {
             <div className="border-b border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <Dialog.Title className="text-xl font-bold text-gray-900">
-                  Saving Changes (V2 Pipeline)
+                  {isCreateMode ? 'Creating' : 'Saving'}{' '}
+                  {isContext ? 'Context Pane' : 'Story Fragment'}
                 </Dialog.Title>
                 <button
                   onClick={() => setShowDebug(!showDebug)}
