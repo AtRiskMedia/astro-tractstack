@@ -1,7 +1,6 @@
-import {
-  storyFragmentTopicsStore,
-  getPendingImageOperation,
-} from '@/stores/storykeep';
+import { storyFragmentTopicsStore } from '@/stores/storykeep';
+import { brandConfigStore } from '@/stores/brand';
+import { fullContentMapStore } from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
 import type {
   FlatNode,
@@ -223,7 +222,44 @@ export function transformStoryFragmentForSave(
 ): any {
   const node = ctx.allNodes.get().get(fragmentId) as StoryFragmentNode;
   const seoData = storyFragmentTopicsStore.get()[fragmentId];
-  const pendingImageOp = getPendingImageOperation(fragmentId);
+
+  // DEBUG: Log all the values we're working with
+  console.log('🔍 TRANSFORMER DEBUG:', {
+    fragmentId,
+    nodeExists: !!node,
+    nodeTractStackId: (node as any)?.tractStackId, // Check if it exists despite type
+  });
+
+  // Get brand config from store to find default tractstack
+  const brandConfig = brandConfigStore.get();
+  console.log('🔍 BRAND CONFIG DEBUG:', {
+    brandConfigExists: !!brandConfig,
+    tractStackHomeSlug: brandConfig?.TRACTSTACK_HOME_SLUG,
+  });
+
+  const defaultTractStackSlug =
+    brandConfig?.TRACTSTACK_HOME_SLUG || 'tractstack';
+  console.log('🔍 DEFAULT SLUG:', defaultTractStackSlug);
+
+  // Find the default tractstack ID from content map
+  const contentMap = fullContentMapStore.get();
+  console.log('🔍 CONTENT MAP DEBUG:', {
+    contentMapLength: contentMap?.length || 0,
+    tractStacks: contentMap?.filter((item) => item.type === 'TractStack'),
+  });
+
+  const defaultTractStack = contentMap.find(
+    (item) => item.type === 'TractStack' && item.slug === defaultTractStackSlug
+  );
+  console.log('🔍 DEFAULT TRACTSTACK FOUND:', {
+    found: !!defaultTractStack,
+    id: defaultTractStack?.id,
+    slug: defaultTractStack?.slug,
+  });
+
+  const finalTractStackId =
+    (node as any)?.tractStackId || defaultTractStack?.id || '';
+  console.log('🔍 FINAL TRACTSTACK ID:', finalTractStackId);
 
   const payload = {
     ...node,
@@ -232,11 +268,10 @@ export function transformStoryFragmentForSave(
       topics: seoData.topics?.map((t) => t.title) || [],
       description: seoData.description || '',
     }),
-    // Add pending image operation if available
-    ...(pendingImageOp && {
-      pendingImageOperation: pendingImageOp,
-    }),
+    // Ensure tractStackId is set for new StoryFragments
+    tractStackId: finalTractStackId,
   };
 
+  console.log('🔍 FINAL PAYLOAD TRACTSTACK ID:', payload.tractStackId);
   return payload;
 }

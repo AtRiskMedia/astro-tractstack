@@ -1,11 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
+import { navigate } from 'astro:transitions/client';
 import { getCtx } from '@/stores/nodes';
 import {
   transformLivePaneForSave,
   transformStoryFragmentForSave,
 } from '@/utils/etl/index';
+import {
+  getPendingImageOperation,
+  clearPendingImageOperation,
+} from '@/stores/storykeep';
+
+const VERBOSE = true;
 
 type SaveStage =
   | 'PREPARING'
@@ -57,7 +64,6 @@ export default function SaveModal({
   const addDebugMessage = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setDebugMessages((prev) => [...prev, `${timestamp}: ${message}`]);
-    console.log(`[SaveModal] ${message}`);
   };
 
   // Main save process
@@ -83,7 +89,7 @@ export default function SaveModal({
         setStage('PREPARING');
         setProgress(5);
         addDebugMessage(
-          `Starting V2 save process... (${isContext ? 'Context' : 'StoryFragment'} mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
+          `Starting save process... (${isContext ? 'Context' : 'StoryFragment'} mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
         );
 
         // Filter nodes based on context mode
@@ -112,8 +118,8 @@ export default function SaveModal({
         // Check for story fragments with pending OG image operations
         const storyFragmentsWithPendingImages = dirtyStoryFragments.filter(
           (fragment) => {
-            const payload = transformStoryFragmentForSave(ctx, fragment.id);
-            return payload.pendingImageOperation;
+            const pendingOp = getPendingImageOperation(fragment.id);
+            return pendingOp && pendingOp.type === 'upload';
           }
         );
 
@@ -150,6 +156,9 @@ export default function SaveModal({
 
         let completedSteps = 1;
 
+        // PHASE 1: Upload all pending files and OG images first
+        const uploadedOGPaths: Record<string, string> = {};
+
         // Handle pending files
         if (nodesWithPendingFiles.length > 0) {
           setStage('SAVING_PENDING_FILES');
@@ -163,11 +172,36 @@ export default function SaveModal({
             addDebugMessage(
               `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${fileNode.id} -> POST ${endpoint}`
             );
-            console.log(
-              `[PAYLOAD] File create (NOT SENT) POST ${endpoint}:`,
-              fileNode
-            );
-            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            try {
+              // CONSOLE LOG MODE - DON'T ACTUALLY FIRE THE REQUEST
+              console.log(
+                `[SaveModal] WOULD POST to ${endpoint}`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Tenant-ID': tenantId,
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify(fileNode),
+                },
+                fileNode
+              );
+
+              if (VERBOSE)
+                console.log('[SaveModal] File create result: SIMULATED');
+              addDebugMessage(
+                `File ${fileNode.id} saved successfully (SIMULATED)`
+              );
+            } catch (error) {
+              const errorMsg =
+                error instanceof Error ? error.message : 'Unknown error';
+              addDebugMessage(`File ${fileNode.id} save failed: ${errorMsg}`);
+              throw new Error(
+                `Failed to save file ${fileNode.id}: ${errorMsg}`
+              );
+            }
 
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
             completedSteps++;
@@ -175,7 +209,7 @@ export default function SaveModal({
           }
         }
 
-        // Handle OG image operations for story fragments
+        // Handle OG image uploads (Phase 1 - Upload only)
         if (storyFragmentsWithPendingImages.length > 0) {
           setStage('PROCESSING_OG_IMAGES');
           setStageProgress({
@@ -184,40 +218,70 @@ export default function SaveModal({
           });
           for (let i = 0; i < storyFragmentsWithPendingImages.length; i++) {
             const fragment = storyFragmentsWithPendingImages[i];
-            const payload = transformStoryFragmentForSave(ctx, fragment.id);
-            const pendingImageOp = payload.pendingImageOperation;
+            const pendingOp = getPendingImageOperation(fragment.id);
 
-            addDebugMessage(
-              `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length}: ${fragment.id} -> ${pendingImageOp.type}`
-            );
+            if (pendingOp && pendingOp.type === 'upload' && pendingOp.data) {
+              const ogUploadEndpoint = `${goBackend}/api/v1/nodes/images/og`;
+              addDebugMessage(
+                `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length}: ${fragment.id} -> POST ${ogUploadEndpoint}`
+              );
 
-            if (pendingImageOp.type === 'upload' && pendingImageOp.data) {
-              addDebugMessage(
-                `OG image upload: ${pendingImageOp.filename} -> POST [OG_UPLOAD_ENDPOINT]`
-              );
-              console.log(`[PAYLOAD] OG image upload (NOT SENT):`, {
-                path: pendingImageOp.path,
-                filename: pendingImageOp.filename,
-                data:
-                  pendingImageOp.data.substring(0, 100) +
-                  '...[base64 data truncated]',
-                fullDataLength: pendingImageOp.data.length,
-              });
-            } else if (pendingImageOp.type === 'remove') {
-              addDebugMessage(
-                `OG image removal: ${payload.socialImagePath} -> DELETE [OG_DELETE_ENDPOINT]`
-              );
-              console.log(`[PAYLOAD] OG image delete (NOT SENT):`, {
-                path: payload.socialImagePath,
-              });
+              const uploadPayload = {
+                data: pendingOp.data,
+                filename:
+                  pendingOp.filename || `${fragment.id}-${Date.now()}.png`,
+              };
+
+              try {
+                // CONSOLE LOG MODE - DON'T ACTUALLY FIRE THE REQUEST
+                console.log(
+                  `[SaveModal] WOULD POST to ${ogUploadEndpoint}`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Tenant-ID': tenantId,
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(uploadPayload),
+                  },
+                  uploadPayload
+                );
+
+                // Simulate successful response
+                const result = {
+                  success: true,
+                  path: `/images/og/${fragment.id}-${Date.now()}.png`,
+                };
+                if (VERBOSE)
+                  console.log(
+                    '[SaveModal] OG image upload result: SIMULATED',
+                    result
+                  );
+
+                uploadedOGPaths[fragment.id] = result.path;
+                addDebugMessage(
+                  `OG image uploaded successfully: ${result.path} (SIMULATED)`
+                );
+              } catch (error) {
+                const errorMsg =
+                  error instanceof Error ? error.message : 'Unknown error';
+                addDebugMessage(
+                  `OG image upload failed for ${fragment.id}: ${errorMsg}`
+                );
+                throw new Error(
+                  `Failed to upload OG image for ${fragment.id}: ${errorMsg}`
+                );
+              }
             }
 
-            await new Promise((resolve) => setTimeout(resolve, 200));
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
             completedSteps++;
             setProgress((completedSteps / totalSteps) * 80);
           }
         }
+
+        // PHASE 2: Save all nodes with updated paths
 
         // Handle panes
         if (dirtyPanes.length > 0) {
@@ -242,17 +306,33 @@ export default function SaveModal({
               addDebugMessage(
                 `Processing pane ${i + 1}/${dirtyPanes.length}: ${paneNode.id} -> ${method} ${endpoint}`
               );
+
+              // CONSOLE LOG MODE - DON'T ACTUALLY FIRE THE REQUEST
               console.log(
-                `[PAYLOAD] Pane save (NOT SENT) ${method} ${endpoint}:`,
+                `[SaveModal] WOULD ${method} to ${endpoint}`,
+                {
+                  method,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Tenant-ID': tenantId,
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify(payload),
+                },
                 payload
               );
 
-              // Simulate API call
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              addDebugMessage(`Pane ${paneNode.id} save simulated`);
-            } catch (etlError) {
+              if (VERBOSE)
+                console.log('[SaveModal] Pane save result: SIMULATED');
               addDebugMessage(
-                `ETL error for pane ${paneNode.id}: ${etlError instanceof Error ? etlError.message : String(etlError)}`
+                `Pane ${paneNode.id} saved successfully (SIMULATED)`
+              );
+            } catch (etlError) {
+              const errorMsg =
+                etlError instanceof Error ? etlError.message : 'Unknown error';
+              addDebugMessage(`Pane ${paneNode.id} ETL failed: ${errorMsg}`);
+              throw new Error(
+                `Failed to save pane ${paneNode.id}: ${errorMsg}`
               );
             }
 
@@ -262,7 +342,7 @@ export default function SaveModal({
           }
         }
 
-        // Handle story fragments (only in non-context mode)
+        // Handle story fragments
         if (!isContext && dirtyStoryFragments.length > 0) {
           setStage('SAVING_STORY_FRAGMENTS');
           setStageProgress({
@@ -275,7 +355,11 @@ export default function SaveModal({
             try {
               const payload = transformStoryFragmentForSave(ctx, fragment.id);
 
-              // Determine endpoint based on create mode
+              // If we uploaded an OG image for this fragment, use that path
+              if (uploadedOGPaths[fragment.id]) {
+                payload.socialImagePath = uploadedOGPaths[fragment.id];
+              }
+
               const endpoint = isCreateMode
                 ? `${goBackend}/api/v1/nodes/storyfragments/create`
                 : `${goBackend}/api/v1/nodes/storyfragments/${payload.id}/complete`;
@@ -284,17 +368,43 @@ export default function SaveModal({
               addDebugMessage(
                 `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id} -> ${method} ${endpoint}`
               );
+
+              // CONSOLE LOG MODE - DON'T ACTUALLY FIRE THE REQUEST
               console.log(
-                `[PAYLOAD] StoryFragment save (NOT SENT) ${method} ${endpoint}:`,
+                `[SaveModal] WOULD ${method} to ${endpoint}`,
+                {
+                  method,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-Tenant-ID': tenantId,
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify(payload),
+                },
                 payload
               );
 
-              // Simulate API call
-              await new Promise((resolve) => setTimeout(resolve, 200));
-              addDebugMessage(`StoryFragment ${fragment.id} save simulated`);
-            } catch (etlError) {
+              if (VERBOSE)
+                console.log('[SaveModal] StoryFragment save result: SIMULATED');
               addDebugMessage(
-                `ETL error for story fragment ${fragment.id}: ${etlError instanceof Error ? etlError.message : String(etlError)}`
+                `StoryFragment ${fragment.id} saved successfully (SIMULATED)`
+              );
+
+              // Clear pending image operation after successful save
+              if (uploadedOGPaths[fragment.id]) {
+                clearPendingImageOperation(fragment.id);
+                addDebugMessage(
+                  `Cleared pending image operation for ${fragment.id} (SIMULATED)`
+                );
+              }
+            } catch (etlError) {
+              const errorMsg =
+                etlError instanceof Error ? etlError.message : 'Unknown error';
+              addDebugMessage(
+                `StoryFragment ${fragment.id} ETL failed: ${errorMsg}`
+              );
+              throw new Error(
+                `Failed to save story fragment ${fragment.id}: ${errorMsg}`
               );
             }
 
@@ -304,52 +414,58 @@ export default function SaveModal({
           }
         }
 
-        // Handle styles
+        // PHASE 3: Styles processing (POST /api/v1/tailwind/update)
         setStage('PROCESSING_STYLES');
-        setStageProgress({ currentStep: 1, totalSteps: 1 });
-        addDebugMessage('Starting V2 Tailwind pipeline...');
-
-        const { dirtyPaneIds, classes: dirtyClasses } =
-          ctx.getDirtyNodesClassData();
-        const tailwindEndpoint = `${goBackend}/api/v1/tailwind/update`;
+        setProgress(90);
+        addDebugMessage(`Processing styles...`);
 
         try {
-          addDebugMessage(
-            `Processing styles: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes -> POST ${tailwindEndpoint}`
-          );
+          const { dirtyPaneIds, classes: dirtyClasses } =
+            ctx.getDirtyNodesClassData();
+          const tailwindEndpoint = `${goBackend}/api/v1/tailwind/update`;
+          const tailwindPayload = { dirtyPaneIds, dirtyClasses };
+
+          // CONSOLE LOG MODE - DON'T ACTUALLY FIRE THE REQUEST
           console.log(
-            `[PAYLOAD] Tailwind update (NOT SENT) POST ${tailwindEndpoint}:`,
-            { dirtyPaneIds, dirtyClasses }
+            `[SaveModal] WOULD POST to ${tailwindEndpoint}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+              body: JSON.stringify(tailwindPayload),
+            },
+            tailwindPayload
           );
-          await new Promise((resolve) => setTimeout(resolve, 200));
-        } catch (styleError) {
+
+          if (VERBOSE)
+            console.log('[SaveModal] Tailwind update result: SIMULATED');
           addDebugMessage(
-            `Style processing error: ${styleError instanceof Error ? styleError.message : String(styleError)}`
+            `Tailwind styles would be processed: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes (SIMULATED)`
           );
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : 'Unknown error';
+          addDebugMessage(`Styles processing failed: ${errorMsg}`);
+          throw new Error(`Failed to process styles: ${errorMsg}`);
         }
 
-        // Clean dirty nodes (commented out for simulation)
-        addDebugMessage(`Cleaning ${allDirtyNodes.length} dirty nodes...`);
-        // ctx.cleanDirtyNodes(allDirtyNodes);
-
-        setProgress(100);
+        // Success!
         setStage('COMPLETED');
-        addDebugMessage(
-          'V2 save process completed successfully (simulation mode)'
-        );
-
-        // If we're in create mode, we might want to redirect to the edit URL
-        if (isCreateMode) {
-          addDebugMessage(
-            'Create mode completed - consider redirecting to edit URL'
-          );
-        }
+        setProgress(100);
+        addDebugMessage('Save process completed successfully! (SIMULATED)');
       } catch (err) {
         setStage('ERROR');
         const errorMessage =
-          err instanceof Error ? err.message : 'Unknown error occurred';
+          err instanceof Error && err.message
+            ? err.message
+            : 'Unknown error occurred';
         setError(errorMessage);
         addDebugMessage(`Save process failed: ${errorMessage}`);
+      } finally {
+        isSaving.current = false;
       }
     };
 
@@ -379,7 +495,7 @@ export default function SaveModal({
       case 'PROCESSING_STYLES':
         return 'Processing styles...';
       case 'COMPLETED':
-        return `${actionText} ${modeText.toLowerCase()} completed successfully! (Simulation Mode)`;
+        return `${actionText} ${modeText.toLowerCase()} completed successfully! (SIMULATED)`;
       case 'ERROR':
         return `Error: ${error}`;
       default:
@@ -390,6 +506,23 @@ export default function SaveModal({
   const handleOpenChange = (details: { open: boolean }) => {
     if (!details.open && (stage === 'COMPLETED' || stage === 'ERROR')) {
       onClose();
+    }
+  };
+
+  const handleSuccessClose = () => {
+    if (stage === 'COMPLETED') {
+      if (isCreateMode) {
+        // Navigate to edit URL after successful creation
+        const editUrl = isContext ? `/context/${slug}/edit` : `/${slug}/edit`;
+        console.log(
+          '[SaveModal] Would navigate to:',
+          editUrl,
+          '(SIMULATED - but actually navigating)'
+        );
+        navigate(editUrl);
+      } else {
+        onClose();
+      }
     }
   };
 
@@ -417,53 +550,37 @@ export default function SaveModal({
               <div className="flex items-center justify-between">
                 <Dialog.Title className="text-xl font-bold text-gray-900">
                   {isCreateMode ? 'Creating' : 'Saving'}{' '}
-                  {isContext ? 'Context Pane' : 'Story Fragment'}
+                  {isContext ? 'Context Pane' : 'Story Fragment'} (SIMULATED)
                 </Dialog.Title>
                 <button
                   onClick={() => setShowDebug(!showDebug)}
-                  className="rounded bg-gray-100 px-2 py-1 text-sm transition-colors hover:bg-gray-200"
+                  className="text-sm text-gray-500 hover:text-gray-700"
                 >
-                  {showDebug ? 'Hide Debug' : 'Show Debug'}
+                  {showDebug ? 'Hide' : 'Show'} Debug
                 </button>
               </div>
             </div>
 
-            <div className="px-6 py-4">
+            <div className="p-6">
               <div className="mb-4">
-                <div className="mb-1 flex justify-between text-sm text-gray-600">
-                  <span>Progress</span>
+                <div className="mb-2 flex justify-between text-sm">
+                  <span>{getStageDescription()}</span>
                   <span>{Math.round(progress)}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      stage === 'COMPLETED'
-                        ? 'bg-green-500'
-                        : stage === 'ERROR'
-                          ? 'bg-red-500'
-                          : 'bg-blue-500'
-                    }`}
+                    className="h-2 rounded-full bg-cyan-600 transition-all duration-300 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
-              <div className="text-center">
-                <Dialog.Description className="text-lg font-medium text-gray-900">
-                  {getStageDescription()}
-                </Dialog.Description>
-              </div>
-            </div>
 
-            {showDebug && (
-              <div className="border-t border-gray-200 bg-gray-50">
-                <div
-                  className="overflow-y-auto px-6 py-4"
-                  style={{ maxHeight: '20rem' }}
-                >
-                  <h3 className="mb-2 text-sm font-bold text-gray-900">
+              {showDebug && (
+                <div className="mb-4">
+                  <h3 className="mb-2 text-sm font-medium text-gray-700">
                     Debug Log
                   </h3>
-                  <div className="space-y-1 rounded border bg-white p-3 font-mono text-xs">
+                  <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 font-mono text-xs">
                     {debugMessages.length === 0 ? (
                       <div className="text-gray-500">No log entries yet...</div>
                     ) : (
@@ -475,34 +592,36 @@ export default function SaveModal({
                     )}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {(stage === 'COMPLETED' || stage === 'ERROR') && (
-              <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
-                <div className="flex justify-end space-x-3">
-                  {stage === 'ERROR' && (
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                    >
-                      Reload Page
-                    </button>
-                  )}
-                  <Dialog.CloseTrigger asChild>
-                    <button
-                      className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        stage === 'COMPLETED'
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {stage === 'COMPLETED' ? 'Close' : 'Cancel'}
-                    </button>
-                  </Dialog.CloseTrigger>
+              {stage === 'ERROR' && (
+                <div className="mb-4 rounded-md bg-red-50 p-4">
+                  <div className="text-sm text-red-700">{error}</div>
                 </div>
+              )}
+
+              <div className="flex justify-end space-x-3">
+                {stage === 'COMPLETED' ? (
+                  <button
+                    onClick={handleSuccessClose}
+                    className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"
+                  >
+                    {isCreateMode ? 'Continue' : 'Close'}
+                  </button>
+                ) : stage === 'ERROR' ? (
+                  <button
+                    onClick={onClose}
+                    className="rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+                  >
+                    Close
+                  </button>
+                ) : (
+                  <div className="text-sm text-gray-500">
+                    Saving... please wait
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>

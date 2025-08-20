@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
+import { brandConfigStore } from '@/stores/brand';
 import {
   viewportKeyStore,
   fullContentMapStore,
@@ -35,6 +36,11 @@ export const Compositor = (props: CompositorProps) => {
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
+
+  brandConfigStore.set(
+    window.TRACTSTACK_CONFIG?.tenantId || 'default',
+    props.config
+  );
 
   fullContentMapStore.set(props.fullContentMap);
   hasAssemblyAIStore.set(props.config.HAS_AAI);
