@@ -108,7 +108,6 @@ export default function SaveModal({
 
         const nodesWithPendingFiles = allDirtyNodes.filter(
           (node) =>
-            node.nodeType === 'TagElement' &&
             'fileId' in node &&
             node.fileId === 'pending' &&
             'base64Data' in node &&

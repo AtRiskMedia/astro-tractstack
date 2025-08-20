@@ -283,6 +283,7 @@ const StyleImagePanel = ({
     imgNode.fileId = params.fileId;
     imgNode.src = params.src;
     imgNode.alt = params.altDescription || '!!This is requires a description!!';
+    if (params.base64Data) imgNode.base64Data = params.base64Data;
     setAltDescription(
       params.altDescription || '!!This is requires a description!!'
     );

@@ -72,6 +72,7 @@ export function transformToOptionsPayload(
           elementCss: computedCSS,
           isPlaceholder: flatNode.isPlaceholder,
           src: flatNode.src,
+          base64Data: flatNode.base64Data,
           href: flatNode.href,
           alt: flatNode.alt,
           fileId: flatNode.fileId,

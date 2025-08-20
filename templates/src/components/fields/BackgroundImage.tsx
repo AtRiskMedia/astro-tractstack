@@ -165,6 +165,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     setBgImageNode(updatedBgNode);
     setLocalAltDescription(updatedBgNode.alt || '');
     onUpdate();
+    ctx.notifyNode('root');
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -215,6 +216,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
       setBgImageNode(updatedBgNode);
       setLocalAltDescription(defaultAlt);
       onUpdate();
+      ctx.notifyNode('root');
     } catch (err) {
       setImageError('Failed to process image');
       console.error('[BackgroundImage] Error:', err);
@@ -232,6 +234,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     setBgImageNode(null);
     setLocalAltDescription('');
     onUpdate();
+    ctx.notifyNode('root');
   };
 
   const handleAltDescriptionBlur = () => {

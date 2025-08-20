@@ -20,6 +20,7 @@ export interface ImageParams {
   src: string;
   srcSet?: string;
   altDescription: string;
+  base64Data?: string;
 }
 
 interface ImageUploadProps {
