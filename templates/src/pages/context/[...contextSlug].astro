@@ -12,7 +12,6 @@ const tenantId =
 const { contextSlug } = Astro.params || {};
 
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-console.log(contextSlug);
 
 // Get context pane data by slug
 let contextPaneData;
@@ -55,12 +54,12 @@ try {
 const paneId = contextPaneData.id;
 const paneTitle = contextPaneData.title || 'Context';
 const codeHookTarget = contextPaneData.codeHookTarget || null;
-console.log(contextPaneData, paneId, paneTitle, codeHookTarget);
+
 // Get rendered fragment for the context pane
 let fragmentData = '';
 try {
   const fragmentResponse = await fetch(
-    `${goBackend}/api/v1/fragments/panes/${paneId}`,
+    `${goBackend}/api/v1/fragments/panes/${paneId}/static`,
     {
       headers: {
         'X-Tenant-ID': tenantId,

@@ -60,8 +60,8 @@ if (contextSlug === 'create') {
   title = 'Create New Context Page - TractStack Editor';
   contextPaneID = emptyContextPane.id;
 } else {
-  // Existing backend fetch logic
-  const endpoint = `${goBackend}/api/v1/nodes/panes/slug/${contextSlug}`;
+  // Existing backend fetch logic - use full-payload endpoint
+  const endpoint = `${goBackend}/api/v1/nodes/panes/slug/${contextSlug}/full-payload`;
 
   try {
     const response = await fetch(endpoint, {
@@ -81,33 +81,21 @@ if (contextSlug === 'create') {
       return failedResponse;
     }
 
-    contextPane = await response.json();
+    loadData = await response.json();
   } catch (error) {
-    console.error('Error fetching context pane:', error);
+    console.error('Error fetching context pane full payload:', error);
     return Astro.redirect(
       `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
     );
   }
 
-  // Verify this is actually a context pane
-  if (!contextPane?.isContextPane) {
-    return new Response(null, {
-      status: 404,
-      statusText: 'Not Found - Not a context pane',
-    });
-  }
-
-  // Format into expected loadData structure
-  loadData = {
-    paneNodes: [contextPane],
-  };
-
+  // Extract data from the response (same pattern as storyfragment)
+  contextPane = loadData?.paneNodes?.at(0);
   title = contextPane?.title || `Context Editor`;
   contextPaneID = contextPane?.id;
 }
 
-const description = `Edit ${title} - TractStack Context Editor`;
-const canonicalURL = `/context/${contextSlug}/edit`;
+const canonicalURL = `/context/${contextSlug}`;
 
 // Extract dates if available
 const pubDatetime = contextPane?.created
@@ -155,12 +143,7 @@ for (const [key, value] of Astro.url.searchParams) {
     role="banner"
     class="z-101 bg-mywhite left-0 right-0 drop-shadow transition-all duration-200"
   >
-    <StoryKeepHeader
-      slug={contextSlug}
-      nodeId={contextPaneID}
-      isContext={true}
-      client:only="react"
-    />
+    <StoryKeepHeader slug={contextSlug} isContext={true} client:only="react" />
   </section>
 
   <div class="flex min-h-screen">

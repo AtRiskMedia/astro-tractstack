@@ -1,3 +1,5 @@
+import { extractPaneSubtree, type PaneSubtree } from './extractor';
+import { formatForSave, formatForPreview } from './loader';
 import { storyFragmentTopicsStore } from '@/stores/storykeep';
 import { brandConfigStore } from '@/stores/brand';
 import { fullContentMapStore } from '@/stores/storykeep';
@@ -10,8 +12,11 @@ import type {
   BgImageNode,
   StoryFragmentNode,
 } from '@/types/compositorTypes';
-import type { PaneSubtree } from './extractor';
-import type { OptionsPayload } from './index';
+import type {
+  OptionsPayload,
+  BackendPreviewPayload,
+  BackendSavePayload,
+} from './index';
 import {
   isBreakNode,
   isArtpackImageNode,
@@ -224,43 +229,17 @@ export function transformStoryFragmentForSave(
   const node = ctx.allNodes.get().get(fragmentId) as StoryFragmentNode;
   const seoData = storyFragmentTopicsStore.get()[fragmentId];
 
-  // DEBUG: Log all the values we're working with
-  console.log('🔍 TRANSFORMER DEBUG:', {
-    fragmentId,
-    nodeExists: !!node,
-    nodeTractStackId: (node as any)?.tractStackId, // Check if it exists despite type
-  });
-
   // Get brand config from store to find default tractstack
   const brandConfig = brandConfigStore.get();
-  console.log('🔍 BRAND CONFIG DEBUG:', {
-    brandConfigExists: !!brandConfig,
-    tractStackHomeSlug: brandConfig?.TRACTSTACK_HOME_SLUG,
-  });
-
   const defaultTractStackSlug =
     brandConfig?.TRACTSTACK_HOME_SLUG || 'tractstack';
-  console.log('🔍 DEFAULT SLUG:', defaultTractStackSlug);
-
   // Find the default tractstack ID from content map
   const contentMap = fullContentMapStore.get();
-  console.log('🔍 CONTENT MAP DEBUG:', {
-    contentMapLength: contentMap?.length || 0,
-    tractStacks: contentMap?.filter((item) => item.type === 'TractStack'),
-  });
-
   const defaultTractStack = contentMap.find(
     (item) => item.type === 'TractStack' && item.slug === defaultTractStackSlug
   );
-  console.log('🔍 DEFAULT TRACTSTACK FOUND:', {
-    found: !!defaultTractStack,
-    id: defaultTractStack?.id,
-    slug: defaultTractStack?.slug,
-  });
-
   const finalTractStackId =
     (node as any)?.tractStackId || defaultTractStack?.id || '';
-  console.log('🔍 FINAL TRACTSTACK ID:', finalTractStackId);
 
   const payload = {
     ...node,
@@ -273,6 +252,34 @@ export function transformStoryFragmentForSave(
     tractStackId: finalTractStackId,
   };
 
-  console.log('🔍 FINAL PAYLOAD TRACTSTACK ID:', payload.tractStackId);
   return payload;
+}
+
+export function transformLivePaneForSave(
+  ctx: NodesContext,
+  paneId: string,
+  isContext?: boolean
+): BackendSavePayload {
+  // 1. Extract distributed state
+  const subtree = extractPaneSubtree(ctx, paneId);
+
+  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
+  const optionsPayload = transformToOptionsPayload(ctx, subtree);
+
+  // 3. Format for save endpoint
+  return formatForSave(subtree.paneNode, optionsPayload, isContext);
+}
+
+export function transformLivePaneForPreview(
+  ctx: NodesContext,
+  paneId: string
+): BackendPreviewPayload {
+  // 1. Extract distributed state
+  const subtree = extractPaneSubtree(ctx, paneId);
+
+  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
+  const optionsPayload = transformToOptionsPayload(ctx, subtree);
+
+  // 3. Format for preview endpoint
+  return formatForPreview(subtree.paneNode, optionsPayload);
 }

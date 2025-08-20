@@ -11,9 +11,11 @@ import {
   getPendingImageOperation,
   clearPendingImageOperation,
 } from '@/stores/storykeep';
-import type { BaseNode } from '@/types/compositorTypes';
-
-const VERBOSE = true;
+import type {
+  BaseNode,
+  PaneNode,
+  StoryFragmentNode,
+} from '@/types/compositorTypes';
 
 type SaveStage =
   | 'PREPARING'
@@ -72,6 +74,7 @@ export default function SaveModal({
   const [showDebug, setShowDebug] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const isSaving = useRef(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Determine if we're in create mode
   const isCreateMode = slug === 'create';
@@ -104,7 +107,6 @@ export default function SaveModal({
       isSaving.current = true;
       const ctx = getCtx();
       const allDirtyNodes = ctx.getDirtyNodes();
-      console.log(allDirtyNodes);
 
       try {
         setStage('PREPARING');
@@ -232,8 +234,6 @@ export default function SaveModal({
 
               ctx.modifyNodes([updatedNode]);
 
-              if (VERBOSE)
-                console.log('[SaveModal] File upload result:', result);
               addDebugMessage(
                 `File ${fileNode.id} uploaded successfully - got fileId: ${result.fileId}`
               );
@@ -276,11 +276,6 @@ export default function SaveModal({
               };
 
               try {
-                console.log(
-                  `[SaveModal] REAL POST to ${ogUploadEndpoint}`,
-                  uploadPayload
-                );
-
                 const response = await fetch(ogUploadEndpoint, {
                   method: 'POST',
                   headers: {
@@ -296,7 +291,6 @@ export default function SaveModal({
                 }
 
                 const result = await response.json();
-                console.log('[SaveModal] OG image upload result:', result);
 
                 uploadedOGPaths[fragment.id] = result.path;
                 addDebugMessage(
@@ -331,7 +325,11 @@ export default function SaveModal({
             const paneNode = dirtyPanes[i];
 
             try {
-              const payload = transformLivePaneForSave(ctx, paneNode.id);
+              const payload = transformLivePaneForSave(
+                ctx,
+                paneNode.id,
+                isContext
+              );
 
               // Determine endpoint based on create mode
               const isCreatePaneMode = isCreateMode;
@@ -343,8 +341,6 @@ export default function SaveModal({
               addDebugMessage(
                 `Processing pane ${i + 1}/${dirtyPanes.length}: ${paneNode.id} -> ${method} ${endpoint}`
               );
-
-              console.log(`[SaveModal] REAL ${method} to ${endpoint}`, payload);
 
               const response = await fetch(endpoint, {
                 method,
@@ -360,8 +356,8 @@ export default function SaveModal({
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
 
-              const result = await response.json();
-              console.log('[SaveModal] Pane save result:', result);
+              //const result =
+              await response.json();
               addDebugMessage(`Pane ${paneNode.id} saved successfully`);
             } catch (etlError) {
               const errorMsg =
@@ -405,8 +401,6 @@ export default function SaveModal({
                 `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id} -> ${method} ${endpoint}`
               );
 
-              console.log(`[SaveModal] REAL ${method} to ${endpoint}`, payload);
-
               const response = await fetch(endpoint, {
                 method,
                 headers: {
@@ -421,8 +415,8 @@ export default function SaveModal({
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
 
-              const result = await response.json();
-              console.log('[SaveModal] StoryFragment save result:', result);
+              //const result =
+              await response.json();
               addDebugMessage(
                 `StoryFragment ${fragment.id} saved successfully`
               );
@@ -509,7 +503,7 @@ export default function SaveModal({
           setProgress((completedSteps / totalSteps) * 90);
         }
 
-        // PHASE 4: Styles processing
+        // PHASE 4: Styles processing (2-step process)
         setStage('PROCESSING_STYLES');
         setProgress(95);
         addDebugMessage(`Processing styles...`);
@@ -523,32 +517,55 @@ export default function SaveModal({
               'No dirty classes to process, skipping Tailwind update'
             );
           } else {
-            const tailwindEndpoint = `${goBackend}/api/v1/tailwind/update`;
-            const tailwindPayload = { dirtyPaneIds, dirtyClasses };
-
-            console.log(
-              `[SaveModal] REAL POST to ${tailwindEndpoint}`,
-              tailwindPayload
-            );
-
-            const response = await fetch(tailwindEndpoint, {
+            // STEP 1: Generate CSS using Astro API
+            const astroEndpoint = `/api/tailwind`;
+            const astroPayload = { dirtyPaneIds, dirtyClasses };
+            const astroResponse = await fetch(astroEndpoint, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'X-Tenant-ID': tenantId,
               },
               credentials: 'include',
-              body: JSON.stringify(tailwindPayload),
+              body: JSON.stringify(astroPayload),
             });
 
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
+            if (!astroResponse.ok) {
+              throw new Error(
+                `CSS generation failed! status: ${astroResponse.status}`
+              );
             }
 
-            const result = await response.json();
-            console.log('[SaveModal] Tailwind update result:', result);
+            const astroResult = await astroResponse.json();
+
+            if (!astroResult.success || !astroResult.generatedCss) {
+              throw new Error('CSS generation failed: no CSS returned');
+            }
+
             addDebugMessage(
-              `Tailwind styles processed: ${dirtyClasses.length} classes for ${dirtyPaneIds.length} panes`
+              `CSS generated: ${astroResult.generatedCss.length} bytes for ${dirtyClasses.length} classes`
+            );
+
+            // STEP 2: Save CSS to Go backend
+            const goEndpoint = `${goBackend}/api/v1/tailwind/update`;
+            const goPayload = { frontendCss: astroResult.generatedCss };
+            const goResponse = await fetch(goEndpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+              body: JSON.stringify(goPayload),
+            });
+
+            if (!goResponse.ok) {
+              throw new Error(`CSS save failed! status: ${goResponse.status}`);
+            }
+
+            const goResult = await goResponse.json();
+            addDebugMessage(
+              `CSS saved successfully: stylesVer ${goResult.stylesVer}`
             );
           }
         } catch (error) {
@@ -617,19 +634,41 @@ export default function SaveModal({
     }
   };
 
-  const handleSuccessClose = () => {
+  const handleSuccessClose = async () => {
     if (stage === 'COMPLETED') {
+      setIsNavigating(true);
+
       if (isCreateMode) {
-        // Navigate to edit URL after successful creation
-        const editUrl = isContext ? `/context/${slug}/edit` : `/${slug}/edit`;
-        console.log(
-          '[SaveModal] Would navigate to:',
-          editUrl,
-          '(SIMULATED - but actually navigating)'
-        );
-        navigate(editUrl);
+        let actualSlug: string;
+
+        if (isContext) {
+          // For context mode, get slug from the saved pane
+          const ctx = getCtx();
+          const allDirtyNodes = ctx.getDirtyNodes();
+          const dirtyPanes = allDirtyNodes.filter(
+            (node): node is PaneNode => node.nodeType === 'Pane'
+          );
+          actualSlug = dirtyPanes[0].slug;
+        } else {
+          // For storyfragment mode, get slug from the saved storyfragment
+          const ctx = getCtx();
+          const allDirtyNodes = ctx.getDirtyNodes();
+          const dirtyStoryFragments = allDirtyNodes.filter(
+            (node): node is StoryFragmentNode =>
+              node.nodeType === 'StoryFragment'
+          );
+          actualSlug = dirtyStoryFragments[0].slug;
+        }
+
+        const editUrl = isContext
+          ? `/context/${actualSlug}/edit`
+          : `/${actualSlug}/edit`;
+        await navigate(editUrl);
       } else {
-        onClose();
+        const currentUrl = isContext
+          ? `/context/${slug}/edit`
+          : `/${slug}/edit`;
+        await navigate(currentUrl);
       }
     }
   };
@@ -684,7 +723,7 @@ export default function SaveModal({
                 <div className="h-2 w-full rounded-full bg-gray-200">
                   <div
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      stage === 'ERROR' ? 'bg-red-500' : 'bg-blue-500'
+                      stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -706,16 +745,6 @@ export default function SaveModal({
               {stage === 'COMPLETED' && (
                 <div className="mb-4 rounded bg-green-50 p-3 text-green-800">
                   Save completed successfully!
-                  {isCreateMode && (
-                    <div className="mt-2">
-                      <button
-                        onClick={handleSuccessClose}
-                        className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
-                      >
-                        Continue to Edit Mode
-                      </button>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -729,10 +758,24 @@ export default function SaveModal({
               {(stage === 'COMPLETED' || stage === 'ERROR') && (
                 <div className="flex justify-end">
                   <button
-                    onClick={onClose}
-                    className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+                    onClick={
+                      stage === 'COMPLETED' ? handleSuccessClose : onClose
+                    }
+                    disabled={isNavigating}
+                    className={`rounded px-4 py-2 text-white transition-colors ${
+                      isNavigating
+                        ? 'cursor-not-allowed bg-gray-400'
+                        : 'bg-gray-600 hover:bg-gray-700'
+                    }`}
                   >
-                    Close
+                    {isNavigating ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                        Loading...
+                      </div>
+                    ) : (
+                      'Close'
+                    )}
                   </button>
                 </div>
               )}

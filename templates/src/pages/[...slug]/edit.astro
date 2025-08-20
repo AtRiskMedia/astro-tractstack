@@ -152,12 +152,7 @@ for (const [key, value] of Astro.url.searchParams) {
     role="banner"
     class="z-101 bg-mywhite left-0 right-0 drop-shadow transition-all duration-200"
   >
-    <StoryKeepHeader
-      slug={slug}
-      nodeId={storyFragmentID}
-      isContext={false}
-      client:only="react"
-    />
+    <StoryKeepHeader slug={slug} isContext={false} client:only="react" />
   </section>
 
   <div class="flex min-h-screen">

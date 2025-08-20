@@ -1,8 +1,3 @@
-import { extractPaneSubtree } from './extractor';
-import { transformToOptionsPayload } from './transformer';
-import { formatForSave, formatForPreview } from './loader';
-import type { NodesContext } from '@/stores/nodes';
-
 export interface BackendSavePayload {
   id: string;
   title: string;
@@ -11,6 +6,7 @@ export interface BackendSavePayload {
   optionsPayload: OptionsPayload;
   created?: string;
   changed: string;
+  isContextPane?: boolean;
 }
 
 export interface BackendPreviewPayload {
@@ -85,32 +81,8 @@ export interface OptionsPayload {
   }>;
 }
 
-export function transformLivePaneForSave(
-  ctx: NodesContext,
-  paneId: string
-): BackendSavePayload {
-  // 1. Extract distributed state
-  const subtree = extractPaneSubtree(ctx, paneId);
-
-  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
-  const optionsPayload = transformToOptionsPayload(ctx, subtree);
-
-  // 3. Format for save endpoint
-  return formatForSave(subtree.paneNode, optionsPayload);
-}
-
-export function transformLivePaneForPreview(
-  ctx: NodesContext,
-  paneId: string
-): BackendPreviewPayload {
-  // 1. Extract distributed state
-  const subtree = extractPaneSubtree(ctx, paneId);
-
-  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
-  const optionsPayload = transformToOptionsPayload(ctx, subtree);
-
-  // 3. Format for preview endpoint
-  return formatForPreview(subtree.paneNode, optionsPayload);
-}
-
-export { transformStoryFragmentForSave } from './transformer';
+export {
+  transformStoryFragmentForSave,
+  transformLivePaneForSave,
+  transformLivePaneForPreview,
+} from './transformer';
