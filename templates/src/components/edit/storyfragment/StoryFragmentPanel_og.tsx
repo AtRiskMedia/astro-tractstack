@@ -105,20 +105,25 @@ const StoryFragmentOpenGraphPanel = ({
   const initialized = useRef(false);
 
   // Initialize draft state and colors
+  // Initialize draft state and colors
   useEffect(() => {
     const ogParams = ctx.getOgImageParams(nodeId);
-    setDraftTitle(storyfragmentNode.title);
-    setCharCount(storyfragmentNode.title.length);
-    setDraftImagePath(storyfragmentNode.socialImagePath || null);
 
-    initialState.current = {
-      title: storyfragmentNode.title,
-      details: '',
-      topics: [],
-      socialImagePath: storyfragmentNode.socialImagePath ?? null,
-      textColor: ogParams.textColor,
-      bgColor: ogParams.bgColor,
-    };
+    // Only set initial values if not already set
+    if (!initialized.current) {
+      setDraftTitle(storyfragmentNode.title);
+      setCharCount(storyfragmentNode.title.length);
+      setDraftImagePath(storyfragmentNode.socialImagePath || null);
+
+      initialState.current = {
+        title: storyfragmentNode.title,
+        details: '',
+        topics: [],
+        socialImagePath: storyfragmentNode.socialImagePath ?? null,
+        textColor: ogParams.textColor,
+        bgColor: ogParams.bgColor,
+      };
+    }
 
     const pendingOp = getPendingImageOperation(nodeId);
     if (pendingOp) {
@@ -130,7 +135,7 @@ const StoryFragmentOpenGraphPanel = ({
         setDraftImageData(null);
       }
     }
-  }, [storyfragmentNode.title, storyfragmentNode.socialImagePath, nodeId]);
+  }, [nodeId]);
 
   // Handle color changes from OgImagePreview
   const handleColorChange = (newTextColor: string, newBgColor: string) => {
@@ -200,9 +205,9 @@ const StoryFragmentOpenGraphPanel = ({
       if (storedData) {
         initialTopics = Array.isArray(storedData.topics)
           ? storedData.topics.map((t) => ({
-              id: typeof t.id === 'string' ? parseInt(t.id, 10) : (t.id ?? -1),
-              title: t.title,
-            }))
+            id: typeof t.id === 'string' ? parseInt(t.id, 10) : (t.id ?? -1),
+            title: t.title,
+          }))
           : [];
         initialDescription = storedData.description || '';
         setDraftTopics(initialTopics);
@@ -443,6 +448,8 @@ const StoryFragmentOpenGraphPanel = ({
   };
 
   const handleApplyChanges = () => {
+    let currentNode = storyfragmentNode; // Track the current node state
+
     // Update title if changed
     if (draftTitle !== storyfragmentNode.title) {
       const existingSlugs = $contentMap
@@ -460,6 +467,9 @@ const StoryFragmentOpenGraphPanel = ({
         isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
+
+      // Update our reference to the current node
+      currentNode = updatedNode;
     }
 
     // Save topics and description to store
@@ -478,12 +488,11 @@ const StoryFragmentOpenGraphPanel = ({
     });
 
     // FORCE node update to trigger undo history for ANY changes
-    // Even if only description/topics/image changed, we need the node to be dirty
-    // We'll update the changed timestamp to force a meaningful change
+    // Use the CURRENT node state, not the original storyfragmentNode
     if (hasChanges) {
       const updatedNode = cloneDeep({
-        ...storyfragmentNode,
-        changed: new Date(), // Force a meaningful change
+        ...currentNode,
+        changed: new Date(),
         isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
@@ -532,19 +541,18 @@ const StoryFragmentOpenGraphPanel = ({
                 type="text"
                 value={draftTitle}
                 onChange={handleTitleChange}
-                className={`w-full rounded-md border px-2 py-1 pr-16 ${
-                  charCount < 10
+                className={`w-full rounded-md border px-2 py-1 pr-16 ${charCount < 5
                     ? 'border-red-500 bg-red-50'
                     : isValid
                       ? 'border-green-500 bg-green-50'
                       : warning
                         ? 'border-yellow-500 bg-yellow-50'
                         : 'border-gray-300'
-                }`}
+                  }`}
                 placeholder="Enter story fragment title (50-60 characters recommended)"
               />
               <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
-                {charCount < 10 ? (
+                {charCount < 5 ? (
                   <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
                 ) : isValid ? (
                   <CheckIcon className="h-5 w-5 text-green-500" />
@@ -552,15 +560,14 @@ const StoryFragmentOpenGraphPanel = ({
                   <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
                 ) : null}
                 <span
-                  className={`text-sm ${
-                    charCount < 10
+                  className={`text-sm ${charCount < 5
                       ? 'text-red-500'
                       : isValid
                         ? 'text-green-500'
                         : warning
                           ? 'text-yellow-500'
                           : 'text-gray-500'
-                  }`}
+                    }`}
                 >
                   {charCount}/70
                 </span>
@@ -586,12 +593,12 @@ const StoryFragmentOpenGraphPanel = ({
                 </li>
               </ul>
               <div className="py-2">
-                {charCount < 10 && (
+                {charCount < 5 && (
                   <span className="text-red-500">
-                    Title must be at least 10 characters
+                    Title must be at least 5 characters
                   </span>
                 )}
-                {charCount >= 10 && charCount < 35 && (
+                {charCount >= 5 && charCount < 35 && (
                   <span className="text-gray-500">
                     Add {35 - charCount} more characters for optimal length
                   </span>
@@ -851,10 +858,10 @@ const StoryFragmentOpenGraphPanel = ({
                           existingTopic.title.toLowerCase()
                       )
                   ).length === 0 && (
-                    <p className="text-xs italic text-gray-500">
-                      No additional topics available.
-                    </p>
-                  )}
+                      <p className="text-xs italic text-gray-500">
+                        No additional topics available.
+                      </p>
+                    )}
                 </div>
               </div>
             </div>

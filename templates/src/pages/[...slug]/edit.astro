@@ -16,6 +16,7 @@ import { requireAdminOrEditor } from '@/utils/auth';
 
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/404');
+
 // Authentication check - redirect to login if not authenticated
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {

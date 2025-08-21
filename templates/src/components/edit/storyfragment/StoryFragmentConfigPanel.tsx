@@ -93,7 +93,7 @@ const StoryFragmentConfigPanel = ({
     return () => {
       clearInterval(intervalId);
     };
-  }, [nodeId, isNodeAvailable]);
+  }, [nodeId]);
 
   // Handle URL params auto-opening
   useEffect(() => {

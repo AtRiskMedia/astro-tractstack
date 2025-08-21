@@ -45,7 +45,7 @@ const StoryFragmentOpenGraphPanel = ({
   };
 
   const handleTitleBlur = () => {
-    if (title.length >= 10) {
+    if (title.length >= 5) {
       // Only update if meets minimum length
       const ctx = getCtx();
       const existingSlugs = fullContentMapStore
@@ -92,19 +92,18 @@ const StoryFragmentOpenGraphPanel = ({
                 e.currentTarget.blur();
               }
             }}
-            className={`w-full rounded-md border px-2 py-1 pr-16 ${
-              charCount < 10
+            className={`w-full rounded-md border px-2 py-1 pr-16 ${charCount < 5
                 ? 'border-red-500 bg-red-50'
                 : isValid
                   ? 'border-green-500 bg-green-50'
                   : warning
                     ? 'border-yellow-500 bg-yellow-50'
                     : 'border-gray-300'
-            }`}
+              }`}
             placeholder="Enter story fragment title (50-60 characters recommended)"
           />
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
-            {charCount < 10 ? (
+            {charCount < 5 ? (
               <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
             ) : isValid ? (
               <CheckIcon className="h-5 w-5 text-green-500" />
@@ -112,15 +111,14 @@ const StoryFragmentOpenGraphPanel = ({
               <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
             ) : null}
             <span
-              className={`text-sm ${
-                charCount < 10
+              className={`text-sm ${charCount < 5
                   ? 'text-red-500'
                   : isValid
                     ? 'text-green-500'
                     : warning
                       ? 'text-yellow-500'
                       : 'text-gray-500'
-              }`}
+                }`}
             >
               {charCount}/70
             </span>
@@ -129,10 +127,9 @@ const StoryFragmentOpenGraphPanel = ({
         <div className="mt-2 flex items-center gap-2">
           <button
             onClick={handleTitleBlur}
-            disabled={title.length < 10}
-            className={`rounded bg-cyan-700 px-3 py-1 text-sm text-white transition-colors hover:bg-cyan-800 ${
-              title !== storyfragmentNode.title ? 'inline-flex' : 'hidden'
-            } items-center ${title.length < 10 ? 'cursor-not-allowed opacity-50' : ''}`}
+            disabled={title.length < 5}
+            className={`rounded bg-cyan-700 px-3 py-1 text-sm text-white transition-colors hover:bg-cyan-800 ${title !== storyfragmentNode.title ? 'inline-flex' : 'hidden'
+              } items-center ${title.length < 5 ? 'cursor-not-allowed opacity-50' : ''}`}
           >
             <CheckIcon className="mr-1 h-4 w-4" />
             Save
@@ -163,12 +160,12 @@ const StoryFragmentOpenGraphPanel = ({
             </ul>
           </div>
           <div className="py-4">
-            {charCount < 10 && (
+            {charCount < 5 && (
               <span className="text-red-500">
-                Title must be at least 10 characters
+                Title must be at least 5 characters
               </span>
             )}
-            {charCount >= 10 && charCount < 50 && (
+            {charCount >= 5 && charCount < 50 && (
               <span className="text-gray-500">
                 Add {50 - charCount} more characters for optimal length
               </span>

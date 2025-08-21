@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
+import { setPendingImageOperation } from '@/stores/storykeep';
 import type { BrandConfig } from '@/types/tractstack';
 
 const OG_IMAGE_WIDTH = 1200;
@@ -25,6 +26,7 @@ const OgImagePreview = ({
   const [fontSize, setFontSize] = useState<number>(48);
   const [textColor, setTextColor] = useState('#ffffff');
   const [bgColor, setBgColor] = useState('#1f2937');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!title) return;
@@ -39,6 +41,88 @@ const OgImagePreview = ({
 
     setFontSize(calculatedSize);
   }, [title, nodeId]);
+
+  const generateCanvasImage = async () => {
+    if (socialImagePath || !title) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return;
+
+    canvas.width = OG_IMAGE_WIDTH;
+    canvas.height = OG_IMAGE_HEIGHT;
+
+    // Fill background
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Set up text
+    ctx.fillStyle = textColor;
+    ctx.font = `bold ${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetY = 2;
+
+    // Calculate available width for text
+    const maxWidth = OG_IMAGE_WIDTH - TEXT_MARGIN * 2;
+    const centerX = OG_IMAGE_WIDTH / 2;
+    const centerY = OG_IMAGE_HEIGHT / 2;
+
+    // Simple word wrapping
+    const words = title.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const metrics = ctx.measureText(testLine);
+
+      if (metrics.width <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // Single word is too long, just use it
+          lines.push(word);
+        }
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    // Draw text lines
+    const lineHeight = fontSize * 1.2;
+    const totalHeight = lines.length * lineHeight;
+    const startY = centerY - totalHeight / 2 + lineHeight / 2;
+
+    lines.forEach((line, index) => {
+      const y = startY + index * lineHeight;
+      ctx.fillText(line, centerX, y);
+    });
+
+    // Convert to base64
+    const base64Data = canvas.toDataURL('image/png', 0.9);
+
+    // Add to pending operations
+    setPendingImageOperation(nodeId, {
+      type: 'upload',
+      data: base64Data,
+      path: `/images/og/${nodeId}-generated-${Date.now()}.png`,
+      filename: `${nodeId}-generated-${Date.now()}.png`,
+    });
+  };
+
+  // Generate image when title or colors change
+  useEffect(() => {
+    generateCanvasImage();
+  }, [title, textColor, bgColor, socialImagePath, fontSize, nodeId]);
 
   const handleTextColorChange = (color: string) => {
     setTextColor(color);
@@ -124,11 +208,14 @@ const OgImagePreview = ({
         </p>
         {!socialImagePath && (
           <p className="mt-1">
-            If no custom image is provided, an image will be generated using
-            your page title and these colors.
+            An image will be automatically generated using your page title and
+            these colors.
           </p>
         )}
       </div>
+
+      {/* Hidden canvas for image generation */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
 };

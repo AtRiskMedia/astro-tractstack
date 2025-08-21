@@ -10,6 +10,11 @@ import { getStoryData } from '@/lib/storyData';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const { slug } = Astro.params || {};
+
+if (slug && (slug.startsWith('images/') || slug.startsWith('media/'))) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
 const lookup = slug || '';
 const sessionId = await getOrSetSessionId(Astro, tenantId);
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
