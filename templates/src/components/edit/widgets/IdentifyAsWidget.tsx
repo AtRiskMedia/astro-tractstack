@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import SingleParam from '@/components/fields/SingleParam';
-import { widgetMeta } from '@/constants';
+import { TractStackAPI } from '@/utils/api';
 import type { FlatNode, BeliefNode } from '@/types/compositorTypes';
 
 interface IdentifyAsWidgetProps {
@@ -54,23 +54,15 @@ export default function IdentifyAsWidget({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const goBackend =
-          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+        const api = new TractStackAPI();
 
         // Step 1: Get all belief IDs
-        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
-          headers: {
-            'X-Tenant-ID': tenantId,
-          },
-        });
+        const idsResponse = await api.get('/api/v1/nodes/beliefs');
 
-        if (!idsResponse.ok) {
-          throw new Error(
-            `Failed to fetch belief IDs: ${idsResponse.statusText}`
-          );
+        if (!idsResponse.success) {
+          throw new Error(`Failed to fetch belief IDs: ${idsResponse.error}`);
         }
-        const { beliefIds } = await idsResponse.json();
+        const { beliefIds } = idsResponse.data;
 
         if (!beliefIds || beliefIds.length === 0) {
           setBeliefs([]);
@@ -78,28 +70,19 @@ export default function IdentifyAsWidget({
         }
 
         // Step 2: Get belief data by IDs
-        const beliefsResponse = await fetch(
-          `${goBackend}/api/v1/nodes/beliefs`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Tenant-ID': tenantId,
-            },
-            body: JSON.stringify({ beliefIds }),
-          }
-        );
+        const beliefsResponse = await api.post('/api/v1/nodes/beliefs', {
+          beliefIds,
+        });
 
-        if (!beliefsResponse.ok) {
-          throw new Error(
-            `Failed to fetch beliefs: ${beliefsResponse.statusText}`
-          );
+        if (!beliefsResponse.success) {
+          throw new Error(`Failed to fetch beliefs: ${beliefsResponse.error}`);
         }
 
-        const { beliefs } = await beliefsResponse.json();
+        const { beliefs } = beliefsResponse.data;
         setBeliefs(beliefs || []);
-      } catch (err) {
-        console.error('Failed to fetch beliefs:', err);
+      } catch (error) {
+        console.error('Error fetching beliefs:', error);
+        setBeliefs([]);
       }
     };
 

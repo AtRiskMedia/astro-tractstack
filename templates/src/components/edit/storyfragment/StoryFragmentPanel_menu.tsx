@@ -6,6 +6,7 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
+import { TractStackAPI } from '@/utils/api';
 import {
   StoryFragmentMode,
   type StoryFragmentNode,
@@ -42,36 +43,28 @@ const StoryFragmentMenuPanel = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const goBackend =
-          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+        const api = new TractStackAPI();
 
-        // Fetch content map if store is empty
-        const currentContentMap = fullContentMapStore.get();
-        if (
-          !currentContentMap ||
-          !currentContentMap.data ||
-          currentContentMap.data.length === 0
-        ) {
-          const contentMapData = await getFullContentMap(tenantId);
-          setContentMap(contentMapData);
-        } else {
-          setContentMap(currentContentMap.data);
+        // Get current content map first if we haven't already
+        if (!contentMap) {
+          const currentContentMap = await api.getContentMapWithTimestamp();
+          if (currentContentMap.success && currentContentMap.data) {
+            const tenantId =
+              window.TRACTSTACK_CONFIG?.tenantId ||
+              import.meta.env.PUBLIC_TENANTID ||
+              'default';
+            fullContentMapStore.set(tenantId, currentContentMap.data);
+            setContentMap(currentContentMap.data.data);
+          }
         }
 
         // Step 1: Get all menu IDs
-        const idsResponse = await fetch(`${goBackend}/api/v1/nodes/menus`, {
-          headers: {
-            'X-Tenant-ID': tenantId,
-          },
-        });
+        const idsResponse = await api.get('/api/v1/nodes/menus');
 
-        if (!idsResponse.ok) {
-          throw new Error(
-            `Failed to fetch menu IDs: ${idsResponse.statusText}`
-          );
+        if (!idsResponse.success) {
+          throw new Error(`Failed to fetch menu IDs: ${idsResponse.error}`);
         }
-        const { menuIds } = await idsResponse.json();
+        const { menuIds } = idsResponse.data;
 
         if (!menuIds || menuIds.length === 0) {
           setMenus([]);
@@ -79,20 +72,15 @@ const StoryFragmentMenuPanel = ({
         }
 
         // Step 2: Get menu data by IDs
-        const menusResponse = await fetch(`${goBackend}/api/v1/nodes/menus`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': tenantId,
-          },
-          body: JSON.stringify({ menuIds }),
+        const menusResponse = await api.post('/api/v1/nodes/menus', {
+          menuIds,
         });
 
-        if (!menusResponse.ok) {
-          throw new Error(`Failed to fetch menus: ${menusResponse.statusText}`);
+        if (!menusResponse.success) {
+          throw new Error(`Failed to fetch menus: ${menusResponse.error}`);
         }
 
-        const { menus } = await menusResponse.json();
+        const { menus } = menusResponse.data;
         setMenus(menus || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch menus');
