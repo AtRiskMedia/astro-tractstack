@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Component } from 'react';
+import { useState, useCallback, useMemo, Component } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
@@ -150,7 +150,32 @@ export default function StoryKeepDashboard_Analytics({
     if (isDownloading) return;
     try {
       setIsDownloading(true);
-      alert('Leads download not yet implemented for V2');
+
+      const config = window.TRACTSTACK_CONFIG;
+      const response = await fetch(
+        `${config?.backendUrl || ''}/api/v1/admin/leads/download`,
+        {
+          method: 'GET',
+          headers: {
+            'X-Tenant-ID': config?.tenantId || 'default',
+          },
+          credentials: 'include', // Include cookies for auth
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leads.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading leads:', error);
       alert('Failed to download leads. Please try again.');
@@ -212,12 +237,22 @@ export default function StoryKeepDashboard_Analytics({
       <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         {stats.map((item) => {
           const period = item.period;
-          const firstTimeValue = analytics.leads?.[`firstTime${period}`] ?? 0;
-          const returningValue = analytics.leads?.[`returning_${period}`] ?? 0;
-          const firstTimePercentage =
-            analytics.leads?.[`firstTime${period}Percentage`] ?? 0;
-          const returningPercentage =
-            analytics.leads?.[`returning_${period}Percentage`] ?? 0;
+          let firstTimeValue = 0,
+            returningValue = 0;
+          switch (period) {
+            case '24h':
+              firstTimeValue = analytics.dashboard?.dailyAnonymous ?? 0;
+              returningValue = analytics.dashboard?.dailyKnown ?? 0;
+              break;
+            case '7d':
+              firstTimeValue = analytics.dashboard?.weeklyAnonymous ?? 0;
+              returningValue = analytics.dashboard?.weeklyKnown ?? 0;
+              break;
+            case '28d':
+              firstTimeValue = analytics.dashboard?.monthlyAnonymous ?? 0;
+              returningValue = analytics.dashboard?.monthlyKnown ?? 0;
+              break;
+          }
 
           return (
             <div
@@ -282,9 +317,9 @@ export default function StoryKeepDashboard_Analytics({
           </div>
           <dd className="mt-2">
             <div className="text-2xl font-bold tracking-tight text-cyan-700">
-              {analytics.leads?.totalLeads === 0
+              {!analytics.leads?.totalLeads || analytics.leads?.totalLeads === 0
                 ? '-'
-                : formatNumber(analytics.leads?.totalLeads || 0)}
+                : formatNumber(analytics.leads?.totalLeads)}
             </div>
             <div className="mt-1 text-sm text-gray-600">
               Registered leads (emails collected)
