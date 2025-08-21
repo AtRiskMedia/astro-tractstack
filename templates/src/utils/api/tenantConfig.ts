@@ -23,12 +23,12 @@ export async function checkTenantCapacity(
 
     const data = response.data;
 
-    // Validate response structure
+    // Validate response structure to match backend
     if (
-      typeof data.currentCount !== 'number' ||
+      typeof data.available !== 'boolean' ||
+      typeof data.currentTenants !== 'number' ||
       typeof data.maxTenants !== 'number' ||
-      typeof data.available !== 'number' ||
-      !Array.isArray(data.existingTenants)
+      typeof data.availableSlots !== 'number'
     ) {
       throw new Error('Invalid response format from server');
     }

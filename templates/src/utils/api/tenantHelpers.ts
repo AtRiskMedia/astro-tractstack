@@ -27,7 +27,7 @@ export function convertToLocalState(
     tenantId: data.tenantId,
     adminPassword: data.adminPassword,
     name: data.name,
-    email: data.email,
+    email: data.adminEmail,
     tursoEnabled: data.tursoEnabled,
     tursoDatabaseURL: data.tursoDatabaseURL || '',
     tursoAuthToken: data.tursoAuthToken || '',
@@ -44,7 +44,7 @@ export function convertToBackendFormat(
     tenantId: state.tenantId.trim(),
     adminPassword: state.adminPassword.trim(),
     name: state.name.trim(),
-    email: state.email.trim(),
+    adminEmail: state.email.trim(),
     tursoEnabled: state.tursoEnabled,
   };
 

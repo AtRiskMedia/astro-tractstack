@@ -3,18 +3,25 @@ import Layout from '@/layouts/Layout.astro';
 import { getBrandConfig } from '@/stores/brand';
 import { checkBackendHealth } from '@/utils/backend';
 
+// Get backend URL
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
 // Check if multi-tenant is enabled
 const isMultiTenantEnabled =
   import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
-if (!isMultiTenantEnabled) {
+let backendHealthy = true;
+try {
+  const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
+  backendHealthy = healthResponse.isHealthy;
+} catch (error) {
+  backendHealthy = false;
+}
+if (!isMultiTenantEnabled || !backendHealthy) {
   return Astro.redirect('/?error=multi-tenant-disabled');
 }
 
 // Dev mode detection
 const isDev = import.meta.env.DEV;
-
-// Get backend URL
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
 // Get activation token from URL
 const url = new URL(Astro.request.url);
@@ -82,14 +89,6 @@ if (!token) {
   }
 }
 
-let backendHealthy = true;
-try {
-  const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
-  backendHealthy = healthResponse.isHealthy;
-} catch (error) {
-  backendHealthy = false;
-}
-
 const brandConfig = await getBrandConfig('default');
 const title = activationResult.success
   ? 'Tenant Activated | TractStack'
@@ -112,12 +111,7 @@ const getDisplayUrl = (tenantId: string) => {
 };
 ---
 
-<Layout
-  title={title}
-  description="TractStack tenant activation"
-  slug="tenant-activate"
-  brandConfig={brandConfig}
->
+<Layout title={title} slug="tenant-activate" brandConfig={brandConfig}>
   <main
     id="main-content"
     class="flex min-h-screen items-center justify-center bg-gray-50"

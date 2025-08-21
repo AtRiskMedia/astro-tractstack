@@ -39,7 +39,7 @@ export default function RegistrationForm({
         setCapacity(capacityData);
 
         // Check if at capacity
-        if (capacityData.available <= 0) {
+        if (!capacityData.available) {
           onCapacityFull?.();
         }
       } catch (error) {
@@ -58,8 +58,7 @@ export default function RegistrationForm({
 
   const formState = useFormState({
     initialData: initialState,
-    validator: (data) =>
-      validateTenantRegistration(data, capacity?.existingTenants),
+    validator: (data) => validateTenantRegistration(data),
     interceptor: tenantStateIntercept,
     onSave: async (data) => {
       try {
@@ -132,7 +131,7 @@ export default function RegistrationForm({
     );
   }
 
-  if (!capacity || capacity.available <= 0) {
+  if (!capacity) {
     return (
       <div className="mx-auto max-w-2xl p-6">
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
@@ -140,8 +139,8 @@ export default function RegistrationForm({
             Registration Currently Unavailable
           </h3>
           <p className="text-yellow-700">
-            We've reached our current capacity of {capacity?.maxTenants}{' '}
-            tenants. Please check back later for availability.
+            We've reached our current capacity. Please check back later for
+            availability.
           </p>
         </div>
       </div>
@@ -154,7 +153,7 @@ export default function RegistrationForm({
         <div className="rounded-lg bg-white p-8 shadow-lg">
           <div className="mb-8">
             <h2 className="mb-2 text-2xl font-bold text-gray-900">
-              Claim Your TractStack Domain
+              Claim Your TractStack Sandbox
             </h2>
             <p className="text-gray-600">
               Set up your free sandbox environment to try TractStack.
@@ -176,8 +175,8 @@ export default function RegistrationForm({
                 </div>
                 <div className="ml-3">
                   <p className="text-sm text-orange-700">
-                    <strong>Available slots:</strong> {capacity.available} of{' '}
-                    {capacity.maxTenants} slots remaining
+                    {capacity.availableSlots} of {capacity.maxTenants} slots
+                    remaining
                   </p>
                 </div>
               </div>

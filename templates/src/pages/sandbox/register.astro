@@ -19,25 +19,21 @@ const tenantId = 'default'; // For registration, always use default
 try {
   const healthResponse = await checkBackendHealth(goBackend, tenantId, 500);
   if (healthResponse.shouldRedirectToMaint) {
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+    return Astro.redirect(
+      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+    );
   }
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const brandConfig = await getBrandConfig('default');
 const title = 'Register New Tenant | TractStack';
 ---
 
-<Layout
-  title={title}
-  description="Register a new TractStack tenant for sandbox testing"
-  storykeep={true}
-  slug="sandbox-register"
-  brandConfig={brandConfig}
->
+<Layout title={title} slug="sandbox-register" brandConfig={brandConfig}>
   <main id="main-content" class="min-h-screen bg-gray-50">
     <div class="py-12">
       <RegistrationForm

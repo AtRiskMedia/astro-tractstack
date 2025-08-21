@@ -2,20 +2,44 @@ export interface TenantProvisioningData {
   tenantId: string;
   adminPassword: string;
   name: string;
-  email: string;
+  adminEmail: string;
   tursoEnabled: boolean;
   tursoDatabaseURL?: string;
   tursoAuthToken?: string;
 }
 
 export interface TenantCapacity {
-  currentCount: number;
+  available: boolean;
+  currentTenants: number;
   maxTenants: number;
-  available: number;
+  availableSlots: number;
 }
 
 export interface ActivationRequest {
   token: string;
+}
+
+export interface TenantActivationRequest {
+  token: string;
+}
+
+export interface TenantProvisioningResponse {
+  message: string;
+  token: string;
+}
+
+export interface TenantRegistrationState {
+  tenantId: string;
+  adminPassword: string;
+  name: string;
+  email: string;
+  tursoEnabled: boolean;
+  tursoDatabaseURL: string;
+  tursoAuthToken: string;
+}
+
+export interface TenantValidationErrors {
+  [key: string]: string;
 }
 
 // Validation functions matching backend
@@ -49,45 +73,4 @@ export function validateTenantId(tenantId: string): {
   }
 
   return { valid: true };
-}
-
-export interface TenantProvisioningData {
-  tenantId: string;
-  adminPassword: string;
-  name: string;
-  email: string;
-  tursoEnabled: boolean;
-  tursoDatabaseURL?: string;
-  tursoAuthToken?: string;
-}
-
-export interface TenantCapacity {
-  currentCount: number;
-  maxTenants: number;
-  available: number;
-  existingTenants: string[];
-}
-
-export interface TenantActivationRequest {
-  token: string;
-}
-
-export interface TenantProvisioningResponse {
-  message: string;
-  token: string;
-}
-
-// Form state for tenant registration (extends existing)
-export interface TenantRegistrationState {
-  tenantId: string;
-  adminPassword: string;
-  name: string;
-  email: string;
-  tursoEnabled: boolean;
-  tursoDatabaseURL: string;
-  tursoAuthToken: string;
-}
-
-export interface TenantValidationErrors {
-  [key: string]: string;
 }
