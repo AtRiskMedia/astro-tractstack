@@ -58,12 +58,12 @@ const createOrphanAnalysisStore = () => {
     listen: function (callback: any) {
       return this.subscribe(callback);
     },
-    notify: function () { },
-    off: function () { },
+    notify: function () {},
+    off: function () {},
     get value() {
       return this.get();
     },
-    set: function () { }, // Orphan store is read-only for components
+    set: function () {}, // Orphan store is read-only for components
   };
 
   return store;
