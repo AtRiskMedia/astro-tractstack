@@ -480,7 +480,6 @@ export default function ResourceBulkIngest({
     return JSON.stringify(examples, null, 2);
   }, [knownResources]);
 
-  // Handle bulk save
   const handleSave = useCallback(async () => {
     if (validationResult.validResources.length === 0 || isProcessing) return;
 
@@ -505,11 +504,20 @@ export default function ResourceBulkIngest({
           actionLisp: resource.actionLisp,
         };
 
-        await saveResourceWithStateUpdate(
-          window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          resourceState,
-          resourceState
-        );
+        // Add timeout protection to the save operation
+        await Promise.race([
+          saveResourceWithStateUpdate(
+            window.TRACTSTACK_CONFIG?.tenantId || 'default',
+            resourceState,
+            resourceState
+          ),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Save operation timed out')),
+              10000
+            )
+          ),
+        ]);
 
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
