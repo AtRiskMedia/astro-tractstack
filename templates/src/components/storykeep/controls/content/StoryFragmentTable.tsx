@@ -74,8 +74,14 @@ const StoryFragmentTable = ({
 
   // Helper function to check if delete should be disabled
   const shouldDisableDelete = (item: FullContentMapItem): boolean => {
-    // Always disable if orphan data hasn't loaded yet OR storyFragments data isn't available
-    if (!orphanState.data || !orphanState.data.storyFragments) {
+    // ALWAYS disable if orphan analysis is not complete
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.storyFragments ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
       return true;
     }
 
@@ -91,7 +97,13 @@ const StoryFragmentTable = ({
 
   // Helper function to get delete tooltip
   const getDeleteTooltip = (item: FullContentMapItem): string => {
-    if (!orphanState.data || !orphanState.data.storyFragments) {
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.storyFragments ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
       return 'Loading usage analysis...';
     }
 

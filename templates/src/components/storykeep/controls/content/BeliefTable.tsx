@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
@@ -57,8 +57,15 @@ export default function BeliefTable({
 
   // Check if delete should be disabled
   const shouldDisableDelete = (belief: BeliefNode): boolean => {
-    if (!orphanState.data) {
-      return true; // Disable if no orphan data loaded yet
+    // ALWAYS disable if orphan analysis is not complete
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.beliefs ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
+      return true;
     }
 
     const usage = getBeliefUsage(belief.id);
@@ -67,7 +74,13 @@ export default function BeliefTable({
 
   // Helper function to get delete tooltip
   const getDeleteTooltip = (belief: BeliefNode): string => {
-    if (!orphanState.data) {
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.beliefs ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
       return 'Loading usage analysis...';
     }
 
@@ -289,11 +302,10 @@ export default function BeliefTable({
                             onClick={() => canDelete && handleDelete(belief)}
                             disabled={!canDelete || isDeleting === belief.id}
                             title={deleteTooltip}
-                            className={`transition-colors ${
-                              canDelete && isDeleting !== belief.id
-                                ? 'text-red-600 hover:text-red-900'
-                                : 'cursor-not-allowed text-gray-300'
-                            }`}
+                            className={`transition-colors ${canDelete && isDeleting !== belief.id
+                              ? 'text-red-600 hover:text-red-900'
+                              : 'cursor-not-allowed text-gray-300'
+                              }`}
                           >
                             {isDeleting === belief.id ? (
                               <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />

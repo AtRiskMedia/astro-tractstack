@@ -71,8 +71,15 @@ export default function MenuTable({
 
   // Check if delete should be disabled
   const shouldDisableDelete = (menu: FullContentMapItem): boolean => {
-    if (!orphanState.data) {
-      return true; // Disable if no orphan data loaded yet
+    // ALWAYS disable if orphan analysis is not complete
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.menus ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
+      return true;
     }
 
     const usage = getMenuUsage(menu.id);
@@ -81,7 +88,13 @@ export default function MenuTable({
 
   // Helper function to get delete tooltip
   const getDeleteTooltip = (menu: FullContentMapItem): string => {
-    if (!orphanState.data) {
+    if (
+      !orphanState ||
+      !orphanState.data ||
+      !orphanState.data.menus ||
+      orphanState.isLoading ||
+      orphanState.data.status !== 'complete'
+    ) {
       return 'Loading usage analysis...';
     }
 
@@ -292,11 +305,10 @@ export default function MenuTable({
                             onClick={() => canDelete && handleDelete(menu)}
                             disabled={!canDelete || isDeleting === menu.id}
                             title={deleteTooltip}
-                            className={`transition-colors ${
-                              canDelete && isDeleting !== menu.id
-                                ? 'text-red-600 hover:text-red-900'
-                                : 'cursor-not-allowed text-gray-300'
-                            }`}
+                            className={`transition-colors ${canDelete && isDeleting !== menu.id
+                              ? 'text-red-600 hover:text-red-900'
+                              : 'cursor-not-allowed text-gray-300'
+                              }`}
                           >
                             {isDeleting === menu.id ? (
                               <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />

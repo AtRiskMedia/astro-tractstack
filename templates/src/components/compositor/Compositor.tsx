@@ -10,10 +10,12 @@ import {
   preferredThemeStore,
   codehookMapStore,
   brandColourStore,
+  hasArtpacksStore
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
 import Node from './Node';
+import { ARTPACKS } from "@/constants/brandThemes";
 import type { LoadData } from '@/types/compositorTypes';
 import type {
   Theme,
@@ -67,6 +69,7 @@ export const Compositor = (props: CompositorProps) => {
   // Initialize nodes tree and set up subscriptions
   useEffect(() => {
     getCtx(props).buildNodesTreeFromRowDataMadeNodes(props.nodes);
+    hasArtpacksStore.set(ARTPACKS);
     setInitialized(true);
 
     // Stop initial loading after initialization
@@ -101,9 +104,8 @@ export const Compositor = (props: CompositorProps) => {
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${
-        isLoading ? 'opacity-60' : 'opacity-100'
-      }`}
+      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
+        }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),

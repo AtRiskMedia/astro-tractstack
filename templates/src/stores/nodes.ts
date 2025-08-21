@@ -70,7 +70,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() {}
+  constructor() { }
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -340,7 +340,7 @@ export class NodesContext {
         handleClickEventDefault(node, dblClick, this.clickedParentLayer.get());
         break;
       case `text`:
-        if (dblClick && ![`Pane`, `Markdown`].includes(node.nodeType)) {
+        if (dblClick && ![`Markdown`].includes(node.nodeType)) {
           this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(
             node,
@@ -348,12 +348,10 @@ export class NodesContext {
             this.clickedParentLayer.get()
           );
         } else {
-          // if (![`Pane`, `Markdown`].includes(node.nodeType)) {
           handleClickEventDefault(
             node,
             dblClick,
             this.clickedParentLayer.get(),
-            true
           );
         }
         break;
@@ -535,11 +533,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-            node,
-            node.tagName as Tag,
-            tagName,
-            offset ? tagNames[offset - 1] : undefined
-          )
+          node,
+          node.tagName as Tag,
+          tagName,
+          offset ? tagNames[offset - 1] : undefined
+        )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -775,10 +773,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-      {
-        heldBeliefs: {},
-        withheldBeliefs: {},
-      };
+    {
+      heldBeliefs: {},
+      withheldBeliefs: {},
+    };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -862,11 +860,10 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
-                ? addHoverPrefix(classesHoverPayload[0])
-                : ``
-            }`;
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
+              ? addHoverPrefix(classesHoverPayload[0])
+              : ``
+              }`;
           }
           const closestPaneId = this.getClosestNodeTypeFromId(
             nodeId,
