@@ -4,6 +4,111 @@ import type { RefObject } from 'react';
 import type { MenuNode } from '@/types/tractstack';
 
 let progressInterval: NodeJS.Timeout | null = null;
+let safetyTimeout: NodeJS.Timeout | null = null;
+
+export function startLoadingAnimation() {
+  const loadingIndicator = document.getElementById(
+    'loading-indicator'
+  ) as HTMLElement;
+
+  if (
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
+    loadingIndicator
+  ) {
+    // Clear any existing safety timeout
+    if (safetyTimeout !== null) {
+      clearTimeout(safetyTimeout);
+      safetyTimeout = null;
+    }
+
+    loadingIndicator.style.transform = 'scaleX(0)';
+    loadingIndicator.style.display = 'block';
+
+    let progress = 0;
+    progressInterval = setInterval(() => {
+      progress += 2;
+      if (progress > 90) {
+        if (progressInterval !== null) {
+          clearInterval(progressInterval);
+        }
+      }
+      loadingIndicator.style.transform = `scaleX(${progress / 100})`;
+    }, 20);
+
+    // AUTOMATIC SHUTOFF: Always stop after 10 seconds
+    safetyTimeout = setTimeout(() => {
+      stopLoadingAnimation();
+    }, 10000);
+  }
+}
+
+export function stopLoadingAnimation() {
+  const loadingIndicator = document.getElementById(
+    'loading-indicator'
+  ) as HTMLElement;
+  const content = document.getElementById('content') as HTMLElement;
+
+  // Clear safety timeout
+  if (safetyTimeout !== null) {
+    clearTimeout(safetyTimeout);
+    safetyTimeout = null;
+  }
+
+  if (
+    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
+    loadingIndicator
+  ) {
+    if (progressInterval !== null) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    loadingIndicator.style.transform = 'scaleX(1)';
+    content.style.opacity = '1';
+
+    setTimeout(() => {
+      loadingIndicator.style.display = 'none';
+      loadingIndicator.style.transform = 'scaleX(0)';
+    }, 300);
+  }
+}
+
+// Emergency function for debugging stuck loading states
+export function emergencyStopAllLoading() {
+  console.warn('EMERGENCY: Force stopping all loading animations');
+
+  // Clear timers
+  if (progressInterval !== null) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
+  if (safetyTimeout !== null) {
+    clearTimeout(safetyTimeout);
+    safetyTimeout = null;
+  }
+
+  // Force hide loading indicator
+  const loadingIndicator = document.getElementById('loading-indicator');
+  if (loadingIndicator) {
+    loadingIndicator.style.display = 'none';
+    loadingIndicator.style.transform = 'scaleX(0)';
+  }
+
+  // Reset content opacity
+  const content = document.getElementById('content');
+  if (content) {
+    content.style.opacity = '1';
+  }
+
+  // Hide any spinning animations
+  document.querySelectorAll('[class*="animate-spin"]').forEach((el) => {
+    (el as HTMLElement).style.display = 'none';
+  });
+}
+
+// Make emergency function available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).emergencyStopAllLoading = emergencyStopAllLoading;
+}
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(` `);
@@ -116,55 +221,6 @@ export function joinUrlPaths(base: string, path: string): string {
   const trimmedPath = path.startsWith('/') ? path.slice(1) : path;
   // Join with a single slash
   return `${trimmedBase}/${trimmedPath}`;
-}
-
-export function startLoadingAnimation() {
-  const loadingIndicator = document.getElementById(
-    'loading-indicator'
-  ) as HTMLElement;
-
-  if (
-    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
-    loadingIndicator
-  ) {
-    loadingIndicator.style.transform = 'scaleX(0)';
-    loadingIndicator.style.display = 'block';
-    //content.style.opacity = '0.5';
-
-    let progress = 0;
-    progressInterval = setInterval(() => {
-      progress += 2;
-      if (progress > 90) {
-        if (progressInterval !== null) {
-          clearInterval(progressInterval);
-        }
-      }
-      loadingIndicator.style.transform = `scaleX(${progress / 100})`;
-    }, 20);
-  }
-}
-
-export function stopLoadingAnimation() {
-  const loadingIndicator = document.getElementById(
-    'loading-indicator'
-  ) as HTMLElement;
-  const content = document.getElementById('content') as HTMLElement;
-
-  if (
-    window.matchMedia('(prefers-reduced-motion: no-preference)').matches &&
-    loadingIndicator
-  ) {
-    if (progressInterval !== null) {
-      clearInterval(progressInterval);
-    }
-    loadingIndicator.style.transform = 'scaleX(1)';
-    content.style.opacity = '1';
-
-    setTimeout(() => {
-      loadingIndicator.style.display = 'none';
-      loadingIndicator.style.transform = 'scaleX(0)';
-    }, 300);
-  }
 }
 
 export function isDeepEqual(obj1: any, obj2: any, excludeKeys: string[] = []) {
