@@ -205,9 +205,9 @@ const StoryFragmentOpenGraphPanel = ({
       if (storedData) {
         initialTopics = Array.isArray(storedData.topics)
           ? storedData.topics.map((t) => ({
-            id: typeof t.id === 'string' ? parseInt(t.id, 10) : (t.id ?? -1),
-            title: t.title,
-          }))
+              id: typeof t.id === 'string' ? parseInt(t.id, 10) : (t.id ?? -1),
+              title: t.title,
+            }))
           : [];
         initialDescription = storedData.description || '';
         setDraftTopics(initialTopics);
@@ -541,14 +541,15 @@ const StoryFragmentOpenGraphPanel = ({
                 type="text"
                 value={draftTitle}
                 onChange={handleTitleChange}
-                className={`w-full rounded-md border px-2 py-1 pr-16 ${charCount < 5
+                className={`w-full rounded-md border px-2 py-1 pr-16 ${
+                  charCount < 5
                     ? 'border-red-500 bg-red-50'
                     : isValid
                       ? 'border-green-500 bg-green-50'
                       : warning
                         ? 'border-yellow-500 bg-yellow-50'
                         : 'border-gray-300'
-                  }`}
+                }`}
                 placeholder="Enter story fragment title (50-60 characters recommended)"
               />
               <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
@@ -560,14 +561,15 @@ const StoryFragmentOpenGraphPanel = ({
                   <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
                 ) : null}
                 <span
-                  className={`text-sm ${charCount < 5
+                  className={`text-sm ${
+                    charCount < 5
                       ? 'text-red-500'
                       : isValid
                         ? 'text-green-500'
                         : warning
                           ? 'text-yellow-500'
                           : 'text-gray-500'
-                    }`}
+                  }`}
                 >
                   {charCount}/70
                 </span>
@@ -858,10 +860,10 @@ const StoryFragmentOpenGraphPanel = ({
                           existingTopic.title.toLowerCase()
                       )
                   ).length === 0 && (
-                      <p className="text-xs italic text-gray-500">
-                        No additional topics available.
-                      </p>
-                    )}
+                    <p className="text-xs italic text-gray-500">
+                      No additional topics available.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
