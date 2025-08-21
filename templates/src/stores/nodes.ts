@@ -1983,8 +1983,10 @@ export class NodesContext {
   getPaneImageFileIds(paneId: string): string[] {
     const paneNode = this.allNodes.get().get(paneId);
     if (!paneNode || paneNode.nodeType !== 'Pane') return [];
+
     const allNodes = this.getNodesRecursively(paneNode);
-    const fileNodes = allNodes
+
+    const embeddedFileIds = allNodes
       .filter(
         (node): node is FlatNode =>
           node.nodeType === 'TagElement' &&
@@ -1995,7 +1997,20 @@ export class NodesContext {
       )
       .map((node) => node.fileId)
       .filter((id): id is string => id !== undefined);
-    return fileNodes;
+
+    const bgFileIds = allNodes
+      .filter(
+        (node): node is any =>
+          node.nodeType === 'BgPane' &&
+          'type' in node &&
+          node.type === 'background-image' &&
+          'fileId' in node &&
+          typeof node.fileId === 'string'
+      )
+      .map((node) => node.fileId)
+      .filter((id): id is string => id !== undefined);
+
+    return [...embeddedFileIds, ...bgFileIds];
   }
 
   getPaneImagesMap(): Record<string, string[]> {

@@ -40,24 +40,6 @@ interface SaveModalProps {
   onClose: () => void;
 }
 
-// Helper function to extract fileIds from pane tree
-function extractFileIdsFromPaneTree(ctx: any, paneId: string): string[] {
-  const fileIds: string[] = [];
-  const allNodes = ctx.allNodes.get();
-
-  // Get all child nodes of the pane
-  const childNodeIds = ctx.getChildNodeIDs(paneId);
-
-  for (const nodeId of childNodeIds) {
-    const node = allNodes.get(nodeId);
-    if (node && 'fileId' in node && node.fileId) {
-      fileIds.push(node.fileId);
-    }
-  }
-
-  return fileIds;
-}
-
 export default function SaveModal({
   show,
   slug,
@@ -453,8 +435,12 @@ export default function SaveModal({
           // Extract pane<>file relationships from saved panes
           const relationships = [];
           for (const paneNode of dirtyPanes) {
-            const fileIds = extractFileIdsFromPaneTree(ctx, paneNode.id);
+            const fileIds = ctx.getPaneImageFileIds(paneNode.id);
             relationships.push({
+              paneId: paneNode.id,
+              fileIds: fileIds,
+            });
+            console.log({
               paneId: paneNode.id,
               fileIds: fileIds,
             });

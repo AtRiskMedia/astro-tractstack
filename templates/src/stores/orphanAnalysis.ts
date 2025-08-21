@@ -58,12 +58,12 @@ const createOrphanAnalysisStore = () => {
     listen: function (callback: any) {
       return this.subscribe(callback);
     },
-    notify: function () {},
-    off: function () {},
+    notify: function () { },
+    off: function () { },
     get value() {
       return this.get();
     },
-    set: function () {}, // Orphan store is read-only for components
+    set: function () { }, // Orphan store is read-only for components
   };
 
   return store;
@@ -239,8 +239,6 @@ function startPolling(tenantId: string): void {
     lastAttemptTime: startTime,
   });
 
-  console.log(`Starting orphan analysis polling for tenant: ${tenantId}`);
-
   // Start the first poll immediately
   scheduleNextPoll(tenantId);
 }
@@ -281,10 +279,6 @@ function scheduleNextPoll(tenantId: string): void {
   // Schedule the next poll
   const timeoutId = setTimeout(() => executePoll(tenantId), delay);
   pollingIntervals.set(tenantId, timeoutId);
-
-  console.log(
-    `Scheduled next poll for tenant ${tenantId}: attempt ${state.attempts + 1}/${MAX_POLLING_ATTEMPTS} in ${delay}ms`
-  );
 }
 
 async function executePoll(tenantId: string): Promise<void> {
@@ -296,10 +290,6 @@ async function executePoll(tenantId: string): Promise<void> {
   state.lastAttemptTime = Date.now();
 
   try {
-    console.log(
-      `Executing orphan analysis poll: attempt ${state.attempts}/${MAX_POLLING_ATTEMPTS} for tenant ${tenantId}`
-    );
-
     const data = await fetchOrphanAnalysis();
 
     // Update tenant state with successful fetch
@@ -314,7 +304,6 @@ async function executePoll(tenantId: string): Promise<void> {
 
     // Check if analysis is complete
     if (data.status === 'complete') {
-      console.log(`Orphan analysis completed for tenant ${tenantId}`);
       stopPolling(tenantId);
       return;
     }
@@ -386,8 +375,6 @@ function stopPolling(tenantId: string): void {
 
   // Clean up polling state
   pollingState.delete(tenantId);
-
-  console.log(`Stopped orphan analysis polling for tenant: ${tenantId}`);
 }
 
 export function clearOrphanAnalysis(): void {
