@@ -305,10 +305,11 @@ export default function MenuTable({
                             onClick={() => canDelete && handleDelete(menu)}
                             disabled={!canDelete || isDeleting === menu.id}
                             title={deleteTooltip}
-                            className={`transition-colors ${canDelete && isDeleting !== menu.id
-                              ? 'text-red-600 hover:text-red-900'
-                              : 'cursor-not-allowed text-gray-300'
-                              }`}
+                            className={`transition-colors ${
+                              canDelete && isDeleting !== menu.id
+                                ? 'text-red-600 hover:text-red-900'
+                                : 'cursor-not-allowed text-gray-300'
+                            }`}
                           >
                             {isDeleting === menu.id ? (
                               <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-red-600" />

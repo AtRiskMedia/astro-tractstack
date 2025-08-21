@@ -1,4 +1,4 @@
-import type { ArtpacksStore } from "@/types/tractstack";
+import type { ArtpacksStore } from '@/types/tractstack';
 
 // Brand Colors --> POSITIONAL MAPPING SYSTEM:
 // Position 1: Very dark (primary black) - pairs with 2,8 for text contrast
@@ -98,36 +98,36 @@ export function isCustomTheme(theme: string): boolean {
 
 export const ARTPACKS: ArtpacksStore = {
   kCz: [
-    "captainBreakfast",
-    "cleanDrips",
-    "crispwaves",
-    "dragon",
-    "dragonSkin",
-    "nightcity",
-    "pattern1",
-    "pattern2",
-    "skindrips",
-    "slimetime",
-    "snake",
-    "toxicshock",
-    "tractstack",
-    "tripdrips",
-    "wavedrips"
+    'captainBreakfast',
+    'cleanDrips',
+    'crispwaves',
+    'dragon',
+    'dragonSkin',
+    'nightcity',
+    'pattern1',
+    'pattern2',
+    'skindrips',
+    'slimetime',
+    'snake',
+    'toxicshock',
+    'tractstack',
+    'tripdrips',
+    'wavedrips',
   ],
   t8k: [
-    "beach",
-    "blast",
-    "bokeh",
-    "cartoon",
-    "darkeggshell",
-    "explosion",
-    "floral",
-    "flower",
-    "foliage",
-    "mist",
-    "portal",
-    "storytime",
-    "tacky",
-    "wallpaper"
-  ]
+    'beach',
+    'blast',
+    'bokeh',
+    'cartoon',
+    'darkeggshell',
+    'explosion',
+    'floral',
+    'flower',
+    'foliage',
+    'mist',
+    'portal',
+    'storytime',
+    'tacky',
+    'wallpaper',
+  ],
 };
