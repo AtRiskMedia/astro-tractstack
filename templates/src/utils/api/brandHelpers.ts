@@ -17,8 +17,8 @@ export function convertToLocalState(
       ? brandConfig.BRAND_COLOURS.split(',').map((color) => color.trim())
       : getThemeColors('Default'), // Fallback to Default theme
     openDemo: brandConfig.OPEN_DEMO ?? false,
-    homeSlug: brandConfig.HOME_SLUG ?? 'home',
-    tractstackHomeSlug: brandConfig.TRACTSTACK_HOME_SLUG ?? 'tractstack',
+    homeSlug: brandConfig.HOME_SLUG ?? 'hello',
+    tractstackHomeSlug: brandConfig.TRACTSTACK_HOME_SLUG ?? 'HELLO',
     theme: brandConfig.THEME ?? 'Default',
     socials: brandConfig.SOCIALS
       ? brandConfig.SOCIALS.split(',').filter((social) => social.trim())
