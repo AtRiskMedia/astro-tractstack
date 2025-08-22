@@ -1,8 +1,6 @@
 import type { APIContext, MiddlewareNext } from '@/types/astro';
 
 interface Locals {
-  session?: Record<string, any>;
-  fullContentMap?: any[];
   tenant?: {
     id: string;
     domain: string | null;

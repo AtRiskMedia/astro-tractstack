@@ -12,6 +12,7 @@ import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryKeepDashboardAnalyticsProps {
   fullContentMap: FullContentMapItem[];
+  initializing?: boolean;
 }
 
 // Helper component for error boundary
@@ -77,6 +78,7 @@ const DurationSelector = ({
 
 export default function StoryKeepDashboard_Analytics({
   fullContentMap,
+  initializing = false,
 }: StoryKeepDashboardAnalyticsProps) {
   const $epinetCustomFilters = useStore(epinetCustomFilters);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -207,6 +209,8 @@ export default function StoryKeepDashboard_Analytics({
       period: '28d',
     },
   ];
+
+  if (initializing) return null
 
   return (
     <div className="w-full">
@@ -340,8 +344,8 @@ export default function StoryKeepDashboard_Analytics({
           Activity Over Time
         </h3>
         {analytics.dashboard &&
-        analytics.dashboard.line &&
-        analytics.dashboard.line.length > 0 ? (
+          analytics.dashboard.line &&
+          analytics.dashboard.line.length > 0 ? (
           <DashboardActivity data={analytics.dashboard.line} />
         ) : (
           <div className="flex h-64 w-full items-center justify-center rounded-lg bg-gray-100">
@@ -383,7 +387,7 @@ export default function StoryKeepDashboard_Analytics({
           analytics.epinet.nodes &&
           analytics.epinet.links ? (
           analytics.epinet.nodes.length > 0 &&
-          analytics.epinet.links.length > 0 ? (
+            analytics.epinet.links.length > 0 ? (
             <ErrorBoundary
               fallback={
                 <div className="rounded-lg bg-red-50 p-4 text-red-800">

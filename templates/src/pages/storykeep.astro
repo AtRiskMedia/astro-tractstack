@@ -43,6 +43,11 @@ const brandConfig = await getBrandConfig(
 );
 const initializing = !brandConfig.SITE_INIT;
 
+// Redirect to branding page during initial setup
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
+
 const title = 'Analytics | StoryKeep';
 
 let fullContentMap;
@@ -75,7 +80,9 @@ try {
       <StoryKeepDashboard_Analytics
         client:only="react"
         fullContentMap={fullContentMap}
+        initializing={initializing}
       />
     </div>
   </main>
 </Layout>
+

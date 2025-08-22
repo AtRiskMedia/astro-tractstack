@@ -1,6 +1,6 @@
 ---
-// V2 Dynamic Collections Route - Adapted from V1 with V2 API calls
 import CustomRoutes, { routes } from '@/custom/CustomRoutes.astro';
+import type { ResourceNode } from '@/types/compositorTypes';
 
 const { param1 } = Astro.params;
 const route = `collections`;
@@ -39,8 +39,10 @@ try {
 
 // Check if the specific resource exists
 const targetSlug = `${route}-${param1}`;
+console.log(`check category vs categorySlug`, resources);
 const resourceExists = resources.some(
-  (resource) => resource.categorySlug === route && resource.slug === targetSlug
+  (resource: ResourceNode) =>
+    resource.category === route && resource.slug === targetSlug
 );
 
 if (!resourceExists) {

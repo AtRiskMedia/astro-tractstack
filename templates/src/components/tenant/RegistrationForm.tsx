@@ -76,10 +76,6 @@ export default function RegistrationForm({
         throw error;
       }
     },
-    unsavedChanges: {
-      enableBrowserWarning: true,
-      browserWarningMessage: 'Your tenant registration will be lost!',
-    },
   });
 
   const { state, updateField, errors } = formState;

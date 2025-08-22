@@ -33,36 +33,41 @@ export default function StoryKeepDashboard({
   const tabs: Tab[] = isCurrentlyInitializing
     ? [{ id: 'branding', name: 'Welcome to your StoryKeep', current: true }]
     : [
-        {
-          id: 'analytics',
-          name: 'Analytics',
-          current: activeTab === 'analytics',
-        },
-        {
-          id: 'content',
-          name: 'Content',
-          current: activeTab === 'content',
-        },
-        {
-          id: 'branding',
-          name: 'Branding',
-          current: activeTab === 'branding',
-        },
-        ...(role === 'admin'
-          ? [
-              {
-                id: 'advanced',
-                name: 'Advanced',
-                current: activeTab === 'advanced',
-              },
-            ]
-          : []),
-      ];
+      {
+        id: 'analytics',
+        name: 'Analytics',
+        current: activeTab === 'analytics',
+      },
+      {
+        id: 'content',
+        name: 'Content',
+        current: activeTab === 'content',
+      },
+      {
+        id: 'branding',
+        name: 'Branding',
+        current: activeTab === 'branding',
+      },
+      ...(role === 'admin'
+        ? [
+          {
+            id: 'advanced',
+            name: 'Advanced',
+            current: activeTab === 'advanced',
+          },
+        ]
+        : []),
+    ];
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  useEffect(() => {
+    if (initializing && !$brandConfig) {
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
+    }
+  }, [initializing, $brandConfig]);
   // Load brand config when branding tab is accessed
   useEffect(() => {
     if (activeTab === 'branding' && !$brandConfig) {
@@ -80,7 +85,7 @@ export default function StoryKeepDashboard({
 
   return (
     <div className="md:mb-18 mb-12 w-full">
-      {isCurrentlyInitializing && (
+      {isCurrentlyInitializing ? (
         <div className="mb-8 rounded-md border border-dashed border-orange-200 bg-orange-50 p-6">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -99,14 +104,13 @@ export default function StoryKeepDashboard({
             </div>
           </div>
         </div>
-      )}
-
-      {!isCurrentlyInitializing && (
-        <StoryKeepDashboard_Wizard
-          fullContentMap={fullContentMap}
-          homeSlug={homeSlug}
-        />
-      )}
+      ) :
+        (
+          <StoryKeepDashboard_Wizard
+            fullContentMap={fullContentMap}
+            homeSlug={homeSlug}
+          />
+        )}
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">

@@ -24,12 +24,14 @@ try {
   });
 
   if (!statusResponse.ok) {
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+    return Astro.redirect(
+      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+    );
   }
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const userIsAuthenticated = isAuthenticated(Astro);
@@ -52,12 +54,13 @@ try {
   );
   homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 ---
 
-<Layout title={title} storykeep={true} slug="storykeep">
+<Layout title={title} slug="storykeep">
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
       <StoryKeepDashboard
@@ -67,19 +70,6 @@ try {
         activeTab="branding"
         role={role}
         initializing={initializing}
-        onAnalyticsReady={(
-          analytics,
-          downloadFn,
-          durationHelper,
-          setDuration
-        ) => {
-          window.storykeepAnalyticsData = {
-            analytics,
-            downloadFn,
-            durationHelper,
-            setDuration,
-          };
-        }}
       />
       <StoryKeepDashboard_Branding
         client:only="react"

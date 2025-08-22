@@ -5,7 +5,7 @@ interface AnalyticsEvent {
   contentId: string;
   contentType: 'Pane' | 'StoryFragment';
   eventVerb: string;
-  duration?: number; // Added for READ/GLOSSED events
+  duration?: number;
 }
 
 const paneViewTimes = new Map<string, number>();
@@ -17,7 +17,6 @@ let globalObserver: IntersectionObserver | null = null;
 
 function waitForSessionReady(): Promise<void> {
   return new Promise((resolve) => {
-    // The new sse.ts fires this event after the handshake completes.
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
       resolve();
     } else {

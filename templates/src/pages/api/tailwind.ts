@@ -7,11 +7,6 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const { dirtyPaneIds, dirtyClasses } = await request.json();
 
-    console.log('[V2 Tailwind] Received request:', {
-      dirtyPaneIds: dirtyPaneIds?.length || 0,
-      dirtyClasses: dirtyClasses?.length || 0,
-    });
-
     const tenantId =
       request.headers.get('X-Tenant-ID') ||
       import.meta.env.PUBLIC_TENANTID ||
@@ -75,20 +70,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const { classes: cleanClasses } = await classesResponse.json();
-    console.log(
-      '[V2 Tailwind] Got clean classes from Go backend:',
-      cleanClasses?.length || 0
-    );
 
     // Combine clean classes from backend with dirty classes from frontend
     const allClasses = [
       ...new Set([...(cleanClasses || []), ...(dirtyClasses || [])]),
     ];
-
-    console.log(
-      '[V2 Tailwind] Total classes for CSS generation:',
-      allClasses.length
-    );
 
     // Generate CSS using JIT
     const tailwindCss = createTailwindcss({ tailwindConfig });
@@ -96,12 +82,6 @@ export const POST: APIRoute = async ({ request }) => {
     const generatedCss = await tailwindCss.generateStylesFromContent(
       `@tailwind base; @tailwind utilities;`,
       htmlContent
-    );
-
-    console.log(
-      '[V2 Tailwind] Generated CSS size:',
-      generatedCss.length,
-      'bytes'
     );
 
     // Return result (SaveModal will handle the update call logging)
@@ -119,7 +99,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
     );
   } catch (error) {
-    console.error('[V2 Tailwind] Error:', error);
+    console.error('Tailwind Error:', error);
     return new Response(
       JSON.stringify({
         success: false,

@@ -30,12 +30,14 @@ try {
   });
 
   if (!statusResponse.ok) {
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+    return Astro.redirect(
+      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+    );
   }
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 
 const userIsAuthenticated = isAuthenticated(Astro);
@@ -45,6 +47,11 @@ const brandConfig = await getBrandConfig(
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
 );
 const initializing = !brandConfig.SITE_INIT;
+
+// Redirect to branding page during initial setup
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
 
 const title = 'Advanced | StoryKeep';
 
@@ -57,12 +64,13 @@ try {
   );
   homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
-  const currentPath = Astro.url.pathname;
-  return Astro.redirect(`/maint?from=${encodeURIComponent(currentPath)}`);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
 }
 ---
 
-<Layout title={title} storykeep={true} slug="storykeep">
+<Layout title={title} slug="storykeep">
   <main id="main-content" class="min-h-screen w-full">
     <div class="p-8">
       <StoryKeepDashboard
@@ -72,19 +80,6 @@ try {
         activeTab="advanced"
         role={role}
         initializing={initializing}
-        onAnalyticsReady={(
-          analytics,
-          downloadFn,
-          durationHelper,
-          setDuration
-        ) => {
-          window.storykeepAnalyticsData = {
-            analytics,
-            downloadFn,
-            durationHelper,
-            setDuration,
-          };
-        }}
       />
       <StoryKeepDashboard_Advanced client:only="react" />
     </div>

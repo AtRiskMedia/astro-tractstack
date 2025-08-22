@@ -31,7 +31,14 @@ export interface APIContext {
   redirect: (path: string, status?: number) => Response;
   url: URL;
   clientAddress: string;
-  locals: Record<PropertyKey, any>;
+  locals: {
+    tenant?: {
+      id: string;
+      domain: string | null;
+      isMultiTenant: boolean;
+      isLocalhost: boolean;
+    };
+  };
 }
 
 export interface AstroGlobal {
@@ -44,7 +51,14 @@ export interface AstroGlobal {
   redirect: (path: string, status?: number) => Response;
   url: URL;
   clientAddress: string;
-  locals: Record<PropertyKey, any>;
+  locals: {
+    tenant?: {
+      id: string;
+      domain: string | null;
+      isMultiTenant: boolean;
+      isLocalhost: boolean;
+    };
+  };
 }
 
 export interface MiddlewareNext {
@@ -56,4 +70,17 @@ export interface TractStackConfig {
   includeExamples?: boolean;
   enableMultiTenant?: boolean;
   [key: string]: any;
+}
+
+declare global {
+  namespace App {
+    interface Locals {
+      tenant?: {
+        id: string;
+        domain: string | null;
+        isMultiTenant: boolean;
+        isLocalhost: boolean;
+      };
+    }
+  }
 }
