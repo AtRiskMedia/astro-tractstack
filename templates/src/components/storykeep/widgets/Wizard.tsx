@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
+import { navigate } from 'astro:transitions/client';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { skipWizard } from '@/stores/navigation';
 import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
@@ -50,7 +51,7 @@ const wizardSteps: WizardStep[] = [
     key: 'hasAnyMenu',
     message: "A menu helps visitors navigate. Let's create one now.",
     buttonText: 'Create a Menu',
-    href: '/storykeep/content/menus/create',
+    href: '/storykeep/content?create-menu',
   },
   {
     key: 'hasMenu',
@@ -120,7 +121,7 @@ const wizardSteps: WizardStep[] = [
   },
 ];
 
-export default function StoryKeepDashboard_Wizard({
+export default function Wizard({
   fullContentMap,
   homeSlug,
 }: StoryKeepWizardProps) {
@@ -252,8 +253,8 @@ export default function StoryKeepDashboard_Wizard({
               <span className="font-bold">Next step:</span>{' '}
               {currentStep.message}
             </p>
-            <a
-              href={currentStep.href}
+            <button
+              onClick={() => navigate(currentStep.href)}
               className="inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
             >
               <span>{currentStep.buttonText}</span>
@@ -264,7 +265,7 @@ export default function StoryKeepDashboard_Wizard({
                   clipRule="evenodd"
                 />
               </svg>
-            </a>
+            </button>
           </div>
         </div>
       </div>

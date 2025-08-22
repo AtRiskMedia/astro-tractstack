@@ -30,6 +30,7 @@ import type {
 interface ManageContentProps {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
+  createMenu: boolean;
 }
 
 interface ContentManagementTab {
@@ -52,6 +53,7 @@ const staticContentManagementTabs: ContentManagementTab[] = [
 const ManageContent = ({
   fullContentMap: initialContentMap,
   homeSlug,
+  createMenu,
 }: ManageContentProps) => {
   const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,18 @@ const ManageContent = ({
     resource: ResourceConfig | null;
     category: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (createMenu && !navigationRestored) {
+      // Set manage subtab to 'menus'
+      setActiveTab('menus');
+      handleManageSubtabChange('menus', setActiveTab);
+      // Trigger create menu after short delay
+      setTimeout(() => {
+        setActiveMenuForm('create');
+      }, 100);
+    }
+  }, [createMenu, navigationRestored]);
 
   useEffect(() => {
     if (!brandConfig && !loading) {

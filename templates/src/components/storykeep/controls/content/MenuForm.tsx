@@ -7,7 +7,6 @@ import {
   removeMenuLink,
   updateMenuLink,
 } from '@/utils/api/menuHelpers';
-import { getCtx } from '@/stores/nodes';
 import { createMenu, saveMenu } from '@/utils/api/menuConfig';
 import StringInput from '@/components/form/StringInput';
 import EnumSelect from '@/components/form/EnumSelect';
@@ -57,9 +56,6 @@ export default function MenuForm({
         } else {
           await saveMenu(tenantId, data);
         }
-
-        const ctx = getCtx();
-        ctx.notifyNode('root');
 
         setTimeout(() => {
           onClose?.(true);

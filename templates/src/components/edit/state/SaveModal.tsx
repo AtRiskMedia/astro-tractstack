@@ -733,8 +733,9 @@ export default function SaveModal({
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
-                      }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
+                    }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -771,17 +772,18 @@ export default function SaveModal({
                     <>
                       <a
                         href={visitPageUrl}
-                        className={`rounded px-4 py-2 text-white transition-colors bg-cyan-600 hover:bg-cyan-700`}
+                        className={`rounded bg-cyan-600 px-4 py-2 text-white transition-colors hover:bg-cyan-700`}
                       >
                         Visit Page
                       </a>
                       <button
                         onClick={handleSuccessClose}
                         disabled={isNavigating}
-                        className={`rounded px-4 py-2 text-white transition-colors ${isNavigating
-                          ? 'cursor-not-allowed bg-gray-400'
-                          : 'bg-gray-600 hover:bg-gray-700'
-                          }`}
+                        className={`rounded px-4 py-2 text-white transition-colors ${
+                          isNavigating
+                            ? 'cursor-not-allowed bg-gray-400'
+                            : 'bg-gray-600 hover:bg-gray-700'
+                        }`}
                       >
                         Keep Editing
                       </button>
@@ -790,7 +792,7 @@ export default function SaveModal({
                   {stage === 'ERROR' && (
                     <button
                       onClick={onClose}
-                      className="rounded px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+                      className="rounded bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
                     >
                       Close
                     </button>

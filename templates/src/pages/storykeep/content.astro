@@ -49,6 +49,7 @@ if (initializing) {
 }
 
 const title = 'Content | StoryKeep';
+const createMenu = Astro.url.searchParams.has('create-menu');
 
 let fullContentMap;
 let homeSlug = 'hello';
@@ -81,6 +82,7 @@ try {
         client:only="react"
         fullContentMap={fullContentMap}
         homeSlug={homeSlug}
+        createMenu={createMenu}
       />
     </div>
   </main>

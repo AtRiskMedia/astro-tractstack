@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import ResponsiveLine from './ResponsiveLine';
+import ResponsiveLine from './widgets/ResponsiveLine';
 
 interface DashboardActivityProps {
   data: Array<{

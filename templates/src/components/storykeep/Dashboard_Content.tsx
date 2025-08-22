@@ -12,6 +12,7 @@ import type { FullContentMapItem } from '@/types/tractstack';
 interface StoryKeepDashboardContentProps {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
+  createMenu: boolean;
 }
 
 interface ContentTab {
@@ -27,6 +28,7 @@ const contentTabs: ContentTab[] = [
 const StoryKeepDashboard_Content = ({
   fullContentMap,
   homeSlug,
+  createMenu,
 }: StoryKeepDashboardContentProps) => {
   const [activeContentTab, setActiveContentTab] = useState('webpages');
   const [navigationRestored, setNavigationRestored] = useState(false);
@@ -144,7 +146,11 @@ const StoryKeepDashboard_Content = ({
         );
       case 'manage':
         return (
-          <ManageContent fullContentMap={fullContentMap} homeSlug={homeSlug} />
+          <ManageContent
+            fullContentMap={fullContentMap}
+            homeSlug={homeSlug}
+            createMenu={createMenu}
+          />
         );
       default:
         return null;

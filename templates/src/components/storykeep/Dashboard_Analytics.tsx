@@ -7,7 +7,7 @@ import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import DashboardActivity from './Dashboard_Activity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
-import FetchAnalytics from './FetchAnalytics';
+import FetchAnalytics from './state/FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryKeepDashboardAnalyticsProps {

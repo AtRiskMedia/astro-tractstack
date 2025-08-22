@@ -1021,12 +1021,14 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/Dashboard.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/FetchAnalytics.tsx'),
-      dest: 'src/components/storykeep/FetchAnalytics.tsx',
+      src: resolve(
+        'templates/src/components/storykeep/state/FetchAnalytics.tsx'
+      ),
+      dest: 'src/components/storykeep/state/FetchAnalytics.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/Dashboard_Wizard.tsx'),
-      dest: 'src/components/storykeep/Dashboard_Wizard.tsx',
+      src: resolve('templates/src/components/storykeep/widgets/Wizard.tsx'),
+      dest: 'src/components/storykeep/widgets/Wizard.tsx',
     },
     {
       src: resolve('templates/src/components/storykeep/Dashboard_Advanced.tsx'),
@@ -1051,8 +1053,10 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/Dashboard_Activity.tsx',
     },
     {
-      src: resolve('templates/src/components/storykeep/ResponsiveLine.tsx'),
-      dest: 'src/components/storykeep/ResponsiveLine.tsx',
+      src: resolve(
+        'templates/src/components/storykeep/widgets/ResponsiveLine.tsx'
+      ),
+      dest: 'src/components/storykeep/widgets/ResponsiveLine.tsx',
     },
     {
       src: resolve(

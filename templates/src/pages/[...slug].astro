@@ -37,6 +37,7 @@ const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
 if (paneIds.length === 0) {
+  console.log(`Empty Story Fragment. Redirecting to /storykeep`);
   return Astro.redirect('/storykeep');
 }
 

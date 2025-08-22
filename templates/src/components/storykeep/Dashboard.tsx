@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { classNames } from '@/utils/helpers';
-import StoryKeepDashboard_Wizard from './Dashboard_Wizard';
+import Wizard from './widgets/Wizard';
 import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
 
 interface Tab {
@@ -103,10 +103,7 @@ export default function StoryKeepDashboard({
           </div>
         </div>
       ) : (
-        <StoryKeepDashboard_Wizard
-          fullContentMap={fullContentMap}
-          homeSlug={homeSlug}
-        />
+        <Wizard fullContentMap={fullContentMap} homeSlug={homeSlug} />
       )}
 
       {/* Tab Navigation */}
