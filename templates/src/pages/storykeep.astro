@@ -41,7 +41,6 @@ const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 const brandConfig = await getBrandConfig(
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
 );
-console.log(brandConfig);
 const initializing = !brandConfig.SITE_INIT;
 
 const title = 'Analytics | StoryKeep';
