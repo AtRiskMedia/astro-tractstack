@@ -8,6 +8,7 @@ import {
   transformStoryFragmentForSave,
 } from '@/utils/etl/index';
 import {
+  fullContentMapStore,
   getPendingImageOperation,
   clearPendingImageOperation,
 } from '@/stores/storykeep';
@@ -60,6 +61,8 @@ export default function SaveModal({
 
   // Determine if we're in create mode
   const isCreateMode = slug === 'create';
+
+  const contentMap = fullContentMapStore.get();
 
   // Get backend URL
   const goBackend =
@@ -313,8 +316,11 @@ export default function SaveModal({
                 isContext
               );
 
-              // Determine endpoint based on create mode
-              const isCreatePaneMode = isCreateMode;
+              // Check if this pane exists or is new
+              const paneExistsInBackend = contentMap.some(
+                (item) => item.type === 'Pane' && item.id === paneNode.id
+              );
+              const isCreatePaneMode = !paneExistsInBackend;
               const endpoint = isCreatePaneMode
                 ? `${goBackend}/api/v1/nodes/panes/create`
                 : `${goBackend}/api/v1/nodes/panes/${payload.id}`;
@@ -659,6 +665,25 @@ export default function SaveModal({
     }
   };
 
+  const visitPageUrl = (() => {
+    const ctx = getCtx();
+    const allDirtyNodes = ctx.getDirtyNodes();
+
+    if (isContext) {
+      const dirtyPanes = allDirtyNodes.filter(
+        (node): node is PaneNode => node.nodeType === 'Pane'
+      );
+      const currentSlug = dirtyPanes[0]?.slug || slug;
+      return `/context/${currentSlug}`;
+    } else {
+      const dirtyStoryFragments = allDirtyNodes.filter(
+        (node): node is StoryFragmentNode => node.nodeType === 'StoryFragment'
+      );
+      const currentSlug = dirtyStoryFragments[0]?.slug || slug;
+      return `/${currentSlug}`;
+    }
+  })();
+
   return (
     <Dialog.Root
       open={show}
@@ -708,9 +733,8 @@ export default function SaveModal({
                 </div>
                 <div className="h-2 w-full rounded-full bg-gray-200">
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
+                      }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -742,27 +766,35 @@ export default function SaveModal({
               )}
 
               {(stage === 'COMPLETED' || stage === 'ERROR') && (
-                <div className="flex justify-end">
-                  <button
-                    onClick={
-                      stage === 'COMPLETED' ? handleSuccessClose : onClose
-                    }
-                    disabled={isNavigating}
-                    className={`rounded px-4 py-2 text-white transition-colors ${
-                      isNavigating
-                        ? 'cursor-not-allowed bg-gray-400'
-                        : 'bg-gray-600 hover:bg-gray-700'
-                    }`}
-                  >
-                    {isNavigating ? (
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                        Loading...
-                      </div>
-                    ) : (
-                      'Close'
-                    )}
-                  </button>
+                <div className="flex justify-end gap-2">
+                  {stage === 'COMPLETED' && (
+                    <>
+                      <a
+                        href={visitPageUrl}
+                        className={`rounded px-4 py-2 text-white transition-colors bg-cyan-600 hover:bg-cyan-700`}
+                      >
+                        Visit Page
+                      </a>
+                      <button
+                        onClick={handleSuccessClose}
+                        disabled={isNavigating}
+                        className={`rounded px-4 py-2 text-white transition-colors ${isNavigating
+                          ? 'cursor-not-allowed bg-gray-400'
+                          : 'bg-gray-600 hover:bg-gray-700'
+                          }`}
+                      >
+                        Keep Editing
+                      </button>
+                    </>
+                  )}
+                  {stage === 'ERROR' && (
+                    <button
+                      onClick={onClose}
+                      className="rounded px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white transition-colors"
+                    >
+                      Close
+                    </button>
+                  )}
                 </div>
               )}
             </div>
