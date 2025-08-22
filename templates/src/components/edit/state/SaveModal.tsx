@@ -444,10 +444,6 @@ export default function SaveModal({
               paneId: paneNode.id,
               fileIds: fileIds,
             });
-            console.log({
-              paneId: paneNode.id,
-              fileIds: fileIds,
-            });
           }
 
           if (relationships.some((rel) => rel.fileIds.length > 0)) {

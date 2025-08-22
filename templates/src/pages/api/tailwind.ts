@@ -24,9 +24,11 @@ export const POST: APIRoute = async ({ request }) => {
     // Read tailwind config from project root
     const configPath = path.join(process.cwd(), 'tailwind.config.cjs');
     const configContent = await fs.readFile(configPath, 'utf-8');
-    const tailwindConfig = eval(
-      `(function() { ${configContent.replace('module.exports =', 'return')} })()`
-    );
+    const tailwindConfig = new Function(
+      'module',
+      'exports',
+      configContent + '; return module.exports;'
+    )({ exports: {} }, {});
 
     const goBackend =
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
