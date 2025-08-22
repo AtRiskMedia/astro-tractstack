@@ -1,5 +1,4 @@
 import { TractStackAPI } from '../api';
-import { brandConfigStore } from '@/stores/brand';
 import { convertToLocalState, convertToBackendFormat } from './brandHelpers';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
@@ -9,7 +8,10 @@ export async function saveBrandConfig(
 ): Promise<BrandConfig> {
   const api = new TractStackAPI(tenantId);
   try {
-    const response = await api.put('/api/v1/config/brand', brandConfig);
+    const response = await api.put('/api/v1/config/brand', {
+      ...brandConfig,
+      SITE_INIT: true,
+    });
     if (!response.success) {
       throw new Error(response.error || 'Failed to save brand configuration');
     }
@@ -133,7 +135,6 @@ export async function saveBrandConfigWithStateUpdate(
 
     // Get the complete updated config from backend
     const freshConfig = await getBrandConfig(tenantId);
-    brandConfigStore.set(tenantId, freshConfig);
 
     // Convert updated config back to local state format
     const newLocalState = convertToLocalState(freshConfig);

@@ -1,7 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import CodeHook from '@/custom/CodeHook.astro';
-import { getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 import { getOrSetSessionId } from '@/lib/session';
@@ -96,7 +96,6 @@ if (!brandConfig.SITE_INIT) {
 
 <Layout
   title={storyfragmentTitle}
-  description={description}
   slug={lookup || brandConfig.HOME_SLUG}
   menu={storyData.menu || null}
   created={storyData.created}
@@ -113,7 +112,6 @@ if (!brandConfig.SITE_INIT) {
       {
         paneIds.map((paneId: string) => (
           <div
-            key={paneId}
             id={`pane-${paneId}`}
             data-pane-id={paneId}
             class="pane-fragment-container"

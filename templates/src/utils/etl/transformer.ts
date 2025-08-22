@@ -1,7 +1,7 @@
 import { extractPaneSubtree, type PaneSubtree } from './extractor';
 import { formatForSave, formatForPreview } from './loader';
 import { storyFragmentTopicsStore } from '@/stores/storykeep';
-import { brandConfigStore } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import { fullContentMapStore } from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
 import type {
@@ -222,15 +222,16 @@ export function transformToOptionsPayload(
   return optionsPayload;
 }
 
-export function transformStoryFragmentForSave(
+export async function transformStoryFragmentForSave(
   ctx: NodesContext,
-  fragmentId: string
-): any {
+  fragmentId: string,
+  tenantId: string
+): Promise<any> {
   const node = ctx.allNodes.get().get(fragmentId) as StoryFragmentNode;
   const seoData = storyFragmentTopicsStore.get()[fragmentId];
 
   // Get brand config from store to find default tractstack
-  const brandConfig = brandConfigStore.get();
+  const brandConfig = await getBrandConfig(tenantId);
   const defaultTractStackSlug =
     brandConfig?.TRACTSTACK_HOME_SLUG || 'tractstack';
   // Find the default tractstack ID from content map

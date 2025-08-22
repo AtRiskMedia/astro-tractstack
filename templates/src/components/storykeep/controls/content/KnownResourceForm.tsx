@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useStore } from '@nanostores/react';
+import { useState, useEffect } from 'react';
 import { useFormState } from '@/hooks/useFormState';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
@@ -8,13 +7,16 @@ import BooleanToggle from '@/components/form/BooleanToggle';
 import NumberInput from '@/components/form/NumberInput';
 import EnumSelect from '@/components/form/EnumSelect';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
-import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
+import {
+  getBrandConfig,
+  saveBrandConfigWithStateUpdate,
+} from '@/utils/api/brandConfig';
 import { convertToLocalState } from '@/utils/api/brandHelpers';
-import { brandConfigStore } from '@/stores/brand';
 import type {
   FieldDefinition,
   FullContentMapItem,
   FieldErrors,
+  BrandConfig,
 } from '@/types/tractstack';
 
 interface KnownResourceFormProps {
@@ -42,9 +44,20 @@ const KnownResourceForm = ({
   contentMap,
   onClose,
 }: KnownResourceFormProps) => {
-  const brandConfig = useStore(brandConfigStore);
   const [newFieldName, setNewFieldName] = useState('');
   const [showAddField, setShowAddField] = useState(false);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!brandConfig && !loading) {
+      setLoading(true);
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
+        .then(setBrandConfig)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [brandConfig, loading]);
 
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
   const isCreate = categorySlug === 'new';
@@ -78,10 +91,8 @@ const KnownResourceForm = ({
     onSave: async (data) => {
       try {
         // Update known resources in brand config
-        const currentBrandConfig = brandConfigStore.get();
-        if (!currentBrandConfig) throw new Error('Brand config not loaded');
-
-        const brandState = convertToLocalState(currentBrandConfig);
+        if (!brandConfig) throw new Error('Brand config not loaded');
+        const brandState = convertToLocalState(brandConfig);
         const updatedKnownResources = {
           ...brandState.knownResources,
           [data.categorySlug]: data.fields,

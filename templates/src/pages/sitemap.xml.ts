@@ -1,5 +1,5 @@
 import type { APIRoute } from '@/types/astro';
-import { getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 
 // Helper functions for date formatting
 function dateToUnixTimestamp(dateString: string): number {

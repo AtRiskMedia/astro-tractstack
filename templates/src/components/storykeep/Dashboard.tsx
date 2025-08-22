@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useStore } from '@nanostores/react';
-import { brandConfigStore, getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import { classNames } from '@/utils/helpers';
 import StoryKeepDashboard_Wizard from './Dashboard_Wizard';
-import type { FullContentMapItem } from '@/types/tractstack';
+import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
 
 interface Tab {
   id: string;
@@ -25,55 +24,54 @@ export default function StoryKeepDashboard({
   initializing?: boolean;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
-  const $brandConfig = useStore(brandConfigStore);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const isCurrentlyInitializing = initializing && !$brandConfig?.SITE_INIT;
+  const isCurrentlyInitializing = initializing && !brandConfig?.SITE_INIT;
 
   // Define tabs - show only branding when initializing
   const tabs: Tab[] = isCurrentlyInitializing
     ? [{ id: 'branding', name: 'Welcome to your StoryKeep', current: true }]
     : [
-      {
-        id: 'analytics',
-        name: 'Analytics',
-        current: activeTab === 'analytics',
-      },
-      {
-        id: 'content',
-        name: 'Content',
-        current: activeTab === 'content',
-      },
-      {
-        id: 'branding',
-        name: 'Branding',
-        current: activeTab === 'branding',
-      },
-      ...(role === 'admin'
-        ? [
-          {
-            id: 'advanced',
-            name: 'Advanced',
-            current: activeTab === 'advanced',
-          },
-        ]
-        : []),
-    ];
+        {
+          id: 'analytics',
+          name: 'Analytics',
+          current: activeTab === 'analytics',
+        },
+        {
+          id: 'content',
+          name: 'Content',
+          current: activeTab === 'content',
+        },
+        {
+          id: 'branding',
+          name: 'Branding',
+          current: activeTab === 'branding',
+        },
+        ...(role === 'admin'
+          ? [
+              {
+                id: 'advanced',
+                name: 'Advanced',
+                current: activeTab === 'advanced',
+              },
+            ]
+          : []),
+      ];
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (initializing && !$brandConfig) {
-      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
+    if (!brandConfig && !loading) {
+      setLoading(true);
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
+        .then(setBrandConfig)
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }
-  }, [initializing, $brandConfig]);
-  // Load brand config when branding tab is accessed
-  useEffect(() => {
-    if (activeTab === 'branding' && !$brandConfig) {
-      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
-    }
-  }, [activeTab, $brandConfig]);
+  }, [brandConfig, loading]);
 
   if (!isClient) {
     return (
@@ -104,13 +102,12 @@ export default function StoryKeepDashboard({
             </div>
           </div>
         </div>
-      ) :
-        (
-          <StoryKeepDashboard_Wizard
-            fullContentMap={fullContentMap}
-            homeSlug={homeSlug}
-          />
-        )}
+      ) : (
+        <StoryKeepDashboard_Wizard
+          fullContentMap={fullContentMap}
+          homeSlug={homeSlug}
+        />
+      )}
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">

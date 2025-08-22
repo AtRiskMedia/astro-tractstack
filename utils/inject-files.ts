@@ -654,10 +654,6 @@ export async function injectTemplateFiles(
       dest: 'src/stores/storykeep.ts',
     },
     {
-      src: resolve('templates/src/stores/brand.ts'),
-      dest: 'src/stores/brand.ts',
-    },
-    {
       src: resolve('templates/src/stores/analytics.ts'),
       dest: 'src/stores/analytics.ts',
     },

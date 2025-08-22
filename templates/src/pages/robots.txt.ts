@@ -1,5 +1,5 @@
 import type { APIRoute } from '@/types/astro';
-import { getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 
 export const GET: APIRoute = async ({ request }) => {
   // Get tenant ID from headers (set by middleware)

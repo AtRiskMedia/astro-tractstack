@@ -4,7 +4,7 @@ import StoryKeepDashboard from '@/components/storykeep/Dashboard';
 import StoryKeepDashboard_Branding from '@/components/storykeep/Dashboard_Branding';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
-import { getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {

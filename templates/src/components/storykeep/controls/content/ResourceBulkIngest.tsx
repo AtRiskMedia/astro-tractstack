@@ -1,8 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useStore } from '@nanostores/react';
-import { brandConfigStore } from '@/stores/brand';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
-import type { FullContentMapItem } from '@/types/tractstack';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import type { BrandConfig, FullContentMapItem } from '@/types/tractstack';
 
 interface ResourceBulkIngestProps {
   onClose: (saved: boolean) => void;
@@ -46,13 +45,24 @@ export default function ResourceBulkIngest({
   onRefresh,
   fullContentMap,
 }: ResourceBulkIngestProps) {
-  const brandConfig = useStore(brandConfigStore);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<{
     current: number;
     total: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (!brandConfig && !loading) {
+      setLoading(true);
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
+        .then(setBrandConfig)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [brandConfig, loading]);
 
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
 

@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useStore } from '@nanostores/react';
 import {
-  contentNavigationStore,
   handleManageSubtabChange,
   restoreTabNavigation,
 } from '@/stores/navigation';
-import { brandConfigStore } from '@/stores/brand';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { classNames } from '@/utils/helpers';
@@ -27,6 +24,7 @@ import type {
   MenuNode,
   BeliefNode,
   ResourceConfig,
+  BrandConfig,
 } from '@/types/tractstack';
 
 interface ManageContentProps {
@@ -55,6 +53,8 @@ const ManageContent = ({
   fullContentMap: initialContentMap,
   homeSlug,
 }: ManageContentProps) => {
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
   const [navigationRestored, setNavigationRestored] = useState(false);
   const [currentContentMap, setCurrentContentMap] =
@@ -74,9 +74,15 @@ const ManageContent = ({
     category: string;
   } | null>(null);
 
-  // Subscribe to navigation store and brand config
-  const contentNavigationState = useStore(contentNavigationStore);
-  const brandConfig = useStore(brandConfigStore);
+  useEffect(() => {
+    if (!brandConfig && !loading) {
+      setLoading(true);
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
+        .then(setBrandConfig)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [brandConfig, loading]);
 
   // Data refresh function - uses EXISTING API functions
   const refreshData = async () => {
@@ -86,35 +92,13 @@ const ManageContent = ({
         window.TRACTSTACK_CONFIG?.tenantId || 'default'
       );
       setCurrentContentMap(newContentMap);
-
-      // Use existing getBrandConfig function
-      const newBrandConfig = await getBrandConfig(
-        window.TRACTSTACK_CONFIG?.tenantId || 'default'
-      );
-      brandConfigStore.set(
-        window.TRACTSTACK_CONFIG?.tenantId || 'default',
-        newBrandConfig
+      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default').then(
+        setBrandConfig
       );
     } catch (error) {
       console.error('Failed to refresh data:', error);
     }
   };
-
-  // Load brandConfig if not already loaded
-  useEffect(() => {
-    if (!brandConfig) {
-      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
-        .then((config) => {
-          brandConfigStore.set(
-            window.TRACTSTACK_CONFIG?.tenantId || 'default',
-            config
-          );
-        })
-        .catch((error) => {
-          console.error('Failed to load brand config:', error);
-        });
-    }
-  }, [brandConfig]);
 
   // Update content map when prop changes
   useEffect(() => {

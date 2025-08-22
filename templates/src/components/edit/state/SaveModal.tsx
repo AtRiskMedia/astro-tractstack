@@ -367,7 +367,11 @@ export default function SaveModal({
             const fragment = dirtyStoryFragments[i];
 
             try {
-              const payload = transformStoryFragmentForSave(ctx, fragment.id);
+              const payload = await transformStoryFragmentForSave(
+                ctx,
+                fragment.id,
+                window.TRACTSTACK_CONFIG?.tenantId || 'default'
+              );
 
               // If we uploaded an OG image for this fragment, use that path
               if (uploadedOGPaths[fragment.id]) {

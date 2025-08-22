@@ -3,7 +3,7 @@ import { ulid } from 'ulid';
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
-import { getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import { joinUrlPaths } from '@/utils/helpers';
 import { handleFailedResponse } from '@/utils/backend';
 import { components as codeHookComponents } from '@/custom/CodeHook.astro';

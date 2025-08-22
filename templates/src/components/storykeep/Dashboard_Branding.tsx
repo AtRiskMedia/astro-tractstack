@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { navigate } from 'astro:transitions/client';
 import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
@@ -32,6 +33,8 @@ export default function StoryKeepDashboard_Branding({
     validator: validateBrandConfig,
     onSave: async (data) => {
       try {
+        const isFirstSave = !currentBrandConfig.SITE_INIT;
+
         const updatedState = await saveBrandConfigWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
           data,
@@ -44,6 +47,11 @@ export default function StoryKeepDashboard_Branding({
         // Update parent component state
         const updatedBrandConfig = convertToBackendFormat(updatedState);
         setCurrentBrandConfig(updatedBrandConfig);
+
+        console.log(isFirstSave, `***`);
+        if (isFirstSave) {
+          navigate('/storykeep');
+        }
       } catch (error) {
         console.error('Save failed:', error);
         throw error; // Let UnsavedChangesBar handle error display

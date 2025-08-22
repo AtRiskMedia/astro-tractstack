@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useStore } from '@nanostores/react';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import { brandConfigStore } from '@/stores/brand';
 import {
   getBrandConfig,
   saveBrandConfigWithStateUpdate,
 } from '@/utils/api/brandConfig';
 import { convertToLocalState } from '@/utils/api/brandHelpers';
 import ResourceBulkIngest from './ResourceBulkIngest';
-import type { FullContentMapItem } from '@/types/tractstack';
+import type { BrandConfig, FullContentMapItem } from '@/types/tractstack';
 import type { MouseEvent } from 'react';
 
 interface KnownResourceTableProps {
@@ -27,23 +25,18 @@ const KnownResourceTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [showBulkIngest, setShowBulkIngest] = useState(false);
-  const brandConfig = useStore(brandConfigStore);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Load brandConfig if not already loaded
   useEffect(() => {
-    if (!brandConfig) {
+    if (!brandConfig && !loading) {
+      setLoading(true);
       getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
-        .then((config) => {
-          brandConfigStore.set(
-            window.TRACTSTACK_CONFIG?.tenantId || 'default',
-            config
-          );
-        })
-        .catch((error) => {
-          console.error('Failed to load brand config:', error);
-        });
+        .then(setBrandConfig)
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }
-  }, [brandConfig]);
+  }, [brandConfig, loading]);
 
   const knownResources = brandConfig?.KNOWN_RESOURCES || {};
 

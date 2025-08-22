@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { brandConfigStore, getBrandConfig } from '@/stores/brand';
+import { getBrandConfig } from '@/utils/api/brandConfig';
 import { skipWizard } from '@/stores/navigation';
-import type { FullContentMapItem } from '@/types/tractstack';
+import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
 
 interface StoryKeepWizardProps {
   fullContentMap: FullContentMapItem[];
@@ -125,29 +125,20 @@ export default function StoryKeepDashboard_Wizard({
   homeSlug,
 }: StoryKeepWizardProps) {
   const [wizardData, setWizardData] = useState<WizardData | null>(null);
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
   const [loading, setLoading] = useState(true);
-  const $brandConfig = useStore(brandConfigStore);
   const $skipWizard = useStore(skipWizard);
 
   useEffect(() => {
     const buildWizardData = async () => {
       try {
-        // Ensure brand config is loaded
-        let brandConfig = $brandConfig;
-        if (!brandConfig) {
-          await getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default');
-          brandConfig = brandConfigStore.get();
-        }
+        const config = await getBrandConfig(
+          window.TRACTSTACK_CONFIG?.tenantId || 'default'
+        );
+        setBrandConfig(config);
 
-        if (!brandConfig) {
-          setLoading(false);
-          return;
-        }
-
-        // Find home page in content map using homeSlug
         const homePage = fullContentMap.find((item) => item.slug === homeSlug);
 
-        // Get detailed home page data if we found one
         let homeData = null;
         if (homePage) {
           const goBackend =
@@ -166,24 +157,19 @@ export default function StoryKeepDashboard_Wizard({
         }
 
         const data: WizardData = {
-          // Brand config checks
-          hasLogo: !!brandConfig.LOGO,
-          hasWordmark: !!brandConfig.WORDMARK,
-          hasOgTitle: !!brandConfig.OGTITLE,
-          hasOgAuthor: !!brandConfig.OGAUTHOR,
-          hasOgDesc: !!brandConfig.OGDESC,
-          hasOg: !!brandConfig.OG,
-          hasOgLogo: !!brandConfig.OGLOGO,
-          hasFavicon: !!brandConfig.FAVICON,
-          hasSocials: !!brandConfig.SOCIALS,
-
-          // Home page checks
+          hasLogo: !!config.LOGO,
+          hasWordmark: !!config.WORDMARK,
+          hasOgTitle: !!config.OGTITLE,
+          hasOgAuthor: !!config.OGAUTHOR,
+          hasOgDesc: !!config.OGDESC,
+          hasOg: !!config.OG,
+          hasOgLogo: !!config.OGLOGO,
+          hasFavicon: !!config.FAVICON,
+          hasSocials: !!config.SOCIALS,
           hasTitle: !!homeData?.title?.trim(),
           hasPanes: !!(homeData?.paneIds?.length > 0),
           hasSeo: !!homeData?.description,
           hasMenu: !!homeData?.menu,
-
-          // Content map checks
           hasAnyMenu: fullContentMap.some((item) => item.type === 'Menu'),
         };
 
@@ -196,19 +182,17 @@ export default function StoryKeepDashboard_Wizard({
     };
 
     buildWizardData();
-  }, [fullContentMap, homeSlug, $brandConfig]);
+  }, [fullContentMap, homeSlug]);
 
-  if (loading || !wizardData || $skipWizard) {
+  if (loading || !wizardData || !brandConfig || $skipWizard) {
     return null;
   }
 
-  // Find first incomplete step
   const currentStepIndex = wizardSteps.findIndex((step) => {
     const value = wizardData[step.key];
     return typeof value === 'boolean' && !value;
   });
 
-  // If all steps complete, don't show wizard
   if (currentStepIndex === -1) {
     return null;
   }

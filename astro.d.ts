@@ -1,6 +1,10 @@
 /// <reference types="astro/client" />
 
-import type { FullContentMapItem, PlayerJS } from './tractstack';
+import type { PlayerJS } from '@/types/tractstack';
+
+declare module 'astro:transitions/client' {
+  export function navigate(url: string): void;
+}
 
 declare global {
   interface ImportMeta {
@@ -18,18 +22,12 @@ declare global {
     htmx: any;
     playerjs: PlayerJS;
     TRACTSTACK_CONFIG: {
-      configured: boolean;
       backendUrl: string;
       tenantId: string;
       sessionId: string;
-      fontBasePath: string;
       storyfragmentId: string;
       session?: {
         isReady: boolean;
-        fingerprint?: string;
-        visitId?: string;
-        hasProfile?: boolean;
-        consent?: string;
       };
     };
     BELIEF_INITIALIZED?: boolean;
@@ -42,7 +40,6 @@ declare global {
 declare namespace App {
   interface Locals {
     session?: Record<string, any>;
-    fullContentMap?: FullContentMapItem[];
     tenant?: {
       id: string;
       domain: string | null;
