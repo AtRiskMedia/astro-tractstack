@@ -4,7 +4,6 @@ import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
   convertToBackendFormat,
-  brandStateIntercept,
   validateBrandConfig,
 } from '@/utils/api/brandHelpers';
 import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
@@ -31,7 +30,6 @@ export default function StoryKeepDashboard_Branding({
 
   const formState = useFormState({
     initialData: initialState,
-    interceptor: brandStateIntercept,
     validator: validateBrandConfig,
     onSave: async (data) => {
       try {

@@ -1,11 +1,34 @@
 import EnumSelect from '../EnumSelect';
 import ColorPicker from '../ColorPicker';
-import { THEME_OPTIONS } from '@/constants/brandThemes';
+import { THEME_OPTIONS, getThemeColors } from '@/constants/brandThemes';
 import type { BrandConfigState } from '@/types/tractstack';
 import type { FormStateReturn } from '@/hooks/useFormState';
 
 interface BrandColorsSectionProps {
   formState: FormStateReturn<BrandConfigState>;
+}
+
+// Layout theme options for the actual theme dropdown
+const LAYOUT_THEME_OPTIONS = [
+  'light',
+  'light-bw',
+  'light-bold',
+  'dark',
+  'dark-bw',
+  'dark-bold'
+] as const;
+
+// Helper function to determine current brand color preset from colors
+function getCurrentBrandColorPreset(colors: string[]): string {
+  const colorString = colors.join(',');
+  for (const preset of THEME_OPTIONS) {
+    if (preset === 'Custom') continue;
+    const presetColors = getThemeColors(preset);
+    if (presetColors.join(',') === colorString) {
+      return preset;
+    }
+  }
+  return 'Custom';
 }
 
 // Helper function to calculate contrast ratio between two hex colors
@@ -84,6 +107,9 @@ export default function BrandColorsSection({
   const contrastIssues = checkContrastPairs(state.brandColours);
   const hasContrastIssues = contrastIssues.length > 0;
 
+  // Derive the current brand color preset from the colors
+  const currentBrandColorPreset = getCurrentBrandColorPreset(state.brandColours);
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h3 className="mb-4 text-lg font-bold text-gray-900">
@@ -91,17 +117,34 @@ export default function BrandColorsSection({
       </h3>
 
       <div className="space-y-6">
-        {/* Theme Selector */}
+        {/* Layout Theme Selector - this saves to state.theme */}
         <EnumSelect
-          value={state.theme}
+          value={state.theme || 'light-bold'}
           onChange={(value) => updateField('theme', value)}
-          label="Theme Preset"
+          label="Theme"
+          options={LAYOUT_THEME_OPTIONS.map((theme) => ({
+            value: theme,
+            label: theme.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          }))}
+          error={errors.theme}
+          id="theme"
+        />
+
+        {/* Color Preset Selector - directly sets brand colours */}
+        <EnumSelect
+          value={currentBrandColorPreset}
+          onChange={(value) => {
+            if (value !== 'Custom') {
+              updateField('brandColours', getThemeColors(value));
+            }
+          }}
+          label="Color Preset"
           options={THEME_OPTIONS.map((theme) => ({
             value: theme,
             label: theme,
           }))}
-          error={errors.theme}
-          id="theme"
+          error={errors.brandColours}
+          id="brandColorPreset"
         />
 
         {/* Brand Colors */}

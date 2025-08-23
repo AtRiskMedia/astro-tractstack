@@ -10,11 +10,7 @@ import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 export function convertToLocalState(
   brandConfig: BrandConfig
 ): BrandConfigState {
-  console.log('=== convertToLocalState DEBUG ===');
-  console.log('Input LOGO:', brandConfig.LOGO);
-  console.log('Input WORDMARK:', brandConfig.WORDMARK);
-
-  const result = {
+  return {
     siteInit: brandConfig.SITE_INIT ?? false,
     wordmarkMode: brandConfig.WORDMARK_MODE ?? '',
     brandColours: brandConfig.BRAND_COLOURS
@@ -23,7 +19,7 @@ export function convertToLocalState(
     openDemo: brandConfig.OPEN_DEMO ?? false,
     homeSlug: brandConfig.HOME_SLUG ?? 'hello',
     tractstackHomeSlug: brandConfig.TRACTSTACK_HOME_SLUG ?? 'HELLO',
-    theme: brandConfig.THEME ?? 'Default',
+    theme: brandConfig.THEME ?? 'light-bold',
     socials: brandConfig.SOCIALS
       ? brandConfig.SOCIALS.split(',').filter((social) => social.trim())
       : [],
@@ -43,11 +39,6 @@ export function convertToLocalState(
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
     hasAAI: brandConfig.HAS_AAI ?? false,
   };
-  console.log('Output logo:', result.logo);
-  console.log('Output wordmark:', result.wordmark);
-  console.log('=== END DEBUG ===');
-
-  return result;
 }
 
 /**
@@ -91,36 +82,6 @@ export function convertToBackendFormat(
     OGLOGO_BASE64: localState.oglogoBase64,
     FAVICON_BASE64: localState.faviconBase64,
   };
-}
-
-/**
- * State interceptor function for brand configuration
- * Handles theme preset logic and custom theme switching
- */
-export function brandStateIntercept(
-  newState: BrandConfigState,
-  field: keyof BrandConfigState,
-  value: any
-): BrandConfigState {
-  // When theme changes to a preset, override all brand colors
-  if (field === 'theme' && value !== 'Custom' && !isCustomTheme(value)) {
-    return {
-      ...newState,
-      theme: value,
-      brandColours: getThemeColors(value),
-    };
-  }
-
-  // When individual brand colors change, set theme to Custom
-  if (field === 'brandColours') {
-    return {
-      ...newState,
-      theme: 'Custom',
-      brandColours: value,
-    };
-  }
-
-  return newState;
 }
 
 /**
