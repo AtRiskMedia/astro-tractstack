@@ -12,6 +12,7 @@ import {
   getPendingImageOperation,
   clearPendingImageOperation,
 } from '@/stores/storykeep';
+import { startLoadingAnimation } from '@/utils/helpers';
 import type {
   BaseNode,
   PaneNode,
@@ -628,6 +629,7 @@ export default function SaveModal({
 
   const handleSuccessClose = async () => {
     if (stage === 'COMPLETED') {
+      startLoadingAnimation();
       setIsNavigating(true);
 
       if (isCreateMode) {
@@ -666,6 +668,7 @@ export default function SaveModal({
   };
 
   const visitPageUrl = (() => {
+    startLoadingAnimation();
     const ctx = getCtx();
     const allDirtyNodes = ctx.getDirtyNodes();
 

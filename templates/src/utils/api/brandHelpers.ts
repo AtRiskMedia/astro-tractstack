@@ -10,7 +10,11 @@ import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 export function convertToLocalState(
   brandConfig: BrandConfig
 ): BrandConfigState {
-  return {
+  console.log('=== convertToLocalState DEBUG ===');
+  console.log('Input LOGO:', brandConfig.LOGO);
+  console.log('Input WORDMARK:', brandConfig.WORDMARK);
+
+  const result = {
     siteInit: brandConfig.SITE_INIT ?? false,
     wordmarkMode: brandConfig.WORDMARK_MODE ?? '',
     brandColours: brandConfig.BRAND_COLOURS
@@ -39,6 +43,11 @@ export function convertToLocalState(
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
     hasAAI: brandConfig.HAS_AAI ?? false,
   };
+  console.log('Output logo:', result.logo);
+  console.log('Output wordmark:', result.wordmark);
+  console.log('=== END DEBUG ===');
+
+  return result;
 }
 
 /**
@@ -58,11 +67,6 @@ export function convertToBackendFormat(
     TRACTSTACK_HOME_SLUG: localState.tractstackHomeSlug,
     THEME: localState.theme,
     SOCIALS: localState.socials.join(','),
-    LOGO: localState.logo,
-    WORDMARK: localState.wordmark,
-    OG: localState.og,
-    OGLOGO: localState.oglogo,
-    FAVICON: localState.favicon,
     SITE_URL: localState.siteUrl,
     SLOGAN: localState.slogan,
     FOOTER: localState.footer,
@@ -70,13 +74,22 @@ export function convertToBackendFormat(
     OGAUTHOR: localState.ogauthor,
     OGDESC: localState.ogdesc,
     GTAG: localState.gtag,
+    KNOWN_RESOURCES: localState.knownResources,
+    HAS_AAI: localState.hasAAI,
+
+    // ALWAYS send asset paths (current state)
+    LOGO: localState.logo,
+    WORDMARK: localState.wordmark,
+    OG: localState.og,
+    OGLOGO: localState.oglogo,
+    FAVICON: localState.favicon,
+
+    // Only send base64 when uploading
     LOGO_BASE64: localState.logoBase64,
     WORDMARK_BASE64: localState.wordmarkBase64,
     OG_BASE64: localState.ogBase64,
     OGLOGO_BASE64: localState.oglogoBase64,
     FAVICON_BASE64: localState.faviconBase64,
-    KNOWN_RESOURCES: localState.knownResources,
-    HAS_AAI: localState.hasAAI,
   };
 }
 

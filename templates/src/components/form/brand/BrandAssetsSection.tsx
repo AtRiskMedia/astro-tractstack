@@ -21,7 +21,9 @@ export default function BrandAssetsSection({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-bold text-gray-900">Brand Assets</h3>
+      <h3 id="assets" className="mb-4 text-lg font-bold text-gray-900">
+        Brand Assets
+      </h3>
 
       <div className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -31,7 +33,7 @@ export default function BrandAssetsSection({
             onChange={(value) => updateField('logoBase64', value)}
             label="Logo"
             allowedFormats={['svg', 'png', 'jpg', 'jpeg']}
-            maxSizeKB={512}
+            maxSizeKB={1024}
             showPreview={true}
             allowAnyImageWithWarning={true}
             error={errors.logo}
@@ -43,7 +45,7 @@ export default function BrandAssetsSection({
             onChange={(value) => updateField('wordmarkBase64', value)}
             label="Wordmark"
             allowedFormats={['svg', 'png', 'jpg', 'jpeg']}
-            maxSizeKB={512}
+            maxSizeKB={1024}
             showPreview={true}
             allowAnyImageWithWarning={true}
             error={errors.wordmark}
@@ -62,14 +64,14 @@ export default function BrandAssetsSection({
             error={errors.favicon}
           />
 
-          {/* OG Logo - Auto-resized to 1200x630 */}
+          {/* OG Logo - Auto-resized to 512x512 */}
           <FileUpload
             value={state.oglogoBase64 || state.oglogo}
             onChange={(value) => updateField('oglogoBase64', value)}
             label="Open Graph Logo"
-            autoResize={{ width: 1200, height: 630 }}
+            autoResize={{ width: 512, height: 512 }}
             allowAnyImageWithWarning={true}
-            maxSizeKB={2048}
+            maxSizeKB={1024}
             showPreview={true}
             error={errors.oglogo}
           />

@@ -1022,6 +1022,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        'templates/src/components/storykeep/state/BrandingWrapper.tsx'
+      ),
+      dest: 'src/components/storykeep/state/BrandingWrapper.tsx',
+    },
+    {
+      src: resolve(
         'templates/src/components/storykeep/state/FetchAnalytics.tsx'
       ),
       dest: 'src/components/storykeep/state/FetchAnalytics.tsx',

@@ -186,7 +186,9 @@ export default function SocialLinksSection({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-bold text-gray-900">Social Links</h3>
+      <h3 id="socials" className="mb-4 text-lg font-bold text-gray-900">
+        Social Links
+      </h3>
 
       <div className="space-y-4">
         <style>{comboboxItemStyles}</style>

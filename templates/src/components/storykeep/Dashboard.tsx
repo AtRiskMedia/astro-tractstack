@@ -16,18 +16,27 @@ export default function StoryKeepDashboard({
   activeTab = 'analytics',
   role,
   initializing = false,
+  brandConfig,
+  onBrandConfigUpdate,
 }: {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
   activeTab?: string;
   role?: string | null;
   initializing?: boolean;
+  brandConfig?: BrandConfig | null;
+  onBrandConfigUpdate?: (config: BrandConfig) => void;
 }) {
   const [isClient, setIsClient] = useState<boolean>(false);
-  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [internalBrandConfig, setInternalBrandConfig] =
+    useState<BrandConfig | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const isCurrentlyInitializing = initializing && !brandConfig?.SITE_INIT;
+  // Use external brandConfig if provided, otherwise use internal state
+  const currentBrandConfig = brandConfig ?? internalBrandConfig;
+
+  const isCurrentlyInitializing =
+    initializing && !currentBrandConfig?.SITE_INIT;
 
   // Define tabs - show only branding when initializing
   const tabs: Tab[] = isCurrentlyInitializing
@@ -64,14 +73,21 @@ export default function StoryKeepDashboard({
   }, []);
 
   useEffect(() => {
-    if (!brandConfig && !loading) {
+    // Only fetch if no external brandConfig provided and we don't have internal config
+    if (!brandConfig && !internalBrandConfig && !loading) {
       setLoading(true);
       getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
-        .then(setBrandConfig)
+        .then((config) => {
+          setInternalBrandConfig(config);
+          // If we have a callback, also notify parent
+          if (onBrandConfigUpdate) {
+            onBrandConfigUpdate(config);
+          }
+        })
         .catch(console.error)
         .finally(() => setLoading(false));
     }
-  }, [brandConfig, loading]);
+  }, [brandConfig, internalBrandConfig, loading, onBrandConfigUpdate]);
 
   if (!isClient) {
     return (
@@ -103,7 +119,14 @@ export default function StoryKeepDashboard({
           </div>
         </div>
       ) : (
-        <Wizard fullContentMap={fullContentMap} homeSlug={homeSlug} />
+        // Only render Wizard if we have brandConfig loaded
+        currentBrandConfig && (
+          <Wizard
+            fullContentMap={fullContentMap}
+            homeSlug={homeSlug}
+            brandConfig={currentBrandConfig}
+          />
+        )
       )}
 
       {/* Tab Navigation */}

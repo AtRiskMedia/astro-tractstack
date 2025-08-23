@@ -38,13 +38,23 @@ export const Compositor = (props: CompositorProps) => {
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
 
-  fullContentMapStore.set(props.fullContentMap);
-  hasAssemblyAIStore.set(props.config.HAS_AAI);
-  urlParamsStore.set(props.urlParams);
-  canonicalURLStore.set(props.fullCanonicalURL);
-  preferredThemeStore.set(props.config.THEME as Theme);
-  brandColourStore.set(props.config.BRAND_COLOURS);
-  codehookMapStore.set(props.availableCodeHooks);
+  useEffect(() => {
+    fullContentMapStore.set(props.fullContentMap);
+    hasAssemblyAIStore.set(props.config.HAS_AAI);
+    urlParamsStore.set(props.urlParams);
+    canonicalURLStore.set(props.fullCanonicalURL);
+    preferredThemeStore.set(props.config.THEME as Theme);
+    brandColourStore.set(props.config.BRAND_COLOURS);
+    codehookMapStore.set(props.availableCodeHooks);
+  }, [
+    props.fullContentMap,
+    props.config.HAS_AAI,
+    props.config.THEME,
+    props.config.BRAND_COLOURS,
+    props.urlParams,
+    props.fullCanonicalURL,
+    props.availableCodeHooks,
+  ]);
 
   const $viewportKey = useStore(viewportKeyStore);
   const viewportMaxWidth =

@@ -105,33 +105,14 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
  */
 export async function saveBrandConfigWithStateUpdate(
   tenantId: string,
-  currentState: BrandConfigState,
-  originalState: BrandConfigState
+  currentState: BrandConfigState
+  //originalState: BrandConfigState
 ): Promise<BrandConfigState> {
   const backendFormat = convertToBackendFormat(currentState);
-  const originalBackendFormat = convertToBackendFormat(originalState);
-
-  // Filter to only changed fields
-  const changedFields: Partial<BrandConfig> = {};
-  Object.keys(backendFormat).forEach((key) => {
-    const typedKey = key as keyof BrandConfig;
-    if (typedKey === 'KNOWN_RESOURCES') {
-      if (backendFormat[typedKey]) {
-        (changedFields as any)[typedKey] = backendFormat[typedKey];
-      }
-    } else if (backendFormat[typedKey] !== originalBackendFormat[typedKey]) {
-      (changedFields as any)[typedKey] = backendFormat[typedKey];
-    }
-  });
-
-  // Only send if there are actual changes
-  if (Object.keys(changedFields).length === 0) {
-    return currentState;
-  }
 
   try {
-    // Save to backend
-    await saveBrandConfig(tenantId, changedFields as BrandConfig);
+    // Send COMPLETE config, not just changed fields
+    await saveBrandConfig(tenantId, backendFormat);
 
     // Get the complete updated config from backend
     const freshConfig = await getBrandConfig(tenantId);
@@ -141,7 +122,6 @@ export async function saveBrandConfigWithStateUpdate(
 
     return newLocalState;
   } catch (error) {
-    // Network errors are already handled by redirecting to /maint in saveBrandConfig
     throw error;
   }
 }

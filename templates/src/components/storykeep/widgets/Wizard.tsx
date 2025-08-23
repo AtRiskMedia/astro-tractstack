@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { navigate } from 'astro:transitions/client';
-import { getBrandConfig } from '@/utils/api/brandConfig';
 import { skipWizard } from '@/stores/navigation';
 import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
 
 interface StoryKeepWizardProps {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
+  brandConfig: BrandConfig; // Now received as prop instead of fetched
 }
 
 interface WizardData {
@@ -51,7 +50,7 @@ const wizardSteps: WizardStep[] = [
     key: 'hasAnyMenu',
     message: "A menu helps visitors navigate. Let's create one now.",
     buttonText: 'Create a Menu',
-    href: '/storykeep/content?create-menu',
+    href: '/storykeep/content/menus/create',
   },
   {
     key: 'hasMenu',
@@ -69,75 +68,70 @@ const wizardSteps: WizardStep[] = [
     key: 'hasLogo',
     message: 'Upload your logo to brand your website.',
     buttonText: 'Upload Logo',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#assets',
   },
   {
     key: 'hasWordmark',
     message: 'Add a wordmark for branding.',
     buttonText: 'Upload Wordmark',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#assets',
   },
   {
     key: 'hasOgTitle',
     message: 'Set a title for social media sharing previews.',
     buttonText: 'Add OG Title',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#seo',
   },
   {
     key: 'hasOgAuthor',
     message: 'Add an author name for social media attribution.',
     buttonText: 'Add OG Author',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#seo',
   },
   {
     key: 'hasOgDesc',
     message: 'Write a description for social media previews.',
     buttonText: 'Add OG Description',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#seo',
   },
   {
     key: 'hasOg',
     message: 'Upload an image for social media sharing previews.',
     buttonText: 'Upload OG Image',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#seo',
   },
   {
     key: 'hasOgLogo',
     message: 'Add a logo for social media previews.',
     buttonText: 'Upload OG Logo',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#assets',
   },
   {
     key: 'hasFavicon',
     message: 'Upload a favicon to appear in browser tabs.',
     buttonText: 'Upload Favicon',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#assets',
   },
   {
     key: 'hasSocials',
     message: 'Connect your social media accounts.',
     buttonText: 'Add Social Links',
-    href: '/storykeep?branding',
+    href: '/storykeep/branding#socials',
   },
 ];
 
 export default function Wizard({
   fullContentMap,
   homeSlug,
+  brandConfig,
 }: StoryKeepWizardProps) {
   const [wizardData, setWizardData] = useState<WizardData | null>(null);
-  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const $skipWizard = useStore(skipWizard);
 
   useEffect(() => {
     const buildWizardData = async () => {
       try {
-        const config = await getBrandConfig(
-          window.TRACTSTACK_CONFIG?.tenantId || 'default'
-        );
-        setBrandConfig(config);
-
         const homePage = fullContentMap.find((item) => item.slug === homeSlug);
 
         let homeData = null;
@@ -158,19 +152,19 @@ export default function Wizard({
         }
 
         const data: WizardData = {
-          hasLogo: !!config.LOGO,
-          hasWordmark: !!config.WORDMARK,
-          hasOgTitle: !!config.OGTITLE,
-          hasOgAuthor: !!config.OGAUTHOR,
-          hasOgDesc: !!config.OGDESC,
-          hasOg: !!config.OG,
-          hasOgLogo: !!config.OGLOGO,
-          hasFavicon: !!config.FAVICON,
-          hasSocials: !!config.SOCIALS,
-          hasTitle: !!homeData?.title?.trim(),
-          hasPanes: !!(homeData?.paneIds?.length > 0),
-          hasSeo: !!homeData?.description,
-          hasMenu: !!homeData?.menu,
+          hasLogo: !!brandConfig.LOGO,
+          hasWordmark: !!brandConfig.WORDMARK,
+          hasOgTitle: !!brandConfig.OGTITLE,
+          hasOgAuthor: !!brandConfig.OGAUTHOR,
+          hasOgDesc: !!brandConfig.OGDESC,
+          hasOg: !!brandConfig.OG,
+          hasOgLogo: !!brandConfig.OGLOGO,
+          hasFavicon: !!brandConfig.FAVICON,
+          hasSocials: !!brandConfig.SOCIALS,
+          hasTitle: !!homePage?.title?.trim(),
+          hasPanes: !!homePage?.panes?.length,
+          hasSeo: !!homePage?.description,
+          hasMenu: !!homeData?.menuId,
           hasAnyMenu: fullContentMap.some((item) => item.type === 'Menu'),
         };
 
@@ -182,8 +176,11 @@ export default function Wizard({
       }
     };
 
-    buildWizardData();
-  }, [fullContentMap, homeSlug]);
+    // Only build wizard data if we have brandConfig
+    if (brandConfig) {
+      buildWizardData();
+    }
+  }, [fullContentMap, homeSlug, brandConfig]); // Added brandConfig to dependencies
 
   if (loading || !wizardData || !brandConfig || $skipWizard) {
     return null;
@@ -242,30 +239,37 @@ export default function Wizard({
                   />
                 </div>
               </div>
-              <span className="text-sm font-bold text-gray-600">
+              <span className="text-sm font-bold text-cyan-800">
                 {Math.round(progressPercent)}%
               </span>
             </div>
           </div>
 
           <div className="mt-4">
-            <p className="mb-3 text-gray-700">
-              <span className="font-bold">Next step:</span>{' '}
-              {currentStep.message}
+            <p className="text-sm text-gray-600">
+              <strong>Next step:</strong> {currentStep.message}
             </p>
-            <button
-              onClick={() => navigate(currentStep.href)}
-              className="inline-flex items-center gap-2 rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
-            >
-              <span>{currentStep.buttonText}</span>
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
+            <div className="mt-3">
+              <a
+                href={currentStep.href}
+                className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600"
+              >
+                {currentStep.buttonText}
+                <svg
+                  className="ml-1.5 h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
         </div>
       </div>

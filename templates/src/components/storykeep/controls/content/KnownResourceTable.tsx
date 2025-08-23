@@ -88,8 +88,7 @@ const KnownResourceTable = ({
 
       await saveBrandConfigWithStateUpdate(
         window.TRACTSTACK_CONFIG?.tenantId || 'default',
-        updatedBrandState,
-        brandState
+        updatedBrandState
       );
 
       // Refresh the data

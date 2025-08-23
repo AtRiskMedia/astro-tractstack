@@ -12,7 +12,9 @@ export default function SEOSection({ formState }: SEOSectionProps) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-bold text-gray-900">SEO & Open Graph</h3>
+      <h3 id="seo" className="mb-4 text-lg font-bold text-gray-900">
+        SEO & Open Graph
+      </h3>
 
       <div className="space-y-6">
         <StringInput

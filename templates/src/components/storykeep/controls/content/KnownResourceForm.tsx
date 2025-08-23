@@ -105,8 +105,7 @@ const KnownResourceForm = ({
 
         await saveBrandConfigWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          updatedBrandState,
-          brandState
+          updatedBrandState
         );
 
         // Call success callback after save (original pattern)

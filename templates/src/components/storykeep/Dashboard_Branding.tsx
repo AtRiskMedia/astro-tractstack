@@ -18,10 +18,12 @@ import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
 interface StoryKeepDashboardBrandingProps {
   brandConfig: BrandConfig;
+  onBrandConfigUpdate?: (config: BrandConfig) => void;
 }
 
 export default function StoryKeepDashboard_Branding({
   brandConfig,
+  onBrandConfigUpdate,
 }: StoryKeepDashboardBrandingProps) {
   const [currentBrandConfig, setCurrentBrandConfig] = useState(brandConfig);
   const initialState: BrandConfigState =
@@ -37,24 +39,28 @@ export default function StoryKeepDashboard_Branding({
 
         const updatedState = await saveBrandConfigWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          data,
-          formState.originalState
+          data
         );
 
-        // Reset form to new baseline state (clears isDirty)
-        formState.resetToState(updatedState);
+        // Preserve existing paths when updating parent state
+        const updatedBrandConfig = {
+          ...currentBrandConfig,
+          ...convertToBackendFormat(updatedState),
+        };
 
-        // Update parent component state
-        const updatedBrandConfig = convertToBackendFormat(updatedState);
+        // Update local state
         setCurrentBrandConfig(updatedBrandConfig);
 
-        console.log(isFirstSave, `***`);
+        if (onBrandConfigUpdate) {
+          onBrandConfigUpdate(updatedBrandConfig);
+        }
+
         if (isFirstSave) {
           navigate('/storykeep');
         }
       } catch (error) {
         console.error('Save failed:', error);
-        throw error; // Let UnsavedChangesBar handle error display
+        throw error;
       }
     },
     unsavedChanges: {
