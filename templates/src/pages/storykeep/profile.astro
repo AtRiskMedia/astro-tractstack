@@ -1,10 +1,16 @@
 ---
-// Profile configuration page for TractStack v2.0
-// Integrates with Go backend using session-first architecture
-
 import Layout from '@/layouts/Layout.astro';
 import { ProfileSwitch } from '@/components/profile/ProfileSwitch';
 import { ProfileConsent } from '@/components/profile/ProfileConsent';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const config = {
   title: 'Configure your Session',

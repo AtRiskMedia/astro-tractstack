@@ -1,22 +1,21 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import { checkBackendHealth } from '@/utils/backend';
+import { preHealthCheck } from '@/utils/backend';
 
-// Get backend URL
+const tenantId = 'default'; // For registration, always use default
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
 // Check if multi-tenant is enabled
 const isMultiTenantEnabled =
   import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
-let backendHealthy = true;
-try {
-  const healthResponse = await checkBackendHealth(goBackend, 'default', 500);
-  backendHealthy = healthResponse.isHealthy;
-} catch (error) {
-  backendHealthy = false;
-}
-if (!isMultiTenantEnabled || !backendHealthy) {
+if (!isMultiTenantEnabled) {
   return Astro.redirect('/?error=multi-tenant-disabled');
 }
 

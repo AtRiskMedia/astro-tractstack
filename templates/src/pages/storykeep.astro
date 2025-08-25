@@ -5,35 +5,20 @@ import StoryKeepDashboard_Analytics from '@/components/storykeep/Dashboard_Analy
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {
   return authCheck;
 }
-
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId =
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
-
-try {
-  const statusResponse = await fetch(`${goBackend}/api/v1/health`, {
-    headers: {
-      'X-Tenant-ID': tenantId,
-    },
-    signal: AbortSignal.timeout(5000),
-  });
-
-  if (!statusResponse.ok) {
-    return Astro.redirect(
-      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-    );
-  }
-} catch (error) {
-  return Astro.redirect(
-    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-  );
-}
-
 const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;

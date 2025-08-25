@@ -1,3 +1,8 @@
+import {
+  freshInstallStore,
+  FRESH_INSTALL_CACHE_DURATION,
+} from '@/stores/backend';
+
 /**
  * Backend health check utilities for TractStack
  * Handles proper failover logic between maintenance and 404 responses
@@ -143,4 +148,96 @@ export async function handleFailedResponse(
     status: response.status,
     statusText: 'Story not found',
   });
+}
+
+/**
+ * Performs a pre-check to detect if the system requires initial setup.
+ * This function is designed to work idiomatically with Astro's control flow.
+ *
+ * - If setup is needed, it returns a Response object to trigger a redirect.
+ * - If the system is healthy, it completes silently by returning void.
+ * - If an unexpected error occurs (e.g., backend is unreachable), it logs
+ * the error and returns a Response object to redirect to a maintenance page.
+ *
+ * @param tenantId The tenant ID for which to perform the health check.
+ * @returns {Promise<Response | void>} A promise that resolves to a Response object
+ * if a redirect is needed, or void if the request can proceed.
+ */
+export async function preHealthCheck(
+  tenantId: string
+): Promise<Response | void> {
+  const currentState = freshInstallStore.get();
+  const now = Date.now();
+
+  // Fast path: Use cache if the tenant is known to be active and the check is recent.
+  if (
+    currentState.activeTenants.includes(tenantId) &&
+    !currentState.needsSetup &&
+    now - currentState.lastChecked < FRESH_INSTALL_CACHE_DURATION
+  ) {
+    return;
+  }
+
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  const healthCheckUrl = `${goBackend}/api/v1/health`;
+
+  try {
+    const response = await fetch(healthCheckUrl, {
+      headers: { 'X-Tenant-ID': tenantId },
+      signal: AbortSignal.timeout(5000), // 5-second timeout
+    });
+
+    if (!response.ok) {
+      const responseBody = await response.text();
+      console.error(
+        `[preHealthCheck] Health check responded with a non-OK status: ${response.status}`,
+        { tenantId, responseBody }
+      );
+      throw new Error(
+        `Health check failed with status code: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+
+    if (result.needsSetup === true) {
+      // System requires initial setup. Update state and return a redirect Response.
+      freshInstallStore.set({
+        needsSetup: true,
+        activeTenants: currentState.activeTenants.filter(
+          (id) => id !== tenantId
+        ),
+        lastChecked: now,
+      });
+
+      return new Response(null, {
+        status: 302,
+        headers: { Location: '/storykeep/init' },
+      });
+    }
+
+    // If we reach here, the system is considered initialized and healthy.
+    // Update the cache to reflect this state and continue.
+    freshInstallStore.set({
+      needsSetup: false,
+      activeTenants: [...new Set([...currentState.activeTenants, tenantId])],
+      lastChecked: now,
+    });
+  } catch (error) {
+    // For any error (network failure, JSON parsing error, etc.), log it
+    // and return a Response to redirect to the maintenance page.
+    console.error(
+      '[preHealthCheck] An unexpected error occurred during the health check process.',
+      { tenantId, originalError: error }
+    );
+
+    const maintUrl = `/maint?from=${encodeURIComponent(
+      globalThis.location?.pathname || '/'
+    )}`;
+    return new Response(null, {
+      status: 302,
+      headers: { Location: maintUrl },
+    });
+  }
 }

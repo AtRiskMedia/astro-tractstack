@@ -33,33 +33,16 @@ const {
 
 const isHome = slug === brandConfig?.HOME_SLUG;
 
-// Enhanced asset path resolution - always prefer brandConfig over isDev fallbacks
-const isDev = import.meta.env.DEV;
-
-const getAssetPath = (
-  configPath: string,
-  devFallback: string,
-  prodFallback: string
-) => {
+const getAssetPath = (configPath: string, fallback: string) => {
   // Always prioritize brandConfig values when they exist
   if (configPath && configPath !== '') {
     return configPath;
   }
-  // Fall back to environment-based paths
-  return isDev ? devFallback : prodFallback;
+  return fallback;
 };
 
-const logo = getAssetPath(
-  brandConfig?.LOGO,
-  '/brand/logo.svg',
-  '/media/images/brand/logo.svg'
-);
-
-const wordmark = getAssetPath(
-  brandConfig?.WORDMARK,
-  '/brand/wordmark.svg',
-  '/media/images/brand/wordmark.svg'
-);
+const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
+const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
 
 // Handle empty WORDMARK_MODE by defaulting to "default"
 const wordmarkMode =

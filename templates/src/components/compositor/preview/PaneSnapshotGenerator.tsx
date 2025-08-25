@@ -66,8 +66,7 @@ export const PaneSnapshotGenerator = ({
           throw new Error('Could not access iframe document');
         }
 
-        const isDev = import.meta.env.DEV;
-        const cssBasePath = isDev ? '/styles' : '/media/css';
+        const cssBasePath = '/media/css';
         const customCssUrl = `${cssBasePath}/custom.css`;
         const storykeepCssUrl = `${cssBasePath}/storykeep.css`;
 

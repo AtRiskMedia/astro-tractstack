@@ -44,6 +44,10 @@ export async function injectTemplateFiles(
       src: resolve('templates/src/constants/stopWords.ts'),
       dest: 'src/constants/stopWords.ts',
     },
+    {
+      src: resolve('templates/src/pages/media/[...slug].astro'),
+      dest: 'src/pages/media/[...slug].astro',
+    },
 
     // Types
     {
@@ -533,6 +537,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/preview/FeaturedContentPreview.tsx',
     },
 
+    // Server side stores
+    {
+      src: resolve('templates/src/stores/backend.ts'),
+      dest: 'src/stores/backend.ts',
+    },
+
     // Compositor stores
     {
       src: resolve('templates/src/stores/nodes.ts'),
@@ -791,6 +801,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/src/pages/storykeep.astro'),
       dest: 'src/pages/storykeep.astro',
+    },
+    {
+      src: resolve('templates/src/pages/storykeep/init.astro'),
+      dest: 'src/pages/storykeep/init.astro',
     },
     {
       src: resolve('templates/src/pages/storykeep/content.astro'),
@@ -1499,6 +1513,358 @@ export async function injectTemplateFiles(
     {
       src: resolve('templates/brand/wordmark.svg'),
       dest: 'public/brand/wordmark.svg',
+    },
+
+    // Artpack Assets - kCz
+    {
+      src: resolve('templates/artpacks/kCz/captainBreakfast_1080px.webp'),
+      dest: 'public/artpacks/kCz/captainBreakfast_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/captainBreakfast_1920px.webp'),
+      dest: 'public/artpacks/kCz/captainBreakfast_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/captainBreakfast_600px.webp'),
+      dest: 'public/artpacks/kCz/captainBreakfast_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/cleanDrips_1080px.webp'),
+      dest: 'public/artpacks/kCz/cleanDrips_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/cleanDrips_1920px.webp'),
+      dest: 'public/artpacks/kCz/cleanDrips_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/cleanDrips_600px.webp'),
+      dest: 'public/artpacks/kCz/cleanDrips_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/crispwaves_1080px.webp'),
+      dest: 'public/artpacks/kCz/crispwaves_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/crispwaves_1920px.webp'),
+      dest: 'public/artpacks/kCz/crispwaves_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/crispwaves_600px.webp'),
+      dest: 'public/artpacks/kCz/crispwaves_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragon_1080px.webp'),
+      dest: 'public/artpacks/kCz/dragon_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragon_1920px.webp'),
+      dest: 'public/artpacks/kCz/dragon_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragon_600px.webp'),
+      dest: 'public/artpacks/kCz/dragon_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragonSkin_1080px.webp'),
+      dest: 'public/artpacks/kCz/dragonSkin_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragonSkin_1920px.webp'),
+      dest: 'public/artpacks/kCz/dragonSkin_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/dragonSkin_600px.webp'),
+      dest: 'public/artpacks/kCz/dragonSkin_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/nightcity_1080px.webp'),
+      dest: 'public/artpacks/kCz/nightcity_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/nightcity_1920px.webp'),
+      dest: 'public/artpacks/kCz/nightcity_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/nightcity_600px.webp'),
+      dest: 'public/artpacks/kCz/nightcity_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern1_1080px.webp'),
+      dest: 'public/artpacks/kCz/pattern1_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern1_1920px.webp'),
+      dest: 'public/artpacks/kCz/pattern1_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern1_600px.webp'),
+      dest: 'public/artpacks/kCz/pattern1_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern2_1080px.webp'),
+      dest: 'public/artpacks/kCz/pattern2_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern2_1920px.webp'),
+      dest: 'public/artpacks/kCz/pattern2_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/pattern2_600px.webp'),
+      dest: 'public/artpacks/kCz/pattern2_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/skindrips_1080px.webp'),
+      dest: 'public/artpacks/kCz/skindrips_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/skindrips_1920px.webp'),
+      dest: 'public/artpacks/kCz/skindrips_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/skindrips_600px.webp'),
+      dest: 'public/artpacks/kCz/skindrips_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/slimetime_1080px.webp'),
+      dest: 'public/artpacks/kCz/slimetime_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/slimetime_1920px.webp'),
+      dest: 'public/artpacks/kCz/slimetime_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/slimetime_600px.webp'),
+      dest: 'public/artpacks/kCz/slimetime_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/snake_1080px.webp'),
+      dest: 'public/artpacks/kCz/snake_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/snake_1920px.webp'),
+      dest: 'public/artpacks/kCz/snake_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/snake_600px.webp'),
+      dest: 'public/artpacks/kCz/snake_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/toxicshock_1080px.webp'),
+      dest: 'public/artpacks/kCz/toxicshock_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/toxicshock_1920px.webp'),
+      dest: 'public/artpacks/kCz/toxicshock_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/toxicshock_600px.webp'),
+      dest: 'public/artpacks/kCz/toxicshock_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tractstack_1080px.webp'),
+      dest: 'public/artpacks/kCz/tractstack_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tractstack_1920px.webp'),
+      dest: 'public/artpacks/kCz/tractstack_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tractstack_600px.webp'),
+      dest: 'public/artpacks/kCz/tractstack_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tripdrips_1080px.webp'),
+      dest: 'public/artpacks/kCz/tripdrips_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tripdrips_1920px.webp'),
+      dest: 'public/artpacks/kCz/tripdrips_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/tripdrips_600px.webp'),
+      dest: 'public/artpacks/kCz/tripdrips_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/wavedrips_1080px.webp'),
+      dest: 'public/artpacks/kCz/wavedrips_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/wavedrips_1920px.webp'),
+      dest: 'public/artpacks/kCz/wavedrips_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/kCz/wavedrips_600px.webp'),
+      dest: 'public/artpacks/kCz/wavedrips_600px.webp',
+    },
+
+    // Artpack Assets - t8k
+    {
+      src: resolve('templates/artpacks/t8k/beach_1080px.webp'),
+      dest: 'public/artpacks/t8k/beach_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/beach_1920px.webp'),
+      dest: 'public/artpacks/t8k/beach_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/beach_600px.webp'),
+      dest: 'public/artpacks/t8k/beach_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/blast_1080px.webp'),
+      dest: 'public/artpacks/t8k/blast_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/blast_1920px.webp'),
+      dest: 'public/artpacks/t8k/blast_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/blast_600px.webp'),
+      dest: 'public/artpacks/t8k/blast_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/bokeh_1080px.webp'),
+      dest: 'public/artpacks/t8k/bokeh_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/bokeh_1920px.webp'),
+      dest: 'public/artpacks/t8k/bokeh_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/bokeh_600px.webp'),
+      dest: 'public/artpacks/t8k/bokeh_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/cartoon_1080px.webp'),
+      dest: 'public/artpacks/t8k/cartoon_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/cartoon_1920px.webp'),
+      dest: 'public/artpacks/t8k/cartoon_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/cartoon_600px.webp'),
+      dest: 'public/artpacks/t8k/cartoon_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/darkeggshell_1080px.webp'),
+      dest: 'public/artpacks/t8k/darkeggshell_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/darkeggshell_1920px.webp'),
+      dest: 'public/artpacks/t8k/darkeggshell_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/darkeggshell_600px.webp'),
+      dest: 'public/artpacks/t8k/darkeggshell_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/explosion_1080px.webp'),
+      dest: 'public/artpacks/t8k/explosion_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/explosion_1920px.webp'),
+      dest: 'public/artpacks/t8k/explosion_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/explosion_600px.webp'),
+      dest: 'public/artpacks/t8k/explosion_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/floral_1080px.webp'),
+      dest: 'public/artpacks/t8k/floral_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/floral_1920px.webp'),
+      dest: 'public/artpacks/t8k/floral_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/floral_600px.webp'),
+      dest: 'public/artpacks/t8k/floral_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/flower_1080px.webp'),
+      dest: 'public/artpacks/t8k/flower_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/flower_1920px.webp'),
+      dest: 'public/artpacks/t8k/flower_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/flower_600px.webp'),
+      dest: 'public/artpacks/t8k/flower_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/foliage_1080px.webp'),
+      dest: 'public/artpacks/t8k/foliage_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/foliage_1920px.webp'),
+      dest: 'public/artpacks/t8k/foliage_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/foliage_600px.webp'),
+      dest: 'public/artpacks/t8k/foliage_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/mist_1080px.webp'),
+      dest: 'public/artpacks/t8k/mist_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/mist_1920px.webp'),
+      dest: 'public/artpacks/t8k/mist_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/mist_600px.webp'),
+      dest: 'public/artpacks/t8k/mist_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/portal_1080px.webp'),
+      dest: 'public/artpacks/t8k/portal_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/portal_1920px.webp'),
+      dest: 'public/artpacks/t8k/portal_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/portal_600px.webp'),
+      dest: 'public/artpacks/t8k/portal_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/storytime_1080px.webp'),
+      dest: 'public/artpacks/t8k/storytime_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/storytime_1920px.webp'),
+      dest: 'public/artpacks/t8k/storytime_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/storytime_600px.webp'),
+      dest: 'public/artpacks/t8k/storytime_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/tacky_1080px.webp'),
+      dest: 'public/artpacks/t8k/tacky_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/tacky_1920px.webp'),
+      dest: 'public/artpacks/t8k/tacky_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/tacky_600px.webp'),
+      dest: 'public/artpacks/t8k/tacky_600px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/wallpaper_1080px.webp'),
+      dest: 'public/artpacks/t8k/wallpaper_1080px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/wallpaper_1920px.webp'),
+      dest: 'public/artpacks/t8k/wallpaper_1920px.webp',
+    },
+    {
+      src: resolve('templates/artpacks/t8k/wallpaper_600px.webp'),
+      dest: 'public/artpacks/t8k/wallpaper_600px.webp',
     },
 
     // Add Mode icons

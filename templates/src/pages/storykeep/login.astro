@@ -1,5 +1,15 @@
 ---
 import { isAuthenticated } from '@/utils/auth';
+import { preHealthCheck } from '@/utils/backend';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 // Get redirect path from query params
 const url = new URL(Astro.request.url);
@@ -11,13 +21,17 @@ if (isAuthenticated(Astro) && !forceLogin) {
   return Astro.redirect(redirectPath);
 }
 
-// Determine asset paths based on environment
-const isDev = import.meta.env.DEV;
-const brandBasePath = isDev ? '/brand' : '/media/brand';
-
 // Brand assets with environment-aware paths
-const logo = `${brandBasePath}/logo.svg`;
-const wordmark = `${brandBasePath}/wordmark.svg`;
+const brandConfig = await getBrandConfig(tenantId);
+const getAssetPath = (configPath: string, fallback: string) => {
+  // Always prioritize brandConfig values when they exist
+  if (configPath && configPath !== '') {
+    return configPath;
+  }
+  return fallback;
+};
+const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
+const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
 ---
 
 <!doctype html>

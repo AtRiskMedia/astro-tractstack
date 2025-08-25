@@ -15,7 +15,7 @@ const LAYOUT_THEME_OPTIONS = [
   'light-bold',
   'dark',
   'dark-bw',
-  'dark-bold'
+  'dark-bold',
 ] as const;
 
 // Helper function to determine current brand color preset from colors
@@ -108,7 +108,9 @@ export default function BrandColorsSection({
   const hasContrastIssues = contrastIssues.length > 0;
 
   // Derive the current brand color preset from the colors
-  const currentBrandColorPreset = getCurrentBrandColorPreset(state.brandColours);
+  const currentBrandColorPreset = getCurrentBrandColorPreset(
+    state.brandColours
+  );
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -124,7 +126,9 @@ export default function BrandColorsSection({
           label="Theme"
           options={LAYOUT_THEME_OPTIONS.map((theme) => ({
             value: theme,
-            label: theme.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            label: theme
+              .replace(/-/g, ' ')
+              .replace(/\b\w/g, (l) => l.toUpperCase()),
           }))}
           error={errors.theme}
           id="theme"

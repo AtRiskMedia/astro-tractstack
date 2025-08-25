@@ -5,6 +5,15 @@ import StoryKeepDashboard_Advanced from '@/components/storykeep/Dashboard_Advanc
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const authCheck = requireAdminOrEditor(Astro);
 if (authCheck) {
@@ -17,35 +26,10 @@ if (!userIsAdmin) {
   return Astro.redirect('/storykeep');
 }
 
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId =
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
-
-try {
-  const statusResponse = await fetch(`${goBackend}/api/v1/health`, {
-    headers: {
-      'X-Tenant-ID': tenantId,
-    },
-    signal: AbortSignal.timeout(5000),
-  });
-
-  if (!statusResponse.ok) {
-    return Astro.redirect(
-      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-    );
-  }
-} catch (error) {
-  return Astro.redirect(
-    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-  );
-}
-
 const userIsAuthenticated = isAuthenticated(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
 
-const brandConfig = await getBrandConfig(
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
-);
+const brandConfig = await getBrandConfig(tenantId);
 const initializing = !brandConfig.SITE_INIT;
 
 // Redirect to branding page during initial setup
@@ -59,9 +43,7 @@ let fullContentMap;
 let homeSlug = 'hello';
 
 try {
-  fullContentMap = await getFullContentMap(
-    Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
-  );
+  fullContentMap = await getFullContentMap(tenantId);
   homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
   return Astro.redirect(

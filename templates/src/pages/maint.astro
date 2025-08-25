@@ -1,12 +1,20 @@
 ---
+import { getBrandConfig } from '@/utils/api/brandConfig';
+
 const originalUrl = Astro.url.searchParams.get('from') || '/';
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
-const isDev = import.meta.env.DEV;
-const brandBasePath = isDev ? '/brand' : '/media/brand';
-const logo = `${brandBasePath}/logo.svg`;
-const wordmark = `${brandBasePath}/wordmark.svg`;
+const brandConfig = await getBrandConfig(tenantId);
+const getAssetPath = (configPath: string, fallback: string) => {
+  // Always prioritize brandConfig values when they exist
+  if (configPath && configPath !== '') {
+    return configPath;
+  }
+  return fallback;
+};
+const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
+const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
 ---
 
 <!doctype html>

@@ -3,9 +3,9 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
+import { freshInstallStore } from '@/stores/backend'; // Import the store
 import type { MenuNode } from '@/types/tractstack';
 import type { ImpressionNode } from '@/types/compositorTypes';
-
 export interface Props {
   title: string;
   slug?: string;
@@ -46,21 +46,26 @@ const {
 } = Astro.props;
 
 const isDev = import.meta.env.DEV;
-const cssBasePath = isDev ? '/styles' : '/media/css';
-const fontBasePath = isDev ? '/fonts' : '/media/fonts';
-const mainStylesUrl = isStoryKeep
-  ? `${cssBasePath}/storykeep.css`
-  : isDev
+
+// Get site status from the store
+const isInitialized = !freshInstallStore.get().needsSetup;
+
+// Conditionally set asset paths based on initialization status
+const cssBasePath = isInitialized ? '/media/css' : '/styles';
+const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
+const brandBasePath = isInitialized ? '/media/brand' : '/brand';
+
+const mainStylesUrl =
+  isStoryKeep || isDev
     ? `${cssBasePath}/storykeep.css`
     : `${cssBasePath}/frontend.css`;
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
-const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
-
 // Social media and SEO setup
-const defaultFavIcon = `/brand/favicon.ico`;
+const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
+const defaultFavIcon = brandConfig.FAVICON || `/favicon.ico`;
 const defaultSocialImageURL = ogImage || brandConfig.OG || `/og.png`;
 const defaultSocialLogoURL = brandConfig.OGLOGO || `/oglogo.png`;
 const defaultSocialTitle =
@@ -223,7 +228,6 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
           ? storyfragmentMeta.content
           : null;
         const currentSessionId = sessionMeta ? sessionMeta.content : sessionId;
-
         if (window.TRACTSTACK_CONFIG && currentStoryfragmentId) {
           window.TRACTSTACK_CONFIG.storyfragmentId = currentStoryfragmentId;
           window.TRACTSTACK_CONFIG.sessionId = currentSessionId;
@@ -232,7 +236,8 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
         }
       }
 
-      // Check if config exists. If not, create it. This handles the very first load.
+      // Check if config exists.
+      // If not, create it. This handles the very first load.
       if (!window.TRACTSTACK_CONFIG) {
         createTractstackConfig();
       }

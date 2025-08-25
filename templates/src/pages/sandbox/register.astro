@@ -2,31 +2,19 @@
 import Layout from '@/layouts/Layout.astro';
 import RegistrationForm from '@/components/tenant/RegistrationForm';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import { checkBackendHealth } from '@/utils/backend';
+import { preHealthCheck } from '@/utils/backend';
 
+const tenantId = 'default'; // For registration, always use default
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 // Check if multi-tenant is enabled
 const isMultiTenantEnabled =
   import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
 if (!isMultiTenantEnabled) {
   return Astro.redirect('/storykeep?error=multi-tenant-disabled');
-}
-
-// Get backend URL and tenant info
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId = 'default'; // For registration, always use default
-
-// Check backend health using utility
-try {
-  const healthResponse = await checkBackendHealth(goBackend, tenantId, 500);
-  if (healthResponse.shouldRedirectToMaint) {
-    return Astro.redirect(
-      `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-    );
-  }
-} catch (error) {
-  return Astro.redirect(
-    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-  );
 }
 
 const brandConfig = await getBrandConfig('default');

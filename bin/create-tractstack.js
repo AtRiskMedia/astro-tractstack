@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
+import { homedir } from 'os';
 import { execSync } from 'child_process';
 import prompts from 'prompts';
 import kleur from 'kleur';
@@ -105,6 +106,19 @@ ${kleur.bold('Examples:')}
       validate: (value) => value.length > 0 || 'Tenant ID is required',
     },
     {
+      type: 'text',
+      name: 'goBackendPath',
+      message: 'TractStack Go backend path:',
+      initial: `${homedir()}/t8k-go-server/`,
+      validate: (value) => {
+        if (!value || value.trim().length === 0) {
+          return 'Backend path is required';
+        }
+        // Ensure it ends with trailing slash for consistency
+        return true;
+      },
+    },
+    {
       type: 'confirm',
       name: 'includeExamples',
       message:
@@ -128,6 +142,7 @@ ${kleur.bold('Examples:')}
   const envContent = `# TractStack Configuration
 PUBLIC_GO_BACKEND="${responses.goBackend}"
 PUBLIC_TENANTID="${responses.tenantId}"
+PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goBackendPath : responses.goBackendPath + '/'}"
 `;
 
   try {

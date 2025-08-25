@@ -4,9 +4,15 @@ import CodeHook from '@/custom/CodeHook.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
+import { preHealthCheck } from '@/utils/backend';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const { contextSlug } = Astro.params || {};
 

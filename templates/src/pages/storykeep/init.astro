@@ -1,0 +1,16 @@
+---
+import { freshInstallStore } from '@/stores/backend';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+await preHealthCheck(tenantId);
+
+const { needsSetup } = freshInstallStore.get();
+
+if (!needsSetup) {
+  return Astro.redirect('/storykeep');
+}
+---
+
+<p>needs setup</p>

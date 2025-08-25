@@ -6,9 +6,16 @@ import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 import { getOrSetSessionId } from '@/lib/session';
 import { getStoryData } from '@/lib/storyData';
+import { preHealthCheck } from '@/utils/backend';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
 const { slug } = Astro.params || {};
 
 if (slug && (slug.startsWith('images/') || slug.startsWith('media/'))) {

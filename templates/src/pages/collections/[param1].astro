@@ -1,6 +1,15 @@
 ---
 import CustomRoutes, { routes } from '@/custom/CustomRoutes.astro';
+import { preHealthCheck } from '@/utils/backend';
 import type { ResourceNode } from '@/types/compositorTypes';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const { param1 } = Astro.params;
 const route = `collections`;

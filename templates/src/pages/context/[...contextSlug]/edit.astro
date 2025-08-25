@@ -13,6 +13,15 @@ import StoryKeepToolMode from '@/components/edit/ToolMode';
 import SettingsPanel from '@/components/edit/SettingsPanel';
 import { Compositor } from '@/components/compositor/Compositor';
 import { requireAdminOrEditor } from '@/utils/auth';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
 
 const { contextSlug } = Astro.params;
 if (!contextSlug) return Astro.redirect('/404');
@@ -23,8 +32,6 @@ if (authCheck) {
   return authCheck;
 }
 
-const tenantId =
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
 const brandConfig = await getBrandConfig(tenantId);
