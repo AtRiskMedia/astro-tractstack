@@ -37,36 +37,40 @@ export default function StoryKeepDashboard({
 
   const isCurrentlyInitializing =
     initializing && !currentBrandConfig?.SITE_INIT;
+  // Detect if home page has title
+  const homePage = fullContentMap.find((item) => item.slug === homeSlug);
+  const hasTitle = !!homePage?.title?.trim();
+  const shouldShowInactiveTabs = !hasTitle && !isCurrentlyInitializing;
 
   // Define tabs - show only branding when initializing
   const tabs: Tab[] = isCurrentlyInitializing
     ? [{ id: 'branding', name: 'Welcome to your StoryKeep', current: true }]
     : [
-        {
-          id: 'analytics',
-          name: 'Analytics',
-          current: activeTab === 'analytics',
-        },
-        {
-          id: 'content',
-          name: 'Content',
-          current: activeTab === 'content',
-        },
-        {
-          id: 'branding',
-          name: 'Branding',
-          current: activeTab === 'branding',
-        },
-        ...(role === 'admin'
-          ? [
-              {
-                id: 'advanced',
-                name: 'Advanced',
-                current: activeTab === 'advanced',
-              },
-            ]
-          : []),
-      ];
+      {
+        id: 'analytics',
+        name: 'Analytics',
+        current: shouldShowInactiveTabs ? false : activeTab === 'analytics',
+      },
+      {
+        id: 'content',
+        name: 'Content',
+        current: activeTab === 'content',
+      },
+      {
+        id: 'branding',
+        name: 'Branding',
+        current: activeTab === 'branding',
+      },
+      ...(role === 'admin'
+        ? [
+          {
+            id: 'advanced',
+            name: 'Advanced',
+            current: activeTab === 'advanced',
+          },
+        ]
+        : []),
+    ];
 
   useEffect(() => {
     setIsClient(true);

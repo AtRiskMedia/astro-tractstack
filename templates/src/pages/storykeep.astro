@@ -62,11 +62,20 @@ try {
         initializing={initializing}
       />
 
-      <StoryKeepDashboard_Analytics
-        client:only="react"
-        fullContentMap={fullContentMap}
-        initializing={initializing}
-      />
+      <!-- Only show Analytics content when home page has title -->
+      {
+        fullContentMap.find((item) => item.slug === homeSlug)?.title?.trim() ? (
+          <StoryKeepDashboard_Analytics
+            client:only="react"
+            fullContentMap={fullContentMap}
+            initializing={initializing}
+          />
+        ) : (
+          <div class="mt-8 text-gray-500">
+            <p>Complete the setup wizard above to unlock Analytics.</p>
+          </div>
+        )
+      }
     </div>
   </main>
 </Layout>
