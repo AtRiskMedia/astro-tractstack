@@ -445,12 +445,20 @@ export default defineConfig({
 
   await updateAstroConfig();
 
-  // Format project files
+  // Initialize TractStack integration and format project files
   try {
+    console.log(kleur.cyan('🔧 Initializing TractStack integration...'));
+    execSync(`${packageManager} astro build`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ TractStack templates injected'));
+
     execSync(`${packageManager} format`, { stdio: 'inherit' });
     console.log(kleur.green('✅ Formatted project files'));
   } catch (error) {
-    console.log(kleur.red('❌ Failed to format files:', error.message));
+    console.log(
+      kleur.yellow(
+        '⚠️ Setup completed, but run `pnpm astro build && pnpm format` to finish'
+      )
+    );
   }
 
   // Success message
