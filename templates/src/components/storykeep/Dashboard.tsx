@@ -46,31 +46,31 @@ export default function StoryKeepDashboard({
   const tabs: Tab[] = isCurrentlyInitializing
     ? [{ id: 'branding', name: 'Welcome to your StoryKeep', current: true }]
     : [
-      {
-        id: 'analytics',
-        name: 'Analytics',
-        current: shouldShowInactiveTabs ? false : activeTab === 'analytics',
-      },
-      {
-        id: 'content',
-        name: 'Content',
-        current: activeTab === 'content',
-      },
-      {
-        id: 'branding',
-        name: 'Branding',
-        current: activeTab === 'branding',
-      },
-      ...(role === 'admin'
-        ? [
-          {
-            id: 'advanced',
-            name: 'Advanced',
-            current: activeTab === 'advanced',
-          },
-        ]
-        : []),
-    ];
+        {
+          id: 'analytics',
+          name: 'Analytics',
+          current: shouldShowInactiveTabs ? false : activeTab === 'analytics',
+        },
+        {
+          id: 'content',
+          name: 'Content',
+          current: activeTab === 'content',
+        },
+        {
+          id: 'branding',
+          name: 'Branding',
+          current: activeTab === 'branding',
+        },
+        ...(role === 'admin'
+          ? [
+              {
+                id: 'advanced',
+                name: 'Advanced',
+                current: activeTab === 'advanced',
+              },
+            ]
+          : []),
+      ];
 
   useEffect(() => {
     setIsClient(true);

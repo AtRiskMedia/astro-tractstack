@@ -1,19 +1,24 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.0-alpha.1",
-  "description": "Astro integration for TractStack - build dynamic websites with HTMX and Go",
+  "version": "2.0.0-rc.0",
+  "description": "Astro integration for TractStack - build adaptive websites with HTMX and Go",
   "type": "module",
+  "main": "dist/index.js",
   "exports": {
-    ".": "./index.ts",
-    "./config": "./config.ts"
+    ".": "./dist/index.js",
+    "./config": "./dist/config.js"
   },
   "files": [
-    "index.ts",
-    "config.ts",
+    "dist/",
     "templates/",
     "utils/",
-    "bin/"
+    "bin/",
+    "LICENSE.md",
+    "README.md"
   ],
+  "bin": {
+    "create-tractstack": "./bin/create-tractstack.js"
+  },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.dts.json",
     "format": "prettier --write .",
@@ -34,8 +39,12 @@
     "type": "git",
     "url": "https://github.com/AtRiskMedia/astro-tractstack.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
-    "astro": "^5.0.0"
+    "astro": "^5.0.0",
+    "@astrojs/react": "^3.0.0"
   },
   "dependencies": {
     "@ark-ui/react": "^5.9.0",
@@ -75,9 +84,6 @@
   },
   "engines": {
     "node": ">=18.14.1"
-  },
-  "bin": {
-    "create-tractstack": "./bin/create-tractstack.js"
   },
   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
 }
