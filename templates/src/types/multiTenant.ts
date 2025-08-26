@@ -31,6 +31,7 @@ export interface TenantProvisioningResponse {
 export interface TenantRegistrationState {
   tenantId: string;
   adminPassword: string;
+  confirmPassword: string;
   name: string;
   email: string;
   tursoEnabled: boolean;

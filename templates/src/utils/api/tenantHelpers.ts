@@ -15,6 +15,7 @@ export function convertToLocalState(
     return {
       tenantId: '',
       adminPassword: '',
+      confirmPassword: '',
       name: '',
       email: '',
       tursoEnabled: false,
@@ -26,6 +27,7 @@ export function convertToLocalState(
   return {
     tenantId: data.tenantId,
     adminPassword: data.adminPassword,
+    confirmPassword: '',
     name: data.name,
     email: data.adminEmail,
     tursoEnabled: data.tursoEnabled,
@@ -62,25 +64,28 @@ export function convertToBackendFormat(
  */
 export function validateTenantRegistration(
   state: TenantRegistrationState,
-  existingTenants?: string[]
+  existingTenants?: string[],
+  isInitMode?: boolean
 ): TenantValidationErrors {
   const errors: TenantValidationErrors = {};
 
-  // Tenant ID validation (matches backend ValidateTenantID)
-  const tenantId = state.tenantId.trim();
-  if (!tenantId) {
-    errors.tenantId = 'Tenant ID is required';
-  } else if (tenantId.length < 3 || tenantId.length > 12) {
-    errors.tenantId = 'Tenant ID must be 3-12 characters long';
-  } else if (tenantId !== tenantId.toLowerCase()) {
-    errors.tenantId = 'Tenant ID must be lowercase';
-  } else if (!/^[a-z0-9-]+$/.test(tenantId)) {
-    errors.tenantId =
-      'Tenant ID can only contain lowercase letters, numbers, and dashes';
-  } else if (tenantId === 'default') {
-    errors.tenantId = "'default' is a reserved tenant ID";
-  } else if (existingTenants && existingTenants.includes(tenantId)) {
-    errors.tenantId = 'This tenant ID is already taken';
+  // Skip ALL tenant ID validation in init mode
+  if (!isInitMode) {
+    const tenantId = state.tenantId.trim();
+    if (!tenantId) {
+      errors.tenantId = 'Tenant ID is required';
+    } else if (tenantId.length < 3 || tenantId.length > 12) {
+      errors.tenantId = 'Tenant ID must be 3-12 characters long';
+    } else if (tenantId !== tenantId.toLowerCase()) {
+      errors.tenantId = 'Tenant ID must be lowercase';
+    } else if (!/^[a-z0-9-]+$/.test(tenantId)) {
+      errors.tenantId =
+        'Tenant ID can only contain lowercase letters, numbers, and dashes';
+    } else if (tenantId === 'default') {
+      errors.tenantId = "'default' is a reserved tenant ID";
+    } else if (existingTenants && existingTenants.includes(tenantId)) {
+      errors.tenantId = 'This tenant ID is already taken';
+    }
   }
 
   // Admin password validation
@@ -88,6 +93,11 @@ export function validateTenantRegistration(
     errors.adminPassword = 'Admin password is required';
   } else if (state.adminPassword.length < 8) {
     errors.adminPassword = 'Admin password must be at least 8 characters long';
+  }
+
+  // Password confirmation validation - only if main password is valid
+  if (!errors.adminPassword && state.adminPassword !== state.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match';
   }
 
   // Name validation
@@ -137,6 +147,15 @@ export function tenantStateIntercept(
       tursoEnabled: false,
       tursoDatabaseURL: '',
       tursoAuthToken: '',
+    };
+  }
+
+  // Clear confirmation password when main password changes
+  if (field === 'adminPassword') {
+    return {
+      ...newState,
+      adminPassword: value,
+      confirmPassword: '', // Clear confirmation to force re-entry
     };
   }
 

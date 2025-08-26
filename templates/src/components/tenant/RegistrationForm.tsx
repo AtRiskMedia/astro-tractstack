@@ -7,6 +7,7 @@ import {
   tenantStateIntercept,
 } from '@/utils/api/tenantHelpers';
 import { checkTenantCapacity, provisionTenant } from '@/utils/api/tenantConfig';
+import { TractStackAPI } from '@/utils/api';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import StringInput from '@/components/form/StringInput';
 import BooleanToggle from '@/components/form/BooleanToggle';
@@ -14,16 +15,18 @@ import type { TenantCapacity } from '@/types/multiTenant';
 import type { TenantRegistrationState } from '@/types/multiTenant';
 
 interface RegistrationFormProps {
-  onSuccess?: (tenantId: string) => void;
+  isInitMode?: boolean;
+  onSuccess?: (tenantId?: string) => void;
   onCapacityFull?: () => void;
 }
 
 export default function RegistrationForm({
+  isInitMode = false,
   onSuccess,
   onCapacityFull,
 }: RegistrationFormProps) {
   const [capacity, setCapacity] = useState<TenantCapacity | null>(null);
-  const [loadingCapacity, setLoadingCapacity] = useState(true);
+  const [loadingCapacity, setLoadingCapacity] = useState(!isInitMode);
   const [capacityError, setCapacityError] = useState<string | null>(null);
 
   // Modal state for tenant preparation
@@ -33,6 +36,10 @@ export default function RegistrationForm({
 
   // Load capacity information on mount
   useEffect(() => {
+    if (isInitMode) {
+      return;
+    }
+
     const loadCapacity = async () => {
       try {
         const capacityData = await checkTenantCapacity('default');
@@ -52,25 +59,48 @@ export default function RegistrationForm({
     };
 
     loadCapacity();
-  }, [onCapacityFull]);
+  }, [onCapacityFull, isInitMode]);
 
   const initialState: TenantRegistrationState = convertToLocalState();
 
   const formState = useFormState({
     initialData: initialState,
-    validator: (data) => validateTenantRegistration(data),
+    validator: (data) =>
+      validateTenantRegistration(data, undefined, isInitMode),
     interceptor: tenantStateIntercept,
     onSave: async (data) => {
       try {
-        const backendData = convertToBackendFormat(data);
-        const result = await provisionTenant('default', backendData);
+        if (isInitMode) {
+          const api = new TractStackAPI('default');
+          const setupData = {
+            adminEmail: data.email.trim(),
+            adminPassword: data.adminPassword.trim(),
+            ...(data.tursoEnabled && {
+              tursoDatabaseURL: data.tursoDatabaseURL.trim(),
+              tursoAuthToken: data.tursoAuthToken.trim(),
+            }),
+          };
 
-        // Store the activation token and tenant ID for the modal
-        setActivationToken(result.token);
-        setPreparingTenantId(data.tenantId);
-        setShowPreparationModal(true);
+          const response = await api.post(
+            '/api/v1/setup/initialize',
+            setupData
+          );
+          if (!response.success) {
+            throw new Error(response.error || 'Setup failed');
+          }
+          window.location.href = '/storykeep';
+          return data;
+        } else {
+          const backendData = convertToBackendFormat(data);
+          const result = await provisionTenant('default', backendData);
 
-        return data;
+          // Store the activation token and tenant ID for the modal
+          setActivationToken(result.token);
+          setPreparingTenantId(data.tenantId);
+          setShowPreparationModal(true);
+
+          return data;
+        }
       } catch (error) {
         console.error('Tenant provisioning failed:', error);
         throw error;
@@ -127,7 +157,7 @@ export default function RegistrationForm({
     );
   }
 
-  if (!capacity) {
+  if (!capacity && !isInitMode) {
     return (
       <div className="mx-auto max-w-2xl p-6">
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
@@ -148,53 +178,67 @@ export default function RegistrationForm({
       <div className="mx-auto max-w-2xl p-6">
         <div className="rounded-lg bg-white p-8 shadow-lg">
           <div className="mb-8">
-            <h2 className="mb-2 text-2xl font-bold text-gray-900">
-              Claim Your TractStack Sandbox
+            <div className="h-16">
+              <img
+                src="/brand/logo.svg"
+                className="pointer-events-none mx-auto h-full"
+                alt="Logo"
+              />
+            </div>
+
+            <h2 className="mb-2 mt-8 text-2xl font-bold text-gray-900">
+              {isInitMode ? `Install Tract Stack` : `Try Tract Stack`}
             </h2>
-            <p className="text-gray-600">
-              Set up your free sandbox environment to try TractStack.
-            </p>
-            <div className="mt-4 rounded-lg bg-orange-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-orange-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-orange-700">
-                    {capacity.availableSlots} of {capacity.maxTenants} slots
-                    remaining
-                  </p>
+            {!isInitMode && (
+              <p className="text-gray-600">
+                Set up your free sandbox environment to try TractStack.
+              </p>
+            )}
+            {!isInitMode && capacity && (
+              <div className="mt-4 rounded-lg bg-orange-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-orange-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-orange-700">
+                      {capacity.availableSlots} of {capacity.maxTenants} slots
+                      remaining
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="space-y-6">
-            {/* Tenant ID */}
-            <div>
-              <label className="mb-1 block text-sm font-bold text-gray-700">
-                Tenant ID *
-              </label>
-              <StringInput
-                value={state.tenantId}
-                onChange={(value) => updateField('tenantId', value)}
-                placeholder="my-awesome-tenant"
-                error={errors.tenantId}
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                3-12 characters, lowercase letters, numbers, and dashes only
-              </p>
-            </div>
+            {/* Tenant ID field - hidden in init mode */}
+            {!isInitMode && (
+              <div>
+                <label className="mb-1 block text-sm font-bold text-gray-700">
+                  Tenant ID *
+                </label>
+                <StringInput
+                  value={state.tenantId}
+                  onChange={(value) => updateField('tenantId', value)}
+                  placeholder="my-awesome-tenant"
+                  error={errors.tenantId}
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  3-12 characters, lowercase letters, numbers, and dashes only
+                </p>
+              </div>
+            )}
 
             {/* Admin Password */}
             <div>
@@ -209,6 +253,20 @@ export default function RegistrationForm({
                 error={errors.adminPassword}
               />
               <p className="mt-1 text-sm text-gray-500">Minimum 8 characters</p>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="mb-1 block text-sm font-bold text-gray-700">
+                Confirm Password *
+              </label>
+              <StringInput
+                value={state.confirmPassword}
+                onChange={(value) => updateField('confirmPassword', value)}
+                type="password"
+                placeholder="Confirm your admin password"
+                error={errors.confirmPassword}
+              />
             </div>
 
             {/* Name */}
@@ -293,8 +351,12 @@ export default function RegistrationForm({
 
           <UnsavedChangesBar
             formState={formState}
-            message="Complete your tenant registration"
-            saveLabel="Create Tenant"
+            message={
+              isInitMode
+                ? `Install Tract Stack`
+                : `Complete your tenant registration`
+            }
+            saveLabel={isInitMode ? `Install` : `Create Tenant`}
             cancelLabel="Clear Form"
           />
         </div>

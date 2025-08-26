@@ -1,6 +1,7 @@
 ---
 import { freshInstallStore } from '@/stores/backend';
 import { preHealthCheck } from '@/utils/backend';
+import RegistrationForm from '@/components/tenant/RegistrationForm';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -11,6 +12,25 @@ const { needsSetup } = freshInstallStore.get();
 if (!needsSetup) {
   return Astro.redirect('/storykeep');
 }
+
+const isDev = import.meta.env.DEV;
+const isInitialized = !freshInstallStore.get().needsSetup;
+const cssBasePath = isInitialized ? '/media/css' : '/styles';
+const mainStylesUrl = isDev
+  ? `${cssBasePath}/storykeep.css`
+  : `${cssBasePath}/frontend.css`;
 ---
 
-<p>needs setup</p>
+<!doctype html>
+<html lang="en" class="h-full bg-gray-50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Initialize TractStack</title>
+    <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
+    <link rel="stylesheet" href={mainStylesUrl} />
+  </head>
+  <body class="h-full">
+    <RegistrationForm client:load isInitMode={true} />
+  </body>
+</html>

@@ -2,6 +2,7 @@
 import { isAuthenticated } from '@/utils/auth';
 import { preHealthCheck } from '@/utils/backend';
 import { getBrandConfig } from '@/utils/api/brandConfig';
+import { freshInstallStore } from '@/stores/backend';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -11,18 +12,18 @@ if (healthCheckRedirect !== undefined) {
   return healthCheckRedirect;
 }
 
-// Get redirect path from query params
 const url = new URL(Astro.request.url);
 const redirectPath = url.searchParams.get('redirect') || '/storykeep';
 const forceLogin = url.searchParams.get('force') === 'true';
 
-// If already authenticated and not forcing login, redirect
 if (isAuthenticated(Astro) && !forceLogin) {
   return Astro.redirect(redirectPath);
 }
 
-// Brand assets with environment-aware paths
+const isDev = import.meta.env.DEV;
+const isInitialized = !freshInstallStore.get().needsSetup;
 const brandConfig = await getBrandConfig(tenantId);
+const cssBasePath = isInitialized ? '/media/css' : '/styles';
 const getAssetPath = (configPath: string, fallback: string) => {
   // Always prioritize brandConfig values when they exist
   if (configPath && configPath !== '') {
@@ -32,6 +33,9 @@ const getAssetPath = (configPath: string, fallback: string) => {
 };
 const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
 const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
+const mainStylesUrl = isDev
+  ? `${cssBasePath}/storykeep.css`
+  : `${cssBasePath}/frontend.css`;
 ---
 
 <!doctype html>
@@ -40,8 +44,8 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | TractStack</title>
-    <link rel="stylesheet" href="/styles/custom.css" />
-    <link rel="stylesheet" href="/styles/storykeep.css" />
+    <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
+    <link rel="stylesheet" href={mainStylesUrl} />
   </head>
   <body class="h-full">
     <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">

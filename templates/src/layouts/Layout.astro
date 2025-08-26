@@ -3,7 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import { freshInstallStore } from '@/stores/backend'; // Import the store
+import { freshInstallStore } from '@/stores/backend';
 import type { MenuNode } from '@/types/tractstack';
 import type { ImpressionNode } from '@/types/compositorTypes';
 export interface Props {
@@ -53,8 +53,6 @@ const isInitialized = !freshInstallStore.get().needsSetup;
 // Conditionally set asset paths based on initialization status
 const cssBasePath = isInitialized ? '/media/css' : '/styles';
 const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
-const brandBasePath = isInitialized ? '/media/brand' : '/brand';
-
 const mainStylesUrl =
   isStoryKeep || isDev
     ? `${cssBasePath}/storykeep.css`
