@@ -44,7 +44,7 @@
   },
   "peerDependencies": {
     "astro": "^5.0.0",
-    "@astrojs/react": "^3.0.0"
+    "@astrojs/react": "^4.0.0"
   },
   "dependencies": {
     "@ark-ui/react": "^5.9.0",

@@ -93,12 +93,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/edit/panelVisibilityWrapper.tsx'
-      ),
-      dest: 'src/components/edit/panelVisibilityWrapper.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/RenderChildren.tsx'
       ),
       dest: 'src/components/compositor/nodes/RenderChildren.tsx',
@@ -192,12 +186,6 @@ export async function injectTemplateFiles(
         '../templates/src/components/compositor/nodes/tagElements/NodeAnchorComponent.tsx'
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeAnchorComponent.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeA.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeA.tsx',
     },
     {
       src: resolve(
@@ -640,10 +628,6 @@ export async function injectTemplateFiles(
       dest: 'src/utils/compositor/domHelpers.ts',
     },
     {
-      src: resolve('../templates/src/utils/compositor/actionButton.ts'),
-      dest: 'src/utils/compositor/actionButton.ts',
-    },
-    {
       src: resolve('../templates/src/utils/compositor/handleClickEvent.ts'),
       dest: 'src/utils/compositor/handleClickEvent.ts',
     },
@@ -743,16 +727,8 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/brandConfig.ts',
     },
     {
-      src: resolve('../templates/src/utils/sessionSync.ts'),
-      dest: 'src/utils/sessionSync.ts',
-    },
-    {
       src: resolve('../templates/src/utils/auth.ts'),
       dest: 'src/utils/auth.ts',
-    },
-    {
-      src: resolve('../templates/src/utils/core/auth.ts'),
-      dest: 'src/utils/core/auth.ts',
     },
     {
       src: resolve('../templates/src/utils/helpers.ts'),
@@ -805,10 +781,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/api/beliefConfig.ts'),
       dest: 'src/utils/api/beliefConfig.ts',
-    },
-    {
-      src: resolve('../templates/src/utils/navigationHelpers.ts'),
-      dest: 'src/utils/navigationHelpers.ts',
     },
 
     // Layouts
@@ -1121,12 +1093,6 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/widgets/ResponsiveLine.tsx'
       ),
       dest: 'src/components/storykeep/widgets/ResponsiveLine.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/storykeep/PullDashboardAnalytics.tsx'
-      ),
-      dest: 'src/components/storykeep/PullDashboardAnalytics.tsx',
     },
 
     // Content Management Components
@@ -2009,6 +1975,19 @@ export async function injectTemplateFiles(
       dest: 'public/socials/youtube.svg',
     },
 
+    // Multi-Tenant Features
+    {
+      src: resolve('../templates/src/components/tenant/RegistrationForm.tsx'),
+      dest: 'src/components/tenant/RegistrationForm.tsx',
+    },
+    {
+      src: resolve('../templates/src/utils/api/tenantConfig.ts'),
+      dest: 'src/utils/api/tenantConfig.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/api/tenantHelpers.ts'),
+      dest: 'src/utils/api/tenantHelpers.ts',
+    },
     // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
@@ -2016,22 +1995,6 @@ export async function injectTemplateFiles(
           {
             src: resolve('../templates/src/middleware.ts'),
             dest: 'src/middleware.ts',
-          },
-          // API Utilities
-          {
-            src: resolve('../templates/src/utils/api/tenantConfig.ts'),
-            dest: 'src/utils/api/tenantConfig.ts',
-          },
-          {
-            src: resolve('../templates/src/utils/api/tenantHelpers.ts'),
-            dest: 'src/utils/api/tenantHelpers.ts',
-          },
-          // Components
-          {
-            src: resolve(
-              '../templates/src/components/tenant/RegistrationForm.tsx'
-            ),
-            dest: 'src/components/tenant/RegistrationForm.tsx',
           },
           // Pages
           {

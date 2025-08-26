@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
+import {
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+  existsSync,
+} from 'fs';
+import { resolve } from 'path';
 import { homedir } from 'os';
 import { execSync } from 'child_process';
 import prompts from 'prompts';
@@ -287,6 +294,15 @@ src/content/generated/
   });
 
   console.log(kleur.green('✅ Created directory structure'));
+
+  // Remove unwanted index.astro
+  const indexAstroPath = resolve('src/pages/index.astro');
+  if (existsSync(indexAstroPath)) {
+    unlinkSync(indexAstroPath);
+    console.log(kleur.green('✅ Removed src/pages/index.astro'));
+  } else {
+    console.log(kleur.yellow('⚠️ No src/pages/index.astro found to remove'));
+  }
 
   // Update Astro config
   async function updateAstroConfig() {
