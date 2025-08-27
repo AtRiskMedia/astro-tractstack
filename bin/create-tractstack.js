@@ -23,7 +23,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch { }
+  } catch {}
 
   return 'pnpm';
 }

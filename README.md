@@ -23,7 +23,8 @@ Please visit [our docs](https://tractstack.org)
 
 For production deployment you'll need to prepare your server.
 
-*Quick Install*
+_Quick Install_
+
 ```
 mkdir -p ~/src
 cd ~/src
