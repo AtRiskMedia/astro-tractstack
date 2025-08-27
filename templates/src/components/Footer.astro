@@ -9,7 +9,7 @@ export interface Props {
   isContext?: boolean;
   menu?: MenuNode | null;
   backToTop?: boolean;
-  created?: string; // RFC3339 timestamp from V2 storyfragment
+  created?: string;
 }
 
 const {
@@ -86,7 +86,7 @@ const socialIconKeys = [
 
 const socialLinks = socials
   .split(`,`)
-  .map((s) => s.split(`|`))
+  .map((s: string) => s.split(`|`))
   .filter(isSocialEntry);
 
 // Get creation year for copyright
@@ -127,8 +127,8 @@ const createdDate = created ? new Date(created) : new Date();
       socialLinks.length > 0 ? (
         <div class="flex flex-wrap justify-center gap-3">
           {socialLinks
-            .filter((social) => socialIconKeys.includes(social[0]))
-            .map((social) => (
+            .filter((social: string[]) => socialIconKeys.includes(social[0]))
+            .map((social: string[]) => (
               <a
                 href={social[1]}
                 class="hover:text-myblue group my-1 inline-block p-2 hover:rotate-6"
@@ -197,7 +197,8 @@ const createdDate = created ? new Date(created) : new Date();
 
       if (shouldShow && !isVisible) {
         isVisible = true;
-        container.innerHTML = `
+        if (container?.innerHTML)
+          container.innerHTML = `
           <button
             id="top"
             title="Back to top"
@@ -219,7 +220,7 @@ const createdDate = created ? new Date(created) : new Date();
         }
       } else if (!shouldShow && isVisible) {
         isVisible = false;
-        container.innerHTML = '';
+        if (container?.innerHTML) container.innerHTML = '';
       }
     }
 

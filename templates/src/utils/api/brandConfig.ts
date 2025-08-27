@@ -106,7 +106,6 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
 export async function saveBrandConfigWithStateUpdate(
   tenantId: string,
   currentState: BrandConfigState
-  //originalState: BrandConfigState
 ): Promise<BrandConfigState> {
   const backendFormat = convertToBackendFormat(currentState);
 

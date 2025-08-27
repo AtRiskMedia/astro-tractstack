@@ -136,8 +136,7 @@ export async function getResourcesByCategory(
 
 export async function saveResourceWithStateUpdate(
   tenantId: string,
-  currentState: ResourceState,
-  originalState: ResourceState
+  currentState: ResourceState
 ): Promise<ResourceState> {
   // Convert to backend format
   const backendFormat = convertToBackendFormat(currentState);

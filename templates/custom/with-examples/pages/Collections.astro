@@ -1,8 +1,6 @@
 ---
-// V2 Collections Page - Adapted from V1 with V2 API calls
-// Uses Layout pattern from [...slug].astro
-
 import Layout from '@/layouts/Layout.astro';
+//import type { MenuNode } from '@/types/tractstack';
 
 export interface Props {
   route: string;
@@ -11,14 +9,12 @@ export interface Props {
   resources: any[];
 }
 
-// Hardcoded constants
-const hardcodedMenuId = '';
-
 const { route, slug, resources } = Astro.props;
 
-// V2 API call to get menu data
-let menuPayload = null;
 // uncomment if you add a menu id
+//
+//let menuPayload: MenuNode | null = null;
+//const hardcodedMenuId = '';
 //const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 //try {
 //  const menuResponse = await fetch(`${goBackend}/api/v1/nodes/menus/${hardcodedMenuId}`);
@@ -102,27 +98,6 @@ const pageTitle = `${route}=${slug}`;
                 </p>
               )}
             </div>
-
-            {menuPayload && (
-              <div class="mt-6 rounded-lg bg-green-50 p-6">
-                <h3 class="mb-4 text-lg font-bold">Menu Data</h3>
-                <div class="text-sm">
-                  <p>
-                    <strong>Title:</strong> {menuPayload.title}
-                  </p>
-                  <p>
-                    <strong>Theme:</strong> {menuPayload.theme}
-                  </p>
-                  <p>
-                    <strong>Options:</strong>{' '}
-                    {Array.isArray(menuPayload.optionsPayload)
-                      ? menuPayload.optionsPayload.length
-                      : 0}{' '}
-                    items
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         ) : null
       }

@@ -27,7 +27,8 @@ const title = 'Register New Tenant | TractStack';
       <RegistrationForm
         client:load
         onSuccess={(tenantId) => {
-          window.location.href = `/sandbox/success?tenant=${encodeURIComponent(tenantId)}`;
+          if (tenantId)
+            window.location.href = `/sandbox/success?tenant=${encodeURIComponent(tenantId)}`;
         }}
         onCapacityFull={() => {
           window.location.href = '/sandbox/capacity-full';

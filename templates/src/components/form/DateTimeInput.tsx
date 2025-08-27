@@ -52,8 +52,6 @@ const DateTimeInput = ({
   min,
   max,
   withTime = true,
-  timeStep = 15,
-  placeholder = 'Select date and time',
 }: DateTimeInputProps) => {
   const id = useId();
   const errorId = `${id}-error`;

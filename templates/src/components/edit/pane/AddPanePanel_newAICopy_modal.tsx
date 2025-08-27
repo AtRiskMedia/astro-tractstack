@@ -3,14 +3,6 @@ import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { paneFormatPrompt, formatPrompt } from '@/constants/prompts.json';
 
-interface GenerationResponse {
-  success: boolean;
-  data?: {
-    response: string;
-  };
-  error?: string;
-}
-
 type GenerationStatus = 'idle' | 'generating' | 'success' | 'error';
 
 interface AddPaneNewAICopyModalProps {

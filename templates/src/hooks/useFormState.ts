@@ -95,7 +95,6 @@ export function useFormState<T>(
           unsavedChanges.browserWarningMessage ||
           'You have unsaved changes. Are you sure you want to leave?';
         event.preventDefault();
-        event.returnValue = message;
         return message;
       }
     };

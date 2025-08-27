@@ -518,7 +518,6 @@ export default function ResourceBulkIngest({
         await Promise.race([
           saveResourceWithStateUpdate(
             window.TRACTSTACK_CONFIG?.tenantId || 'default',
-            resourceState,
             resourceState
           ),
           new Promise((_, reject) =>

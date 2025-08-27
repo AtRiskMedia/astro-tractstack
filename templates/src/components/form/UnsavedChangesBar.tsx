@@ -218,7 +218,7 @@ export function UnsavedChangesBarMini<T>({
   formState,
   message = 'Unsaved changes',
 }: Pick<UnsavedChangesBarProps<T>, 'formState' | 'message'>) {
-  const { isDirty, isValid, save, cancel, saveState, errorMessage } = formState;
+  const { isDirty, isValid, save, cancel, saveState } = formState;
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {

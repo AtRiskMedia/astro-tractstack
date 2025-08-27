@@ -1,11 +1,13 @@
 ---
+import type { FullContentMapItem } from '@/types/tractstack';
+
 export interface Props {
   options?: {
     params?: {
       options?: string;
     };
   };
-  contentMap: any[];
+  contentMap: FullContentMapItem[];
 }
 
 const { options, contentMap } = Astro.props;
@@ -31,11 +33,12 @@ const storyfragmentIdsArray = parsedOptions.storyfragmentIds
 
 // Find the featured story from the contentMap
 const featuredStory = contentMap.find(
-  (item) => item.id === featuredId && item.type === 'StoryFragment'
+  (item: FullContentMapItem) =>
+    item.id === featuredId && item.type === 'StoryFragment'
 );
 // Filter and sort the included stories, excluding the featured story
 let includedStories = contentMap.filter(
-  (item) =>
+  (item: FullContentMapItem) =>
     storyfragmentIdsArray.includes(item.id) &&
     item.type === 'StoryFragment' &&
     item.id !== featuredId
@@ -45,11 +48,11 @@ let includedStories = contentMap.filter(
 // The 'popular' mode will be handled on the client-side
 if (defaultMode === 'ordered') {
   includedStories.sort(
-    (a, b) =>
+    (a: FullContentMapItem, b: FullContentMapItem) =>
       storyfragmentIdsArray.indexOf(a.id) - storyfragmentIdsArray.indexOf(b.id)
   );
 } else if (defaultMode === 'recent') {
-  includedStories.sort((a, b) => {
+  includedStories.sort((a: FullContentMapItem, b: FullContentMapItem) => {
     const dateA = a.changed ? new Date(a.changed).getTime() : 0;
     const dateB = b.changed ? new Date(b.changed).getTime() : 0;
     return dateB - dateA;
@@ -107,7 +110,7 @@ function formatDate(dateString: string | null): string {
     {
       displayedStories.length > 0 ? (
         <div class="space-y-4">
-          {displayedStories.map((story) => (
+          {displayedStories.map((story: FullContentMapItem) => (
             <a href={`/${story.slug}`} class="group block">
               <div class="flex items-start space-x-4 p-1 group-hover:bg-slate-50">
                 {story.thumbSrc && (

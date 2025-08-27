@@ -1,5 +1,5 @@
 import { TractStackAPI } from '../api';
-import { convertToBackendFormat, convertToLocalState } from './menuHelpers';
+import { convertToBackendFormat } from './menuHelpers';
 import type { MenuNode, MenuNodeState } from '@/types/tractstack';
 
 /**

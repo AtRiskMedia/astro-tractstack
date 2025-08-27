@@ -1,5 +1,5 @@
 import type { FieldErrors } from '@/hooks/useFormState';
-import { getThemeColors, isCustomTheme } from '@/constants/brandThemes';
+import { getThemeColors } from '@/constants/brandThemes';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
 /**

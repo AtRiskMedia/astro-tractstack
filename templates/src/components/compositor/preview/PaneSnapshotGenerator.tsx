@@ -119,7 +119,7 @@ export const PaneSnapshotGenerator = ({
 </html>`;
 
         iframeDoc.open();
-        iframeDoc.write(fullHtml);
+        (iframeDoc as any).write(fullHtml);
         iframeDoc.close();
 
         // Wait for CSS to load

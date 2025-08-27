@@ -62,8 +62,7 @@ export async function getBeliefById(
  */
 export async function saveBeliefWithStateUpdate(
   tenantId: string,
-  currentState: BeliefNodeState,
-  originalState: BeliefNodeState
+  currentState: BeliefNodeState
 ): Promise<BeliefNodeState> {
   try {
     let savedBelief: BeliefNode;

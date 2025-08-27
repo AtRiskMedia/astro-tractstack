@@ -43,12 +43,13 @@ const storyfragmentId = storyData.id;
 const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
+
 if (paneIds.length === 0) {
   console.log(`Empty Story Fragment. Redirecting to /storykeep`);
   return Astro.redirect('/storykeep');
 }
 
-let fragmentsData = {};
+let fragmentsData: Record<string, string> = {};
 try {
   const batchResponse = await fetch(`${goBackend}/api/v1/fragments/panes`, {
     method: 'POST',
@@ -60,6 +61,7 @@ try {
     },
     body: JSON.stringify({ paneIds }),
   });
+
   if (batchResponse.ok) {
     const batchData = await batchResponse.json();
     fragmentsData = batchData.fragments || {};
@@ -94,7 +96,6 @@ if (!fragmentsData) {
 }
 
 const fullContentMap = await getFullContentMap(tenantId);
-const description = storyData.description || 'Dynamic content from TractStack';
 const brandConfig = await getBrandConfig(tenantId);
 
 if (!brandConfig.SITE_INIT) {

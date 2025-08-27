@@ -51,8 +51,7 @@ export function validateResource(state: ResourceState): FieldErrors {
 
 export function resourceStateIntercept(
   updatedState: ResourceState,
-  fieldName: string,
-  value: any
+  fieldName: string
 ): ResourceState {
   const newState = { ...updatedState };
 

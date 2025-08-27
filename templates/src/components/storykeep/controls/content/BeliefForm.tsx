@@ -82,8 +82,7 @@ export default function BeliefForm({
       try {
         const updatedState = await saveBeliefWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          data,
-          formState.originalState
+          data
         );
 
         // Call success callback after save (original pattern)

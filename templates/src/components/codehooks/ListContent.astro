@@ -1,11 +1,13 @@
 ---
+import type { FullContentMapItem } from '@/types/tractstack';
+
 export interface Props {
   options?: {
     params?: {
       options?: string;
     };
   };
-  contentMap: any[];
+  contentMap: FullContentMapItem[];
 }
 
 const { options, contentMap } = Astro.props;
@@ -31,7 +33,7 @@ const pageSize = parseInt(parsedOptions.pageSize || '10');
 
 // Filter for valid stories to display
 const validPages = contentMap.filter(
-  (item): boolean =>
+  (item: FullContentMapItem): boolean =>
     item.type === 'StoryFragment' &&
     typeof item.description === 'string' &&
     typeof item.thumbSrc === 'string' &&
@@ -42,7 +44,7 @@ const validPages = contentMap.filter(
 let filteredStories: any[] = [];
 if (topicsArray.length > 0) {
   filteredStories = validPages.filter(
-    (item) =>
+    (item: FullContentMapItem) =>
       item.topics &&
       item.topics.some((topic: string) => topicsArray.includes(topic))
   );

@@ -1,4 +1,4 @@
-import { useState, useId } from 'react';
+import { useId } from 'react';
 import { classNames } from '@/utils/helpers';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
