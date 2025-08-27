@@ -169,7 +169,7 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
   try {
     // Install React and Node adapter
     execSync(
-      `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.3.0 @astrojs/node@^9.0.0`,
+      `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ React and Node adapter installed'));
@@ -185,7 +185,7 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
 
     // Install UI components
     execSync(
-      `${addCommand} @ark-ui/react@^5.9.0 @heroicons/react@^2.2.0 @internationalized/date@^3.8.0`,
+      `${addCommand} @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@^3.8.2`,
       {
         stdio: 'inherit',
       }
@@ -194,7 +194,7 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
 
     // Install visualization dependencies
     execSync(
-      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.0 player.js@^0.1.0 tinycolor2 html-to-image`,
+      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2 html-to-image`,
       {
         stdio: 'inherit',
       }
@@ -207,7 +207,7 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/node @types/react@^18.3.11 @types/react-dom@^18.3.1 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.5.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.11 typescript@^5.8.3 @types/tinycolor2 html-to-image @mhsdesign/jit-browser-tailwindcss`,
+      `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2 @mhsdesign/jit-browser-tailwindcss`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
