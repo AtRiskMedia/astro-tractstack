@@ -55,7 +55,7 @@ export async function injectTemplateFiles(
       dest: 'src/types/astro.ts',
     },
     {
-      src: resolve('astro.d.ts'),
+      src: resolve('../astro.d.ts'),
       dest: 'astro.d.ts',
     },
     {
