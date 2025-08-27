@@ -23,7 +23,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch {}
+  } catch { }
 
   return 'pnpm';
 }
@@ -185,7 +185,7 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
 
     // Install UI components
     execSync(
-      `${addCommand} @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@^3.8.2`,
+      `${addCommand} @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@3.8.2`,
       {
         stdio: 'inherit',
       }
@@ -216,12 +216,12 @@ PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goB
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react react-dom @astrojs/react @astrojs/node @ark-ui/react @heroicons/react d3 d3-sankey recharts player.js path-to-regexp @nanostores/react nanostores @nanostores/persistent ulid tinycolor2`
+        `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@3.8.2 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2 html-to-image path-to-regexp@^8.0.0`
       )
     );
     console.log(
       kleur.cyan(
-        `${addCommand} -D @types/node @types/react @types/react-dom @types/d3 @types/d3-sankey @types/tinycolor2 prettier prettier-plugin-astro prettier-plugin-tailwindcss typescript @mhsdesign/jit-browser-tailwindcss`
+        `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2 @mhsdesign/jit-browser-tailwindcss`
       )
     );
     process.exit(1);
@@ -409,14 +409,8 @@ export default defineConfig({
     "include": ["src/**/*", "public/**/*", "tailwind.config.cjs"],
     "exclude": ["node_modules", "dist", ".astro"]
   }`;
-  if (!existsSync('tsconfig.json')) {
-    writeFileSync('tsconfig.json', tsConfig);
-    console.log(kleur.green('✅ Created tsconfig.json'));
-  } else {
-    console.log(
-      kleur.yellow('⚠️ tsconfig.json already exists, skipping creation')
-    );
-  }
+  writeFileSync('tsconfig.json', tsConfig);
+  console.log(kleur.green('✅ Updated tsconfig.json'));
 
   // Update package.json
   try {
@@ -435,30 +429,6 @@ export default defineConfig({
     console.log(kleur.red('❌ Failed to update package.json:', error.message));
   }
 
-  // Install TractStack (this will trigger file injection)
-  //try {
-  //  execSync(`${addCommand} astro-tractstack@latest`, {
-  //    stdio: 'inherit',
-  //  });
-  //  console.log(kleur.green('✅ TractStack installed'));
-  //} catch (error) {
-  //  console.log(kleur.red('❌ Failed to install TractStack:', error.message));
-  //  console.log('Please run manually:');
-  //  console.log(kleur.cyan(`${addCommand} astro-tractstack@latest`));
-  //  if (packageManager !== 'npm') {
-  //    try {
-  //      execSync(`${packageManager} install`, { stdio: 'inherit' });
-  //    } catch {
-  //      console.log(kleur.red('❌ Failed to run install'));
-  //    }
-  //  }
-  //}
-  console.log(
-    kleur.red(
-      '❌ Not installing TractStack NPM package yet: using local pnpm linked'
-    )
-  );
-
   await updateAstroConfig();
 
   // Initialize TractStack integration and format project files
@@ -467,8 +437,8 @@ export default defineConfig({
     execSync(`${packageManager} astro build`, { stdio: 'inherit' });
     console.log(kleur.green('✅ TractStack templates injected'));
 
-    execSync(`${packageManager} format`, { stdio: 'inherit' });
-    console.log(kleur.green('✅ Formatted project files'));
+    //execSync(`${packageManager} format`, { stdio: 'inherit' });
+    //console.log(kleur.green('✅ Formatted project files'));
   } catch (error) {
     console.log(
       kleur.yellow(
