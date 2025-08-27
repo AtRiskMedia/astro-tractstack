@@ -23,15 +23,27 @@ Please visit [our docs](https://tractstack.org)
 
 For production deployment you'll need to prepare your server.
 
-_Quick Install_
+_Quick Install_ in two steps:
+
+First install and run the go backend. It runs on port 8080 by default.
 
 ```
 mkdir -p ~/src
+cd ~/src
+git clone https://github.com/AtRiskMedia/tractstack-go.git
+cd tractstack-go
+go build cmd/tractstack-go/main.go
+./tractstack-go
+```
+Next create an Astro starter then install Tract Stack as an integration:
+
+```
 cd ~/src
 pnpm create astro@latest my-tractstack --template minimal --typescript strict --install
 cd my-tractstack
 pnpm add astro-tractstack@latest
 npx create-tractstack
+pnpm dev
 ```
 
 ## Queries?
