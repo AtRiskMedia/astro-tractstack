@@ -35,6 +35,7 @@ cd tractstack-go
 go build cmd/tractstack-go/main.go
 ./tractstack-go
 ```
+
 Next create an Astro starter then install Tract Stack as an integration:
 
 ```
