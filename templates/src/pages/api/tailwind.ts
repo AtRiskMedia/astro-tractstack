@@ -33,23 +33,8 @@ export const POST: APIRoute = async ({ request }) => {
     const goBackend =
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-    // Authenticate with Go backend
-    const authResponse = await fetch(`${goBackend}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-ID': tenantId,
-      },
-      body: JSON.stringify({
-        password: import.meta.env.ADMIN_PASSWORD || 'letmein',
-      }),
-    });
-
-    if (!authResponse.ok) {
-      throw new Error('Failed to authenticate with Go backend');
-    }
-
-    const { token } = await authResponse.json();
+    // Forward authentication cookies to the backend
+    const cookieHeader = request.headers.get('cookie') || '';
 
     // Get classes from Go backend (includes whitelist + clean panes)
     const classesResponse = await fetch(
@@ -58,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Cookie: cookieHeader,
           'X-Tenant-ID': tenantId,
         },
         body: JSON.stringify({ excludePaneIds: dirtyPaneIds || [] }),
@@ -86,14 +71,13 @@ export const POST: APIRoute = async ({ request }) => {
       htmlContent
     );
 
-    // Return result (SaveModal will handle the update call logging)
     return new Response(
       JSON.stringify({
         success: true,
         classes: allClasses.length,
         frontend: generatedCss.length,
-        stylesVer: Date.now(), // Simple version for demo
-        generatedCss, // Include actual CSS for potential update call
+        stylesVer: Date.now(),
+        generatedCss,
       }),
       {
         status: 200,

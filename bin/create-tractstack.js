@@ -28,6 +28,56 @@ function detectPackageManager() {
   return 'pnpm';
 }
 
+// Parse existing .env file
+function parseExistingEnv() {
+  const defaults = {
+    goBackend: 'http://localhost:8080',
+    tenantId: 'default',
+    goBackendPath: `${homedir()}/t8k-go-server/`,
+    enableMultiTenant: false,
+  };
+
+  if (!existsSync('.env')) {
+    return defaults;
+  }
+
+  try {
+    const envContent = readFileSync('.env', 'utf-8');
+    const envVars = {};
+
+    envContent.split('\n').forEach((line) => {
+      line = line.trim();
+      if (line && !line.startsWith('#')) {
+        const [key, ...valueParts] = line.split('=');
+        if (key && valueParts.length > 0) {
+          // Remove surrounding quotes and trim
+          let value = valueParts.join('=').trim();
+          if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+          ) {
+            value = value.slice(1, -1);
+          }
+          envVars[key.trim()] = value;
+        }
+      }
+    });
+
+    return {
+      goBackend: envVars.PUBLIC_GO_BACKEND || defaults.goBackend,
+      tenantId: envVars.PUBLIC_TENANTID || defaults.tenantId,
+      goBackendPath: envVars.PRIVATE_GO_BACKEND_PATH || defaults.goBackendPath,
+      enableMultiTenant:
+        envVars.ENABLE_MULTI_TENANT === 'true' || defaults.enableMultiTenant,
+    };
+  } catch (error) {
+    console.log(
+      kleur.yellow('⚠️ Found .env file but could not parse it, using defaults')
+    );
+    return defaults;
+  }
+}
+
 async function main() {
   // ASCII art
   console.log(
@@ -89,13 +139,25 @@ ${kleur.bold('Examples:')}
     process.exit(1);
   }
 
-  // Prompt for configuration
+  // Parse existing .env values
+  const envDefaults = parseExistingEnv();
+  const hasExistingEnv = existsSync('.env');
+
+  if (hasExistingEnv) {
+    console.log(
+      kleur.yellow(
+        '📁 Found existing .env file, using current values as defaults\n'
+      )
+    );
+  }
+
+  // Prompt for configuration with existing values as defaults
   const responses = await prompts([
     {
       type: 'text',
       name: 'goBackend',
       message: 'TractStack Go backend URL:',
-      initial: 'http://localhost:8080',
+      initial: envDefaults.goBackend,
       validate: (value) => {
         try {
           new URL(value);
@@ -106,22 +168,27 @@ ${kleur.bold('Examples:')}
       },
     },
     {
-      type: 'text',
+      type: 'confirm',
+      name: 'enableMultiTenant',
+      message: 'Enable multi-tenant functionality?',
+      initial: enableMultiTenant || envDefaults.enableMultiTenant,
+    },
+    {
+      type: (prev, values) => (values.enableMultiTenant ? 'text' : null),
       name: 'tenantId',
       message: 'Tenant ID:',
-      initial: 'default',
+      initial: envDefaults.tenantId,
       validate: (value) => value.length > 0 || 'Tenant ID is required',
     },
     {
       type: 'text',
       name: 'goBackendPath',
       message: 'TractStack Go backend path:',
-      initial: `${homedir()}/t8k-go-server/`,
+      initial: envDefaults.goBackendPath,
       validate: (value) => {
         if (!value || value.trim().length === 0) {
           return 'Backend path is required';
         }
-        // Ensure it ends with trailing slash for consistency
         return true;
       },
     },
@@ -132,29 +199,38 @@ ${kleur.bold('Examples:')}
         'Include CodeHook examples? (custom components, collections route)',
       initial: includeExamples,
     },
-    {
-      type: 'confirm',
-      name: 'enableMultiTenant',
-      message: 'Enable multi-tenant functionality?',
-      initial: enableMultiTenant,
-    },
   ]);
 
-  if (!responses.goBackend || !responses.tenantId) {
+  if (!responses.goBackend) {
     console.log(kleur.red('\n❌ Setup cancelled.'));
+    process.exit(1);
+  }
+
+  // Use existing tenantId if multi-tenant is disabled
+  const finalTenantId = responses.enableMultiTenant
+    ? responses.tenantId
+    : envDefaults.tenantId;
+
+  if (!finalTenantId) {
+    console.log(kleur.red('\n❌ Setup cancelled - Tenant ID is required.'));
     process.exit(1);
   }
 
   // Create .env file
   const envContent = `# TractStack Configuration
 PUBLIC_GO_BACKEND="${responses.goBackend}"
-PUBLIC_TENANTID="${responses.tenantId}"
+PUBLIC_TENANTID="${finalTenantId}"
 PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goBackendPath : responses.goBackendPath + '/'}"
+${responses.enableMultiTenant ? 'ENABLE_MULTI_TENANT="true"' : ''}
 `;
 
   try {
     writeFileSync('.env', envContent);
-    console.log(kleur.green('✅ Created .env file'));
+    if (hasExistingEnv) {
+      console.log(kleur.green('✅ Updated .env file with new configuration'));
+    } else {
+      console.log(kleur.green('✅ Created .env file'));
+    }
   } catch (error) {
     console.log(kleur.red('❌ Failed to create .env file:', error.message));
     process.exit(1);

@@ -154,7 +154,11 @@ const createdDate = created ? new Date(created) : new Date();
       class="text-myblue xs:flex-row my-2 flex flex-col items-center justify-center"
     >
       <div class="px-12 text-center text-2xl">
-        Copyright &#169; {createdDate.getFullYear()}
+        Copyright &#169; {createdDate.getFullYear()}{
+          createdDate.getFullYear() !== new Date().getFullYear()
+            ? `-${new Date().getFullYear()}`
+            : ''
+        }
         &nbsp;|&nbsp;
         {footer}
       </div>
