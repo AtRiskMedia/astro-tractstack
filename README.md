@@ -25,7 +25,7 @@ For production deployment you'll need to prepare your server.
 **One-line installer (recommended for Linux):**
 
 ```bash
-curl -fsSL https://install.tractstack.org | sh
+curl -fsSL https://get.tractstack.com | bash
 ```
 
 This will automatically install both the Go backend and create a new Astro project with TractStack.
