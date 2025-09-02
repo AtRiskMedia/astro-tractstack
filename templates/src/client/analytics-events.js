@@ -1,21 +1,15 @@
-import { VERBOSE } from './sse';
-import { THRESHOLD_GLOSSED, THRESHOLD_READ } from '@/constants';
+const THRESHOLD_GLOSSED = 7000; // 7 seconds in ms
+const THRESHOLD_READ = 42000; // 42 seconds in ms
+const VERBOSE = false;
 
-interface AnalyticsEvent {
-  contentId: string;
-  contentType: 'Pane' | 'StoryFragment';
-  eventVerb: string;
-  duration?: number;
-}
-
-const paneViewTimes = new Map<string, number>();
+const paneViewTimes = new Map();
 let hasTrackedEntered =
   localStorage.getItem('tractstack_entered_tracked') === 'true';
-let currentStoryfragmentId: string | null = null;
+let currentStoryfragmentId = null;
 let isPageInitialized = false;
-let globalObserver: IntersectionObserver | null = null;
+let globalObserver = null;
 
-function waitForSessionReady(): Promise<void> {
+function waitForSessionReady() {
   return new Promise((resolve) => {
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
       resolve();
@@ -27,7 +21,7 @@ function waitForSessionReady(): Promise<void> {
   });
 }
 
-export async function initAnalyticsTracking(storyfragmentId?: string) {
+export async function initAnalyticsTracking(storyfragmentId) {
   if (isPageInitialized) return;
   isPageInitialized = true;
 
@@ -71,7 +65,7 @@ function initPaneVisibilityTracking() {
   globalObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        const paneId = getPaneIdFromElement(entry.target as HTMLElement);
+        const paneId = getPaneIdFromElement(entry.target);
         if (!paneId) return;
         if (entry.isIntersecting) {
           if (!paneViewTimes.has(paneId)) {
@@ -82,7 +76,7 @@ function initPaneVisibilityTracking() {
           if (startTime) {
             const duration = Date.now() - startTime;
             paneViewTimes.delete(paneId);
-            let eventVerb: string | null = null;
+            let eventVerb = null;
             if (duration >= THRESHOLD_READ) eventVerb = 'READ';
             else if (duration >= THRESHOLD_GLOSSED) eventVerb = 'GLOSSED';
             if (eventVerb) {
@@ -105,7 +99,7 @@ function initPaneVisibilityTracking() {
 function observeAllPanes() {
   if (!globalObserver) return;
   const panes = document.querySelectorAll('[data-pane-id]');
-  panes.forEach((pane) => globalObserver!.observe(pane));
+  panes.forEach((pane) => globalObserver.observe(pane));
 }
 
 function setupLifecycleListeners() {
@@ -151,7 +145,7 @@ function flushPendingPaneEvents() {
   const flushTime = Date.now();
   paneViewTimes.forEach((startTime, paneId) => {
     const duration = flushTime - startTime;
-    let eventVerb: string | null = null;
+    let eventVerb = null;
     if (duration >= THRESHOLD_READ) eventVerb = 'READ';
     else if (duration >= THRESHOLD_GLOSSED) eventVerb = 'GLOSSED';
     if (eventVerb) {
@@ -166,13 +160,13 @@ function flushPendingPaneEvents() {
   paneViewTimes.clear();
 }
 
-async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
+async function sendAnalyticsEvent(event) {
   try {
     const config = window.TRACTSTACK_CONFIG;
     if (!config || !config.sessionId) return; // Use server-provided session ID
 
     const sessionId = config.sessionId;
-    const formData: { [key: string]: string } = {
+    const formData = {
       beliefId: event.contentId,
       beliefType: event.contentType,
       beliefValue: event.eventVerb,
@@ -198,11 +192,11 @@ async function sendAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
   }
 }
 
-function getPaneIdFromElement(element: HTMLElement): string | null {
+function getPaneIdFromElement(element) {
   return element.getAttribute('data-pane-id');
 }
 
-(window as any).initAnalyticsTracking = initAnalyticsTracking;
+window.initAnalyticsTracking = initAnalyticsTracking;
 
 setupLifecycleListeners();
 

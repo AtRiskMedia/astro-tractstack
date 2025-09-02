@@ -281,10 +281,10 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
         />
       )
     }
-    <script type="module" is:inline is:persist>
-      import '/src/client/sse.js';
-      import '/src/client/belief-events.js';
-      import '/src/client/analytics-events.js';
+    <script type="module" is:inline is:persist is:raw>
+      import '/client/sse.js';
+      import '/client/belief-events.js';
+      import '/client/analytics-events.js';
     </script>
   </body>
 </html>

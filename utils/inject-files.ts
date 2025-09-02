@@ -1271,16 +1271,16 @@ export async function injectTemplateFiles(
 
     // Client Scripts
     {
-      src: resolve('../templates/src/client/sse.ts'),
-      dest: 'src/client/sse.ts',
+      src: resolve('../templates/src/client/sse.js'),
+      dest: 'public/client/sse.js',
     },
     {
-      src: resolve('../templates/src/client/belief-events.ts'),
-      dest: 'src/client/belief-events.ts',
+      src: resolve('../templates/src/client/belief-events.js'),
+      dest: 'public/client/belief-events.js',
     },
     {
-      src: resolve('../templates/src/client/analytics-events.ts'),
-      dest: 'src/client/analytics-events.ts',
+      src: resolve('../templates/src/client/analytics-events.js'),
+      dest: 'public/client/analytics-events.js',
     },
 
     // StoryKeep Editor (add new section)

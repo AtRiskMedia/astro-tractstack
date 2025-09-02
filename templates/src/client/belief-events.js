@@ -1,4 +1,4 @@
-import { VERBOSE } from './sse';
+const VERBOSE = false;
 
 // This function now contains all essential one-time and recurring HTMX setup.
 function configureHtmx() {
@@ -9,7 +9,7 @@ function configureHtmx() {
     window.HTMX_CONFIGURED = true;
   }
 
-  window.htmx.on(document.body, 'htmx:configRequest', function (evt: any) {
+  window.htmx.on(document.body, 'htmx:configRequest', function (evt) {
     const config = window.TRACTSTACK_CONFIG;
     if (!config || !config.sessionId) return; // Check for config and session ID
 
@@ -27,20 +27,10 @@ function configureHtmx() {
   });
 }
 
-interface BeliefUpdateData {
-  [key: string]: string;
-  beliefId: string;
-  beliefType: string;
-  beliefValue: string;
-  paneId: string;
-}
+const pageBeliefs = {};
+let activeStoryfragmentId = null;
 
-const pageBeliefs: {
-  [storyfragmentId: string]: { [beliefId: string]: string };
-} = {};
-let activeStoryfragmentId: string | null = null;
-
-function waitForSessionReady(): Promise<void> {
+function waitForSessionReady() {
   return new Promise((resolve) => {
     // This event is fired by sse.ts after the handshake is complete.
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
@@ -66,21 +56,19 @@ function initializeBeliefs() {
 
   configureHtmx(); // Run config on initial load.
 
-  document.addEventListener('change', function (event: Event) {
-    const target = event.target as HTMLElement;
+  document.addEventListener('change', function (event) {
+    const target = event.target;
     if (
       target.matches &&
       (target.matches('select[data-belief-id]') ||
         target.matches('input[type="checkbox"][data-belief-id]'))
     ) {
-      handleBeliefChange(target as HTMLSelectElement | HTMLInputElement);
+      handleBeliefChange(target);
     }
   });
 }
 
-async function handleBeliefChange(
-  element: HTMLSelectElement | HTMLInputElement
-): Promise<void> {
+async function handleBeliefChange(element) {
   const beliefId = element.getAttribute('data-belief-id');
   const beliefType = element.getAttribute('data-belief-type');
   const paneId = element.getAttribute('data-pane-id');
@@ -91,13 +79,11 @@ async function handleBeliefChange(
     return;
   }
 
-  let beliefValue: string;
-  if ((element as HTMLInputElement).type === 'checkbox') {
-    beliefValue = (element as HTMLInputElement).checked
-      ? 'BELIEVES_YES'
-      : 'BELIEVES_NO';
+  let beliefValue;
+  if (element.type === 'checkbox') {
+    beliefValue = element.checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
   } else {
-    beliefValue = (element as HTMLSelectElement).value;
+    beliefValue = element.value;
   }
 
   if (VERBOSE)
@@ -119,7 +105,7 @@ async function handleBeliefChange(
   });
 }
 
-async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
+async function sendBeliefUpdate(data) {
   await waitForSessionReady();
 
   try {
@@ -164,7 +150,7 @@ async function sendBeliefUpdate(data: BeliefUpdateData): Promise<void> {
   }
 }
 
-function trackBeliefState(beliefId: string, beliefValue: string) {
+function trackBeliefState(beliefId, beliefValue) {
   if (!activeStoryfragmentId) return;
 
   if (!pageBeliefs[activeStoryfragmentId]) {

@@ -2,51 +2,15 @@
  * SSE (Server-Sent Events) Client with Critical Debug Logging
  */
 
-export const VERBOSE = false;
-
-interface StoryfragmentUpdate {
-  storyfragmentId: string;
-  affectedPanes: string[];
-  gotoPaneId?: string;
-}
-
-interface BatchPanesUpdatedEventData {
-  updates: StoryfragmentUpdate[];
-}
-
-interface PanesUpdatedEventData {
-  storyfragmentId: string;
-  affectedPanes: string[];
-  gotoPaneId?: string;
-}
-
-type PanesEventData = BatchPanesUpdatedEventData | PanesUpdatedEventData;
-
-interface HandshakeRequest {
-  sessionId: string;
-  storyfragmentId: string;
-  consent: string;
-  encryptedEmail?: string;
-  encryptedCode?: string;
-}
-
-interface HandshakeResponse {
-  fingerprint: string;
-  visitId: string;
-  sessionId: string;
-  hasProfile: boolean;
-  consent: string;
-  restored?: boolean;
-  affectedPanes?: string[];
-}
+const VERBOSE = false;
 
 // ============================================================================
 // GLOBAL STATE
 // ============================================================================
 
-let eventSource: EventSource | null = null;
+let eventSource = null;
 let isHtmxReady = false;
-let currentStoryfragmentId: string | null = null;
+let currentStoryfragmentId = null;
 let reconnectAttempts = 0;
 
 const BASE_RECONNECT_DELAY = 1000;
@@ -56,20 +20,15 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 // CRITICAL DEBUG LOGGING
 // ============================================================================
 
-function log(...args: any[]): void {
+function log(...args) {
   if (VERBOSE) console.log('🔌 SSE DEBUG:', ...args);
 }
 
-function logCritical(...args: any[]): void {
+function logCritical(...args) {
   if (VERBOSE) console.error('🚨 SSE CRITICAL:', ...args);
 }
 
-function logStoryfragmentChange(
-  action: string,
-  oldId: string | null,
-  newId: string | null,
-  source: string
-): void {
+function logStoryfragmentChange(action, oldId, newId, source) {
   logCritical(`STORYFRAGMENT ${action}:`, {
     action,
     oldId,
@@ -81,12 +40,7 @@ function logStoryfragmentChange(
   });
 }
 
-function logSSEEvent(
-  eventType: string,
-  data: any,
-  willProcess: boolean,
-  reason?: string
-): void {
+function logSSEEvent(eventType, data, willProcess, reason) {
   logCritical(`SSE EVENT ${eventType}:`, {
     eventType,
     data,
@@ -102,9 +56,7 @@ function logSSEEvent(
 // SSE HANDSHAKE
 // ============================================================================
 
-async function performSSEHandshake(
-  sessionId: string
-): Promise<HandshakeResponse> {
+async function performSSEHandshake(sessionId) {
   log('=== STARTING SSE HANDSHAKE ===');
   log('📤 Session ID provided by server:', sessionId);
 
@@ -144,7 +96,7 @@ async function performSSEHandshake(
   const consent = localStorage.getItem('tractstack_consent') || '0';
   log('📋 Consent status:', consent);
 
-  const handshakePayload: HandshakeRequest = {
+  const handshakePayload = {
     sessionId,
     storyfragmentId: config.storyfragmentId,
     consent,
@@ -178,7 +130,7 @@ async function performSSEHandshake(
       throw new Error(`Handshake failed with status ${response.status}`);
     }
 
-    const result: HandshakeResponse = await response.json();
+    const result = await response.json();
     log('📥 Handshake response received:', result);
 
     const restorationDetails = {
@@ -272,7 +224,7 @@ async function performSSEHandshake(
 // SSE CONNECTION
 // ============================================================================
 
-function initializeSSE(sessionId: string): void {
+function initializeSSE(sessionId) {
   log('=== SSE CONNECTION INITIALIZATION ===');
 
   if (eventSource) {
@@ -299,22 +251,19 @@ function initializeSSE(sessionId: string): void {
 
   eventSource.addEventListener('connected', (event) => {
     try {
-      const data = JSON.parse((event as MessageEvent).data);
+      const data = JSON.parse(event.data);
       log('📡 SSE Connected event received:', data);
     } catch (error) {
-      log(
-        '⚠️  Failed to parse connected event data:',
-        (event as MessageEvent).data
-      );
+      log('⚠️  Failed to parse connected event data:', event.data);
     }
   });
 
   eventSource.addEventListener('heartbeat', (event) => {
     try {
-      const data = JSON.parse((event as MessageEvent).data);
+      const data = JSON.parse(event.data);
       log('💓 SSE Heartbeat:', data);
     } catch (error) {
-      log('⚠️  Failed to parse heartbeat data:', (event as MessageEvent).data);
+      log('⚠️  Failed to parse heartbeat data:', event.data);
     }
   });
 
@@ -330,7 +279,7 @@ function initializeSSE(sessionId: string): void {
     log('📨 === PANES_UPDATED EVENT ===');
 
     try {
-      const data: PanesEventData = JSON.parse((event as MessageEvent).data);
+      const data = JSON.parse(event.data);
 
       logCritical('📨 PANES_UPDATED PARSED:', {
         data,
@@ -426,7 +375,7 @@ function initializeSSE(sessionId: string): void {
   };
 }
 
-function processStoryfragmentUpdate(update: StoryfragmentUpdate): void {
+function processStoryfragmentUpdate(update) {
   logCritical('🔄 PROCESSING UPDATE:', {
     storyfragmentId: update.storyfragmentId,
     affectedPanes: update.affectedPanes,
@@ -502,7 +451,7 @@ function processStoryfragmentUpdate(update: StoryfragmentUpdate): void {
   log('🔄 === UPDATE PROCESSING COMPLETE ===');
 }
 
-function handleReconnection(): void {
+function handleReconnection() {
   if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
     log(
       `❌ Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`
@@ -531,10 +480,7 @@ function handleReconnection(): void {
 // CONTEXT MANAGEMENT
 // ============================================================================
 
-function updateStoryfragmentContext(
-  newStoryfragmentId: string,
-  source: string
-): void {
+function updateStoryfragmentContext(newStoryfragmentId, source) {
   const oldId = currentStoryfragmentId;
 
   if (currentStoryfragmentId !== newStoryfragmentId) {
@@ -555,7 +501,7 @@ function updateStoryfragmentContext(
 // CONNECTION SETUP
 // ============================================================================
 
-function setupSSEConnection(): void {
+function setupSSEConnection() {
   log('=== SSE CONNECTION SETUP ===');
   log('🚀 First-time SSE initialization');
 
