@@ -68,7 +68,8 @@ function parseExistingEnv() {
       tenantId: envVars.PUBLIC_TENANTID || defaults.tenantId,
       goBackendPath: envVars.PRIVATE_GO_BACKEND_PATH || defaults.goBackendPath,
       enableMultiTenant:
-        envVars.PUBLIC_ENABLE_MULTI_TENANT === 'true' || defaults.enableMultiTenant,
+        envVars.PUBLIC_ENABLE_MULTI_TENANT === 'true' ||
+        defaults.enableMultiTenant,
     };
   } catch (error) {
     console.log(
