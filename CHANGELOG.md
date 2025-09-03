@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [2.0.0-rc.4] - 2025-09-03
+
+### Fixed
+
+- multi-tenant detection during install
+
+### Changed
+
+- tidy up build script messages
+
 ### [2.0.0-rc.3] - 2025-09-02
 
 ### Fixed

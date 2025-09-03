@@ -68,7 +68,7 @@ function parseExistingEnv() {
       tenantId: envVars.PUBLIC_TENANTID || defaults.tenantId,
       goBackendPath: envVars.PRIVATE_GO_BACKEND_PATH || defaults.goBackendPath,
       enableMultiTenant:
-        envVars.ENABLE_MULTI_TENANT === 'true' || defaults.enableMultiTenant,
+        envVars.PUBLIC_ENABLE_MULTI_TENANT === 'true' || defaults.enableMultiTenant,
     };
   } catch (error) {
     console.log(
@@ -221,7 +221,7 @@ ${kleur.bold('Examples:')}
 PUBLIC_GO_BACKEND="${responses.goBackend}"
 PUBLIC_TENANTID="${finalTenantId}"
 PRIVATE_GO_BACKEND_PATH="${responses.goBackendPath.endsWith('/') ? responses.goBackendPath : responses.goBackendPath + '/'}"
-${responses.enableMultiTenant ? 'ENABLE_MULTI_TENANT="true"' : ''}
+${responses.enableMultiTenant ? 'PUBLIC_ENABLE_MULTI_TENANT="true"' : ''}
 `;
 
   try {
@@ -529,17 +529,10 @@ export default defineConfig({
   const runCommand =
     packageManager === 'pnpm' ? 'pnpm run' : `${packageManager} run`;
 
-  console.log('\nNext steps:');
-  console.log(kleur.cyan('1. Start your Go backend:'));
-  console.log('   tractstack-go');
-  console.log(kleur.cyan('2. Start your Astro development server:'));
-  console.log(`   ${runCommand} dev`);
-
   if (responses.enableMultiTenant) {
     console.log('\n' + kleur.bold('Multi-tenant features enabled:'));
     console.log(`  • Tenant registration: ${kleur.cyan('/sandbox/register')}`);
     console.log(`  • Subdomain routing middleware added`);
-    console.log(`  • Admin-only tenant management`);
     console.log(
       `\n${kleur.yellow('Note:')} Make sure your Go backend has ENABLE_MULTI_TENANT=true`
     );
