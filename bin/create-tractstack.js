@@ -547,7 +547,7 @@ export default defineConfig({
     console.log(`  • Custom components and CodeHooks`);
   }
 
-  console.log('\n📚 Documentation: https://tractstack.org/docs');
+  console.log('\n📚 Documentation: https://tractstack.org');
 }
 
 main().catch(console.error);
