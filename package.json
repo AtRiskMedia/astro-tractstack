@@ -18,7 +18,7 @@
     "README.md"
   ],
   "bin": {
-    "create-tractstack": "./bin/create-tractstack.js"
+    "create-tractstack": "bin/create-tractstack.js"
   },
   "scripts": {
     "build": "vite build && tsc -p tsconfig.dts.json",
@@ -37,7 +37,7 @@
   "license": "FSL-1.1-MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AtRiskMedia/astro-tractstack.git"
+    "url": "git+https://github.com/AtRiskMedia/astro-tractstack.git"
   },
   "publishConfig": {
     "access": "public",
