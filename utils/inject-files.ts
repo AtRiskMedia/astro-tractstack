@@ -1531,6 +1531,14 @@ export async function injectTemplateFiles(
       dest: 'public/static.jpg',
     },
     {
+      src: resolve('../templates/brand/og.png'),
+      dest: 'public/brand/og.png',
+    },
+    {
+      src: resolve('../templates/brand/oglogo.png'),
+      dest: 'public/brand/oglogo.png',
+    },
+    {
       src: resolve('../templates/brand/favicon.ico'),
       dest: 'public/brand/favicon.ico',
     },

@@ -63,9 +63,9 @@ const tenantId =
 
 // Social media and SEO setup
 const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
-const defaultFavIcon = brandConfig.FAVICON || `/favicon.ico`;
-const defaultSocialImageURL = ogImage || brandConfig.OG || `/og.png`;
-const defaultSocialLogoURL = brandConfig.OGLOGO || `/oglogo.png`;
+const defaultFavIcon = brandConfig.FAVICON || `/brand/favicon.ico`;
+const defaultSocialImageURL = ogImage || brandConfig.OG || `/brand/og.png`;
+const defaultSocialLogoURL = brandConfig.OGLOGO || `/brand/oglogo.png`;
 const defaultSocialTitle =
   typeof title === `string` && title
     ? title
