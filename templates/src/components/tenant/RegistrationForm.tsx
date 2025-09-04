@@ -291,11 +291,13 @@ export default function RegistrationForm({
                 value={state.email}
                 onChange={(value) => updateField('email', value)}
                 type="email"
-                placeholder="john@example.com"
+                placeholder="susie@amazing.com"
                 error={errors.email}
               />
               <p className="mt-1 text-sm text-gray-500">
-                You'll receive an activation email at this address
+                {isInitMode
+                  ? `Used for password reset, etc.`
+                  : `You'll receive an activation email at this address`}
               </p>
             </div>
 

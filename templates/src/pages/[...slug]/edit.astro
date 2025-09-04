@@ -168,7 +168,13 @@ for (const [key, value] of Astro.url.searchParams) {
     <StoryKeepToolMode isContext={false} client:only="react" />
 
     <!-- Main Content Area -->
-    <main id="mainContent" class="relative flex-1">
+    <main
+      id="mainContent"
+      class="relative flex-1"
+      style={{
+        paddingBottom: 'var(--bottom-right-controls-bottom-offset, 16px)',
+      }}
+    >
       <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
         <div
           class="h-fit min-h-screen"

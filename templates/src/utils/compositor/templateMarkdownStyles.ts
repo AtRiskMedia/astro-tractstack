@@ -359,6 +359,7 @@ export function getJustCopyDesign(
       baseClasses[2].mobile.textWRAP = 'pretty';
       baseClasses[2].mobile.maxW = '3xl';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -383,6 +384,7 @@ export function getJustCopyDesign(
       baseClasses[2].mobile.textALIGN = 'center';
       baseClasses[2].mobile.textWRAP = 'balance';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -405,6 +407,7 @@ export function getJustCopyDesign(
       baseClasses[2].mobile.textALIGN = 'left';
       baseClasses[2].mobile.textWRAP = 'pretty';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -503,6 +506,7 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.textWRAP = 'pretty';
       baseClasses[2].mobile.maxW = '3xl';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -552,6 +556,7 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.textALIGN = 'center';
       baseClasses[2].mobile.textWRAP = 'balance';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -647,6 +652,7 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.textALIGN = 'center';
       baseClasses[2].mobile.textWRAP = 'balance';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -741,6 +747,7 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.textALIGN = 'left';
       baseClasses[2].mobile.textWRAP = 'pretty';
       if (bordered) {
+        baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',
@@ -986,6 +993,7 @@ export const getIntroDesign = (
         (parentClasses[2].mobile.textALIGN = 'center');
       parentClasses[2].mobile.textWRAP = 'balance';
       if (bordered) {
+        parentClasses[2].mobile.rounded = 'lg';
         parentClasses[2].mobile.bgCOLOR = getColor(
           {
             light: useOdd ? 'brand-2' : 'white',

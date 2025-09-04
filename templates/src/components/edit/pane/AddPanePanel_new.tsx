@@ -493,7 +493,7 @@ const AddPaneNewPanel = ({
                 <Switch.HiddenInput />
                 <div className="flex h-6 items-center">
                   <Switch.Label className="px-4 text-sm text-gray-700">
-                    Use odd variant
+                    Toggle subtle variation (great for stacking content)
                   </Switch.Label>
                 </div>
               </Switch.Root>
