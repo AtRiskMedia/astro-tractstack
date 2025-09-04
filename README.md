@@ -283,7 +283,7 @@ sudo ~/t8k/src/tractstack-go/pkg/scripts/t8k-uninstall.sh
 
 ## Support & Documentation
 
-- **Documentation**: https://tractstack.org/docs
+- **Documentation**: https://tractstack.org
 - **GitHub Issues**: https://github.com/AtRiskMedia/tractstack-go/issues
 - **Email Support**: hello@tractstack.com
 - **Community**: Join discussions about adaptive web experiences
