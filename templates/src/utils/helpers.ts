@@ -31,6 +31,7 @@ export function startLoadingAnimation() {
         if (progressInterval !== null) {
           clearInterval(progressInterval);
         }
+        return;
       }
       loadingIndicator.style.transform = `scaleX(${progress / 100})`;
     }, 20);

@@ -110,13 +110,9 @@ const PanelSwitch = ({
       break;
 
     case 'style-parent-add':
-      if (markdownNode && signal.className)
+      if (markdownNode)
         return (
-          <StyleParentAddPanel
-            node={markdownNode}
-            layer={signal.layer || 0}
-            className={signal.className}
-          />
+          <StyleParentAddPanel node={markdownNode} layer={signal.layer || 0} />
         );
       break;
 
@@ -200,12 +196,11 @@ const PanelSwitch = ({
       break;
 
     case 'style-element-add':
-      if (clickedNode && markdownNode && signal.className)
+      if (clickedNode && markdownNode)
         return (
           <StyleElementAddPanel
             node={clickedNode}
             parentNode={markdownNode}
-            className={signal.className}
             onTitleChange={onTitleChange}
           />
         );
