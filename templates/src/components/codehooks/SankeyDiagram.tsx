@@ -234,9 +234,10 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
     }
   }, [data, dimensions]);
 
-  const compressedHeight = COMPRESSED_HEIGHT;
-  const needsCompression = compressedHeight && !isExpanded;
-  const displayHeight = needsCompression ? compressedHeight : dimensions.height;
+  const needsCompression = !isExpanded && dimensions.height > COMPRESSED_HEIGHT;
+  const displayHeight = needsCompression
+    ? COMPRESSED_HEIGHT
+    : dimensions.height;
 
   const handleExpand = () => {
     setIsExpanded(!isExpanded);
