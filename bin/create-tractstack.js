@@ -76,13 +76,14 @@ function getEnvState() {
         goBackendPath:
           envVars.PRIVATE_GO_BACKEND_PATH || defaults.goBackendPath,
         enableMultiTenant:
-          envVars.ENABLE_MULTI_TENANT === 'true' || defaults.enableMultiTenant,
+          envVars.PUBLIC_ENABLE_MULTI_TENANT === 'true' ||
+          defaults.enableMultiTenant,
       },
       envState: {
         goBackend: !!envVars.PUBLIC_GO_BACKEND,
         tenantId: !!envVars.PUBLIC_TENANTID,
         goBackendPath: !!envVars.PRIVATE_GO_BACKEND_PATH,
-        enableMultiTenant: !!envVars.ENABLE_MULTI_TENANT,
+        enableMultiTenant: envVars.PUBLIC_ENABLE_MULTI_TENANT !== undefined,
       },
     };
   } catch (error) {
@@ -284,7 +285,7 @@ ${kleur.bold('Examples:')}
 PUBLIC_GO_BACKEND="${finalResponses.goBackend}"
 PUBLIC_TENANTID="${finalTenantId}"
 PRIVATE_GO_BACKEND_PATH="${finalResponses.goBackendPath.endsWith('/') ? finalResponses.goBackendPath : finalResponses.goBackendPath + '/'}"
-ENABLE_MULTI_TENANT="${finalResponses.enableMultiTenant ? 'true' : 'false'}"
+PUBLIC_ENABLE_MULTI_TENANT="${finalResponses.enableMultiTenant ? 'true' : 'false'}"
 `;
 
   try {

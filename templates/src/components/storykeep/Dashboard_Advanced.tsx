@@ -131,7 +131,7 @@ export default function StoryKeepDashboard_Advanced({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8" style={{ paddingBottom: '112px' }}>
       {initialize && (
         <div className="rounded-md border border-blue-200 bg-blue-50 p-4">
           <div className="flex">

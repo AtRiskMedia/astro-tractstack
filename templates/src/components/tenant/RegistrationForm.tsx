@@ -175,7 +175,7 @@ export default function RegistrationForm({
 
   return (
     <>
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="mx-auto max-w-2xl p-6" style={{ paddingBottom: '112px' }}>
         <div className="rounded-lg bg-white p-8 shadow-lg">
           <div className="mb-8">
             <div className="h-16">
