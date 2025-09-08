@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { skipWizard } from '@/stores/navigation';
+import { fullContentMapStore } from '@/stores/analytics';
 import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
 
 interface StoryKeepWizardProps {
   fullContentMap: FullContentMapItem[];
   homeSlug: string;
-  brandConfig: BrandConfig; // Now received as prop instead of fetched
+  brandConfig: BrandConfig;
 }
 
 interface WizardData {
@@ -50,7 +51,7 @@ const wizardSteps: WizardStep[] = [
     key: 'hasAnyMenu',
     message: "A menu helps visitors navigate. Let's create one now.",
     buttonText: 'Create a Menu',
-    href: '/storykeep/content/menus/create',
+    href: '/storykeep/content?create-menu',
   },
   {
     key: 'hasMenu',
@@ -128,11 +129,18 @@ export default function Wizard({
   const [wizardData, setWizardData] = useState<WizardData | null>(null);
   const [loading, setLoading] = useState(true);
   const $skipWizard = useStore(skipWizard);
+  const $clientContentMap = useStore(fullContentMapStore);
+  const activeContentMap =
+    $clientContentMap?.data?.length > 0
+      ? $clientContentMap.data
+      : fullContentMap;
 
   useEffect(() => {
     const buildWizardData = async () => {
       try {
-        const homePage = fullContentMap.find((item) => item.slug === homeSlug);
+        const homePage = activeContentMap.find(
+          (item) => item.slug === homeSlug
+        );
 
         let homeData = null;
         if (homePage) {
@@ -165,7 +173,7 @@ export default function Wizard({
           hasPanes: !!homePage?.panes?.length,
           hasSeo: !!homePage?.description,
           hasMenu: !!homeData?.menuId,
-          hasAnyMenu: fullContentMap.some((item) => item.type === 'Menu'),
+          hasAnyMenu: activeContentMap.some((item) => item.type === 'Menu'),
         };
 
         setWizardData(data);
@@ -176,11 +184,10 @@ export default function Wizard({
       }
     };
 
-    // Only build wizard data if we have brandConfig
     if (brandConfig) {
       buildWizardData();
     }
-  }, [fullContentMap, homeSlug, brandConfig]); // Added brandConfig to dependencies
+  }, [activeContentMap, homeSlug, brandConfig]);
 
   if (loading || !wizardData || !brandConfig || $skipWizard) {
     return null;

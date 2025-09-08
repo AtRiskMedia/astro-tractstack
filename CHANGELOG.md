@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [2.0.0-rc.11] - 2025-09-08
+
+### Fixed
+
+- correct initial frontend.css; better tailwind output for gen
+- removed unnecessary bottom padding on consumers of UnsavedChangesBar, except the RegistrationForm
+- correct url for create menu in SiteWizard
+- proper detection of createMenu mode
+- made SiteWizard responsively use fullContentMap
+
 ### [2.0.0-rc.10] - 2025-09-08
 
 ### Fixed

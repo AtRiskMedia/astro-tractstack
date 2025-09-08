@@ -93,7 +93,7 @@ export default function MenuForm({
   };
 
   return (
-    <div className="space-y-8" style={{ paddingBottom: '112px' }}>
+    <div className="space-y-8">
       {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">

@@ -64,6 +64,12 @@ const StoryKeepDashboard_Content = ({
     handleContentSubtabChange(tabId as any, setActiveContentTab);
   };
 
+  useEffect(() => {
+    if (createMenu) {
+      setActiveContentTab('manage');
+    }
+  }, [createMenu]);
+
   // Lightweight content summary fetch with retry logic
   useEffect(() => {
     let retryCount = 0;

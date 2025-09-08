@@ -65,7 +65,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Generate CSS using JIT
     const tailwindCss = createTailwindcss({ tailwindConfig });
-    const htmlContent = [`<span class="${allClasses.join(' ')}"></span>`];
+    const baseClasses = allClasses.filter(
+      (c) => !c.startsWith('md:') && !c.startsWith('xl:')
+    );
+    const mdClasses = allClasses.filter((c) => c.startsWith('md:'));
+    const xlClasses = allClasses.filter((c) => c.startsWith('xl:'));
+    const htmlContent = [
+      `<div class="${baseClasses.join(' ')}"></div>`,
+      `<div class="md:block ${mdClasses.join(' ')}"></div>`,
+      `<div class="xl:block ${xlClasses.join(' ')}"></div>`,
+    ];
     const generatedCss = await tailwindCss.generateStylesFromContent(
       `@tailwind base; @tailwind utilities;`,
       htmlContent
