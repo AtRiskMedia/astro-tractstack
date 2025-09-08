@@ -335,7 +335,13 @@ const authStatus = {
 }
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAdminModal);
+  } else {
+    setupAdminModal();
+  }
+
+  function setupAdminModal() {
     const logoutBtn = document.getElementById(
       'logout-btn'
     ) as HTMLButtonElement | null;
@@ -445,14 +451,9 @@ const authStatus = {
         heartBtn?.focus();
       }
 
-      // Handle iframe load events for better UX
-      //iframe.addEventListener('load', function () {
-      //  console.log('Admin panel loaded successfully');
-      //});
-
       iframe.addEventListener('error', function () {
         console.error('Failed to load admin panel');
       });
     }
-  });
+  }
 </script>
