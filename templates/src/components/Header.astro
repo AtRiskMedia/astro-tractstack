@@ -160,12 +160,13 @@ const authStatus = {
 
       {/* Edit Icon */}
       {
-        isEditable ? (
+        isEditable &&
+        (authStatus.isAdmin || authStatus.userRole === 'editor') ? (
           <a
             data-astro-reload
             href={!isContext ? `/${slug}/edit` : `/context/${slug}/edit`}
             class="text-myblue/80 hover:text-myblue hover:rotate-6"
-            title={!isContext ? 'Edit this story' : 'Edit this pane'}
+            title={!isContext ? 'Edit this story' : 'Edit this page'}
           >
             <svg
               class="h-6 w-6"

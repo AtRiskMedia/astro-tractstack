@@ -238,7 +238,7 @@ export default function StoryKeepDashboard_Analytics({
       )}
 
       {/* Stats Cards Grid */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mb-6 grid grid-cols-3 gap-4">
         {stats.map((item) => {
           const period = item.period;
           let firstTimeValue = 0,
@@ -261,11 +261,11 @@ export default function StoryKeepDashboard_Analytics({
           return (
             <div
               key={item.period}
-              className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100"
+              className="rounded-lg border border-gray-100 bg-white px-2 py-2.5 shadow-sm transition-colors hover:border-cyan-100 md:px-4 md:py-3"
             >
               <dt className="text-sm font-bold text-gray-800">{item.name}</dt>
 
-              <dd className="mt-2">
+              <dd className="mt-1 md:mt-2">
                 <div className="flex items-end justify-between">
                   <div className="flex-1">
                     <div className="text-sm text-gray-600">Events</div>
@@ -276,10 +276,11 @@ export default function StoryKeepDashboard_Analytics({
                 </div>
               </dd>
 
-              <hr className="my-3.5 border-gray-100" />
+              <hr className="my-1.5 border-gray-100 md:my-3.5" />
 
               <dd>
-                <div className="flex items-end justify-between">
+                {/* Desktop: side-by-side layout */}
+                <div className="hidden items-end justify-between md:flex">
                   <div className="flex-1">
                     <div className="text-sm text-gray-600">
                       Anonymous Visitors
@@ -299,13 +300,35 @@ export default function StoryKeepDashboard_Analytics({
                     </div>
                   </div>
                 </div>
+
+                {/* Mobile: stacked layout */}
+                <div className="md:hidden">
+                  <div className="mb-1.5">
+                    <div className="text-sm text-gray-600">
+                      Anonymous Visitors
+                    </div>
+                    <div className="text-2xl font-bold tracking-tight text-cyan-700">
+                      {firstTimeValue === 0
+                        ? '-'
+                        : formatNumber(firstTimeValue)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Known Leads</div>
+                    <div className="text-2xl font-bold tracking-tight text-cyan-700">
+                      {returningValue === 0
+                        ? '-'
+                        : formatNumber(returningValue)}
+                    </div>
+                  </div>
+                </div>
               </dd>
             </div>
           );
         })}
 
         {/* Total Leads Card */}
-        <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100 md:col-span-3">
+        <div className="col-span-3 rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100">
           <div className="flex items-center justify-between">
             <dt className="text-sm font-bold text-gray-800">Total Leads</dt>
             <div className="flex items-center gap-2">
