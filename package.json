@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.0-rc.11",
+  "version": "2.0.0-rc.12",
   "description": "Astro integration for TractStack - redeeming the web from boring experiences",
   "type": "module",
   "main": "dist/index.js",
