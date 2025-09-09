@@ -185,7 +185,7 @@ const EpinetDurationSelector = ({
     const startUTCTime = createUTCDateTime(startDate, localFilters.startHour);
     const endUTCTime = createUTCDateTime(endDate, localFilters.endHour);
 
-    if (endUTCTime <= startUTCTime) {
+    if (endUTCTime < startUTCTime) {
       setErrorMessage('End time must be after start time.');
       return;
     }
@@ -549,7 +549,7 @@ const EpinetDurationSelector = ({
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-4 overflow-visible">
         {$epinetCustomFilters.enabled && (
           <div
             className={`space-y-4 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-4`}
@@ -865,7 +865,10 @@ const EpinetDurationSelector = ({
                           </Select.Control>
                           <Portal>
                             <Select.Positioner>
-                              <Select.Content className="z-10 mt-2 max-h-96 w-[var(--trigger-width)] overflow-auto rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                              <Select.Content
+                                className="z-10 mt-2 max-h-96 overflow-auto rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                style={{ width: 'var(--trigger-width)' }}
+                              >
                                 {paginatedUserCounts.length > 0 ? (
                                   [
                                     <Select.Item

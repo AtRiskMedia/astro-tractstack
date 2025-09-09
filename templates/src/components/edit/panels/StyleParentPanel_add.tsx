@@ -174,7 +174,7 @@ const StyleParentPanelAdd = ({ node, layer }: BasePanelProps) => {
   `;
 
   return (
-    <div className="min-h-[400px] max-w-md space-y-4">
+    <div className="max-w-md space-y-4">
       <style>{comboboxItemStyles}</style>
 
       <div className="flex flex-row flex-nowrap justify-between">

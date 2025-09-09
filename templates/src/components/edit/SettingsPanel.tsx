@@ -42,7 +42,10 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
       100% { opacity: var(--fade-end, 1); }
     }
   `}</style>
-      <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl md:p-2.5">
+      <div
+        className="w-full rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl md:p-2.5"
+        style={{ maxWidth: '90vw' }}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-myblue text-lg font-bold">{panelTitle}</h3>
           <button

@@ -31,6 +31,8 @@ const mainStylesUrl = isDev
     <link rel="stylesheet" href={mainStylesUrl} />
   </head>
   <body class="h-full">
-    <RegistrationForm client:load isInitMode={true} />
+    <div class="max-w-5xl p-3.5 md:p-8">
+      <RegistrationForm client:load isInitMode={true} />
+    </div>
   </body>
 </html>

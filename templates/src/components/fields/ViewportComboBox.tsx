@@ -13,7 +13,7 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobileIcon';
 import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
 import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon';
-import { classNames } from '@/utils/helpers';
+import { classNames, useDropdownDirection } from '@/utils/helpers';
 import { tailwindToHex, colorValues } from '@/utils/compositor/tailwindColors';
 import type { BrandConfig } from '@/types/tractstack';
 
@@ -46,6 +46,8 @@ const ViewportComboBox = ({
   const [query, setQuery] = useState('');
   const [isNowNegative, setIsNowNegative] = useState(isNegative);
   const inputRef = useRef<HTMLInputElement>(null);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+  const { openAbove, maxHeight } = useDropdownDirection(comboboxRef);
 
   const Icon =
     viewport === 'mobile'
@@ -155,7 +157,7 @@ const ViewportComboBox = ({
               openOnKeyPress={true}
               composite={true}
             >
-              <div className="relative">
+              <div ref={comboboxRef} className="relative">
                 <div className="relative flex items-center">
                   {isColorValue && (
                     <div
@@ -187,7 +189,12 @@ const ViewportComboBox = ({
                   </Combobox.Trigger>
                 </div>
               </div>
-              <Combobox.Content className="absolute z-50 mt-1 max-h-32 w-full overflow-auto rounded-md bg-white py-1 text-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <Combobox.Content
+                className={`absolute z-50 mt-1 w-full overflow-auto rounded-md bg-white py-1 text-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
+                  openAbove ? 'bottom-full mb-1' : 'top-full'
+                }`}
+                style={{ maxHeight: `${maxHeight}px` }}
+              >
                 {collection.items.length === 0 ? (
                   <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
                     Nothing found.

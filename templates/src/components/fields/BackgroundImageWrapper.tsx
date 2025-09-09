@@ -120,7 +120,7 @@ const BackgroundImageWrapper = ({
             <label className="block text-sm font-bold text-gray-700">
               Position
             </label>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap space-x-4">
               {(
                 [
                   'background',

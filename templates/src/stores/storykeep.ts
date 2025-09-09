@@ -1,6 +1,7 @@
 import { atom, map } from 'nanostores';
 import { persistentAtom } from '@nanostores/persistent';
 import { handleSettingsPanelMobile } from '@/utils/layout';
+import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
 import type {
   FullContentMapItem,
   Theme,
@@ -116,6 +117,10 @@ export const setViewportMode = (mode: ViewportKey) => {
   } else {
     viewportKeyStore.setKey('value', mode);
   }
+
+  // Notify root node to trigger coordinated re-render
+  const ctx = getCtx();
+  ctx.notifyNode(ROOT_NODE_NAME);
 };
 
 export const toggleShowAnalytics = () => {

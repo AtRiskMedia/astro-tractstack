@@ -222,7 +222,7 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
         </div>
 
         <div className="flex w-full flex-wrap gap-8">
-          <div className="min-w-[400px] flex-1">
+          <div className="flex-1">
             <MagicPathBuilder
               paths={heldPaths}
               setPaths={handleHeldPathsChange}
@@ -232,7 +232,7 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
             />
           </div>
 
-          <div className="min-w-[400px] flex-1">
+          <div className="flex-1">
             <MagicPathBuilder
               paths={withheldPaths}
               setPaths={handleWithheldPathsChange}

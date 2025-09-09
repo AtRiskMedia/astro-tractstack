@@ -369,7 +369,7 @@ export default function StoryKeepDashboard_Analytics({
       </div>
 
       {/* User Journey Section */}
-      <div className="mb-6 overflow-hidden">
+      <div className="mb-6 overflow-visible">
         <h3 className="mb-4 text-lg font-bold text-gray-900">
           User Journey Analytics
         </h3>

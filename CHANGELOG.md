@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [2.0.0-rc.13] - 2025-09-09
+
+### Fixed
+
+- Fixed dropdown positioning and overflow issues in ViewportComboBox component
+- Improved time validation logic in EpinetDurationSelector (changed `<=` to `<` for end time comparison)
+- Added proper overflow handling for dashboard analytics sections
+- Enhanced class extraction algorithm in nodes store to include all descendant nodes when traversing dirty node trees
+- Added viewport change notifications to trigger coordinated re-renders
+
+### Added
+
+- Added `useDropdownDirection` utility for intelligent dropdown positioning
+- Added responsive padding classes for consistent mobile/desktop layouts across StoryKeep pages
+- Added max-width constraints and proper container sizing for better content layout
+
+### Changed
+
+- Improved code formatting and consistency across template literals in multiple components
+- Enhanced sticky bottom bar styling with better conditional class formatting
+- Updated all StoryKeep pages to use consistent responsive padding (`p-3.5 md:p-8`)
+- Refactored getDirtyNodesClassData method to properly traverse node hierarchies for class extraction
+
 ### [2.0.0-rc.12] - 2025-09-08
 
 ### Fixed

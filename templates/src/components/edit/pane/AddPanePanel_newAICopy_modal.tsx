@@ -165,7 +165,7 @@ ${additionalInstructions}`;
                       Content has been generated successfully! Click "Apply
                       Content" to use this content with your selected design.
                     </p>
-                    <div className="max-h-[60vh] overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4">
+                    <div className="overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4">
                       <pre className="whitespace-pre-wrap font-mono text-sm text-gray-800">
                         {generatedContent}
                       </pre>

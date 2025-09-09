@@ -2316,10 +2316,41 @@ export class NodesContext {
 
   getDirtyNodesClassData(): { dirtyPaneIds: string[]; classes: string[] } {
     const dirtyNodes = this.getDirtyNodes();
+
     const dirtyPaneIds = dirtyNodes
       .filter((node) => node.nodeType === 'Pane')
       .map((node) => node.id);
-    const classes = extractClassesFromNodes(dirtyNodes);
+
+    // Collect all nodes that need class extraction
+    const allNodesToExtract: BaseNode[] = [];
+
+    // Find root dirty nodes (dirty nodes whose parents are NOT dirty)
+    const dirtyNodeIds = new Set(dirtyNodes.map((n) => n.id));
+    const rootDirtyNodes = dirtyNodes.filter(
+      (node) => !node.parentId || !dirtyNodeIds.has(node.parentId)
+    );
+
+    // For each root dirty node, traverse all descendants
+    rootDirtyNodes.forEach((rootNode) => {
+      // Add the root node itself
+      allNodesToExtract.push(rootNode);
+
+      // Traverse all descendants using breadth-first
+      const queue = [...this.getChildNodeIDs(rootNode.id)];
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (!currentId) continue;
+
+        const currentNode = this.allNodes.get().get(currentId);
+        if (currentNode) {
+          allNodesToExtract.push(currentNode);
+          const childrenIds = this.getChildNodeIDs(currentId);
+          queue.push(...childrenIds);
+        }
+      }
+    });
+
+    const classes = extractClassesFromNodes(allNodesToExtract);
 
     return { dirtyPaneIds, classes };
   }

@@ -201,7 +201,7 @@ for (const [key, value] of Astro.url.searchParams) {
   <!-- Floating Controls (Settings Panel & HUD OR ToolBar) -->
   <aside
     id="settingsControls"
-    class="z-101 pointer-events-none fixed bottom-24 right-0 flex max-h-screen flex-col items-end gap-2 overflow-y-auto p-4 md:bottom-0"
+    class="z-101 pointer-events-none fixed bottom-24 right-0 flex max-h-screen flex-col items-end gap-2 overflow-visible p-4 md:bottom-0"
   >
     <div class="pointer-events-auto">
       <StoryKeepToolBar client:only="react" />
