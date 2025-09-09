@@ -51,26 +51,40 @@ const PanelVisibilityWrapper = ({
     const currentWrapper = wrapperRef.current;
     if (!currentWrapper) return;
 
-    // Always observe the panel, regardless of active state
+    // Skip intersection observer for 'add' panels - they behave differently
+    if (panelType === 'add') {
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        // Only take action if this panel is currently active and not intersecting
-        if (!entries[0].isIntersecting && isActive) {
-          nodesCtx.closeAllPanels();
+        // Add delay to prevent immediate closing during panel activation
+        if (isActive) {
+          setTimeout(() => {
+            // Double-check the panel is still active before closing
+            const currentActiveMode = nodesCtx.activePaneMode.get();
+            const stillActive =
+              currentActiveMode.panel === panelType &&
+              currentActiveMode.paneId === nodeId;
+            if (!entries[0].isIntersecting && stillActive) {
+              console.log('❌ CLOSING PANEL DUE TO INTERSECTION OBSERVER!', {
+                panelType,
+                nodeId,
+              });
+              nodesCtx.closeAllPanels();
+            }
+          }, 100); // Small delay to allow panel to render
         }
       },
       {
-        threshold: 0.1, // Close when 90% of the panel is out of view
-        rootMargin: '-10px', // Small margin to make detection a bit more forgiving
+        threshold: 0.1,
+        rootMargin: '-10px',
       }
     );
 
     observer.observe(currentWrapper);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [nodeId, panelType, nodesCtx, isActive]); // Include isActive in dependencies
+    return () => observer.disconnect();
+  }, [nodeId, panelType, nodesCtx, isActive]);
 
   return (
     <div

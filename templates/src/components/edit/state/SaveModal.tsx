@@ -505,62 +505,56 @@ export default function SaveModal({
           const { dirtyPaneIds, classes: dirtyClasses } =
             ctx.getDirtyNodesClassData();
 
-          if (dirtyClasses.length === 0) {
-            addDebugMessage(
-              'No dirty classes to process, skipping Tailwind update'
-            );
-          } else {
-            // STEP 1: Generate CSS using Astro API
-            const astroEndpoint = `/api/tailwind`;
-            const astroPayload = { dirtyPaneIds, dirtyClasses };
-            const astroResponse = await fetch(astroEndpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Tenant-ID': tenantId,
-              },
-              credentials: 'include',
-              body: JSON.stringify(astroPayload),
-            });
+          // STEP 1: Generate CSS using Astro API
+          const astroEndpoint = `/api/tailwind`;
+          const astroPayload = { dirtyPaneIds, dirtyClasses };
+          const astroResponse = await fetch(astroEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            credentials: 'include',
+            body: JSON.stringify(astroPayload),
+          });
 
-            if (!astroResponse.ok) {
-              throw new Error(
-                `CSS generation failed! status: ${astroResponse.status}`
-              );
-            }
-
-            const astroResult = await astroResponse.json();
-
-            if (!astroResult.success || !astroResult.generatedCss) {
-              throw new Error('CSS generation failed: no CSS returned');
-            }
-
-            addDebugMessage(
-              `CSS generated: ${astroResult.generatedCss.length} bytes for ${dirtyClasses.length} classes`
-            );
-
-            // STEP 2: Save CSS to Go backend
-            const goEndpoint = `${goBackend}/api/v1/tailwind/update`;
-            const goPayload = { frontendCss: astroResult.generatedCss };
-            const goResponse = await fetch(goEndpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Tenant-ID': tenantId,
-              },
-              credentials: 'include',
-              body: JSON.stringify(goPayload),
-            });
-
-            if (!goResponse.ok) {
-              throw new Error(`CSS save failed! status: ${goResponse.status}`);
-            }
-
-            const goResult = await goResponse.json();
-            addDebugMessage(
-              `CSS saved successfully: stylesVer ${goResult.stylesVer}`
+          if (!astroResponse.ok) {
+            throw new Error(
+              `CSS generation failed! status: ${astroResponse.status}`
             );
           }
+
+          const astroResult = await astroResponse.json();
+
+          if (!astroResult.success || !astroResult.generatedCss) {
+            throw new Error('CSS generation failed: no CSS returned');
+          }
+
+          addDebugMessage(
+            `CSS generated: ${astroResult.generatedCss.length} bytes for ${dirtyClasses.length} classes`
+          );
+
+          // STEP 2: Save CSS to Go backend
+          const goEndpoint = `${goBackend}/api/v1/tailwind/update`;
+          const goPayload = { frontendCss: astroResult.generatedCss };
+          const goResponse = await fetch(goEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': tenantId,
+            },
+            credentials: 'include',
+            body: JSON.stringify(goPayload),
+          });
+
+          if (!goResponse.ok) {
+            throw new Error(`CSS save failed! status: ${goResponse.status}`);
+          }
+
+          const goResult = await goResponse.json();
+          addDebugMessage(
+            `CSS saved successfully: stylesVer ${goResult.stylesVer}`
+          );
         } catch (error) {
           const errorMsg =
             error instanceof Error ? error.message : 'Unknown error';

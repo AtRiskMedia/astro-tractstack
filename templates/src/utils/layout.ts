@@ -113,9 +113,9 @@ export function setupLayoutObservers(): void {
         toolModeNav.style.left = '0';
 
         // Add margin to main content when nav becomes fixed (nav no longer takes flex space)
-        if (mainContent) {
-          mainContent.classList.add('md:ml-16');
-        }
+        //if (mainContent) {
+        //  mainContent.classList.add('md:ml-16');
+        //}
       } else {
         // Normal static positioning when header is visible
         toolModeNav.classList.remove('md:fixed');
@@ -124,9 +124,9 @@ export function setupLayoutObservers(): void {
         toolModeNav.style.left = '';
 
         // Remove margin from main content when nav is static (nav takes flex space naturally)
-        if (mainContent) {
-          mainContent.classList.remove('md:ml-16');
-        }
+        //if (mainContent) {
+        //  mainContent.classList.remove('md:ml-16');
+        //}
       }
     }
   };
