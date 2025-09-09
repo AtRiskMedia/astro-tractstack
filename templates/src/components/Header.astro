@@ -400,60 +400,61 @@ const authStatus = {
       });
     }
 
-    // Admin Modal JavaScript - Only runs when admin elements exist
-    const heartBtn = document.getElementById('admin-heart-btn');
-    const modal = document.getElementById('admin-modal');
-    const closeBtn = document.getElementById('admin-modal-close');
-    const iframe = document.getElementById('admin-sysop-iframe');
-
-    if (heartBtn && modal && closeBtn && iframe) {
-      // Open modal when heart icon is clicked
-      heartBtn.addEventListener('click', function (e) {
+    // Admin Modal JavaScript - Use event delegation
+    document.addEventListener('click', function (e) {
+      if (e.target && (e.target as Element).closest('#admin-heart-btn')) {
         e.preventDefault();
-        modal.classList.remove('hidden');
-        modal.setAttribute('aria-hidden', 'false');
+        const modal = document.getElementById('admin-modal');
+        const closeBtn = document.getElementById('admin-modal-close');
 
-        // Focus management for accessibility
-        closeBtn.focus();
-
-        // Prevent body scroll when modal is open
-        document.body.style.overflow = 'hidden';
-      });
-
-      // Close modal when X button is clicked
-      closeBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        closeModal();
-      });
-
-      // Close modal when clicking outside the iframe
-      modal.addEventListener('click', function (e) {
-        if (e.target === modal) {
-          closeModal();
+        if (modal && closeBtn) {
+          modal.classList.remove('hidden');
+          modal.setAttribute('aria-hidden', 'false');
+          closeBtn.focus();
+          document.body.style.overflow = 'hidden';
         }
-      });
-
-      // Close modal with Escape key
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-          closeModal();
-        }
-      });
-
-      function closeModal() {
-        modal?.classList.add('hidden');
-        modal?.setAttribute('aria-hidden', 'true');
-
-        // Restore body scroll
-        document.body.style.overflow = '';
-
-        // Return focus to heart button for accessibility
-        heartBtn?.focus();
+        return;
       }
 
-      iframe.addEventListener('error', function () {
-        console.error('Failed to load admin panel');
-      });
+      if (e.target && (e.target as Element).closest('#admin-modal-close')) {
+        e.preventDefault();
+        closeModal();
+        return;
+      }
+
+      if (e.target && (e.target as Element).id === 'admin-modal') {
+        closeModal();
+        return;
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('admin-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+          closeModal();
+        }
+      }
+    });
+
+    function closeModal() {
+      const modal = document.getElementById('admin-modal');
+      const heartBtn = document.getElementById('admin-heart-btn');
+
+      modal?.classList.add('hidden');
+      modal?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      heartBtn?.focus();
     }
+
+    // iframe error handling
+    document.addEventListener('DOMContentLoaded', function () {
+      const iframe = document.getElementById('admin-sysop-iframe');
+      if (iframe) {
+        iframe.addEventListener('error', function () {
+          console.error('Failed to load admin panel');
+        });
+      }
+    });
   }
 </script>
