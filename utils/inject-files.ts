@@ -29,7 +29,15 @@ export async function injectTemplateFiles(
       dest: 'env.example',
     },
     {
-      src: resolve('../templates/.gitignore'),
+      src: resolve('../templates/prettierrc'),
+      dest: '.prettierrc',
+    },
+    {
+      src: resolve('../templates/prettierignore'),
+      dest: '.prettierignore',
+    },
+    {
+      src: resolve('../templates/gitignore'),
       dest: '.gitignore',
     },
     {

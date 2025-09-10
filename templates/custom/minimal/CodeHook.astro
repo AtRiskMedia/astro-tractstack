@@ -4,12 +4,13 @@ import ListContent from '@/components/codehooks/ListContent.astro';
 import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
 import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
 import type { FullContentMapItem } from '@/types/tractstack';
+import type { ResourceNode } from '@/types/compositorTypes';
 // import CustomHero from './CustomHero.astro';  // Uncomment to add custom components
 
 export interface Props {
   target: string;
   fullContentMap: FullContentMapItem[];
-  resourcesPayload?: Record<string, any[]>;
+  resourcesPayload?: Record<string, ResourceNode[]>;
   options?: {
     params?: {
       options?: string;
@@ -17,7 +18,7 @@ export interface Props {
   };
 }
 
-const { target, options, fullContentMap /* resourcesPayload */ } = Astro.props;
+const { target, options, fullContentMap /*, resourcesPayload */ } = Astro.props;
 
 export const components = {
   'featured-content': true,

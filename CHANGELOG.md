@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [2.0.0-rc.20] - 2025-09-10
+
+### Changed
+
+- Wired page loading indicator to all page loads!
+
+### [2.0.0-rc.19] - 2025-09-10
+
+### Fixed
+
+- correct typing on resourcesPayload
+- enableMultiTenant handling
+- proper inject of prettier and gitignore
+
+### [2.0.0-rc.18] - 2025-09-10
+
+### Fixed
+
+- Correctly use available codehooks (do not hardcode defaults)
+
+### Changed
+
+- Copy .prettierignore into host on install
+
 ### [2.0.0-rc.17] - 2025-09-09
 
 ### Fixed

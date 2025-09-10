@@ -275,8 +275,10 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
     <div
       id="loading-indicator"
       class="bg-myorange fixed left-0 top-0 z-50 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
+      style="opacity: 0.5; filter: blur(0.5px);"
     >
     </div>
+
     <div id="content" class="transition-opacity duration-300">
       <slot />
     </div>
@@ -296,6 +298,102 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
       import '/client/sse.js';
       import '/client/belief-events.js';
       import '/client/analytics-events.js';
+    </script>
+
+    <script is:inline is:persist>
+      // Navigation loading animation - exact copy of helpers.ts implementation
+      let navProgressInterval = null;
+      let navSafetyTimeout = null;
+
+      function startNavLoadingAnimation() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        if (
+          window.matchMedia('(prefers-reduced-motion: no-preference)')
+            .matches &&
+          loadingIndicator
+        ) {
+          // Clear any existing safety timeout
+          if (navSafetyTimeout !== null) {
+            clearTimeout(navSafetyTimeout);
+            navSafetyTimeout = null;
+          }
+
+          loadingIndicator.style.transform = 'scaleX(0)';
+          loadingIndicator.style.display = 'block';
+
+          let progress = 0;
+          navProgressInterval = setInterval(() => {
+            progress += 2;
+            if (progress > 90) {
+              if (navProgressInterval !== null) {
+                clearInterval(navProgressInterval);
+              }
+              return;
+            }
+            loadingIndicator.style.transform = `scaleX(${progress / 100})`;
+          }, 20);
+
+          // AUTOMATIC SHUTOFF: Always stop after 10 seconds
+          navSafetyTimeout = setTimeout(() => {
+            stopNavLoadingAnimation();
+          }, 10000);
+        }
+      }
+
+      function stopNavLoadingAnimation() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const content = document.getElementById('content');
+
+        // Clear safety timeout
+        if (navSafetyTimeout !== null) {
+          clearTimeout(navSafetyTimeout);
+          navSafetyTimeout = null;
+        }
+
+        if (
+          window.matchMedia('(prefers-reduced-motion: no-preference)')
+            .matches &&
+          loadingIndicator
+        ) {
+          if (navProgressInterval !== null) {
+            clearInterval(navProgressInterval);
+            navProgressInterval = null;
+          }
+          loadingIndicator.style.transform = 'scaleX(1)';
+          content.style.opacity = '1';
+
+          setTimeout(() => {
+            loadingIndicator.style.display = 'none';
+            loadingIndicator.style.transform = 'scaleX(0)';
+          }, 300);
+        }
+      }
+
+      // Set up navigation loading
+      function setupNavigationLoading() {
+        document.addEventListener('astro:before-preparation', () => {
+          startNavLoadingAnimation();
+        });
+
+        document.addEventListener('astro:page-load', () => {
+          stopNavLoadingAnimation();
+        });
+
+        document.addEventListener('astro:after-swap', () => {
+          stopNavLoadingAnimation();
+        });
+      }
+
+      // Initialize
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupNavigationLoading);
+      } else {
+        setupNavigationLoading();
+      }
+
+      // Re-setup after navigation
+      document.addEventListener('astro:page-load', setupNavigationLoading);
     </script>
   </body>
 </html>

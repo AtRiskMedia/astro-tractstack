@@ -258,8 +258,9 @@ ${kleur.bold('Examples:')}
   const finalResponses = {
     goBackend: responses.goBackend || envDefaults.goBackend,
     enableMultiTenant:
-      responses.enableMultiTenant ??
-      (enableMultiTenant || envDefaults.enableMultiTenant),
+      responses.enableMultiTenant === true || // explicit true from prompt
+      enableMultiTenant || // CLI flag --multi-tenant
+      envDefaults.enableMultiTenant === true, // existing .env value was "true"
     tenantId: responses.tenantId || envDefaults.tenantId,
     goBackendPath: responses.goBackendPath || envDefaults.goBackendPath,
     includeExamples: responses.includeExamples ?? includeExamples,

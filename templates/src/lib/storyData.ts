@@ -1,5 +1,5 @@
 import { handleFailedResponse } from '@/utils/backend';
-import type { ImpressionNode } from '@/types/compositorTypes';
+import type { ImpressionNode, ResourceNode } from '@/types/compositorTypes';
 
 export interface StoryData {
   id: string;
@@ -7,7 +7,7 @@ export interface StoryData {
   slug: string;
   paneIds: string[];
   codeHookTargets: Record<string, string>;
-  resourcesPayload: Record<string, any[]>;
+  resourcesPayload: Record<string, ResourceNode[]>;
   impressions: ImpressionNode[];
   fragments: Record<string, string>;
   menu: any;
