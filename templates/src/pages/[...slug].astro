@@ -43,6 +43,7 @@ const storyfragmentId = storyData.id;
 const storyfragmentTitle = storyData.title || 'Untitled Story';
 const paneIds = storyData.paneIds || [];
 const codeHookTargets = storyData.codeHookTargets || {};
+const resourcesPayload = storyData.resourcesPayload || {};
 
 if (paneIds.length === 0) {
   console.log(`Empty Story Fragment. Redirecting to /storykeep`);
@@ -134,6 +135,7 @@ if (!brandConfig.SITE_INIT) {
                   target={codeHookTargets[paneId]}
                   paneId={paneId}
                   fullContentMap={fullContentMap}
+                  resourcesPayload={resourcesPayload}
                   noPaneId={true}
                 />
               </div>

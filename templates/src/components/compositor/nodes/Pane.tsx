@@ -29,7 +29,7 @@ const CodeHookContainer = ({
             value && (
               <div key={key} className="flex items-start">
                 <span className="min-w-24 font-bold text-gray-600">{key}:</span>
-                <span className="ml-2 text-gray-800">
+                <span className="ml-2 truncate text-gray-800">
                   {JSON.stringify(value)}
                 </span>
               </div>

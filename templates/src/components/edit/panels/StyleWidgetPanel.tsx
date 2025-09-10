@@ -5,6 +5,7 @@ import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
 import { widgetMeta } from '@/constants';
+import { getCtx } from '@/stores/nodes';
 import type {
   FlatNode,
   MarkdownPaneFragmentNode,
@@ -271,6 +272,7 @@ const StyleWidgetPanel = ({
   };
 
   const handleWidgetConfig = () => {
+    getCtx().toolModeValStore.set({ value: 'styles' });
     settingsPanelStore.set({
       action: `style-code-config`,
       nodeId: node.id,

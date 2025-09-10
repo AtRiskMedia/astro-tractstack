@@ -7,6 +7,7 @@ export interface StoryData {
   slug: string;
   paneIds: string[];
   codeHookTargets: Record<string, string>;
+  resourcesPayload: Record<string, any[]>;
   impressions: ImpressionNode[];
   fragments: Record<string, string>;
   menu: any;

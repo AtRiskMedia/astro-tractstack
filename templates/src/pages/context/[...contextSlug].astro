@@ -59,6 +59,7 @@ try {
 const paneId = contextPaneData.id;
 const paneTitle = contextPaneData.title || 'Context';
 const codeHookTarget = contextPaneData.codeHookTarget || null;
+const resourcesPayload = storyData.resourcesPayload || {};
 
 // Get rendered fragment for the context pane
 let fragmentData = '';
@@ -123,7 +124,11 @@ if (!brandConfig.SITE_INIT) {
     >
       {
         codeHookTarget ? (
-          <CodeHook target={codeHookTarget} fullContentMap={fullContentMap} />
+          <CodeHook
+            target={codeHookTarget}
+            resourcesPayload={resourcesPayload}
+            fullContentMap={fullContentMap}
+          />
         ) : (
           <Fragment set:html={fragmentData} />
         )

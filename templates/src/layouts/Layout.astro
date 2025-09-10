@@ -50,19 +50,30 @@ const isDev = import.meta.env.DEV;
 // Get site status from the store
 const isInitialized = !freshInstallStore.get().needsSetup;
 
-// Conditionally set asset paths based on initialization status
-const cssBasePath = isInitialized ? '/media/css' : '/styles';
-const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
-const mainStylesUrl =
-  isStoryKeep || isDev
-    ? `${cssBasePath}/storykeep.css`
-    : `${cssBasePath}/frontend.css`;
+// ensure we have brand config!
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
+
+// Conditionally set asset paths based on initialization status
+const cssBasePath = isInitialized ? '/media/css' : '/styles';
+const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
+const mainStylesUrl = (() => {
+  const baseUrl =
+    isStoryKeep || isDev
+      ? `${cssBasePath}/storykeep.css`
+      : `${cssBasePath}/frontend.css`;
+
+  // Only add version for frontend.css (the dynamic one)
+  if (!isStoryKeep && !isDev && brandConfig?.STYLES_VER) {
+    return `${baseUrl}?v=${brandConfig.STYLES_VER}`;
+  }
+
+  return baseUrl;
+})();
 
 // Social media and SEO setup
-const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
 const defaultFavIcon = brandConfig.FAVICON || `/brand/favicon.ico`;
 const defaultSocialImageURL = ogImage || brandConfig.OG || `/brand/og.png`;
 const defaultSocialLogoURL = brandConfig.OGLOGO || `/brand/oglogo.png`;

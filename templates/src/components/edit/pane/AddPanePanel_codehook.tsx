@@ -153,7 +153,8 @@ const AddPaneCodeHookPanel = ({
       font-weight: bold;
     }
     .hook-item-available:hover {
-      background-color: rgba(8, 145, 178, 0.1); /* bg-cyan-600/10 */
+      background-color: #0891b2;
+      color: #fff;
     }
     .hook-item-disabled {
       background-color: #f9fafb; /* bg-gray-50 */

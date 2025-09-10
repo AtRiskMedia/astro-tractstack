@@ -68,6 +68,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
   };
 
   const handleCodeHookConfig = () => {
+    ctx.toolModeValStore.set({ value: 'styles' });
     settingsPanelStore.set({
       action: 'setup-codehook',
       nodeId: nodeId,

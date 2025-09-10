@@ -1,7 +1,4 @@
 ---
-// CodeHook Dispatcher - Minimal Version
-// Framework components are always available, custom components are commented for guidance
-
 import FeaturedContent from '@/components/codehooks/FeaturedContent.astro';
 import ListContent from '@/components/codehooks/ListContent.astro';
 import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
@@ -12,6 +9,7 @@ import type { FullContentMapItem } from '@/types/tractstack';
 export interface Props {
   target: string;
   fullContentMap: FullContentMapItem[];
+  resourcesPayload?: Record<string, any[]>;
   options?: {
     params?: {
       options?: string;
@@ -19,7 +17,7 @@ export interface Props {
   };
 }
 
-const { target, options, fullContentMap } = Astro.props;
+const { target, options, fullContentMap /* resourcesPayload */ } = Astro.props;
 
 export const components = {
   'featured-content': true,
