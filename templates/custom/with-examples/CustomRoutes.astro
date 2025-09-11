@@ -1,25 +1,25 @@
 ---
 import Collections from './pages/Collections.astro';
+import type { ResourceNode } from '@/types/compositorTypes';
 
 export interface Props {
   route: string;
   slug: string;
-  resources: any[];
+  resources: ResourceNode[];
   variation?: string;
 }
 
 const { route, slug, resources } = Astro.props;
 
+// list all here !
 export const routes = {
   collections: true,
 };
-
-const payload = resources;
 ---
 
 {
   route === 'collections' ? (
-    <Collections route={route} slug={slug} resources={payload} />
+    <Collections route={route} slug={slug} resources={resources} />
   ) : (
     <div class="rounded-lg bg-gray-50 p-8 text-center">
       <p class="text-gray-600">Custom route "{route}" not found</p>

@@ -1,40 +1,40 @@
 ---
+//import Collections from './pages/Collections.astro';
+import type { ResourceNode } from '@/types/compositorTypes';
+
 export interface Props {
   route: string;
   slug: string;
-  resources: any[];
+  resources: ResourceNode[];
   variation?: string;
 }
 
-const { route, slug, resources } = Astro.props;
+const { route, slug /*, resources */ } = Astro.props;
 
-// Define available routes here
-export const routes = {
-  // collections: true,  // Uncomment to enable collections route
-};
+// list all here !
+export const routes = {};
 ---
 
 {
-  (
-    /* 
-  Uncomment and customize routes as needed:
-  
-  route === "collections" ? (
+  /*
+  route === 'collections' ? (
     <Collections route={route} slug={slug} resources={payload} />
-  ) : 
+  ) : (
   */
-    <div class="rounded-lg bg-gray-50 p-8 text-center">
-      <p class="text-gray-600">Custom route "{route}" not implemented</p>
-      <p class="mt-2 text-sm text-gray-500">
-        Edit <code>src/custom/CustomRoutes.astro</code> to add your custom
-        routes
-      </p>
-      <div class="mt-4 rounded border bg-white p-4 text-left text-xs">
-        <p class="mb-2 font-bold">Route Data:</p>
-        <p>Route: {route}</p>
-        <p>Slug: {slug}</p>
-        <p>Resources: {resources.length} items</p>
-      </div>
-    </div>
-  )
+}
+
+<div class="rounded-lg bg-gray-50 p-8 text-center">
+  <p class="text-gray-600">Custom route "{route}" not found</p>
+  <p class="mt-2 text-sm text-gray-500">Available routes: collections</p>
+  <div class="mt-4 rounded border bg-white p-4 text-left text-xs">
+    <p class="mb-2 font-bold">Route Data:</p>
+    <p>Route: {route}</p>
+    <p>Slug: {slug}</p>
+  </div>
+</div>
+
+{
+  /*
+) }
+*/
 }

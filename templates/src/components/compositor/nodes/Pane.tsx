@@ -27,12 +27,19 @@ const CodeHookContainer = ({
         {Object.entries(payload.params).map(
           ([key, value]) =>
             value && (
-              <div key={key} className="flex items-start">
+              <>
                 <span className="min-w-24 font-bold text-gray-600">{key}:</span>
-                <span className="ml-2 truncate text-gray-800">
-                  {JSON.stringify(value)}
-                </span>
-              </div>
+                <div className="ml-2 flex flex-wrap gap-1">
+                  {value.split('|').map((item, index) => (
+                    <span
+                      key={index}
+                      className="inline-block rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-800"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </>
             )
         )}
       </div>

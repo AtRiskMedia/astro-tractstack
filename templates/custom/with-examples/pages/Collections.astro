@@ -1,110 +1,70 @@
 ---
-import Layout from '@/layouts/Layout.astro';
-//import type { MenuNode } from '@/types/tractstack';
+import CustomRoutes, { routes } from '@/custom/CustomRoutes.astro';
+import { preHealthCheck } from '@/utils/backend';
+//import type { ResourceNode } from '@/types/compositorTypes';
 
-export interface Props {
-  route: string;
-  slug: string;
-  variation?: string;
-  resources: any[];
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
 }
 
-const { route, slug, resources } = Astro.props;
+const { param1 } = Astro.params;
+// this needs to match the url path
+const route = `collections`;
 
-// uncomment if you add a menu id
-//
-//let menuPayload: MenuNode | null = null;
-//const hardcodedMenuId = '';
-//const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-//try {
-//  const menuResponse = await fetch(`${goBackend}/api/v1/nodes/menus/${hardcodedMenuId}`);
-//  if (menuResponse.ok) {
-//    menuPayload = await menuResponse.json();
-//  }
-//} catch (error) {
-//  console.error('Error fetching menu:', error);
-//}
+// Check if route is enabled
+if (!param1 || !routes[route]) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not Found',
+  });
+}
 
-const targetSlug = `${route}-${slug}`;
-const categoryResources = resources || [];
-const activeResource = categoryResources.find(
-  (resource: any) => resource.slug === targetSlug
-);
+// include all resource categories here
+const CATEGORIES = [`collections`];
 
-const pageTitle = `${route}=${slug}`;
+let resources = [];
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+try {
+  const resourcesResponse = await fetch(`${goBackend}/api/v1/nodes/resources`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
+    body: JSON.stringify({ categories: CATEGORIES }),
+  });
+
+  if (resourcesResponse.ok) {
+    const responseData = await resourcesResponse.json();
+    if (responseData.resources) {
+      resources = responseData.resources;
+    }
+  }
+} catch (error) {
+  console.error('Error fetching resources:', error);
+  return new Response(null, {
+    status: 500,
+    statusText: 'Internal Server Error',
+  });
+}
+
+/*
+if (!resources.length) {
+  return new Response(null, {
+    status: 404,
+    statusText: 'Not Found',
+  });
+}
+*/
+
+const pageTitle = `${route} collection`;
 ---
 
-<Layout title={pageTitle}>
-  <div class="border-b bg-gray-100 p-4">
-    <h1 class="text-2xl font-bold">{pageTitle}</h1>
-    <p class="text-sm text-gray-600">
-      Collections page - slug: {slug}
-    </p>
-  </div>
-
-  <main id="main-content" class="min-h-screen w-full">
-    <div class="bg-white p-8">
-      {
-        slug ? (
-          <div class="mx-auto max-w-4xl">
-            <h2 class="mb-4 text-xl font-bold">
-              Collection: {route}={slug}
-            </h2>
-
-            {activeResource ? (
-              <div class="mb-6 rounded-lg bg-blue-50 p-6">
-                <h3 class="mb-2 text-lg font-bold text-blue-900">
-                  {activeResource.title}
-                </h3>
-                <p class="mb-2 text-blue-800">{activeResource.oneliner}</p>
-                <div class="text-sm text-blue-600">
-                  <p>ID: {activeResource.id}</p>
-                  <p>Slug: {activeResource.slug}</p>
-                  <p>Category: {activeResource.categorySlug || 'none'}</p>
-                </div>
-              </div>
-            ) : (
-              <div class="mb-6 rounded-lg bg-yellow-50 p-6">
-                <p class="text-yellow-800">
-                  No active resource found for slug: {targetSlug}
-                </p>
-              </div>
-            )}
-
-            <div class="rounded-lg bg-gray-50 p-6">
-              <h3 class="mb-4 text-lg font-bold">
-                All Resources in Category ({categoryResources.length})
-              </h3>
-              {categoryResources.length > 0 ? (
-                <div class="grid gap-4 md:grid-cols-2">
-                  {categoryResources.map((resource: any) => (
-                    <div class="rounded border bg-white p-4">
-                      <h4 class="font-bold text-gray-900">{resource.title}</h4>
-                      <p class="mt-1 text-sm text-gray-600">
-                        {resource.oneliner}
-                      </p>
-                      <div class="mt-2 text-xs text-gray-500">
-                        <p>Slug: {resource.slug}</p>
-                        {resource.categorySlug && (
-                          <p>Category: {resource.categorySlug}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p class="text-gray-500">
-                  No resources found in this category.
-                </p>
-              )}
-            </div>
-          </div>
-        ) : null
-      }
-    </div>
-  </main>
-
-  <div class="border-t bg-gray-100 p-4">
-    <p class="text-sm text-gray-600">Collections footer</p>
-  </div>
-</Layout>
+<div class="border-b bg-gray-100 p-4">
+  <h1 class="text-2xl font-bold">{pageTitle}</h1>
+  <p class="text-sm text-gray-600">
+    Collections page - slug: {param1}
+  </p>
+</div>
