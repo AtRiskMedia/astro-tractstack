@@ -133,10 +133,15 @@ if (!brandConfig.SITE_INIT) {
               <div class="overflow-hidden">
                 <CodeHook
                   target={codeHookTargets[paneId]}
-                  paneId={paneId}
+                  options={(() => {
+                    const optionsStr =
+                      codeHookTargets[paneId + '-' + codeHookTargets[paneId]];
+                    return optionsStr
+                      ? { params: { options: optionsStr } }
+                      : undefined;
+                  })()}
                   fullContentMap={fullContentMap}
                   resourcesPayload={resourcesPayload}
-                  noPaneId={true}
                 />
               </div>
             ) : (

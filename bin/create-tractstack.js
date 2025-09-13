@@ -35,6 +35,7 @@ function getEnvState() {
     tenantId: 'default',
     goBackendPath: `${homedir()}/t8k-go-server/`,
     enableMultiTenant: false,
+    enableBunny: false,
   };
 
   const found = {
@@ -42,6 +43,7 @@ function getEnvState() {
     tenantId: false,
     goBackendPath: false,
     enableMultiTenant: false,
+    enableBunny: false,
   };
 
   if (!existsSync('.env')) {
@@ -78,12 +80,15 @@ function getEnvState() {
         enableMultiTenant:
           envVars.PUBLIC_ENABLE_MULTI_TENANT === 'true' ||
           defaults.enableMultiTenant,
+        enableBunny:
+          envVars.PUBLIC_ENABLE_BUNNY === 'true' || defaults.enableBunny,
       },
       envState: {
         goBackend: !!envVars.PUBLIC_GO_BACKEND,
         tenantId: !!envVars.PUBLIC_TENANTID,
         goBackendPath: !!envVars.PRIVATE_GO_BACKEND_PATH,
         enableMultiTenant: envVars.PUBLIC_ENABLE_MULTI_TENANT !== undefined,
+        enableBunny: envVars.PUBLIC_ENABLE_BUNNY !== undefined,
       },
     };
   } catch (error) {
@@ -207,6 +212,21 @@ ${kleur.bold('Examples:')}
     );
   }
 
+  if (!envState.enableBunny) {
+    promptQuestions.push({
+      type: 'confirm',
+      name: 'enableBunny',
+      message: 'Enable Bunny Video Player?',
+      initial: envDefaults.enableBunny,
+    });
+  } else {
+    console.log(
+      kleur.green(
+        `✓ Bunny Video Player: ${envDefaults.enableBunny ? 'enabled' : 'disabled'}`
+      )
+    );
+  }
+
   // Only prompt for tenantId if multi-tenant will be enabled and tenantId not in .env
   const willEnableMultiTenant =
     enableMultiTenant || envDefaults.enableMultiTenant;
@@ -261,6 +281,7 @@ ${kleur.bold('Examples:')}
       responses.enableMultiTenant === true || // explicit true from prompt
       enableMultiTenant || // CLI flag --multi-tenant
       envDefaults.enableMultiTenant === true, // existing .env value was "true"
+    enableBunny: responses.enableBunny ?? envDefaults.enableBunny,
     tenantId: responses.tenantId || envDefaults.tenantId,
     goBackendPath: responses.goBackendPath || envDefaults.goBackendPath,
     includeExamples: responses.includeExamples ?? includeExamples,
@@ -287,6 +308,7 @@ PUBLIC_GO_BACKEND="${finalResponses.goBackend}"
 PUBLIC_TENANTID="${finalTenantId}"
 PRIVATE_GO_BACKEND_PATH="${finalResponses.goBackendPath.endsWith('/') ? finalResponses.goBackendPath : finalResponses.goBackendPath + '/'}"
 PUBLIC_ENABLE_MULTI_TENANT="${finalResponses.enableMultiTenant ? 'true' : 'false'}"
+PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 `;
 
   try {

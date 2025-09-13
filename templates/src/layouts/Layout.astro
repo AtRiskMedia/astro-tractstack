@@ -105,6 +105,8 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
     ? `${brandConfig.SITE_URL.replace(/\/$/, '')}${canonicalURL}`
     : `${brandConfig.SITE_URL.replace(/\/$/, '')}/${canonicalURL}`
   : canonicalURL;
+
+const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
 ---
 
 <!doctype html>
@@ -194,10 +196,15 @@ const fullCanonicalUrl = brandConfig?.SITE_URL
 
     <ClientRouter />
 
-    <script
-      is:inline
-      type="text/javascript"
-      src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"></script>
+    {
+      enableBunny && (
+        <script
+          is:inline
+          type="text/javascript"
+          src="//assets.mediadelivery.net/playerjs/player-0.1.0.min.js"
+        />
+      )
+    }
 
     <script
       src="https://unpkg.com/htmx.org@2.0.4"
