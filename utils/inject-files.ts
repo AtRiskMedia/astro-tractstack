@@ -1279,6 +1279,10 @@ export async function injectTemplateFiles(
 
     // Client Scripts
     {
+      src: resolve('../templates/src/client/htmx.min.js'),
+      dest: 'public/client/htmx.min.js',
+    },
+    {
       src: resolve('../templates/src/client/sse.js'),
       dest: 'public/client/sse.js',
     },
