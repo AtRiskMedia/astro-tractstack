@@ -5,184 +5,123 @@ import {
   setMobileHeaderFaded,
 } from '@/stores/storykeep';
 
-// Track whether initial scroll adjustment has been made for settings panel
+// --- START: New Debounce Utility ---
+// A utility to prevent a function from running too often.
+function debounce<F extends (...args: any[]) => any>(
+  func: F,
+  wait: number
+): (...args: Parameters<F>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return function executedFunction(...args: Parameters<F>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
+}
+// --- END: New Debounce Utility ---
+
 let hasScrolledForSettingsPanel = false;
 
-/**
- * Sets up CSS custom properties for dynamic layout positioning
- */
 export function setupLayoutStyles(): void {
-  // Calculate and set CSS custom properties for positioning
   const updateBottomOffset = () => {
     const mobileNavHeight = window.innerWidth < 801 ? 80 : 0;
     const padding = 16;
     const offset = `${mobileNavHeight + padding}px`;
-
     document.documentElement.style.setProperty(
       '--bottom-right-controls-bottom-offset',
       offset
     );
   };
-
-  // Set initial values
   updateBottomOffset();
-
-  // Update on resize
   window.addEventListener('resize', updateBottomOffset);
 }
 
-/**
- * Sets up scroll observers for header positioning behavior
- */
 export function setupLayoutObservers(): void {
-  const header = document.getElementById('storykeepHeader');
+  const storykeepHeader = document.getElementById('storykeepHeader');
   const toolModeNav = document.getElementById('mainNav');
   const mainContent = document.getElementById('mainContent');
   const settingsControls = document.getElementById('settingsControls');
   const standardHeader = document.querySelector('header');
 
-  if (!header) return;
+  if (!storykeepHeader || !settingsControls || !standardHeader) return;
 
-  let headerHeight = 0;
-  const updateHeaderHeight = () => {
-    if (standardHeader) {
-      headerHeight = standardHeader.offsetHeight;
-    }
+  let standardHeaderHeight = 0;
+  const updateStandardHeaderHeight = () => {
+    standardHeaderHeight = standardHeader.offsetHeight;
   };
 
-  const updateSettingsMargin = () => {
-    if (settingsControls && header) {
-      const storyKeepHeaderHeight = header.offsetHeight;
-      const viewportHeight = window.innerHeight;
-      const bottomOffset = window.innerWidth < 801 ? 96 : 16; // Mobile nav + padding
-
-      // Set top margin to avoid StoryKeep header overlap only
-      settingsControls.style.marginTop = `${storyKeepHeaderHeight + 20}px`;
-
-      // Set max height for inner scroll
-      const maxHeight =
-        viewportHeight - storyKeepHeaderHeight - bottomOffset - 20;
-      settingsControls.style.maxHeight = `${maxHeight}px`;
-    }
+  // --- START: New Panel Positioning Logic ---
+  // This function implements your idea.
+  const updatePanelPosition = () => {
+    const headerRect = storykeepHeader.getBoundingClientRect();
+    const panelTop = headerRect.bottom;
+    settingsControls.style.top = `${panelTop}px`;
   };
+  // --- END: New Panel Positioning Logic ---
 
   const handleScroll = () => {
     const scrollY = window.scrollY;
-    const shouldBeSticky = scrollY > headerHeight;
-
-    // Only update header position if it actually needs to change
+    const shouldBeSticky = scrollY > standardHeaderHeight;
     const currentPosition = headerPositionStore.get();
     const newPosition = shouldBeSticky ? 'sticky' : 'normal';
 
     if (currentPosition !== newPosition) {
       setHeaderPosition(newPosition);
-
       if (shouldBeSticky) {
-        if (header) {
-          const headerHeight = header.offsetHeight;
-          // Add padding to body to prevent layout shift
-          document.body.style.paddingTop = `${headerHeight}px`;
-
-          header.style.position = 'fixed';
-          header.style.top = '0';
-          header.style.left = '0';
-          header.style.right = '0';
-          header.style.zIndex = '101';
-        }
+        document.body.style.paddingTop = `${storykeepHeader.offsetHeight}px`;
+        storykeepHeader.style.position = 'fixed';
+        storykeepHeader.style.top = '0';
       } else {
-        if (header) {
-          // Remove padding when header is not fixed
-          document.body.style.paddingTop = '';
-
-          header.style.position = '';
-          header.style.top = '';
-          header.style.left = '';
-          header.style.right = '';
-          header.style.zIndex = '';
-        }
+        document.body.style.paddingTop = '';
+        storykeepHeader.style.position = '';
+        storykeepHeader.style.top = '';
       }
     }
 
-    // Update tool mode nav position and main content margin
     if (toolModeNav && window.innerWidth >= 801) {
       if (shouldBeSticky) {
-        // On desktop, make nav fixed when header is sticky
         toolModeNav.classList.remove('md:static');
         toolModeNav.classList.add('md:fixed');
-        toolModeNav.style.top = '60px'; // Below fixed header
+        toolModeNav.style.top = '60px';
         toolModeNav.style.left = '0';
-
-        // Add margin to main content when nav becomes fixed (nav no longer takes flex space)
-        //if (mainContent) {
-        //  mainContent.classList.add('md:ml-16');
-        //}
       } else {
-        // Normal static positioning when header is visible
         toolModeNav.classList.remove('md:fixed');
         toolModeNav.classList.add('md:static');
         toolModeNav.style.top = '';
         toolModeNav.style.left = '';
-
-        // Remove margin from main content when nav is static (nav takes flex space naturally)
-        //if (mainContent) {
-        //  mainContent.classList.remove('md:ml-16');
-        //}
       }
     }
   };
 
-  // Handle resize events
-  const handleResize = () => {
-    updateHeaderHeight();
-    updateSettingsMargin();
-
-    // Handle desktop/mobile breakpoint transitions
-    const isMobile = window.innerWidth < 801;
-
-    if (isMobile && toolModeNav && mainContent) {
-      // Force reset to mobile layout
-      toolModeNav.classList.remove('md:fixed', 'md:static');
-      toolModeNav.style.top = '';
-      toolModeNav.style.left = '';
-
-      // Remove desktop margin
-      mainContent.classList.remove('md:ml-16');
-    }
-
-    // Re-run scroll logic to handle desktop/mobile transitions
+  const debouncedUpdate = debounce(() => {
+    updateStandardHeaderHeight();
     handleScroll();
-  };
+    updatePanelPosition(); // Update panel position on scroll/resize
+  }, 200);
 
-  // Listen for settings panel state changes
   const handleSettingsPanelChange = () => {
-    const isSettingsOpen = settingsPanelOpenStore.get();
-
-    // Reset scroll flag when panel state changes
-    if (!isSettingsOpen) {
+    if (!settingsPanelOpenStore.get()) {
       hasScrolledForSettingsPanel = false;
     }
   };
 
-  // Set up event listeners
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  window.addEventListener('resize', handleResize);
-
-  // Subscribe to settings panel state changes
+  window.addEventListener('scroll', debouncedUpdate, { passive: true });
+  window.addEventListener('resize', debouncedUpdate);
   settingsPanelOpenStore.subscribe(handleSettingsPanelChange);
 
-  // Initial setup
-  updateHeaderHeight();
-  updateSettingsMargin();
+  // Initial setup on load
+  updateStandardHeaderHeight();
   handleScroll();
+  updatePanelPosition();
 }
 
-/**
- * Handle settings panel mobile behavior
- * This is called when the settings panel is toggled
- */
 export function handleSettingsPanelMobile(isOpen: boolean): void {
   const isMobile = window.innerWidth < 801;
-
   if (!isMobile) return;
 
   if (isOpen) {
@@ -190,19 +129,12 @@ export function handleSettingsPanelMobile(isOpen: boolean): void {
     const headerHeight = header?.offsetHeight || 0;
     const currentScrollY = window.scrollY;
 
-    // Only scroll if we're near the top and haven't already scrolled
     if (currentScrollY <= headerHeight && !hasScrolledForSettingsPanel) {
-      window.scrollTo({
-        top: headerHeight + 10,
-        behavior: 'smooth',
-      });
+      window.scrollTo({ top: headerHeight + 10, behavior: 'smooth' });
       hasScrolledForSettingsPanel = true;
     }
-
-    // Fade the header
     setMobileHeaderFaded(true);
   } else {
-    // Unfade the header and reset scroll flag
     setMobileHeaderFaded(false);
     hasScrolledForSettingsPanel = false;
   }

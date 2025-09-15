@@ -41,12 +41,6 @@ const storykeepToolModes = [
     title: 'Move',
     description: 'Keyboard accessible re-order',
   },
-  {
-    key: 'debug' as const,
-    Icon: BugAntIcon,
-    title: 'Debug',
-    description: 'Debug node ids',
-  },
 ] as const;
 
 interface StoryKeepToolModeProps {
@@ -54,9 +48,9 @@ interface StoryKeepToolModeProps {
 }
 
 const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
-  //const signal = useStore(settingsPanelStore);
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
+  const showGuids = useStore(ctx.showGuids);
 
   const hasTitle = useStore(ctx.hasTitle);
   const hasPanes = useStore(ctx.hasPanes);
@@ -64,6 +58,8 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   const className =
     'w-8 h-8 py-1 rounded-xl bg-white text-myblue hover:bg-mygreen/20 hover:text-black hover:rotate-3 cursor-pointer transition-all';
   const classNameActive = 'w-8 h-8 py-1.5 rounded-md bg-myblue text-white';
+  const classNameDebugActive =
+    'w-8 h-8 py-1.5 rounded-md bg-orange-500 text-white';
 
   const currentToolMode =
     storykeepToolModes.find((mode) => mode.key === toolModeVal) ??
@@ -72,11 +68,14 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   const handleClick = (mode: ToolModeVal) => {
     settingsPanelStore.set(null);
     ctx.toolModeValStore.set({ value: mode });
-    ctx.showGuids.set(mode === `debug`);
     ctx.notifyNode('root');
   };
 
-  // Escape key listener
+  const handleDebugToggle = () => {
+    ctx.showGuids.set(!showGuids);
+    ctx.notifyNode('root');
+  };
+
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -97,8 +96,8 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
       id="mainNav"
       className="z-102 bg-mywhite fixed bottom-0 left-0 right-0 pt-1.5 md:sticky md:bottom-auto md:left-0 md:top-24 md:h-screen md:w-16 md:pt-0"
     >
-      <div className="flex flex-wrap justify-around gap-4 py-3.5 md:mt-0 md:flex-col md:items-center md:gap-8 md:space-x-0 md:space-y-2 md:py-2">
-        <div className="text-mydarkgrey h-16 text-center text-sm font-bold">
+      <div className="flex flex-wrap justify-around gap-4 py-0.5 md:mt-0 md:flex-col md:items-center md:gap-8 md:space-x-0 md:space-y-2 md:py-2">
+        <div className="text-mydarkgrey text-center text-sm font-bold">
           mode:
           <div className="font-action text-myblue pt-1.5 text-center text-xs">
             {currentToolMode.title}
@@ -113,6 +112,12 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
             )}
           </div>
         ))}
+        <div title="Toggle debug node ids" key="debug">
+          <BugAntIcon
+            className={showGuids ? classNameDebugActive : className}
+            onClick={handleDebugToggle}
+          />
+        </div>
       </div>
     </nav>
   );

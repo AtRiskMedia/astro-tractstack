@@ -1,4 +1,4 @@
-import { useEffect, useState, memo, type CSSProperties } from 'react';
+import { useEffect, useState, memo, Fragment, type CSSProperties } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
@@ -27,7 +27,7 @@ const CodeHookContainer = ({
         {Object.entries(payload.params).map(
           ([key, value]) =>
             value && (
-              <>
+              <Fragment key={key}>
                 <span className="min-w-24 font-bold text-gray-600">{key}:</span>
                 <div className="ml-2 flex flex-wrap gap-1">
                   {value.split('|').map((item, index) => (
@@ -39,7 +39,7 @@ const CodeHookContainer = ({
                     </span>
                   ))}
                 </div>
-              </>
+              </Fragment>
             )
         )}
       </div>

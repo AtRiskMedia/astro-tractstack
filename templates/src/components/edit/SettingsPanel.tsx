@@ -17,13 +17,13 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
-  if (toolModeVal !== `styles` || !signal) {
+  if (toolModeVal !== 'styles' || !signal) {
     return null;
   }
 
   return (
     <div
-      className="bg-mydarkgrey max-w-md rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
+      className="bg-mydarkgrey flex h-full max-w-sm flex-col rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
       style={
         {
           animation: window.matchMedia(
@@ -37,26 +37,30 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
       }
     >
       <style>{`
-    @keyframes fadeInFromHalf {
-      0% { opacity: var(--fade-start, 0.5); }
-      100% { opacity: var(--fade-end, 1); }
-    }
-  `}</style>
+        @keyframes fadeInFromHalf {
+          0% { opacity: var(--fade-start, 0.5); }
+          100% { opacity: var(--fade-end, 1); }
+        }
+      `}</style>
       <div
-        className="w-full rounded-lg border border-gray-200 bg-white p-1.5 shadow-xl md:p-2.5"
+        className="flex h-full min-h-0 w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl"
         style={{ maxWidth: '90vw' }}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-myblue text-lg font-bold">{panelTitle}</h3>
-          <button
-            onClick={() => settingsPanelStore.set(null)}
-            className="hover:text-myblue text-gray-500"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
+        {/* Header Section (fixed height) */}
+        <div className="flex-shrink-0 p-1.5 md:p-2.5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-myblue text-lg font-bold">{panelTitle}</h3>
+            <button
+              onClick={() => settingsPanelStore.set(null)}
+              className="hover:text-myblue text-gray-500"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="space-y-4">
+        {/* Scrollable Content Section */}
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-1.5 pt-0 md:p-2.5 md:pt-0">
           <div className="rounded bg-gray-50 p-1.5 md:p-2.5">
             <PanelSwitch
               config={config}

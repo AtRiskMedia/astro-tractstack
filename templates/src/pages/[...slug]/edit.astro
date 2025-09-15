@@ -201,12 +201,19 @@ for (const [key, value] of Astro.url.searchParams) {
   <!-- Floating Controls (Settings Panel & HUD OR ToolBar) -->
   <aside
     id="settingsControls"
-    class="z-101 pointer-events-none fixed bottom-24 right-0 flex max-h-screen flex-col items-end gap-2 overflow-visible p-4 md:bottom-0"
+    class="z-101 pointer-events-none fixed bottom-14 right-2 flex flex-col items-end gap-2 md:bottom-2"
   >
-    <div class="pointer-events-auto">
+    <div class="pointer-events-none flex-grow"></div>
+
+    {/* Toolbar's wrapper: Does not grow or shrink */}
+    <div class="pointer-events-auto flex-shrink-0">
       <StoryKeepToolBar client:only="react" />
     </div>
-    <div class="pointer-events-auto">
+
+    {
+      /* Settings Panel's wrapper: Grows, shrinks, and will be positioned by our script */
+    }
+    <div class="pointer-events-auto max-h-full">
       <SettingsPanel
         config={brandConfig}
         availableCodeHooks={Object.keys(codeHookComponents)}

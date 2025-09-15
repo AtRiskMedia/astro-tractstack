@@ -312,7 +312,7 @@ const getElement = (
     case 'impression':
       return <></>;
     default:
-      console.warn(`Node.tsx miss on ${type}`);
+      console.warn(`Node.tsx miss on ${type}`, node);
       return <></>;
   }
 };
