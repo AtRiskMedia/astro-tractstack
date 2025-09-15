@@ -11,24 +11,6 @@ export const POST: APIRoute = async ({ request }) => {
       request.headers.get('X-Tenant-ID') ||
       import.meta.env.PUBLIC_TENANTID ||
       'default';
-    const isMultiTenant =
-      import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true' &&
-      tenantId !== 'default';
-
-    if (isMultiTenant) {
-      return new Response('CSS generation disabled in multi-tenant mode', {
-        status: 403,
-      });
-    }
-
-    // Read tailwind config from project root
-    const configPath = path.join(process.cwd(), 'tailwind.config.cjs');
-    const configContent = await fs.readFile(configPath, 'utf-8');
-    const tailwindConfig = new Function(
-      'module',
-      'exports',
-      configContent + '; return module.exports;'
-    )({ exports: {} }, {});
 
     const goBackend =
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
@@ -63,18 +45,29 @@ export const POST: APIRoute = async ({ request }) => {
       ...new Set([...(cleanClasses || []), ...(dirtyClasses || [])]),
     ];
 
-    // Generate CSS using JIT
-    const tailwindCss = createTailwindcss({ tailwindConfig });
-    const baseClasses = allClasses.filter(
-      (c) => !c.startsWith('md:') && !c.startsWith('xl:')
-    );
-    const mdClasses = allClasses.filter((c) => c.startsWith('md:'));
-    const xlClasses = allClasses.filter((c) => c.startsWith('xl:'));
-    const htmlContent = [
-      `<div class="${baseClasses.join(' ')}"></div>`,
-      `<div class="md:block ${mdClasses.join(' ')}"></div>`,
-      `<div class="xl:block ${xlClasses.join(' ')}"></div>`,
-    ];
+    // Read base tailwind config from project root
+    const configPath = path.join(process.cwd(), 'tailwind.config.cjs');
+    const configContent = await fs.readFile(configPath, 'utf-8');
+    const baseTailwindConfig = new Function(
+      'module',
+      'exports',
+      configContent + '; return module.exports;'
+    )({ exports: {} }, {});
+
+    // Create config with safelist
+    const tailwindConfigWithSafelist = {
+      ...baseTailwindConfig,
+      safelist: allClasses,
+    };
+
+    // Generate CSS using JIT with safelist
+    const tailwindCss = createTailwindcss({
+      tailwindConfig: tailwindConfigWithSafelist,
+    });
+
+    // Use simple HTML content since safelist should handle class generation
+    const htmlContent = ['<div>Using the safelist</div>'];
+
     const generatedCss = await tailwindCss.generateStylesFromContent(
       `@tailwind base; @tailwind utilities;`,
       htmlContent

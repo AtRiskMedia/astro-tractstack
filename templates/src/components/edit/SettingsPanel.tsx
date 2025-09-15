@@ -23,7 +23,7 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
 
   return (
     <div
-      className="bg-mydarkgrey rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
+      className="bg-mydarkgrey max-w-md rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
       style={
         {
           animation: window.matchMedia(

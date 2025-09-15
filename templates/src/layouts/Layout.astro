@@ -45,8 +45,6 @@ const {
   impressions = [],
 } = Astro.props;
 
-const isDev = import.meta.env.DEV;
-
 // Get site status from the store
 const isInitialized = !freshInstallStore.get().needsSetup;
 
@@ -60,13 +58,12 @@ const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
 const cssBasePath = isInitialized ? '/media/css' : '/styles';
 const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
 const mainStylesUrl = (() => {
-  const baseUrl =
-    isStoryKeep || isDev
-      ? `${cssBasePath}/storykeep.css`
-      : `${cssBasePath}/frontend.css`;
+  const baseUrl = isStoryKeep // || isDev
+    ? `${cssBasePath}/storykeep.css`
+    : `${cssBasePath}/frontend.css`;
 
   // Only add version for frontend.css (the dynamic one)
-  if (!isStoryKeep && !isDev && brandConfig?.STYLES_VER) {
+  if (!isStoryKeep && brandConfig?.STYLES_VER) {
     return `${baseUrl}?v=${brandConfig.STYLES_VER}`;
   }
 

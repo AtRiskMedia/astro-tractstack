@@ -14,9 +14,11 @@ import {
 } from '@/stores/storykeep';
 import { startLoadingAnimation } from '@/utils/helpers';
 import type {
+  FlatNode,
   BaseNode,
   PaneNode,
   StoryFragmentNode,
+  MarkdownPaneFragmentNode,
 } from '@/types/compositorTypes';
 
 type SaveStage =
@@ -316,6 +318,56 @@ export default function SaveModal({
                 paneNode.id,
                 isContext
               );
+
+              // This ensures css generation in the next phase uses fresh values
+              payload.optionsPayload.nodes.forEach((transformedNode) => {
+                const liveNode = ctx.allNodes.get().get(transformedNode.id);
+                if (!liveNode) return;
+
+                let needsUpdate = false;
+                let updatedNode: BaseNode = { ...liveNode };
+
+                // Update elementCss for TagElement nodes (FlatNode)
+                if (
+                  transformedNode.nodeType === 'TagElement' &&
+                  transformedNode.elementCss
+                ) {
+                  const flatNode = liveNode as FlatNode;
+                  if (flatNode.elementCss !== transformedNode.elementCss) {
+                    (updatedNode as FlatNode).elementCss =
+                      transformedNode.elementCss;
+                    needsUpdate = true;
+                  }
+                }
+
+                // Update parentCss for Markdown nodes (MarkdownPaneFragmentNode)
+                if (
+                  transformedNode.nodeType === 'Markdown' &&
+                  transformedNode.parentCss
+                ) {
+                  const markdownNode = liveNode as MarkdownPaneFragmentNode;
+                  const currentParentCss = markdownNode.parentCss;
+                  const newParentCss = transformedNode.parentCss as string[];
+
+                  const isDifferent =
+                    !currentParentCss ||
+                    currentParentCss.length !== newParentCss.length ||
+                    currentParentCss.some(
+                      (css, index) => css !== newParentCss[index]
+                    );
+
+                  if (isDifferent) {
+                    (updatedNode as MarkdownPaneFragmentNode).parentCss =
+                      newParentCss;
+                    needsUpdate = true;
+                  }
+                }
+
+                // Only update the live node if there are actual changes
+                if (needsUpdate) {
+                  ctx.allNodes.get().set(transformedNode.id, updatedNode);
+                }
+              });
 
               // Check if this pane exists or is new
               const paneExistsInBackend = contentMap.some(
