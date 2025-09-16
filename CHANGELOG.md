@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### [2.0.0-rc.27] - 2025-09-16
 
+### Fixed
+
+- Safer analytics fetch; avoid flooding
+
+### [2.0.0-rc.26] - 2025-09-15
+
 ### Added
 
 - Set/change homepage slug when editing storyfragment
-
-### [2.0.0-rc.26] - 2025-09-15
 
 ### Fixed
 

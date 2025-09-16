@@ -20,88 +20,115 @@ interface FetchAnalyticsProps {
   onAnalyticsUpdate: (analytics: AnalyticsState) => void;
 }
 
-export default function FetchAnalytics({
-  onAnalyticsUpdate,
-}: FetchAnalyticsProps) {
-  const $epinetCustomFilters = useStore(epinetCustomFilters);
-  const isInitialized = useRef<boolean>(false);
-  const isInitializing = useRef<boolean>(false);
-  const fetchCount = useRef<number>(0);
+// Global singleton state to prevent multi-component conflicts
+class AnalyticsService {
+  private static instance: AnalyticsService;
+  private isInitialized = false;
+  private activeRequest: AbortController | null = null;
+  private requestCache = new Map<string, { data: any; timestamp: number }>();
+  private readonly CACHE_TTL = 5000; // 5 seconds
+  private readonly DEBOUNCE_MS = 300;
+  private debounceTimer: NodeJS.Timeout | null = null;
+  private floodProtection = {
+    requestCount: 0,
+    windowStart: 0,
+    isBlocked: false,
+  };
+  private readonly FLOOD_WINDOW_MS = 10000; // 10 seconds
+  private readonly FLOOD_THRESHOLD = 5;
 
-  // Add polling state
-  const [pollingTimer, setPollingTimer] = useState<NodeJS.Timeout | null>(null);
-  const [pollingAttempts, setPollingAttempts] = useState(0);
-  const [pollingStartTime, setPollingStartTime] = useState<number | null>(null);
-  const MAX_POLLING_ATTEMPTS = 3;
-  const POLLING_DELAYS = [2000, 5000, 10000]; // 2s, 5s, 10s
-  const MAX_POLLING_TIME = 30000; // 30 seconds total max
+  static getInstance(): AnalyticsService {
+    if (!AnalyticsService.instance) {
+      AnalyticsService.instance = new AnalyticsService();
+    }
+    return AnalyticsService.instance;
+  }
 
-  if (VERBOSE)
-    console.log('🔄 FetchAnalytics RENDER', {
-      renderCount: ++fetchCount.current,
-      filters: {
-        startTimeUTC: $epinetCustomFilters.startTimeUTC,
-        endTimeUTC: $epinetCustomFilters.endTimeUTC,
-        visitorType: $epinetCustomFilters.visitorType,
-        selectedUserId: $epinetCustomFilters.selectedUserId,
-      },
-      isInitialized: isInitialized.current,
-      storeObjectRef: $epinetCustomFilters,
-    });
+  private getCacheKey(params: URLSearchParams): string {
+    const sorted = new URLSearchParams([...params.entries()].sort());
+    return sorted.toString();
+  }
 
-  // Clear polling timer on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingTimer) {
-        clearTimeout(pollingTimer);
+  private isFloodBlocked(): boolean {
+    const now = Date.now();
+
+    // Reset window if needed
+    if (now - this.floodProtection.windowStart > this.FLOOD_WINDOW_MS) {
+      this.floodProtection.requestCount = 0;
+      this.floodProtection.windowStart = now;
+      this.floodProtection.isBlocked = false;
+    }
+
+    // Check if blocked
+    if (this.floodProtection.isBlocked) {
+      if (VERBOSE) console.log('🚫 Request blocked by flood protection');
+      return true;
+    }
+
+    // Increment counter and check threshold
+    this.floodProtection.requestCount++;
+    if (this.floodProtection.requestCount > this.FLOOD_THRESHOLD) {
+      this.floodProtection.isBlocked = true;
+      if (VERBOSE) console.log('🚨 Flood protection activated');
+
+      // Auto-unblock after delay
+      setTimeout(() => {
+        this.floodProtection.isBlocked = false;
+        if (VERBOSE) console.log('✅ Flood protection deactivated');
+      }, 30000); // 30 second cooldown
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private getCachedResponse(cacheKey: string): any | null {
+    const cached = this.requestCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      if (VERBOSE) console.log('📦 Using cached response');
+      return cached.data;
+    }
+    return null;
+  }
+
+  private setCachedResponse(cacheKey: string, data: any): void {
+    this.requestCache.set(cacheKey, { data, timestamp: Date.now() });
+
+    // Cleanup old cache entries
+    const cutoff = Date.now() - this.CACHE_TTL;
+    for (const [key, value] of this.requestCache.entries()) {
+      if (value.timestamp < cutoff) {
+        this.requestCache.delete(key);
       }
-    };
-  }, [pollingTimer]);
+    }
+  }
 
-  // Fetch all analytics data
-  const fetchAllAnalytics = useCallback(async () => {
-    if (VERBOSE)
-      console.log('🚀 fetchAllAnalytics CALLED', {
-        timestamp: new Date().toISOString(),
-        filters: {
-          startTimeUTC: $epinetCustomFilters.startTimeUTC,
-          endTimeUTC: $epinetCustomFilters.endTimeUTC,
-          visitorType: $epinetCustomFilters.visitorType,
-          selectedUserId: $epinetCustomFilters.selectedUserId,
-        },
-      });
+  async fetchAnalytics(
+    filters: any,
+    onUpdate: (data: AnalyticsState) => void
+  ): Promise<void> {
+    // Flood protection
+    if (this.isFloodBlocked()) {
+      return;
+    }
 
     try {
-      // Clear existing timer
-      if (pollingTimer) {
-        clearTimeout(pollingTimer);
-        setPollingTimer(null);
+      // Cancel any existing request
+      if (this.activeRequest) {
+        this.activeRequest.abort();
+        if (VERBOSE) console.log('🛑 Cancelled previous request');
       }
 
-      // Set loading state
-      if (VERBOSE) console.log('📤 Setting loading state');
-      onAnalyticsUpdate({
-        dashboard: null,
-        leads: null,
-        epinet: null,
-        userCounts: [],
-        hourlyNodeActivity: {},
-        isLoading: true,
-        status: 'loading',
-        error: null,
-      });
+      // Create new abort controller
+      this.activeRequest = new AbortController();
 
-      const { startTimeUTC, endTimeUTC, visitorType, selectedUserId } =
-        $epinetCustomFilters;
-
-      // Build URL parameters for TractStackAPI
+      // Build URL parameters
       const params = new URLSearchParams();
-
-      if (startTimeUTC && endTimeUTC) {
-        // Convert UTC timestamps to hours-back integers (what backend expects)
+      if (filters.startTimeUTC && filters.endTimeUTC) {
         const now = new Date();
-        const startTime = new Date(startTimeUTC);
-        const endTime = new Date(endTimeUTC);
+        const startTime = new Date(filters.startTimeUTC);
+        const endTime = new Date(filters.endTimeUTC);
 
         const startHour = Math.ceil(
           (now.getTime() - startTime.getTime()) / (1000 * 60 * 60)
@@ -112,27 +139,42 @@ export default function FetchAnalytics({
 
         params.append('startHour', startHour.toString());
         params.append('endHour', endHour.toString());
-
-        if (VERBOSE)
-          console.log('⏰ Time calculations', {
-            now: now.toISOString(),
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
-            startHour,
-            endHour,
-          });
       }
 
-      if (visitorType) params.append('visitorType', visitorType);
-      if (selectedUserId) params.append('userId', selectedUserId);
+      if (filters.visitorType)
+        params.append('visitorType', filters.visitorType);
+      if (filters.selectedUserId)
+        params.append('userId', filters.selectedUserId);
 
-      // Use TractStackAPI
+      const cacheKey = this.getCacheKey(params);
+
+      // Check cache first
+      const cachedData = this.getCachedResponse(cacheKey);
+      if (cachedData) {
+        onUpdate(cachedData);
+        return;
+      }
+
+      // Set loading state
+      onUpdate({
+        dashboard: null,
+        leads: null,
+        epinet: null,
+        userCounts: [],
+        hourlyNodeActivity: {},
+        isLoading: true,
+        status: 'loading',
+        error: null,
+      });
+
+      // Make request using existing TractStackAPI
       const api = new TractStackAPI(
         window.TRACTSTACK_CONFIG?.tenantId || 'default'
       );
       const endpoint = `/api/v1/analytics/all${params.toString() ? `?${params.toString()}` : ''}`;
 
-      if (VERBOSE) console.log('📡 Making API request', { endpoint });
+      if (VERBOSE) console.log('🔥 Making API request', { endpoint });
+
       const response = await api.get(endpoint);
 
       if (!response.success) {
@@ -140,15 +182,8 @@ export default function FetchAnalytics({
       }
 
       const data = response.data;
-      if (VERBOSE)
-        console.log('✅ API response received', {
-          hasData: !!data,
-          dataKeys: data ? Object.keys(data) : [],
-          userCountsLength: data?.userCounts?.length || 0,
-          hasHourlyNodeActivity: !!data?.hourlyNodeActivity,
-        });
 
-      // Check if data is still loading - add polling logic here
+      // Check if data is still loading - implement polling logic
       const isStillLoading =
         data?.status === 'loading' ||
         data?.status === 'refreshing' ||
@@ -159,63 +194,42 @@ export default function FetchAnalytics({
         data?.epinet?.status === 'loading' ||
         data?.epinet?.status === 'refreshing';
 
-      if (VERBOSE) {
-        console.log('🔍 Loading status check', {
-          overallStatus: data?.status,
-          dashboardStatus: data?.dashboard?.status,
-          leadsStatus: data?.leads?.status,
-          epinetStatus: data?.epinet?.status,
-          isStillLoading,
-          pollingAttempts,
-        });
-      }
+      if (isStillLoading) {
+        if (VERBOSE) console.log('⏳ Backend data still loading, will poll...');
 
-      if (isStillLoading && pollingAttempts < MAX_POLLING_ATTEMPTS) {
-        // Check if we've been polling too long
-        const now = Date.now();
-        if (pollingStartTime && now - pollingStartTime > MAX_POLLING_TIME) {
-          if (VERBOSE) console.log('⏰ Max polling time reached, stopping');
-          setPollingStartTime(null);
-          // Continue with data even if still loading
-        } else {
-          if (VERBOSE)
-            console.log('⏳ Analytics data still loading, polling...', {
-              attempt: pollingAttempts + 1,
-            });
+        // Update with partial data but keep loading state
+        const partialAnalytics = {
+          dashboard: data.dashboard,
+          leads: data.leads,
+          epinet: data.epinet,
+          userCounts: data.userCounts || [],
+          hourlyNodeActivity: data.hourlyNodeActivity || {},
+          status: 'loading',
+          error: null,
+          isLoading: true,
+        };
 
-          // Set start time if this is the first poll
-          if (!pollingStartTime) {
-            setPollingStartTime(now);
-          }
+        onUpdate(partialAnalytics);
 
-          const delayMs =
-            POLLING_DELAYS[pollingAttempts] ||
-            POLLING_DELAYS[POLLING_DELAYS.length - 1];
+        // Schedule polling retry - use the cache key to prevent multiple polls
+        const pollKey = `poll_${cacheKey}`;
+        if (!this.requestCache.has(pollKey)) {
+          this.requestCache.set(pollKey, { data: null, timestamp: Date.now() });
 
-          const newTimer = setTimeout(() => {
-            setPollingAttempts(pollingAttempts + 1);
-            fetchAllAnalytics();
-          }, delayMs);
-
-          setPollingTimer(newTimer);
-
-          // Update with partial data but keep loading state
-          onAnalyticsUpdate({
-            dashboard: data.dashboard,
-            leads: data.leads,
-            epinet: data.epinet,
-            userCounts: data.userCounts || [],
-            hourlyNodeActivity: data.hourlyNodeActivity || {},
-            status: 'loading',
-            error: null,
-            isLoading: true,
-          });
-
-          return;
+          setTimeout(() => {
+            this.requestCache.delete(pollKey);
+            // Clear the main cache entry to force fresh request
+            this.requestCache.delete(cacheKey);
+            // Retry the fetch
+            this.fetchAnalytics(filters, onUpdate);
+          }, 2000);
         }
+
+        return;
       }
 
-      const newAnalytics = {
+      // Process successful response
+      const analyticsData = {
         dashboard: data.dashboard,
         leads: data.leads,
         epinet: data.epinet,
@@ -226,90 +240,62 @@ export default function FetchAnalytics({
         isLoading: false,
       };
 
-      if (VERBOSE) console.log('📤 Calling onAnalyticsUpdate');
-      onAnalyticsUpdate(newAnalytics);
+      // Cache the response
+      this.setCachedResponse(cacheKey, analyticsData);
 
-      // Update epinetCustomFilters with additional data from response
-      if (VERBOSE)
-        console.log('🔄 BEFORE store update', {
-          currentStoreRef: epinetCustomFilters.get(),
-          aboutToSet: {
-            userCounts: data.userCounts?.length || 0,
-            hourlyNodeActivity: !!data.hourlyNodeActivity,
-          },
-        });
+      // Update caller
+      onUpdate(analyticsData);
 
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
-        ...$epinetCustomFilters,
-        userCounts: data.userCounts || [],
-        hourlyNodeActivity: data.hourlyNodeActivity || {},
-      });
+      if (VERBOSE) console.log('✅ Analytics request completed successfully');
 
-      // Reset polling attempts and start time on success
-      setPollingAttempts(0);
-      setPollingStartTime(null);
-
-      if (VERBOSE)
-        console.log('🔄 AFTER store update', {
-          newStoreRef: epinetCustomFilters.get(),
-        });
+      this.activeRequest = null;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        if (VERBOSE) console.log('🔄 Request aborted');
+        return;
+      }
+
       console.error('❌ Analytics fetch error:', error);
 
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error occurred';
-
-      onAnalyticsUpdate({
+      onUpdate({
         dashboard: null,
         leads: null,
         epinet: null,
         userCounts: [],
         hourlyNodeActivity: {},
         status: 'error',
-        error: errorMessage,
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
         isLoading: false,
       });
 
-      // Schedule retry if we haven't reached max attempts
-      if (pollingAttempts < MAX_POLLING_ATTEMPTS) {
-        if (VERBOSE)
-          console.log(
-            '🔄 Scheduling retry due to error, attempt',
-            pollingAttempts + 1
-          );
-
-        const delayMs =
-          POLLING_DELAYS[pollingAttempts] ||
-          POLLING_DELAYS[POLLING_DELAYS.length - 1];
-
-        const newTimer = setTimeout(() => {
-          setPollingAttempts(pollingAttempts + 1);
-          fetchAllAnalytics();
-        }, delayMs);
-
-        setPollingTimer(newTimer);
-      }
+      this.activeRequest = null;
     }
-  }, [
-    $epinetCustomFilters.startTimeUTC,
-    $epinetCustomFilters.endTimeUTC,
-    $epinetCustomFilters.visitorType,
-    $epinetCustomFilters.selectedUserId,
-    pollingAttempts,
-  ]);
+  }
 
-  // Initialize on first mount
-  useEffect(() => {
-    if (!isInitialized.current && !isInitializing.current) {
-      if (VERBOSE) console.log('🏁 Initializing FetchAnalytics');
-      isInitializing.current = true;
+  cleanup(): void {
+    if (this.activeRequest) {
+      this.activeRequest.abort();
+      this.activeRequest = null;
+    }
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+  }
 
-      const nowUTC = new Date();
-      const oneWeekAgoUTC = new Date(
-        nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000
-      );
+  initializeFilters(tenantId: string): void {
+    if (this.isInitialized) return;
 
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+    if (VERBOSE) console.log('🏁 Initializing analytics filters');
+
+    const nowUTC = new Date();
+    const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Only set if not already initialized to prevent store churn
+    const current = epinetCustomFilters.get();
+    if (!current.enabled) {
+      epinetCustomFilters.set(tenantId, {
         enabled: true,
         visitorType: 'all',
         selectedUserId: null,
@@ -318,32 +304,94 @@ export default function FetchAnalytics({
         userCounts: [],
         hourlyNodeActivity: {},
       });
-
-      isInitialized.current = true;
-      isInitializing.current = false;
     }
+
+    this.isInitialized = true;
+  }
+
+  debouncedFetch(filters: any, onUpdate: (data: AnalyticsState) => void): void {
+    // Clear existing debounce timer
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    // Set new debounced fetch
+    this.debounceTimer = setTimeout(() => {
+      this.fetchAnalytics(filters, onUpdate);
+    }, this.DEBOUNCE_MS);
+  }
+}
+
+export default function FetchAnalytics({
+  onAnalyticsUpdate,
+}: FetchAnalyticsProps) {
+  const $epinetCustomFilters = useStore(epinetCustomFilters);
+  const analyticsService = useRef(AnalyticsService.getInstance());
+  const lastFiltersRef = useRef<string>('');
+
+  if (VERBOSE) {
+    console.log('🔄 FetchAnalytics render', {
+      filters: {
+        startTimeUTC: $epinetCustomFilters.startTimeUTC,
+        endTimeUTC: $epinetCustomFilters.endTimeUTC,
+        visitorType: $epinetCustomFilters.visitorType,
+        selectedUserId: $epinetCustomFilters.selectedUserId,
+      },
+    });
+  }
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      analyticsService.current.cleanup();
+    };
   }, []);
 
-  // Fetch when filters change
+  // Initialize filters once
+  useEffect(() => {
+    const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+    analyticsService.current.initializeFilters(tenantId);
+  }, []);
+
+  // Debounced fetch when filters change
   useEffect(() => {
     if (
-      isInitialized.current &&
-      $epinetCustomFilters.enabled &&
-      $epinetCustomFilters.visitorType !== null &&
-      $epinetCustomFilters.startTimeUTC !== null &&
-      $epinetCustomFilters.endTimeUTC !== null
+      !$epinetCustomFilters.enabled ||
+      $epinetCustomFilters.visitorType === null ||
+      $epinetCustomFilters.startTimeUTC === null ||
+      $epinetCustomFilters.endTimeUTC === null
     ) {
-      if (VERBOSE) console.log('🔄 Filters changed, fetching analytics');
-      setPollingAttempts(0); // Reset polling attempts when filters change
-      setPollingStartTime(null); // Reset polling start time
-      fetchAllAnalytics();
+      return;
     }
+
+    // Create stable filter signature to prevent unnecessary fetches
+    const filtersSignature = JSON.stringify({
+      startTimeUTC: $epinetCustomFilters.startTimeUTC,
+      endTimeUTC: $epinetCustomFilters.endTimeUTC,
+      visitorType: $epinetCustomFilters.visitorType,
+      selectedUserId: $epinetCustomFilters.selectedUserId,
+    });
+
+    // Skip if filters haven't actually changed
+    if (filtersSignature === lastFiltersRef.current) {
+      return;
+    }
+
+    lastFiltersRef.current = filtersSignature;
+
+    if (VERBOSE) console.log('🔄 Filters changed, debouncing fetch');
+
+    analyticsService.current.debouncedFetch(
+      $epinetCustomFilters,
+      onAnalyticsUpdate
+    );
   }, [
     $epinetCustomFilters.enabled,
     $epinetCustomFilters.visitorType,
     $epinetCustomFilters.selectedUserId,
     $epinetCustomFilters.startTimeUTC,
     $epinetCustomFilters.endTimeUTC,
+    onAnalyticsUpdate,
   ]);
 
   return null;
