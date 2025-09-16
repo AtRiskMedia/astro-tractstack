@@ -7,6 +7,7 @@ import {
   orphanAnalysisStore,
   loadOrphanAnalysis,
 } from '@/stores/orphanAnalysis';
+import { TractStackAPI } from '@/utils/api';
 import UsageCell from '../UsageCell';
 import type { FullContentMapItem } from '@/types/tractstack';
 
@@ -138,16 +139,12 @@ const StoryFragmentTable = ({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/storyfragments/${id}`, {
+      const api = new TractStackAPI(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default'
+      );
+      await api.request(`/api/v1/nodes/storyfragments/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete story fragment');
-      }
 
       // Reload the page to refresh the data
       window.location.reload();
