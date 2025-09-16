@@ -1,36 +1,18 @@
 import {
   settingsPanelOpenStore,
+  settingsPanelStore,
   headerPositionStore,
   setHeaderPosition,
   setMobileHeaderFaded,
 } from '@/stores/storykeep';
-
-// --- START: New Debounce Utility ---
-// A utility to prevent a function from running too often.
-function debounce<F extends (...args: any[]) => any>(
-  func: F,
-  wait: number
-): (...args: Parameters<F>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return function executedFunction(...args: Parameters<F>) {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(later, wait);
-  };
-}
-// --- END: New Debounce Utility ---
+import { debounce } from '@/utils/helpers';
 
 let hasScrolledForSettingsPanel = false;
 
 export function setupLayoutStyles(): void {
   const updateBottomOffset = () => {
     const mobileNavHeight = window.innerWidth < 801 ? 80 : 0;
-    const padding = 16;
+    const padding = 4;
     const offset = `${mobileNavHeight + padding}px`;
     document.documentElement.style.setProperty(
       '--bottom-right-controls-bottom-offset',
@@ -41,10 +23,43 @@ export function setupLayoutStyles(): void {
   window.addEventListener('resize', updateBottomOffset);
 }
 
+// Replace your existing setupPaneObserver with this one.
+function setupPaneObserver() {
+  let currentObserver: IntersectionObserver | null = null;
+
+  settingsPanelStore.subscribe((signalValue) => {
+    if (currentObserver) {
+      currentObserver.disconnect();
+      currentObserver = null;
+    }
+
+    if (signalValue && signalValue.nodeId) {
+      setTimeout(() => {
+        const { nodeId } = signalValue;
+
+        const targetElement =
+          document.getElementById(`pane-${nodeId}`) ||
+          document.querySelector(`[data-node-id="${nodeId}"]`);
+
+        if (targetElement) {
+          currentObserver = new IntersectionObserver(
+            ([entry]) => {
+              if (!entry.isIntersecting) {
+                settingsPanelStore.set(null);
+              }
+            },
+            { threshold: 0 }
+          );
+          currentObserver.observe(targetElement);
+        }
+      }, 100);
+    }
+  });
+}
+
 export function setupLayoutObservers(): void {
   const storykeepHeader = document.getElementById('storykeepHeader');
   const toolModeNav = document.getElementById('mainNav');
-  const mainContent = document.getElementById('mainContent');
   const settingsControls = document.getElementById('settingsControls');
   const standardHeader = document.querySelector('header');
 
@@ -55,14 +70,11 @@ export function setupLayoutObservers(): void {
     standardHeaderHeight = standardHeader.offsetHeight;
   };
 
-  // --- START: New Panel Positioning Logic ---
-  // This function implements your idea.
   const updatePanelPosition = () => {
     const headerRect = storykeepHeader.getBoundingClientRect();
     const panelTop = headerRect.bottom;
     settingsControls.style.top = `${panelTop}px`;
   };
-  // --- END: New Panel Positioning Logic ---
 
   const handleScroll = () => {
     const scrollY = window.scrollY;
@@ -101,8 +113,8 @@ export function setupLayoutObservers(): void {
   const debouncedUpdate = debounce(() => {
     updateStandardHeaderHeight();
     handleScroll();
-    updatePanelPosition(); // Update panel position on scroll/resize
-  }, 200);
+    updatePanelPosition();
+  }, 50);
 
   const handleSettingsPanelChange = () => {
     if (!settingsPanelOpenStore.get()) {
@@ -114,7 +126,8 @@ export function setupLayoutObservers(): void {
   window.addEventListener('resize', debouncedUpdate);
   settingsPanelOpenStore.subscribe(handleSettingsPanelChange);
 
-  // Initial setup on load
+  setupPaneObserver();
+
   updateStandardHeaderHeight();
   handleScroll();
   updatePanelPosition();

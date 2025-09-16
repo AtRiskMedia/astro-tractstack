@@ -43,7 +43,7 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
         }
       `}</style>
       <div
-        className="flex h-full min-h-0 w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl"
+        className="flex h-full min-h-0 w-full flex-col rounded-lg border border-gray-200 bg-white bg-opacity-85 shadow-xl"
         style={{ maxWidth: '90vw' }}
       >
         {/* Header Section (fixed height) */}
