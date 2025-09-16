@@ -13,6 +13,7 @@ import {
   viewportModeStore,
   setViewportMode,
   settingsPanelStore,
+  pendingHomePageSlugStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
 import SaveModal from '@/components/edit/state/SaveModal';
@@ -24,6 +25,7 @@ interface StoryKeepHeaderProps {
 
 const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
   const viewport = useStore(viewportModeStore);
+  const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
   const ctx = getCtx();
   const hasTitle = useStore(ctx.hasTitle);
   const hasPanes = useStore(ctx.hasPanes);
@@ -61,7 +63,8 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
   };
 
   const handleVisitPage = () => {
-    if (canUndo) {
+    const hasChanges = canUndo || pendingHomePageSlug;
+    if (hasChanges) {
       if (
         confirm(
           'You have unsaved changes. Do you want to visit the page anyway?'
@@ -88,6 +91,9 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
     { value: 'tablet', Icon: DeviceTabletIcon, title: 'Tablet Viewport' },
     { value: 'desktop', Icon: ComputerDesktopIcon, title: 'Desktop Viewport' },
   ];
+
+  // Show save button if there are undo changes OR pending home page change
+  const shouldShowSave = canUndo || pendingHomePageSlug;
 
   if (!hasTitle && !hasPanes) return null;
 
@@ -127,7 +133,7 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
             className={`${iconClassName} relative`}
           >
             <GlobeAltIcon />
-            {canUndo && (
+            {shouldShowSave && (
               <ExclamationTriangleIcon className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-white text-amber-500" />
             )}
           </button>
@@ -156,7 +162,7 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
           </div>
         )}
 
-        {canUndo && (
+        {shouldShowSave && (
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             <button
               onClick={handleSave}

@@ -11,6 +11,7 @@ import {
   fullContentMapStore,
   getPendingImageOperation,
   clearPendingImageOperation,
+  pendingHomePageSlugStore,
 } from '@/stores/storykeep';
 import { startLoadingAnimation } from '@/utils/helpers';
 import type {
@@ -29,6 +30,7 @@ type SaveStage =
   | 'SAVING_STORY_FRAGMENTS'
   | 'LINKING_FILES'
   | 'PROCESSING_STYLES'
+  | 'UPDATING_HOME_PAGE'
   | 'COMPLETED'
   | 'ERROR';
 
@@ -61,13 +63,9 @@ export default function SaveModal({
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const isSaving = useRef(false);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  // Determine if we're in create mode
   const isCreateMode = slug === 'create';
-
   const contentMap = fullContentMapStore.get();
-
-  // Get backend URL
+  const pendingHomePageSlug = pendingHomePageSlugStore.get();
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
   const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
@@ -145,7 +143,8 @@ export default function SaveModal({
         if (
           relevantNodeCount === 0 &&
           nodesWithPendingFiles.length === 0 &&
-          storyFragmentsWithPendingImages.length === 0
+          storyFragmentsWithPendingImages.length === 0 &&
+          !pendingHomePageSlug
         ) {
           addDebugMessage('No changes to save');
           setStage('COMPLETED');
@@ -614,6 +613,67 @@ export default function SaveModal({
           throw new Error(`Failed to process styles: ${errorMsg}`);
         }
 
+        // Check if we need to update home page
+        if (pendingHomePageSlug) {
+          setStage('UPDATING_HOME_PAGE');
+          setProgress(98);
+          addDebugMessage(`Updating home page to: ${pendingHomePageSlug}`);
+
+          try {
+            // First get current brand config
+            const response = await fetch(`${goBackend}/api/v1/config/brand`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+            });
+
+            if (!response.ok) {
+              throw new Error(
+                `Failed to get current brand config: ${response.status}`
+              );
+            }
+
+            const currentBrandConfig = await response.json();
+
+            // Update HOME_SLUG
+            const updatedBrandConfig = {
+              ...currentBrandConfig,
+              HOME_SLUG: pendingHomePageSlug,
+            };
+
+            const updateResponse = await fetch(
+              `${goBackend}/api/v1/config/brand`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Tenant-ID': tenantId,
+                },
+                credentials: 'include',
+                body: JSON.stringify(updatedBrandConfig),
+              }
+            );
+
+            if (!updateResponse.ok) {
+              throw new Error(
+                `Failed to update home page: ${updateResponse.status}`
+              );
+            }
+
+            // Clear the pending operation
+            pendingHomePageSlugStore.set(null);
+            addDebugMessage('Home page updated successfully');
+          } catch (error) {
+            const errorMsg =
+              error instanceof Error ? error.message : 'Unknown error';
+            addDebugMessage(`Home page update failed: ${errorMsg}`);
+            throw new Error(`Failed to update home page: ${errorMsg}`);
+          }
+        }
+
         // Success!
         setStage('COMPLETED');
         setProgress(100);
@@ -658,6 +718,8 @@ export default function SaveModal({
         return 'Linking file relationships...';
       case 'PROCESSING_STYLES':
         return 'Processing styles...';
+      case 'UPDATING_HOME_PAGE':
+        return 'Updating home page...';
       case 'COMPLETED':
         return `${actionText} ${modeText.toLowerCase()} completed successfully!`;
       case 'ERROR':

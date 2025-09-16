@@ -29,6 +29,8 @@ export const preferredThemeStore = atom<Theme>('light');
 export const hasAssemblyAIStore = atom<boolean>(false);
 export const codehookMapStore = atom<string[]>([]);
 
+export const pendingHomePageSlugStore = atom<string | null>(null);
+
 // Tool mode types
 export type ToolModeVal =
   | 'styles'

@@ -36,11 +36,10 @@ const title = 'Content | StoryKeep';
 const createMenu = Astro.url.searchParams.has('create-menu');
 
 let fullContentMap;
-let homeSlug = 'hello';
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
 
 try {
   fullContentMap = await getFullContentMap(tenantId);
-  homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
   return Astro.redirect(
     `/maint?from=${encodeURIComponent(Astro.url.pathname)}`

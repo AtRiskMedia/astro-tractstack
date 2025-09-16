@@ -1,8 +1,11 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
+import { useStore } from '@nanostores/react';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import LockClosedIcon from '@heroicons/react/24/outline/LockClosedIcon';
+import { Switch } from '@ark-ui/react/switch';
 import { getCtx } from '@/stores/nodes';
+import { pendingHomePageSlugStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
 import type { BrandConfig } from '@/types/tractstack';
 import {
@@ -28,6 +31,8 @@ const StoryFragmentSlugPanel = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [canSave, setCanSave] = useState(false);
   const isHomeSlug = slug === config.HOME_SLUG;
+  const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
+  const isSetAsHomePage = pendingHomePageSlug === slug;
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();
@@ -129,6 +134,14 @@ const StoryFragmentSlugPanel = ({
     }
   };
 
+  const handleSetAsHomePageChange = (details: { checked: boolean }) => {
+    if (details.checked) {
+      pendingHomePageSlugStore.set(slug);
+    } else {
+      pendingHomePageSlugStore.set(null);
+    }
+  };
+
   return (
     <div className="group mb-4 w-full rounded-b-md bg-white px-1.5 py-6">
       <div className="px-3.5">
@@ -194,72 +207,60 @@ const StoryFragmentSlugPanel = ({
             </span>
           </div>
         </div>
+
         {validationError && (
           <div className="mt-2 text-sm text-red-600">
             <ExclamationTriangleIcon className="mr-1 inline h-4 w-4" />
             {validationError}
           </div>
         )}
+
         {isHomeSlug && (
-          <div className="mt-2 text-sm text-gray-600">
-            <LockClosedIcon className="mr-1 inline h-4 w-4" />
-            This is your home page slug and cannot be modified
+          <div className="mt-4">
+            <div className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800">
+              <LockClosedIcon className="mr-1.5 h-4 w-4" />
+              Home Page
+            </div>
+            <div className="mt-2 text-sm text-gray-600">
+              This is your current home page
+            </div>
           </div>
         )}
-        <div className="mt-4 text-lg">
-          <div className="text-gray-600">
-            Create a clean, descriptive URL slug that helps users and search
-            engines understand the page content.
-            <ul className="ml-4 mt-1">
-              <li>
-                <CheckIcon className="inline h-4 w-4" /> Use hyphens to separate
-                words
-              </li>
-              <li>
-                <CheckIcon className="inline h-4 w-4" /> Keep it short and
-                descriptive
-              </li>
-              <li>
-                <CheckIcon className="inline h-4 w-4" /> Use only lowercase
-                letters, numbers, and hyphens
-              </li>
-              <li>
-                <CheckIcon className="inline h-4 w-4" /> Must start and end with
-                a letter or number
-              </li>
-            </ul>
-          </div>
-          <div className="py-4">
-            {!isHomeSlug && (
-              <>
-                {charCount < 3 && (
-                  <span className="text-red-500">
-                    Slug must be at least 3 characters
-                  </span>
-                )}
-                {charCount >= 3 && charCount < 5 && !validationError && (
-                  <span className="text-gray-500">
-                    Consider adding more characters for better description
-                  </span>
-                )}
-                {warning && !validationError && (
-                  <span className="text-yellow-500">
-                    Slug is getting long - consider shortening it
-                  </span>
-                )}
-                {isValid && canSave && charCount >= 5 && !validationError && (
-                  <span className="text-green-500">
-                    Good URL length and format!
-                  </span>
-                )}
-                {isValid && !canSave && !validationError && (
-                  <span className="text-gray-500">
-                    Valid characters but needs proper formatting to save
-                  </span>
-                )}
-              </>
+
+        {!isHomeSlug && isValid && canSave && (
+          <div className="mt-4">
+            <div className="flex items-center space-x-3">
+              <Switch.Root
+                checked={isSetAsHomePage}
+                onCheckedChange={handleSetAsHomePageChange}
+                className="flex items-center"
+              >
+                <Switch.Control
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    isSetAsHomePage ? 'bg-cyan-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <Switch.Thumb
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                      isSetAsHomePage ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </Switch.Control>
+                <Switch.HiddenInput />
+              </Switch.Root>
+              <span className="text-sm text-gray-700">Set as Home Page</span>
+            </div>
+            {isSetAsHomePage && (
+              <div className="mt-2 text-sm text-cyan-600">
+                ✓ Will be set as home page when saved
+              </div>
             )}
           </div>
+        )}
+
+        <div className="mt-4 text-sm text-gray-600">
+          Create a clean, descriptive URL slug that helps users and search
+          engines understand the page content.
         </div>
       </div>
     </div>

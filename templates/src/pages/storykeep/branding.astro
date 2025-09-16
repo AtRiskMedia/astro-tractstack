@@ -29,11 +29,10 @@ const initializing = !brandConfig.SITE_INIT;
 const title = 'Branding | StoryKeep';
 
 let fullContentMap;
-let homeSlug = 'hello';
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
 
 try {
   fullContentMap = await getFullContentMap(tenantId);
-  homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
   return Astro.redirect(
     `/maint?from=${encodeURIComponent(Astro.url.pathname)}`

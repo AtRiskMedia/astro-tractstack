@@ -35,14 +35,13 @@ if (initializing) {
 
 const title = 'Analytics | StoryKeep';
 
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
 let fullContentMap;
-let homeSlug = 'hello';
 
 try {
   fullContentMap = await getFullContentMap(
     Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
   );
-  homeSlug = fullContentMap.find((item) => item.isHome)?.slug || 'hello';
 } catch (error) {
   return Astro.redirect(
     `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
