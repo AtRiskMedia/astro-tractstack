@@ -58,12 +58,12 @@ const createOrphanAnalysisStore = () => {
     listen: function (callback: any) {
       return this.subscribe(callback);
     },
-    notify: function () { },
-    off: function () { },
+    notify: function () {},
+    off: function () {},
     get value() {
       return this.get();
     },
-    set: function () { }, // Orphan store is read-only for components
+    set: function () {}, // Orphan store is read-only for components
   };
 
   return store;
@@ -259,7 +259,8 @@ function scheduleNextPoll(tenantId: string): void {
   const elapsed = Date.now() - state.startTime;
   if (elapsed >= MAX_POLLING_DURATION) {
     console.warn(
-      `Orphan analysis polling stopped: Maximum duration (${MAX_POLLING_DURATION / 1000
+      `Orphan analysis polling stopped: Maximum duration (${
+        MAX_POLLING_DURATION / 1000
       }s) exceeded for tenant ${tenantId}`
     );
     handlePollingFailure(tenantId, 'Polling timeout exceeded');
