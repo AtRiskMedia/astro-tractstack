@@ -58,12 +58,12 @@ const createOrphanAnalysisStore = () => {
     listen: function (callback: any) {
       return this.subscribe(callback);
     },
-    notify: function () {},
-    off: function () {},
+    notify: function () { },
+    off: function () { },
     get value() {
       return this.get();
     },
-    set: function () {}, // Orphan store is read-only for components
+    set: function () { }, // Orphan store is read-only for components
   };
 
   return store;
@@ -161,11 +161,10 @@ const pollingState = new Map<
   }
 >();
 
-// Constants for polling configuration
-const MAX_POLLING_ATTEMPTS = 10;
-const MAX_POLLING_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-const BASE_POLLING_INTERVAL = 2000; // 2 seconds base interval
-const MAX_POLLING_INTERVAL = 32000; // 32 seconds max interval
+const MAX_POLLING_ATTEMPTS = 25;
+const MAX_POLLING_DURATION = 10 * 60 * 1000; // 10 minutes
+const BASE_POLLING_INTERVAL = 10000; // 10 seconds
+const MAX_POLLING_INTERVAL = 30000; // 30 seconds
 
 const fetchingStates = new Map<string, boolean>();
 
@@ -203,7 +202,7 @@ export async function loadOrphanAnalysis(): Promise<void> {
 
     updateTenantState(tenantId, {
       data,
-      isLoading: false,
+      isLoading: data.status === 'loading', // Only stop loading if complete
       error: null,
       lastFetched: Date.now(),
     });
@@ -239,7 +238,7 @@ function startPolling(tenantId: string): void {
     lastAttemptTime: startTime,
   });
 
-  // Start the first poll immediately
+  // Start the first poll
   scheduleNextPoll(tenantId);
 }
 
@@ -260,21 +259,20 @@ function scheduleNextPoll(tenantId: string): void {
   const elapsed = Date.now() - state.startTime;
   if (elapsed >= MAX_POLLING_DURATION) {
     console.warn(
-      `Orphan analysis polling stopped: Maximum duration (${MAX_POLLING_DURATION}ms) exceeded for tenant ${tenantId}`
+      `Orphan analysis polling stopped: Maximum duration (${MAX_POLLING_DURATION / 1000
+      }s) exceeded for tenant ${tenantId}`
     );
     handlePollingFailure(tenantId, 'Polling timeout exceeded');
     return;
   }
 
-  // Calculate delay using exponential backoff for consecutive errors
-  let delay = BASE_POLLING_INTERVAL;
-  if (state.consecutiveErrors > 0) {
-    // Exponential backoff: 2s → 4s → 8s → 16s → 32s (capped)
-    delay = Math.min(
-      BASE_POLLING_INTERVAL * Math.pow(2, state.consecutiveErrors),
-      MAX_POLLING_INTERVAL
-    );
-  }
+  // This is more suitable for long-running jobs, as it spaces out requests
+  // even when the server responds successfully with a 'loading' status.
+  // Polling sequence: 10s → 20s → 30s → 30s...
+  const delay = Math.min(
+    BASE_POLLING_INTERVAL * Math.pow(2, state.attempts),
+    MAX_POLLING_INTERVAL
+  );
 
   // Schedule the next poll
   const timeoutId = setTimeout(() => executePoll(tenantId), delay);
@@ -304,6 +302,7 @@ async function executePoll(tenantId: string): Promise<void> {
 
     // Check if analysis is complete
     if (data.status === 'complete') {
+      updateTenantState(tenantId, { isLoading: false });
       stopPolling(tenantId);
       return;
     }
@@ -329,7 +328,6 @@ async function executePoll(tenantId: string): Promise<void> {
       error instanceof Error ? error.message : 'Unknown polling error';
     updateTenantState(tenantId, {
       error: `Polling error (attempt ${state.attempts}/${MAX_POLLING_ATTEMPTS}): ${errorMessage}`,
-      lastFetched: Date.now(),
     });
 
     // Check if we should stop polling due to consecutive errors
@@ -344,7 +342,7 @@ async function executePoll(tenantId: string): Promise<void> {
       return;
     }
 
-    // Schedule next poll with exponential backoff
+    // Schedule next poll (will use exponential backoff due to increased consecutiveErrors)
     scheduleNextPoll(tenantId);
   }
 }
@@ -357,8 +355,7 @@ function handlePollingFailure(tenantId: string, reason: string): void {
   // Update tenant state with final error
   updateTenantState(tenantId, {
     isLoading: false,
-    error: `Orphan analysis polling failed: ${reason}. Please try refreshing the page or contact support if the issue persists.`,
-    lastFetched: Date.now(),
+    error: `Orphan analysis failed: ${reason}. Please try refreshing the page.`,
   });
 
   // Clean up polling state
