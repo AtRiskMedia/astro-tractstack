@@ -301,8 +301,6 @@ class AnalyticsService {
         selectedUserId: null,
         startTimeUTC: oneWeekAgoUTC.toISOString(),
         endTimeUTC: nowUTC.toISOString(),
-        userCounts: [],
-        hourlyNodeActivity: {},
       });
     }
 

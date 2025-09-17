@@ -45,11 +45,13 @@ interface ContentMapItem {
 interface EpinetDurationSelectorProps {
   fullContentMap?: ContentMapItem[];
   isLoading?: boolean;
+  hourlyNodeActivity?: any;
 }
 
 const EpinetDurationSelector = ({
   fullContentMap,
   isLoading,
+  hourlyNodeActivity,
 }: EpinetDurationSelectorProps = {}) => {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -191,16 +193,6 @@ const EpinetDurationSelector = ({
     }
 
     const nowUTC = new Date();
-    const maxPastTime = new Date(
-      nowUTC.getTime() - MAX_ANALYTICS_HOURS * 60 * 60 * 1000
-    );
-
-    if (startUTCTime < maxPastTime) {
-      setErrorMessage(
-        `Start time cannot be more than ${MAX_ANALYTICS_HOURS} hours in the past.`
-      );
-      return;
-    }
 
     if (endUTCTime > nowUTC) {
       setErrorMessage('End time cannot be in the future.');
@@ -933,6 +925,7 @@ const EpinetDurationSelector = ({
               <EpinetTableView
                 fullContentMap={fullContentMap || []}
                 isLoading={isLoading}
+                hourlyNodeActivity={hourlyNodeActivity}
               />
             )}
           </div>

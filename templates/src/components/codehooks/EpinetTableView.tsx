@@ -53,13 +53,17 @@ interface ContentMapItem {
   type: string;
 }
 
+interface Props {
+  fullContentMap: ContentMapItem[];
+  isLoading?: boolean;
+  hourlyNodeActivity?: any;
+}
+
 const EpinetTableView = ({
   fullContentMap,
   isLoading = false,
-}: {
-  fullContentMap: ContentMapItem[];
-  isLoading?: boolean;
-}) => {
+  hourlyNodeActivity,
+}: Props) => {
   const $epinetCustomFilters = useStore(epinetCustomFilters);
   const [currentDay, setCurrentDay] = useState<string | null>(null);
   const [availableDays, setAvailableDays] = useState<string[]>([]);
@@ -174,7 +178,7 @@ const EpinetTableView = ({
   };
 
   useEffect(() => {
-    const hourlyActivity = $epinetCustomFilters.hourlyNodeActivity || {};
+    const hourlyActivity = hourlyNodeActivity || {};
     const hourKeys = Object.keys(hourlyActivity);
 
     if (hourKeys.length === 0) {
@@ -192,7 +196,7 @@ const EpinetTableView = ({
     setAvailableDays(days);
     setCurrentDay(days[0] || null);
     setCurrentDayIndex(0);
-  }, [$epinetCustomFilters.hourlyNodeActivity]);
+  }, [hourlyNodeActivity]);
 
   const navigateDay = (direction: 'prev' | 'next') => {
     const newIndex =
@@ -213,7 +217,7 @@ const EpinetTableView = ({
     if (!currentDay)
       return { data: [], dailyTotal: 0, dailyVisitors: 0, maxHourlyTotal: 0 };
 
-    const hourlyActivity = $epinetCustomFilters.hourlyNodeActivity || {};
+    const hourlyActivity = hourlyNodeActivity || {};
     const result: HourData[] = [];
     let emptyRangeStart: number | null = null;
     let dailyTotal = 0;

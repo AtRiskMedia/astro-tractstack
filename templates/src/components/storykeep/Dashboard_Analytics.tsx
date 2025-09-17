@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, Component } from 'react';
+import { useState, useEffect, useCallback, useMemo, Component } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
@@ -439,6 +439,7 @@ export default function StoryKeepDashboard_Analytics({
                   isLoading={
                     analytics.isLoading || analytics.status === 'loading'
                   }
+                  hourlyNodeActivity={analytics.hourlyNodeActivity}
                 />
               </div>
             </ErrorBoundary>
@@ -453,6 +454,7 @@ export default function StoryKeepDashboard_Analytics({
                 isLoading={
                   analytics.isLoading || analytics.status === 'loading'
                 }
+                hourlyNodeActivity={analytics.hourlyNodeActivity}
               />
             </>
           )
@@ -465,6 +467,7 @@ export default function StoryKeepDashboard_Analytics({
             <EpinetDurationSelector
               fullContentMap={fullContentMap}
               isLoading={analytics.isLoading || analytics.status === 'loading'}
+              hourlyNodeActivity={analytics.hourlyNodeActivity}
             />
           </>
         )}
