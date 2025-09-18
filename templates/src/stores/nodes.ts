@@ -340,6 +340,18 @@ export class NodesContext {
         handleClickEventDefault(node, dblClick, this.clickedParentLayer.get());
         break;
       case `text`:
+        if (
+          node.nodeType === 'TagElement' &&
+          'tagName' in node &&
+          (node.tagName === 'a' || node.tagName === 'button')
+        ) {
+          this.toolModeValStore.set({ value: 'styles' });
+          handleClickEventDefault(
+            node,
+            dblClick,
+            this.clickedParentLayer.get()
+          );
+        }
         if (dblClick && ![`Markdown`].includes(node.nodeType)) {
           this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(

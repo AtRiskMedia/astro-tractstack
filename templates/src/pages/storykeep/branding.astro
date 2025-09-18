@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
 import BrandingPageWrapper from '@/components/storykeep/state/BrandingWrapper';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
@@ -42,6 +43,7 @@ try {
 
 <Layout title={title} slug="storykeep" isStoryKeep={true}>
   <main id="main-content" class="min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
     <div class="max-w-5xl p-3.5 md:p-8">
       <BrandingPageWrapper
         client:only="react"

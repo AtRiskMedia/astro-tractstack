@@ -1047,6 +1047,12 @@ export async function injectTemplateFiles(
 
     // StoryKeep Dashboard Components
     {
+      src: resolve(
+        '../templates/src/components/storykeep/StoryKeepBackdrop.astro'
+      ),
+      dest: 'src/components/storykeep/StoryKeepBackdrop.astro',
+    },
+    {
       src: resolve('../templates/src/components/storykeep/Dashboard.tsx'),
       dest: 'src/components/storykeep/Dashboard.tsx',
     },

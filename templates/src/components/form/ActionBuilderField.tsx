@@ -202,7 +202,9 @@ export default function ActionBuilderField({
                 onChange={(e) => {
                   const newValue = e.target.value;
                   setParam1(newValue);
-                  updateValue(selectedTarget, '', newValue);
+                }}
+                onBlur={(e) => {
+                  updateValue(selectedTarget, '', e.target.value);
                 }}
                 placeholder="https://..."
                 className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-700 focus:ring-cyan-700"

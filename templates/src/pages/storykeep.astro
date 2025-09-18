@@ -1,5 +1,6 @@
 ---
 import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
 import StoryKeepDashboard from '@/components/storykeep/Dashboard';
 import StoryKeepDashboard_Analytics from '@/components/storykeep/Dashboard_Analytics';
 import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
@@ -50,7 +51,8 @@ try {
 ---
 
 <Layout title={title} isStoryKeep={true} slug="storykeep">
-  <main id="main-content" class="min-h-screen w-full">
+  <main id="main-content" class="relative min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
     <div class="max-w-5xl p-3.5 md:p-8">
       <StoryKeepDashboard
         client:only="react"

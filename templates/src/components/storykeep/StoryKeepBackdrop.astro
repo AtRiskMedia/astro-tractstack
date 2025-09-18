@@ -1,0 +1,86 @@
+---
+let MODE = 'logo'; // 'wordmark' | 'logo'
+
+interface Props {
+  brandConfig: {
+    LOGO?: string;
+    WORDMARK?: string;
+  };
+}
+
+const { brandConfig } = Astro.props;
+
+const getAssetPath = (
+  configPath: string | undefined,
+  fallback: string
+): string => {
+  if (configPath && configPath !== '') {
+    return configPath;
+  }
+  return fallback;
+};
+
+let assetUrl;
+if (MODE === `wordmark`)
+  assetUrl = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
+else assetUrl = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
+
+// Generate positions programmatically for triple density
+const generatePositions = () => {
+  const positions = [];
+  const rows = 15; // More rows to extend beyond boundaries
+  const cols = 12; // More cols to extend beyond boundaries
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      // Skip some positions for natural spacing
+      if ((row + col) % 3 !== 0) continue;
+
+      // Allow logos to extend beyond container edges (no margins)
+      const top = (row / (rows - 1)) * 120 - 10; // Extend 10% beyond top/bottom
+      const left = (col / (cols - 1)) * 120 - 10; // Extend 10% beyond left/right
+      const rotation = -45 + Math.random() * 90;
+
+      positions.push({
+        top: `${top}%`,
+        left: `${left}%`,
+        rotation: `${rotation}deg`,
+      });
+    }
+  }
+
+  return positions;
+};
+
+const logoPositions = generatePositions();
+---
+
+{
+  assetUrl && (
+    <div
+      class="pointer-events-none absolute overflow-hidden rounded-2xl p-1.5 md:p-3.5"
+      style={{
+        top: '2rem',
+        left: '64rem',
+        right: '0',
+        bottom: '3.5rem',
+        opacity: '0.85',
+        //filter: 'grayscale(1)',
+      }}
+    >
+      {logoPositions.map((position) => (
+        <img
+          src={assetUrl}
+          style={{
+            position: 'absolute',
+            top: position.top,
+            left: position.left,
+            width: '120px',
+            height: 'auto',
+            transform: `rotate(${position.rotation})`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
