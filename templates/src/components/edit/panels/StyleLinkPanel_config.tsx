@@ -221,8 +221,8 @@ const StyleLinkConfigPanel = ({ node, config }: StyleLinkConfigPanelProps) => {
         </div>
 
         <div className="space-y-2">
-          <div className="relative overflow-y-auto">
-            <div className="absolute inset-x-0">
+          <div className="overflow-y-auto">
+            <div>
               <label className="text-mydarkgrey mb-2 block text-sm">
                 {actionType === 'goto'
                   ? 'Callback Payload'

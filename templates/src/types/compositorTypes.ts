@@ -71,6 +71,7 @@ export type SettingsPanelSignal = {
   className?: string;
   minimized?: boolean;
   expanded?: boolean;
+  editLock?: number;
 };
 
 export interface OgImageParams {

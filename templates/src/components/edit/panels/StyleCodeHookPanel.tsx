@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Combobox, Switch } from '@ark-ui/react';
+import { Combobox, Switch, Portal } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
@@ -8,7 +8,7 @@ import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTria
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import { cloneDeep } from '@/utils/helpers';
+import { cloneDeep, useDropdownDirection } from '@/utils/helpers';
 import { isPaneNode } from '@/utils/compositor/typeGuards';
 import type { PaneNode, BasePanelProps } from '@/types/compositorTypes';
 
@@ -30,7 +30,8 @@ const StyleCodeHookPanel = ({
 
   const [localTarget, setLocalTarget] = useState(node.codeHookTarget || '');
   const [query, setQuery] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+  const { openAbove } = useDropdownDirection(comboboxRef);
 
   // Parse the nested options from JSON string
   const [localOptions, setLocalOptions] = useState<OptionState[]>(() => {
@@ -320,42 +321,52 @@ const StyleCodeHookPanel = ({
               loopFocus={true}
               openOnKeyPress={true}
               composite={true}
+              positioning={{
+                placement: openAbove ? 'top' : 'bottom',
+                gutter: 4,
+                sameWidth: true,
+              }}
             >
-              <div className="relative">
-                <Combobox.Input
-                  ref={inputRef}
-                  className={commonInputClass}
-                  placeholder="Select a code hook..."
-                  onBlur={handleBlur}
-                />
-                <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon
-                    className="text-mydarkgrey h-5 w-5"
-                    aria-hidden="true"
+              <Combobox.Control ref={comboboxRef}>
+                <div className="relative">
+                  <Combobox.Input
+                    className={commonInputClass}
+                    placeholder="Select a code hook..."
+                    onBlur={handleBlur}
                   />
-                </Combobox.Trigger>
-              </div>
+                  <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
+                    <ChevronUpDownIcon
+                      className="text-mydarkgrey h-5 w-5"
+                      aria-hidden="true"
+                    />
+                  </Combobox.Trigger>
+                </div>
+              </Combobox.Control>
 
-              <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                {collection.items.length === 0 ? (
-                  <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
-                    Nothing found.
-                  </div>
-                ) : (
-                  collection.items.map((hook) => (
-                    <Combobox.Item
-                      key={hook}
-                      item={hook}
-                      className="codehook-item relative cursor-default select-none py-2 pl-10 pr-4"
-                    >
-                      <span className="block truncate">{hook}</span>
-                      <span className="codehook-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                        <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                      </span>
-                    </Combobox.Item>
-                  ))
-                )}
-              </Combobox.Content>
+              <Portal>
+                <Combobox.Positioner style={{ zIndex: 1002 }}>
+                  <Combobox.Content className="z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    {collection.items.length === 0 ? (
+                      <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                        Nothing found.
+                      </div>
+                    ) : (
+                      collection.items.map((hook) => (
+                        <Combobox.Item
+                          key={hook}
+                          item={hook}
+                          className="codehook-item relative cursor-default select-none py-2 pl-10 pr-4"
+                        >
+                          <span className="block truncate">{hook}</span>
+                          <span className="codehook-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        </Combobox.Item>
+                      ))
+                    )}
+                  </Combobox.Content>
+                </Combobox.Positioner>
+              </Portal>
             </Combobox.Root>
           </div>
           {!isValidCodeHook && localTarget && (

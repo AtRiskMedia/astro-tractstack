@@ -37,6 +37,8 @@ type SaveStage =
 interface SaveStageProgress {
   currentStep: number;
   totalSteps: number;
+  currentFileName?: string;
+  isUploading?: boolean;
 }
 
 interface SaveModalProps {
@@ -45,6 +47,13 @@ interface SaveModalProps {
   isContext: boolean;
   onClose: () => void;
 }
+
+const PROGRESS_PHASES = {
+  PREPARATION: 5,
+  UPLOADS: 60,
+  PROCESSING: 25,
+  FINALIZATION: 10,
+};
 
 export default function SaveModal({
   show,
@@ -75,9 +84,7 @@ export default function SaveModal({
     setDebugMessages((prev) => [...prev, `${timestamp}: ${message}`]);
   };
 
-  // Main save process
   useEffect(() => {
-    // Reset state when modal is hidden or if save is already running
     if (!show) {
       setStage('PREPARING');
       setProgress(0);
@@ -96,12 +103,13 @@ export default function SaveModal({
 
       try {
         setStage('PREPARING');
-        setProgress(5);
+        setProgress(PROGRESS_PHASES.PREPARATION);
         addDebugMessage(
-          `Starting save process... (${isContext ? 'Context' : 'StoryFragment'} mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
+          `Starting save process... (${
+            isContext ? 'Context' : 'StoryFragment'
+          } mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
         );
 
-        // Filter nodes based on context mode
         let dirtyPanes = allDirtyNodes.filter(
           (node) => node.nodeType === 'Pane'
         );
@@ -109,7 +117,6 @@ export default function SaveModal({
           (node) => node.nodeType === 'StoryFragment'
         );
 
-        // In context mode, we only care about panes, not story fragments
         if (isContext) {
           dirtyStoryFragments = [];
           addDebugMessage('Context mode: Ignoring StoryFragment nodes');
@@ -119,14 +126,26 @@ export default function SaveModal({
           (node): node is BaseNode & { base64Data?: string } =>
             'base64Data' in node && !!node.base64Data
         );
-
-        // Check for story fragments with pending OG image operations
         const storyFragmentsWithPendingImages = dirtyStoryFragments.filter(
           (fragment) => {
             const pendingOp = getPendingImageOperation(fragment.id);
             return pendingOp && pendingOp.type === 'upload';
           }
         );
+
+        const totalFileBytes = nodesWithPendingFiles.reduce(
+          (sum, node) => sum + (node.base64Data?.length || 0),
+          0
+        );
+        const totalOgBytes = storyFragmentsWithPendingImages.reduce(
+          (sum, fragment) => {
+            const pendingOp = getPendingImageOperation(fragment.id);
+            return sum + (pendingOp?.data?.length || 0);
+          },
+          0
+        );
+        const totalUploadBytes = totalFileBytes + totalOgBytes;
+        let completedUploadBytes = 0;
 
         const relevantNodeCount =
           dirtyPanes.length + dirtyStoryFragments.length;
@@ -152,35 +171,25 @@ export default function SaveModal({
           return;
         }
 
-        const totalSteps =
-          nodesWithPendingFiles.length +
-          storyFragmentsWithPendingImages.length +
-          dirtyPanes.length +
-          dirtyStoryFragments.length +
-          2; // +1 for file linking, +1 for styles
-
-        addDebugMessage(
-          `Save plan: ${nodesWithPendingFiles.length} files, ${storyFragmentsWithPendingImages.length} og images, ${dirtyPanes.length} panes, ${dirtyStoryFragments.length} story fragments, 1 file linking, 1 styles = ${totalSteps} total steps`
-        );
-
-        let completedSteps = 1;
-
-        // PHASE 1: Upload all pending files and OG images first
         const uploadedOGPaths: Record<string, string> = {};
 
-        // Handle pending files
         if (nodesWithPendingFiles.length > 0) {
           setStage('SAVING_PENDING_FILES');
-          setStageProgress({
-            currentStep: 0,
-            totalSteps: nodesWithPendingFiles.length,
-          });
-
           for (let i = 0; i < nodesWithPendingFiles.length; i++) {
             const fileNode = nodesWithPendingFiles[i];
+            const fileBytes = fileNode.base64Data?.length || 0;
             const endpoint = `${goBackend}/api/v1/nodes/files/create`;
+
+            setStageProgress({
+              currentStep: i + 1,
+              totalSteps: nodesWithPendingFiles.length,
+              currentFileName: `${fileNode.id}.jpg`,
+              isUploading: true,
+            });
             addDebugMessage(
-              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${fileNode.id} -> POST ${endpoint}`
+              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${
+                fileNode.id
+              } -> POST ${endpoint}`
             );
 
             try {
@@ -191,7 +200,7 @@ export default function SaveModal({
                   'X-Tenant-ID': tenantId,
                 },
                 credentials: 'include',
-                body: JSON.stringify({ base64Data: fileNode.base64Data }), // FIXED: only send base64Data
+                body: JSON.stringify({ base64Data: fileNode.base64Data }),
               });
 
               if (!response.ok) {
@@ -199,16 +208,12 @@ export default function SaveModal({
               }
 
               const result = await response.json();
-
-              // Update tree with response data - handle different node types properly
               const updatedNode = { ...fileNode, isChanged: true };
 
-              // Remove base64Data and add file properties
               if ('base64Data' in updatedNode) {
                 delete updatedNode.base64Data;
               }
 
-              // Add file properties - these properties already exist in FlatNode and BgImageNode types
               if ('fileId' in updatedNode) {
                 updatedNode.fileId = result.fileId;
               }
@@ -233,28 +238,38 @@ export default function SaveModal({
               );
             }
 
-            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedSteps++;
-            setProgress((completedSteps / totalSteps) * 80);
+            completedUploadBytes += fileBytes;
+            const uploadProgress =
+              totalUploadBytes > 0
+                ? (completedUploadBytes / totalUploadBytes) *
+                  PROGRESS_PHASES.UPLOADS
+                : 0;
+            setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
+            setStageProgress((prev) => ({ ...prev, isUploading: false }));
           }
         }
 
-        // Handle OG image uploads
         if (storyFragmentsWithPendingImages.length > 0) {
           setStage('PROCESSING_OG_IMAGES');
-          setStageProgress({
-            currentStep: 0,
-            totalSteps: storyFragmentsWithPendingImages.length,
-          });
           for (let i = 0; i < storyFragmentsWithPendingImages.length; i++) {
             const fragment = storyFragmentsWithPendingImages[i];
             const pendingOp = getPendingImageOperation(fragment.id);
+            const imageBytes = pendingOp?.data?.length || 0;
 
             if (pendingOp && pendingOp.type === 'upload' && pendingOp.data) {
               const ogUploadEndpoint = `${goBackend}/api/v1/nodes/images/og`;
               addDebugMessage(
-                `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length}: ${fragment.id} -> POST ${ogUploadEndpoint}`
+                `Processing OG image ${i + 1}/${
+                  storyFragmentsWithPendingImages.length
+                }: ${fragment.id} -> POST ${ogUploadEndpoint}`
               );
+
+              setStageProgress({
+                currentStep: i + 1,
+                totalSteps: storyFragmentsWithPendingImages.length,
+                currentFileName: pendingOp?.filename || `${fragment.id}-og.png`,
+                isUploading: true,
+              });
 
               const uploadPayload = {
                 data: pendingOp.data,
@@ -293,15 +308,26 @@ export default function SaveModal({
                   `Failed to upload OG image for ${fragment.id}: ${errorMsg}`
                 );
               }
+              completedUploadBytes += imageBytes;
+              const uploadProgress =
+                totalUploadBytes > 0
+                  ? (completedUploadBytes / totalUploadBytes) *
+                    PROGRESS_PHASES.UPLOADS
+                  : 0;
+              setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
+              setStageProgress((prev) => ({ ...prev, isUploading: false }));
             }
-
-            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedSteps++;
-            setProgress((completedSteps / totalSteps) * 80);
           }
         }
 
-        // Handle panes
+        if (totalUploadBytes > 0) {
+          setProgress(PROGRESS_PHASES.PREPARATION + PROGRESS_PHASES.UPLOADS);
+        }
+
+        const totalProcessingSteps =
+          dirtyPanes.length + dirtyStoryFragments.length;
+        let completedProcessingSteps = 0;
+
         if (dirtyPanes.length > 0) {
           setStage('SAVING_PANES');
           setStageProgress({
@@ -318,7 +344,6 @@ export default function SaveModal({
                 isContext
               );
 
-              // This ensures css generation in the next phase uses fresh values
               payload.optionsPayload.nodes.forEach((transformedNode) => {
                 const liveNode = ctx.allNodes.get().get(transformedNode.id);
                 if (!liveNode) return;
@@ -326,7 +351,6 @@ export default function SaveModal({
                 let needsUpdate = false;
                 let updatedNode: BaseNode = { ...liveNode };
 
-                // Update elementCss for TagElement nodes (FlatNode)
                 if (
                   transformedNode.nodeType === 'TagElement' &&
                   transformedNode.elementCss
@@ -339,7 +363,6 @@ export default function SaveModal({
                   }
                 }
 
-                // Update parentCss for Markdown nodes (MarkdownPaneFragmentNode)
                 if (
                   transformedNode.nodeType === 'Markdown' &&
                   transformedNode.parentCss
@@ -362,13 +385,11 @@ export default function SaveModal({
                   }
                 }
 
-                // Only update the live node if there are actual changes
                 if (needsUpdate) {
                   ctx.allNodes.get().set(transformedNode.id, updatedNode);
                 }
               });
 
-              // Check if this pane exists or is new
               const paneExistsInBackend = contentMap.some(
                 (item) => item.type === 'Pane' && item.id === paneNode.id
               );
@@ -379,7 +400,9 @@ export default function SaveModal({
               const method = isCreatePaneMode ? 'POST' : 'PUT';
 
               addDebugMessage(
-                `Processing pane ${i + 1}/${dirtyPanes.length}: ${paneNode.id} -> ${method} ${endpoint}`
+                `Processing pane ${i + 1}/${
+                  dirtyPanes.length
+                }: ${paneNode.id} -> ${method} ${endpoint}`
               );
 
               const response = await fetch(endpoint, {
@@ -396,7 +419,6 @@ export default function SaveModal({
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
 
-              //const result =
               await response.json();
               addDebugMessage(`Pane ${paneNode.id} saved successfully`);
             } catch (etlError) {
@@ -409,12 +431,18 @@ export default function SaveModal({
             }
 
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedSteps++;
-            setProgress((completedSteps / totalSteps) * 80);
+            completedProcessingSteps++;
+            const processingProgress =
+              (completedProcessingSteps / totalProcessingSteps) *
+              PROGRESS_PHASES.PROCESSING;
+            setProgress(
+              PROGRESS_PHASES.PREPARATION +
+                PROGRESS_PHASES.UPLOADS +
+                processingProgress
+            );
           }
         }
 
-        // Handle story fragments
         if (!isContext && dirtyStoryFragments.length > 0) {
           setStage('SAVING_STORY_FRAGMENTS');
           setStageProgress({
@@ -431,7 +459,6 @@ export default function SaveModal({
                 window.TRACTSTACK_CONFIG?.tenantId || 'default'
               );
 
-              // If we uploaded an OG image for this fragment, use that path
               if (uploadedOGPaths[fragment.id]) {
                 payload.socialImagePath = uploadedOGPaths[fragment.id];
               }
@@ -442,7 +469,9 @@ export default function SaveModal({
               const method = isCreateMode ? 'POST' : 'PUT';
 
               addDebugMessage(
-                `Processing story fragment ${i + 1}/${dirtyStoryFragments.length}: ${fragment.id} -> ${method} ${endpoint}`
+                `Processing story fragment ${i + 1}/${
+                  dirtyStoryFragments.length
+                }: ${fragment.id} -> ${method} ${endpoint}`
               );
 
               const response = await fetch(endpoint, {
@@ -459,13 +488,11 @@ export default function SaveModal({
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
 
-              //const result =
               await response.json();
               addDebugMessage(
                 `StoryFragment ${fragment.id} saved successfully`
               );
 
-              // Clear pending image operation after successful save
               if (uploadedOGPaths[fragment.id]) {
                 clearPendingImageOperation(fragment.id);
                 addDebugMessage(
@@ -484,17 +511,28 @@ export default function SaveModal({
             }
 
             setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedSteps++;
-            setProgress((completedSteps / totalSteps) * 80);
+            completedProcessingSteps++;
+            const processingProgress =
+              (completedProcessingSteps / totalProcessingSteps) *
+              PROGRESS_PHASES.PROCESSING;
+            setProgress(
+              PROGRESS_PHASES.PREPARATION +
+                PROGRESS_PHASES.UPLOADS +
+                processingProgress
+            );
           }
         }
 
-        // PHASE 3: Link file-pane relationships
+        const baseFinalizationProgress =
+          PROGRESS_PHASES.PREPARATION +
+          PROGRESS_PHASES.UPLOADS +
+          PROGRESS_PHASES.PROCESSING;
+
         if (dirtyPanes.length > 0) {
           setStage('LINKING_FILES');
+          setProgress(baseFinalizationProgress);
           addDebugMessage('Starting file-pane relationship linking...');
 
-          // Extract pane<>file relationships from saved panes
           const relationships = [];
           for (const paneNode of dirtyPanes) {
             const fileIds = ctx.getPaneImageFileIds(paneNode.id);
@@ -542,21 +580,18 @@ export default function SaveModal({
           } else {
             addDebugMessage('No file relationships to link');
           }
-
-          completedSteps++;
-          setProgress((completedSteps / totalSteps) * 90);
         }
 
-        // PHASE 4: Styles processing (2-step process)
         setStage('PROCESSING_STYLES');
-        setProgress(95);
+        setProgress(
+          baseFinalizationProgress + PROGRESS_PHASES.FINALIZATION / 2
+        );
         addDebugMessage(`Processing styles...`);
 
         try {
           const { dirtyPaneIds, classes: dirtyClasses } =
             ctx.getDirtyNodesClassData();
 
-          // STEP 1: Generate CSS using Astro API
           const astroEndpoint = `/api/tailwind`;
           const astroPayload = { dirtyPaneIds, dirtyClasses };
           const astroResponse = await fetch(astroEndpoint, {
@@ -585,7 +620,6 @@ export default function SaveModal({
             `CSS generated: ${astroResult.generatedCss.length} bytes for ${dirtyClasses.length} classes`
           );
 
-          // STEP 2: Save CSS to Go backend
           const goEndpoint = `${goBackend}/api/v1/tailwind/update`;
           const goPayload = { frontendCss: astroResult.generatedCss };
           const goResponse = await fetch(goEndpoint, {
@@ -613,14 +647,14 @@ export default function SaveModal({
           throw new Error(`Failed to process styles: ${errorMsg}`);
         }
 
-        // Check if we need to update home page
         if (pendingHomePageSlug) {
           setStage('UPDATING_HOME_PAGE');
-          setProgress(98);
+          setProgress(
+            baseFinalizationProgress + (PROGRESS_PHASES.FINALIZATION - 2)
+          );
           addDebugMessage(`Updating home page to: ${pendingHomePageSlug}`);
 
           try {
-            // First get current brand config
             const response = await fetch(`${goBackend}/api/v1/config/brand`, {
               method: 'GET',
               headers: {
@@ -638,7 +672,6 @@ export default function SaveModal({
 
             const currentBrandConfig = await response.json();
 
-            // Update HOME_SLUG
             const updatedBrandConfig = {
               ...currentBrandConfig,
               HOME_SLUG: pendingHomePageSlug,
@@ -663,7 +696,6 @@ export default function SaveModal({
               );
             }
 
-            // Clear the pending operation
             pendingHomePageSlugStore.set(null);
             addDebugMessage('Home page updated successfully');
           } catch (error) {
@@ -674,7 +706,6 @@ export default function SaveModal({
           }
         }
 
-        // Success!
         setStage('COMPLETED');
         setProgress(100);
         addDebugMessage('Save process completed successfully!');
@@ -695,10 +726,18 @@ export default function SaveModal({
   }, [show, slug, isContext, isCreateMode, goBackend, tenantId]);
 
   const getStageDescription = () => {
-    const getProgressText = () =>
-      stageProgress.totalSteps > 0
-        ? ` (${stageProgress.currentStep}/${stageProgress.totalSteps})`
-        : '';
+    const { currentStep, totalSteps, currentFileName, isUploading } =
+      stageProgress;
+
+    const getProgressText = () => {
+      if (currentFileName && isUploading) {
+        return ` - Uploading ${currentFileName}...`;
+      }
+      if (currentFileName && !isUploading) {
+        return ` - Completed ${currentFileName}`;
+      }
+      return totalSteps > 0 ? ` (${currentStep}/${totalSteps})` : '';
+    };
 
     const modeText = isContext ? 'Context Pane' : 'Story Fragment';
     const actionText = isCreateMode ? 'Creating' : 'Updating';
@@ -707,9 +746,9 @@ export default function SaveModal({
       case 'PREPARING':
         return `Preparing ${actionText.toLowerCase()} ${modeText.toLowerCase()}...`;
       case 'SAVING_PENDING_FILES':
-        return `Uploading files...${getProgressText()}`;
+        return `Uploading files${getProgressText()}`;
       case 'PROCESSING_OG_IMAGES':
-        return `Processing OG images...${getProgressText()}`;
+        return `Processing social images${getProgressText()}`;
       case 'SAVING_PANES':
         return `${actionText} pane content...${getProgressText()}`;
       case 'SAVING_STORY_FRAGMENTS':
@@ -742,19 +781,15 @@ export default function SaveModal({
 
       if (isCreateMode) {
         let actualSlug: string;
+        const ctx = getCtx();
+        const allDirtyNodes = ctx.getDirtyNodes();
 
         if (isContext) {
-          // For context mode, get slug from the saved pane
-          const ctx = getCtx();
-          const allDirtyNodes = ctx.getDirtyNodes();
           const dirtyPanes = allDirtyNodes.filter(
             (node): node is PaneNode => node.nodeType === 'Pane'
           );
           actualSlug = dirtyPanes[0].slug;
         } else {
-          // For storyfragment mode, get slug from the saved storyfragment
-          const ctx = getCtx();
-          const allDirtyNodes = ctx.getDirtyNodes();
           const dirtyStoryFragments = allDirtyNodes.filter(
             (node): node is StoryFragmentNode =>
               node.nodeType === 'StoryFragment'
@@ -833,7 +868,11 @@ export default function SaveModal({
             <div className="p-6">
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm text-gray-700">
+                  <span
+                    className={`text-sm text-gray-700 ${
+                      stageProgress.isUploading ? 'animate-pulse' : ''
+                    }`}
+                  >
                     {getStageDescription()}
                   </span>
                   {stage !== 'ERROR' && (

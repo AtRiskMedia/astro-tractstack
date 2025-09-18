@@ -173,10 +173,12 @@ const PanelSwitch = ({
     case 'style-link-remove':
     case 'style-link-remove-hover':
       if (clickedNode && signal.className)
-        <StyleLinkRemovePanel
-          node={clickedNode}
-          className={signal.className}
-        />;
+        return (
+          <StyleLinkRemovePanel
+            node={clickedNode}
+            className={signal.className}
+          />
+        );
       break;
 
     case 'style-link-config':
@@ -317,12 +319,12 @@ const PanelSwitch = ({
     case 'style-code-add':
     case 'style-code-container-add':
     case 'style-code-outer-add':
-      if (clickedNode && markdownNode && signal.childId)
+      if (clickedNode && markdownNode)
         return (
           <StyleWidgetAddPanel
             node={clickedNode}
             parentNode={markdownNode}
-            childId={signal.childId}
+            childId={signal?.childId}
           />
         );
       break;

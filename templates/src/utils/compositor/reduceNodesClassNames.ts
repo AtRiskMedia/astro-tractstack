@@ -85,6 +85,10 @@ const reduceClassName = (
   if (useKeyAsClass && typeof v === 'string')
     return `${modifier}${applyPrefix(v)}`;
   if (typeof v === 'string' || typeof v === 'number') {
+    // Add check for empty string
+    if (typeof v === 'string' && v.trim() === '') {
+      return '';
+    }
     if (typeof v === 'string' && v.startsWith('-')) {
       return `${modifier}-${applyPrefix(`${thisSelector}${v}`)}`;
     }

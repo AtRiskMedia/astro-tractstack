@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Combobox } from '@ark-ui/react';
+import { useState, useCallback, useMemo, useRef } from 'react';
+import { Combobox, Portal } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
@@ -7,6 +7,7 @@ import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import { useDropdownDirection } from '@/utils/helpers';
 import type { BasePanelProps, FlatNode } from '@/types/compositorTypes';
 
 // Recommended styles for list items
@@ -66,17 +67,17 @@ const StyleLiElementAddPanel = ({
   const [query, setQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+  const { openAbove } = useDropdownDirection(comboboxRef);
 
   if (!node?.tagName || !parentNode || !isMarkdownPaneFragmentNode(parentNode))
     return null;
 
-  // Determine if we're styling a container or list item
   const isContainer = node.tagName === 'ul' || node.tagName === 'ol';
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();
 
-  // Get the correct node based on what we're styling
   const targetNodeId = isContainer ? node.id : childId || node.id;
   const targetNode = allNodes.get(targetNodeId) as FlatNode;
 
@@ -84,7 +85,6 @@ const StyleLiElementAddPanel = ({
 
   const currentClasses = new Set<string>();
 
-  // Get existing classes from default classes in parent
   if (parentNode.defaultClasses?.[targetNode.tagName]) {
     const defaults = parentNode.defaultClasses[targetNode.tagName];
     Object.keys(defaults.mobile).forEach((key) => currentClasses.add(key));
@@ -94,7 +94,6 @@ const StyleLiElementAddPanel = ({
       Object.keys(defaults.desktop).forEach((key) => currentClasses.add(key));
   }
 
-  // Get existing classes from override classes in node
   if (targetNode.overrideClasses) {
     Object.values(targetNode.overrideClasses).forEach((viewportClasses) => {
       Object.keys(viewportClasses).forEach((key) => currentClasses.add(key));
@@ -103,7 +102,6 @@ const StyleLiElementAddPanel = ({
 
   const styles = getFilteredStyles(showAdvanced, currentClasses);
 
-  // Create collection for combobox
   const collection = useMemo(() => {
     const filteredStyles =
       query === ''
@@ -121,7 +119,6 @@ const StyleLiElementAddPanel = ({
     });
   }, [styles, query]);
 
-  // Get appropriate recommended styles based on element type
   const recommendedStyles = isContainer
     ? LIST_CONTAINER_STYLES
     : LIST_ITEM_STYLES;
@@ -179,7 +176,6 @@ const StyleLiElementAddPanel = ({
     });
   };
 
-  // CSS to properly style the combobox items with hover and selection
   const comboboxItemStyles = `
     .style-item[data-highlighted] {
       background-color: #0891b2; /* bg-cyan-600 */
@@ -235,46 +231,57 @@ const StyleLiElementAddPanel = ({
           loopFocus={true}
           openOnKeyPress={true}
           composite={true}
+          positioning={{
+            placement: openAbove ? 'top' : 'bottom',
+            gutter: 4,
+            sameWidth: true,
+          }}
         >
-          <div className="relative">
-            <Combobox.Input
-              className="border-mydarkgrey focus:border-myblue focus:ring-myblue w-full rounded-md py-2 pl-3 pr-10 text-xl shadow-sm"
-              placeholder="Search styles..."
-              autoComplete="off"
-            />
-            <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon
-                className="text-mydarkgrey h-5 w-5"
-                aria-hidden="true"
+          <Combobox.Control ref={comboboxRef}>
+            <div className="relative">
+              <Combobox.Input
+                className="border-mydarkgrey focus:border-myblue focus:ring-myblue w-full rounded-md py-2 pl-3 pr-10 text-xl shadow-sm"
+                placeholder="Search styles..."
+                autoComplete="off"
               />
-            </Combobox.Trigger>
-          </div>
+              <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon
+                  className="text-mydarkgrey h-5 w-5"
+                  aria-hidden="true"
+                />
+              </Combobox.Trigger>
+            </div>
+          </Combobox.Control>
 
-          <Combobox.Content className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-            {collection.items.length === 0 ? (
-              <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
-                Nothing found.
-              </div>
-            ) : (
-              collection.items.map((item) => (
-                <Combobox.Item
-                  key={item.key}
-                  item={item}
-                  className="style-item relative cursor-default select-none py-2 pl-10 pr-4"
-                >
-                  <span className="block truncate">
-                    {item.title}
-                    <span className="ml-2 text-sm opacity-60">
-                      {item.className}
-                    </span>
-                  </span>
-                  <span className="style-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
-                    <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </Combobox.Item>
-              ))
-            )}
-          </Combobox.Content>
+          <Portal>
+            <Combobox.Positioner style={{ zIndex: 1002 }}>
+              <Combobox.Content className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                {collection.items.length === 0 ? (
+                  <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                    Nothing found.
+                  </div>
+                ) : (
+                  collection.items.map((item) => (
+                    <Combobox.Item
+                      key={item.key}
+                      item={item}
+                      className="style-item relative cursor-default select-none py-2 pl-10 pr-4"
+                    >
+                      <span className="block truncate">
+                        {item.title}
+                        <span className="ml-2 text-sm opacity-60">
+                          {item.className}
+                        </span>
+                      </span>
+                      <span className="style-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
+                        <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                    </Combobox.Item>
+                  ))
+                )}
+              </Combobox.Content>
+            </Combobox.Positioner>
+          </Portal>
         </Combobox.Root>
       </div>
 

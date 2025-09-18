@@ -44,6 +44,11 @@ function setupPaneObserver() {
         if (targetElement) {
           currentObserver = new IntersectionObserver(
             ([entry]) => {
+              const signal = settingsPanelStore.get();
+              const now = Date.now();
+              if (signal?.editLock && now - signal.editLock < 100) {
+                return;
+              }
               if (!entry.isIntersecting) {
                 settingsPanelStore.set(null);
               }
