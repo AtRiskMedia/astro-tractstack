@@ -906,7 +906,23 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/components/Fragment.astro'),
       dest: 'src/components/Fragment.astro',
     },
-
+    // Search Components
+    {
+      src: resolve('../templates/src/components/search/SearchWrapper.tsx'),
+      dest: 'src/components/search/SearchWrapper.tsx',
+    },
+    {
+      src: resolve('../templates/src/components/search/SearchModal.tsx'),
+      dest: 'src/components/search/SearchModal.tsx',
+    },
+    {
+      src: resolve('../templates/src/components/search/SearchResults.tsx'),
+      dest: 'src/components/search/SearchResults.tsx',
+    },
+    {
+      src: resolve('../templates/src/hooks/useSearch.ts'),
+      dest: 'src/hooks/useSearch.ts',
+    },
     // Profile Components
     {
       src: resolve('../templates/src/components/profile/ProfileConsent.tsx'),
@@ -2056,6 +2072,11 @@ export async function injectTemplateFiles(
           : '../templates/custom/minimal/CustomRoutes.astro'
       ),
       dest: 'src/custom/CustomRoutes.astro',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/src/utils/customHelpers.ts'),
+      dest: 'src/utils/customHelpers.ts',
       protected: true,
     },
 

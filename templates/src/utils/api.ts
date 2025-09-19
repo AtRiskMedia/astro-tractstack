@@ -73,6 +73,11 @@ export class TractStackAPI {
     const defaultHeaders = {
       'Content-Type': 'application/json',
       'X-Tenant-ID': this.tenantId,
+      ...(typeof window !== 'undefined' &&
+        (window as any).TRACTSTACK_CONFIG?.sessionId && {
+          'X-TractStack-Session-ID': (window as any).TRACTSTACK_CONFIG
+            .sessionId,
+        }),
     };
 
     try {
@@ -131,6 +136,16 @@ export class TractStackAPI {
       ...event,
       timestamp: event.timestamp || Date.now(),
     });
+  }
+
+  async search(query: string): Promise<
+    APIResponse<{
+      storyFragmentIds: string[];
+      contextPaneIds: string[];
+      resourceIds: string[];
+    }>
+  > {
+    return this.post('/api/v1/nodes/panes/search', { query });
   }
 
   async getContent(slug: string): Promise<APIResponse> {

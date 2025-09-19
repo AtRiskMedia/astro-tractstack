@@ -1,5 +1,7 @@
 ---
 import Menu from './Menu';
+import SearchWrapper from '@/components/search/SearchWrapper';
+import { getFullContentMap } from '@/stores/analytics';
 import { isAuthenticated, isAdmin, getUserRole } from '@/utils/auth';
 import ImpressionWrapper from '@/components/widgets/ImpressionWrapper';
 import type { MenuNode } from '@/types/tractstack';
@@ -33,6 +35,10 @@ const {
 
 const isHome = slug === brandConfig?.HOME_SLUG;
 
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+const fullContentMap = await getFullContentMap(tenantId);
+
 const getAssetPath = (configPath: string, fallback: string) => {
   // Always prioritize brandConfig values when they exist
   if (configPath && configPath !== '') {
@@ -40,11 +46,8 @@ const getAssetPath = (configPath: string, fallback: string) => {
   }
   return fallback;
 };
-
 const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
 const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
-
-// Handle empty WORDMARK_MODE by defaulting to "default"
 const wordmarkMode =
   brandConfig?.WORDMARK_MODE && brandConfig.WORDMARK_MODE !== ''
     ? brandConfig.WORDMARK_MODE
@@ -108,7 +111,6 @@ const authStatus = {
   >
     <h1 class="text-mydarkgrey truncate text-xl">{title}</h1>
     <div class="flex flex-row flex-nowrap items-center gap-x-2">
-      {/* Home Icon */}
       {
         !isHome ? (
           <a
@@ -133,7 +135,6 @@ const authStatus = {
         ) : null
       }
 
-      {/* StoryKeep Dashboard Icon */}
       {
         authStatus.isAdmin || authStatus.isAuthenticated ? (
           <a
@@ -158,7 +159,6 @@ const authStatus = {
         ) : null
       }
 
-      {/* Edit Icon */}
       {
         isEditable &&
         (authStatus.isAdmin || authStatus.userRole === 'editor') ? (
@@ -185,7 +185,8 @@ const authStatus = {
         ) : null
       }
 
-      {/* Remember Me Icon */}
+      <SearchWrapper contentMap={fullContentMap} client:load />
+
       <script is:inline define:vars={{ sessionId }}>
         function initRememberMe() {
           const consent = localStorage.getItem('tractstack_consent') === '1';
@@ -247,7 +248,6 @@ const authStatus = {
         ) : null
       }
 
-      {/* Logout Icon - Admin/Editor Only */}
       {
         authStatus.isAdmin || authStatus.userRole === 'editor' ? (
           <a
