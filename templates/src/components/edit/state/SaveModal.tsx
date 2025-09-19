@@ -73,7 +73,6 @@ export default function SaveModal({
   const isSaving = useRef(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const isCreateMode = slug === 'create';
-  const contentMap = fullContentMapStore.get();
   const pendingHomePageSlug = pendingHomePageSlugStore.get();
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
@@ -334,113 +333,108 @@ export default function SaveModal({
             currentStep: 0,
             totalSteps: dirtyPanes.length,
           });
-          for (let i = 0; i < dirtyPanes.length; i++) {
-            const paneNode = dirtyPanes[i];
 
-            try {
-              const payload = transformLivePaneForSave(
-                ctx,
-                paneNode.id,
-                isContext
-              );
+          const bulkPayload = dirtyPanes.map((paneNode) =>
+            transformLivePaneForSave(ctx, paneNode.id, isContext)
+          );
 
-              payload.optionsPayload.nodes.forEach((transformedNode) => {
-                const liveNode = ctx.allNodes.get().get(transformedNode.id);
-                if (!liveNode) return;
+          bulkPayload.forEach((payload) => {
+            payload.optionsPayload.nodes.forEach((transformedNode) => {
+              const liveNode = ctx.allNodes.get().get(transformedNode.id);
+              if (!liveNode) return;
 
-                let needsUpdate = false;
-                let updatedNode: BaseNode = { ...liveNode };
+              let needsUpdate = false;
+              let updatedNode: BaseNode = { ...liveNode };
 
-                if (
-                  transformedNode.nodeType === 'TagElement' &&
-                  transformedNode.elementCss
-                ) {
-                  const flatNode = liveNode as FlatNode;
-                  if (flatNode.elementCss !== transformedNode.elementCss) {
-                    (updatedNode as FlatNode).elementCss =
-                      transformedNode.elementCss;
-                    needsUpdate = true;
-                  }
+              if (
+                transformedNode.nodeType === 'TagElement' &&
+                transformedNode.elementCss
+              ) {
+                const flatNode = liveNode as FlatNode;
+                if (flatNode.elementCss !== transformedNode.elementCss) {
+                  (updatedNode as FlatNode).elementCss =
+                    transformedNode.elementCss;
+                  needsUpdate = true;
                 }
-
-                if (
-                  transformedNode.nodeType === 'Markdown' &&
-                  transformedNode.parentCss
-                ) {
-                  const markdownNode = liveNode as MarkdownPaneFragmentNode;
-                  const currentParentCss = markdownNode.parentCss;
-                  const newParentCss = transformedNode.parentCss as string[];
-
-                  const isDifferent =
-                    !currentParentCss ||
-                    currentParentCss.length !== newParentCss.length ||
-                    currentParentCss.some(
-                      (css, index) => css !== newParentCss[index]
-                    );
-
-                  if (isDifferent) {
-                    (updatedNode as MarkdownPaneFragmentNode).parentCss =
-                      newParentCss;
-                    needsUpdate = true;
-                  }
-                }
-
-                if (needsUpdate) {
-                  ctx.allNodes.get().set(transformedNode.id, updatedNode);
-                }
-              });
-
-              const paneExistsInBackend = contentMap.some(
-                (item) => item.type === 'Pane' && item.id === paneNode.id
-              );
-              const isCreatePaneMode = !paneExistsInBackend;
-              const endpoint = isCreatePaneMode
-                ? `${goBackend}/api/v1/nodes/panes/create`
-                : `${goBackend}/api/v1/nodes/panes/${payload.id}`;
-              const method = isCreatePaneMode ? 'POST' : 'PUT';
-
-              addDebugMessage(
-                `Processing pane ${i + 1}/${
-                  dirtyPanes.length
-                }: ${paneNode.id} -> ${method} ${endpoint}`
-              );
-
-              const response = await fetch(endpoint, {
-                method,
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Tenant-ID': tenantId,
-                },
-                credentials: 'include',
-                body: JSON.stringify(payload),
-              });
-
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
               }
 
-              await response.json();
-              addDebugMessage(`Pane ${paneNode.id} saved successfully`);
-            } catch (etlError) {
-              const errorMsg =
-                etlError instanceof Error ? etlError.message : 'Unknown error';
-              addDebugMessage(`Pane ${paneNode.id} ETL failed: ${errorMsg}`);
+              if (
+                transformedNode.nodeType === 'Markdown' &&
+                transformedNode.parentCss
+              ) {
+                const markdownNode = liveNode as MarkdownPaneFragmentNode;
+                const currentParentCss = markdownNode.parentCss;
+                const newParentCss = transformedNode.parentCss as string[];
+
+                const isDifferent =
+                  !currentParentCss ||
+                  currentParentCss.length !== newParentCss.length ||
+                  currentParentCss.some(
+                    (css, index) => css !== newParentCss[index]
+                  );
+
+                if (isDifferent) {
+                  (updatedNode as MarkdownPaneFragmentNode).parentCss =
+                    newParentCss;
+                  needsUpdate = true;
+                }
+              }
+
+              if (needsUpdate) {
+                ctx.allNodes.get().set(transformedNode.id, updatedNode);
+              }
+            });
+          });
+
+          const endpoint = `${goBackend}/api/v1/nodes/panes/bulk`;
+          addDebugMessage(
+            `Processing ${dirtyPanes.length} panes via -> POST ${endpoint}`
+          );
+
+          try {
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+              body: JSON.stringify({ panes: bulkPayload }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
               throw new Error(
-                `Failed to save pane ${paneNode.id}: ${errorMsg}`
+                `HTTP error! status: ${response.status} - ${errorText}`
               );
             }
 
-            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedProcessingSteps++;
-            const processingProgress =
-              (completedProcessingSteps / totalProcessingSteps) *
-              PROGRESS_PHASES.PROCESSING;
-            setProgress(
-              PROGRESS_PHASES.PREPARATION +
-                PROGRESS_PHASES.UPLOADS +
-                processingProgress
+            await response.json();
+            addDebugMessage(
+              `${dirtyPanes.length} panes saved successfully via bulk endpoint.`
             );
+          } catch (bulkError) {
+            const errorMsg =
+              bulkError instanceof Error
+                ? bulkError.message
+                : 'Unknown bulk save error';
+            addDebugMessage(`Bulk pane save failed: ${errorMsg}`);
+            throw new Error(`Failed to save panes in bulk: ${errorMsg}`);
           }
+
+          setStageProgress({
+            currentStep: dirtyPanes.length,
+            totalSteps: dirtyPanes.length,
+          });
+          completedProcessingSteps += dirtyPanes.length;
+          const processingProgress =
+            (completedProcessingSteps / totalProcessingSteps) *
+            PROGRESS_PHASES.PROCESSING;
+          setProgress(
+            PROGRESS_PHASES.PREPARATION +
+              PROGRESS_PHASES.UPLOADS +
+              processingProgress
+          );
         }
 
         if (!isContext && dirtyStoryFragments.length > 0) {

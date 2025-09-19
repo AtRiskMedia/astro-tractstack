@@ -9,10 +9,13 @@ import {
   isContextPaneNode,
   hasBeliefPayload,
 } from '@/utils/compositor/typeGuards';
-import { settingsPanelStore, viewportKeyStore } from '@/stores/storykeep';
+import {
+  settingsPanelStore,
+  viewportKeyStore,
+  fullContentMapStore,
+} from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import PaneTitlePanel from './PanePanel_title';
-import PaneSlugPanel from './PanePanel_slug';
 import PaneMagicPathPanel from './PanePanel_path';
 import PaneImpressionPanel from './PanePanel_impression';
 import { PaneConfigMode, type PaneNode } from '@/types/compositorTypes';
@@ -30,7 +33,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
   const reorderMode = toolMode.value === `move`;
   const isActiveMode =
     activePaneMode.panel === 'settings' && activePaneMode.paneId === nodeId;
-
+  const $contentMap = useStore(fullContentMapStore);
   const $viewportKey = useStore(viewportKeyStore);
   const isMobile = $viewportKey.value === `mobile`;
 
@@ -104,8 +107,6 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
 
   if (mode === PaneConfigMode.TITLE) {
     return <PaneTitlePanel nodeId={nodeId} setMode={setSaveMode} />;
-  } else if (mode === PaneConfigMode.SLUG) {
-    return <PaneSlugPanel nodeId={nodeId} setMode={setSaveMode} />;
   } else if (mode === PaneConfigMode.PATH) {
     return <PaneMagicPathPanel nodeId={nodeId} setMode={setSaveMode} />;
   } else if (mode === PaneConfigMode.IMPRESSION) {
@@ -137,28 +138,16 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
               <>
                 {!isTemplate && (
                   <>
-                    <button
-                      onClick={() => setSaveMode(PaneConfigMode.TITLE)}
-                      className={buttonClass}
-                    >
-                      Pane Title
-                      {!isMobile && (
-                        <>
-                          : <strong>{paneNode.title}</strong>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setSaveMode(PaneConfigMode.SLUG)}
-                      className={buttonClass}
-                    >
-                      Slug
-                      {!isMobile && (
-                        <>
-                          : <strong>{paneNode.slug}</strong>
-                        </>
-                      )}
-                    </button>
+                    {$contentMap.some(
+                      (item) => item.type === 'Pane' && item.id === nodeId
+                    ) && (
+                      <button
+                        onClick={() => setSaveMode(PaneConfigMode.TITLE)}
+                        className={buttonClass}
+                      >
+                        ID
+                      </button>
+                    )}
                     <button
                       onClick={() => setSaveMode(PaneConfigMode.IMPRESSION)}
                       className={buttonClass}

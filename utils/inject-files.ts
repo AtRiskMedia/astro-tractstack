@@ -480,10 +480,6 @@ export async function injectTemplateFiles(
       dest: 'src/components/edit/pane/PanePanel_path.tsx',
     },
     {
-      src: resolve('../templates/src/components/edit/pane/PanePanel_slug.tsx'),
-      dest: 'src/components/edit/pane/PanePanel_slug.tsx',
-    },
-    {
       src: resolve('../templates/src/components/edit/pane/PanePanel_title.tsx'),
       dest: 'src/components/edit/pane/PanePanel_title.tsx',
     },
