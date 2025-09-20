@@ -21,3 +21,9 @@ export function getResourceImage(
   console.log(`please define getResourceImage`, id, slug, category);
   return '/static.jpg';
 }
+
+// Initialize search data - override in custom implementation
+export function initSearch(): void {
+  // Default implementation does nothing
+  // Override this function in your custom implementation to load search data
+}

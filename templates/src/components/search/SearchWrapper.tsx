@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { initSearch } from '@/utils/customHelpers';
 import SearchModal from './SearchModal';
 import type { FullContentMapItem } from '@/types/tractstack';
 
@@ -17,6 +18,10 @@ export default function SearchWrapper({ contentMap }: SearchWrapperProps) {
   const handleSearchClose = () => {
     setIsSearchOpen(false);
   };
+
+  useEffect(() => {
+    initSearch();
+  }, []);
 
   return (
     <>
