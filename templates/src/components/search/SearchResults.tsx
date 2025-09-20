@@ -105,7 +105,7 @@ export default function SearchResults({
       if (!aHasRealImage && bHasRealImage) return 1;
       return 0;
     });
-  }, [results, contentMap]);
+  }, [results]);
 
   const totalPages = Math.ceil(allResultItems.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -170,13 +170,13 @@ export default function SearchResults({
             <a href={item.url} onClick={onResultClick} className="group block">
               <div className="flex items-start gap-4">
                 <div
-                  className="flex-shrink-0 overflow-hidden rounded-lg bg-gray-100"
+                  className="bg-mydarkgrey flex-shrink-0 overflow-hidden rounded-lg"
                   style={{ width: '120px', height: '67.5px' }}
                 >
                   <img
                     src={item.imageSrc}
                     alt={item.title}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                     style={{ width: '100%', height: '100%' }}
                   />
                 </div>
