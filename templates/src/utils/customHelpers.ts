@@ -22,6 +22,15 @@ export function getResourceImage(
   return '/static.jpg';
 }
 
+export function getResourceDescription(
+  id: string,
+  slug: string,
+  category: string
+): string | null {
+  console.log(`please define getResourceDescription`, id, slug, category);
+  return null;
+}
+
 // Initialize search data - override in custom implementation
 export function initSearch(): void {
   // Default implementation does nothing

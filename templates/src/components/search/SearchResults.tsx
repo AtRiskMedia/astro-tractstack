@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Pagination } from '@ark-ui/react/pagination';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import type { SearchResults as SearchResultsType } from '@/hooks/useSearch';
 import type { FullContentMapItem } from '@/types/tractstack';
-import { getResourceUrl, getResourceImage } from '@/utils/customHelpers';
+import {
+  getResourceUrl,
+  getResourceImage,
+  getResourceDescription,
+} from '@/utils/customHelpers';
 
 interface SearchResultsProps {
   results: SearchResultsType;
@@ -84,12 +87,18 @@ export default function SearchResults({
           item.slug,
           item.categorySlug || ''
         );
+        const description = getResourceDescription(
+          item.id,
+          item.slug,
+          item.categorySlug || ''
+        );
 
         items.push({
           id: item.id,
           type: 'Resource',
           title: item.title,
           slug: item.slug,
+          description: description || undefined,
           categorySlug: item.categorySlug || undefined,
           url: resourceUrl,
           imageSrc: resourceImage,
@@ -114,8 +123,8 @@ export default function SearchResults({
     startIndex + ITEMS_PER_PAGE
   );
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handlePageChange = (details: { page: number }) => {
+    setCurrentPage(details.page);
   };
 
   const getResultBadge = (type: string, categorySlug?: string) => {
@@ -170,14 +179,32 @@ export default function SearchResults({
             <a href={item.url} onClick={onResultClick} className="group block">
               <div className="flex items-start gap-4">
                 <div
-                  className="bg-mydarkgrey hidden flex-shrink-0 overflow-hidden rounded-lg md:block"
-                  style={{ width: '120px', height: '67.5px' }}
+                  className="bg-mydarkgrey flex-shrink-0 overflow-hidden rounded-lg p-1 md:hidden"
+                  style={{
+                    width: '100px',
+                    height: '56px',
+                  }}
+                  data-mobile-size="100x56"
                 >
                   <img
                     src={item.imageSrc}
                     alt={item.title}
-                    className="h-full w-full object-contain"
-                    style={{ width: '100%', height: '100%' }}
+                    className="h-full w-full rounded object-contain"
+                  />
+                </div>
+
+                <div
+                  className="bg-mydarkgrey hidden flex-shrink-0 overflow-hidden rounded-lg p-1 md:block"
+                  style={{
+                    width: '240px',
+                    height: '135px',
+                  }}
+                  data-desktop-size="240x135"
+                >
+                  <img
+                    src={item.imageSrc}
+                    alt={item.title}
+                    className="h-full w-full rounded object-contain"
                   />
                 </div>
 
@@ -190,11 +217,13 @@ export default function SearchResults({
                         </h3>
                       </div>
 
-                      {item.type === 'StoryFragment' && item.description && (
-                        <p className="mb-2 line-clamp-2 text-sm text-gray-600">
-                          {item.description}
-                        </p>
-                      )}
+                      {(item.type === 'StoryFragment' ||
+                        item.type === 'Resource') &&
+                        item.description && (
+                          <p className="mb-2 line-clamp-2 text-sm text-gray-600">
+                            {item.description}
+                          </p>
+                        )}
 
                       {item.topics && item.topics.length > 0 && (
                         <div className="mb-2 flex flex-wrap gap-1">
@@ -217,6 +246,11 @@ export default function SearchResults({
                       <p className="truncate text-xs text-gray-500">
                         {item.url}
                       </p>
+
+                      {/* Mobile badge row */}
+                      <div className="mt-2 block md:hidden">
+                        {getResultBadge(item.type, item.categorySlug)}
+                      </div>
                     </div>
 
                     <div className="hidden flex-shrink-0 text-right md:block">
@@ -233,47 +267,42 @@ export default function SearchResults({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center space-x-1">
+        <div className="mt-8 flex justify-center">
           <Pagination.Root
             count={allResultItems.length}
             pageSize={ITEMS_PER_PAGE}
             page={currentPage}
-            onPageChange={(details) => handlePageChange(details.page)}
+            siblingCount={1}
+            onPageChange={handlePageChange}
+            className="flex flex-wrap items-center gap-2"
           >
-            <Pagination.PrevTrigger className="text-mydarkgrey flex items-center rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-              <ChevronLeftIcon className="mr-1 h-4 w-4" />
-              Previous
-            </Pagination.PrevTrigger>
-
             <Pagination.Context>
               {(pagination) =>
                 pagination.pages.map((page, index) =>
                   page.type === 'page' ? (
                     <Pagination.Item
                       key={index}
-                      value={page.value}
-                      type="page"
+                      {...page}
                       className={`cursor-pointer rounded-md px-3 py-2 text-sm ${
                         page.value === currentPage
-                          ? 'bg-myblue text-white'
-                          : 'text-mydarkgrey hover:bg-gray-50'
+                          ? 'bg-gray-900 text-white'
+                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       {page.value}
                     </Pagination.Item>
                   ) : (
-                    <span key={index} className="px-2 text-gray-400">
-                      ...
-                    </span>
+                    <Pagination.Ellipsis
+                      key={index}
+                      index={index}
+                      className="px-3 py-2 text-sm text-gray-500"
+                    >
+                      …
+                    </Pagination.Ellipsis>
                   )
                 )
               }
             </Pagination.Context>
-
-            <Pagination.NextTrigger className="text-mydarkgrey flex items-center rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-              Next
-              <ChevronRightIcon className="ml-1 h-4 w-4" />
-            </Pagination.NextTrigger>
           </Pagination.Root>
         </div>
       )}

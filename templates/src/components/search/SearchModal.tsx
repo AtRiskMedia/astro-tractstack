@@ -78,7 +78,7 @@ export default function SearchModal({
     >
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm" />
-        <Dialog.Positioner className="fixed inset-0 z-50 mx-auto max-w-3xl p-2 pt-16 md:p-4">
+        <Dialog.Positioner className="fixed inset-0 z-50 mx-auto max-w-5xl p-2 pt-16 md:p-4">
           <Dialog.Content
             className="bg-mywhite mx-auto w-full overflow-hidden rounded-lg shadow-2xl"
             style={{ height: '80vh' }}
