@@ -85,13 +85,12 @@ const defaultSocialDesc =
   description ||
   brandConfig.OGDESC ||
   `No-code website builder and content marketing platform`;
-const buildVersion = (() => {
-  if (modDatetime) return modDatetime.getTime();
-  if (pubDatetime) return pubDatetime.getTime();
-  return Date.now();
-})();
-const socialImageWithVersion = `${defaultSocialImageURL}?v=${buildVersion}`;
-const socialLogoWithVersion = `${defaultSocialLogoURL}?v=${buildVersion}`;
+const socialImageFullURL = brandConfig?.SITE_URL
+  ? `${brandConfig.SITE_URL.replace(/\/$/, '')}${defaultSocialImageURL}`
+  : `${defaultSocialImageURL}`;
+const socialLogoFullURL = brandConfig?.SITE_URL
+  ? `${brandConfig.SITE_URL.replace(/\/$/, '')}${defaultSocialLogoURL}`
+  : `${defaultSocialLogoURL}`;
 const gtagId = brandConfig?.GTAG || false;
 const gtagUrl =
   typeof gtagId === `string` && gtagId.length > 1
@@ -144,14 +143,14 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
     <meta property="og:type" content="website" />
     <meta property="og:description" content={defaultSocialDesc} />
     <meta property="og:url" content={fullCanonicalUrl} />
-    <meta property="og:image" content={socialImageWithVersion} />
-    <meta property="og:logo" content={socialLogoWithVersion} />
+    <meta property="og:image" content={socialImageFullURL} />
+    <meta property="og:logo" content={socialLogoFullURL} />
 
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={fullCanonicalUrl} />
     <meta property="twitter:title" content={defaultSocialTitle} />
     <meta property="twitter:description" content={defaultSocialDesc} />
-    <meta property="twitter:image" content={socialImageWithVersion} />
+    <meta property="twitter:image" content={socialImageFullURL} />
 
     {
       pubDatetime && (
