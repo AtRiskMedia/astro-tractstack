@@ -97,7 +97,14 @@ export default function SearchResults({
       }
     });
 
-    return items;
+    return items.sort((a, b) => {
+      const aHasRealImage = a.imageSrc !== '/static.jpg';
+      const bHasRealImage = b.imageSrc !== '/static.jpg';
+
+      if (aHasRealImage && !bHasRealImage) return -1;
+      if (!aHasRealImage && bHasRealImage) return 1;
+      return 0;
+    });
   }, [results, contentMap]);
 
   const totalPages = Math.ceil(allResultItems.length / ITEMS_PER_PAGE);

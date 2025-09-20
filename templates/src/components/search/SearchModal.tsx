@@ -74,7 +74,7 @@ export default function SearchModal({
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm" />
         <Dialog.Positioner className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16">
           <Dialog.Content
-            className="bg-mywhite w-full max-w-4xl overflow-hidden rounded-lg shadow-2xl"
+            className="bg-mywhite w-full max-w-5xl overflow-hidden rounded-lg shadow-2xl"
             style={{ height: '80vh', display: 'flex', flexDirection: 'column' }}
           >
             {/* Fixed Header */}
