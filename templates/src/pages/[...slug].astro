@@ -102,11 +102,17 @@ const brandConfig = await getBrandConfig(tenantId);
 if (!brandConfig.SITE_INIT) {
   return Astro.redirect('/storykeep');
 }
+
+const ogImage =
+  typeof storyData.socialImagePath === `string`
+    ? storyData.socialImagePath
+    : undefined;
 ---
 
 <Layout
   title={storyfragmentTitle}
   slug={lookup || brandConfig.HOME_SLUG}
+  ogImage={ogImage}
   menu={storyData.menu || null}
   created={storyData.created}
   isContext={false}

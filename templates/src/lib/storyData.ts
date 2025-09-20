@@ -13,6 +13,7 @@ export interface StoryData {
   menu: any;
   isHome: boolean;
   created: string;
+  socialImagePath?: string | null;
 }
 
 export async function getStoryData(
