@@ -150,7 +150,7 @@ export default function SearchResults({
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-mydarkgrey text-lg font-semibold">
+        <h2 className="text-mydarkgrey text-lg font-bold">
           {allResultItems.length} result{allResultItems.length !== 1 ? 's' : ''}{' '}
           found
         </h2>
@@ -165,12 +165,12 @@ export default function SearchResults({
         {paginatedItems.map((item) => (
           <div
             key={item.id}
-            className="hover:border-myblue rounded-lg border border-gray-200 p-4 transition-colors"
+            className="rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-100"
           >
             <a href={item.url} onClick={onResultClick} className="group block">
               <div className="flex items-start gap-4">
                 <div
-                  className="bg-mydarkgrey flex-shrink-0 overflow-hidden rounded-lg"
+                  className="bg-mydarkgrey hidden flex-shrink-0 overflow-hidden rounded-lg md:block"
                   style={{ width: '120px', height: '67.5px' }}
                 >
                   <img
@@ -185,7 +185,7 @@ export default function SearchResults({
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="mb-2">
-                        <h3 className="text-mydarkgrey group-hover:text-myblue line-clamp-2 font-semibold transition-colors">
+                        <h3 className="text-mydarkgrey group-hover:text-myblue line-clamp-2 font-bold transition-colors">
                           {item.title}
                         </h3>
                       </div>
@@ -219,7 +219,7 @@ export default function SearchResults({
                       </p>
                     </div>
 
-                    <div className="flex-shrink-0 text-right">
+                    <div className="hidden flex-shrink-0 text-right md:block">
                       <div className="mb-2">
                         {getResultBadge(item.type, item.categorySlug)}
                       </div>

@@ -153,7 +153,7 @@ const createdDate = created ? new Date(created) : new Date();
     <div
       class="text-myblue xs:flex-row my-2 flex flex-col items-center justify-center"
     >
-      <div class="px-12 text-center text-2xl">
+      <div class="px-4 text-center text-2xl md:px-12">
         Copyright &#169; {createdDate.getFullYear()}{
           createdDate.getFullYear() !== new Date().getFullYear()
             ? `-${new Date().getFullYear()}`
@@ -164,9 +164,9 @@ const createdDate = created ? new Date(created) : new Date();
       </div>
     </div>
     <div
-      class="text-myblue xs:flex-row my-2 flex flex-col items-center justify-center"
+      class="text-myblue my-2 flex flex-row items-center justify-center md:flex-col"
     >
-      <div class="px-12 text-center text-lg">
+      <div class="px-4 text-center text-lg md:px-12">
         pressed with
         <a
           href="https://tractstack.com/?utm_source=tractstack&utm_medium=www&utm_campaign=community"
