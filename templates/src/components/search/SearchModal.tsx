@@ -21,13 +21,26 @@ interface SearchModalProps {
   contentMap: FullContentMapItem[];
 }
 
+// --- CHANGE START ---
+// 1. Define a new type for the selected suggestions to include their type
+interface SelectedSuggestion {
+  term: string;
+  type: string;
+}
+// --- CHANGE END ---
+
 export default function SearchModal({
   isOpen,
   onClose,
   contentMap,
 }: SearchModalProps) {
   const [query, setQuery] = useState('');
-  const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
+  // --- CHANGE START ---
+  // 2. Update state to use the new type instead of just string[]
+  const [selectedSuggestions, setSelectedSuggestions] = useState<
+    SelectedSuggestion[]
+  >([]);
+  // --- CHANGE END ---
   const inputRef = useRef<HTMLInputElement>(null);
   const {
     suggestions,
@@ -51,13 +64,15 @@ export default function SearchModal({
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
-      setSelectedTerms([]);
+      // --- CHANGE START ---
+      // 3. Update cleanup logic to use the new state
+      setSelectedSuggestions([]);
+      // --- CHANGE END ---
       clearAll();
     }
   }, [isOpen, clearAll]);
 
   useEffect(() => {
-    // Only trigger discovery if query has 3+ characters
     if (query.trim().length >= 3) {
       discoverTerms(query);
     }
@@ -69,7 +84,10 @@ export default function SearchModal({
 
   const handleClose = () => {
     setQuery('');
-    setSelectedTerms([]);
+    // --- CHANGE START ---
+    // 4. Update cleanup logic to use the new state
+    setSelectedSuggestions([]);
+    // --- CHANGE END ---
     clearAll();
     onClose();
   };
@@ -78,25 +96,20 @@ export default function SearchModal({
     if (e.key === 'Escape') {
       handleClose();
     } else if (e.key === 'Enter' && query.trim()) {
-      // Only proceed if we have suggestions or query is 3+ chars
       if (query.trim().length < 3) return;
 
-      // If there's only one suggestion, select it
       if (suggestions.length === 1) {
         handleSuggestionSelect(suggestions[0]);
       } else if (suggestions.length > 0) {
-        // Check for exact match first
         const exactMatch = suggestions.find(
           (s) => s.term.toLowerCase() === query.trim().toLowerCase()
         );
         if (exactMatch) {
           handleSuggestionSelect(exactMatch);
         } else {
-          // No exact match, select first suggestion
           handleSuggestionSelect(suggestions[0]);
         }
       } else {
-        // No suggestions, do exact match search
         handleExactMatch(query.trim());
       }
     }
@@ -107,34 +120,42 @@ export default function SearchModal({
   };
 
   const handleSuggestionSelect = (suggestion: DiscoverySuggestion) => {
-    // Add to selected terms if not already present
-    if (!selectedTerms.includes(suggestion.term)) {
-      setSelectedTerms((prev) => [...prev, suggestion.term]);
+    // --- CHANGE START ---
+    // 5. Update how suggestions are added to the state
+    // Check for duplicates before adding
+    if (!selectedSuggestions.some((s) => s.term === suggestion.term)) {
+      setSelectedSuggestions((prev) => [
+        ...prev,
+        { term: suggestion.term, type: suggestion.type },
+      ]);
     }
+    // --- CHANGE END ---
 
-    // Clear input and perform search
     setQuery('');
     selectSuggestion(suggestion);
   };
 
   const handleExactMatch = (term: string) => {
-    // Add to selected terms if not already present
-    if (!selectedTerms.includes(term)) {
-      setSelectedTerms((prev) => [...prev, term]);
+    // --- CHANGE START ---
+    // 6. Update exact match handling to add a default type
+    // From the legend, "Exact Match" uses the 'COLLECTION' style
+    if (!selectedSuggestions.some((s) => s.term === term)) {
+      setSelectedSuggestions((prev) => [...prev, { term, type: 'COLLECTION' }]);
     }
+    // --- CHANGE END ---
 
-    // Clear input and perform search
     setQuery('');
     selectExactMatch(term);
   };
 
   const removeTerm = (indexToRemove: number) => {
-    setSelectedTerms((prev) =>
+    // --- CHANGE START ---
+    // 7. Update remove logic to use the new state
+    setSelectedSuggestions((prev) =>
       prev.filter((_, index) => index !== indexToRemove)
     );
-    // Clear search results when removing terms
+    // --- CHANGE END ---
     clearAll();
-    // Focus back on input
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -144,8 +165,8 @@ export default function SearchModal({
     switch (type) {
       case 'TOPIC':
         return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'TITLE':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'COLLECTION':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'CONTENT':
         return 'bg-green-100 text-green-800 border-green-200';
       default:
@@ -153,13 +174,34 @@ export default function SearchModal({
     }
   };
 
-  // Autocomplete logic - only show when we have suggestions and query is 3+ chars
+  // --- CHANGE START ---
+  // 8. (Optional but recommended) Create a helper for the 'X' button color
+  const getCloseButtonColor = (type: string) => {
+    switch (type) {
+      case 'TOPIC':
+        return 'text-purple-600 hover:text-purple-800';
+      case 'COLLECTION':
+        return 'text-orange-600 hover:text-orange-800';
+      case 'CONTENT':
+        return 'text-green-600 hover:text-green-800';
+      default:
+        return 'text-gray-600 hover:text-gray-800';
+    }
+  };
+  // --- CHANGE END ---
+
   const bestCompletion =
     suggestions.length > 0 && query.length >= 3 ? suggestions[0].term : '';
   const showCompletion =
     bestCompletion.toLowerCase().startsWith(query.toLowerCase()) &&
     query.length >= 3;
-
+  let preservedCompletion = '';
+  if (showCompletion) {
+    const completionText = bestCompletion.slice(query.length);
+    preservedCompletion = completionText.startsWith(' ')
+      ? '\u00A0' + completionText.slice(1)
+      : completionText;
+  }
   const showSuggestions =
     suggestions.length > 0 && !searchResults && query.length >= 3;
   const showResults = searchResults !== null;
@@ -181,37 +223,44 @@ export default function SearchModal({
             className="bg-mywhite mx-auto w-full overflow-hidden rounded-lg shadow-2xl"
             style={{ height: '80vh' }}
           >
-            {/* Fixed Header */}
             <div className="relative w-full border-b border-gray-200 p-4">
-              {/* Selected Terms Pills */}
-              {selectedTerms.length > 0 && (
+              {/* --- CHANGE START --- */}
+              {/* 9. Update the rendering of selected term pills */}
+              {selectedSuggestions.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
-                  {selectedTerms.map((term, index) => (
+                  {selectedSuggestions.map((suggestion, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-sm font-bold text-blue-800"
+                      // Use getTypeColor to dynamically set the class
+                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
+                        suggestion.type
+                      )}`}
                     >
-                      <span>{term}</span>
+                      <span>{suggestion.term}</span>
                       <button
                         onClick={() => removeTerm(index)}
-                        className="ml-1 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-800"
-                        aria-label={`Remove ${term}`}
+                        // Use the new helper for the button color
+                        className={`flex items-center justify-center rounded-full ${getCloseButtonColor(
+                          suggestion.type
+                        )}`}
+                        aria-label={`Remove ${suggestion.term}`}
                       >
-                        <XMarkIcon className="h-3 w-3" />
+                        <XMarkIcon className="h-4 w-4" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
+              {/* --- CHANGE END --- */}
 
               {!showResults && (
                 <div className="relative w-full px-6 py-2">
                   {showCompletion && (
                     <div className="pointer-events-none absolute left-0 top-0 flex h-full w-full items-center px-6 py-2 text-xl text-gray-400">
-                      <span style={{ visibility: 'hidden' }}>{query}</span>
-                      {bestCompletion
-                        .slice(query.length)
-                        .replace(/ /g, '\u00A0')}
+                      <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>
+                        {query}
+                      </span>
+                      {preservedCompletion}
                     </div>
                   )}
                   <input
@@ -226,6 +275,7 @@ export default function SearchModal({
                   />
                 </div>
               )}
+
               <button
                 onClick={handleClose}
                 className="text-mydarkgrey hover:text-myblue absolute right-4 top-6 rounded-lg p-2 transition-colors hover:bg-gray-100"
@@ -235,13 +285,14 @@ export default function SearchModal({
               </button>
             </div>
 
-            {/* Scrollable Content Area */}
             <div
               className="w-full overflow-y-auto"
               style={{ height: 'calc(80vh - 80px)' }}
             >
-              {/* Initial State */}
-              {!query.trim() && selectedTerms.length === 0 && (
+              {/* --- CHANGE START --- */}
+              {/* 10. Final cleanup logic update */}
+              {!query.trim() && selectedSuggestions.length === 0 && (
+                // --- CHANGE END ---
                 <div className="w-full p-8 text-center text-gray-500">
                   <MagnifyingGlassIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                   <p className="text-lg">Search across all content</p>
@@ -251,7 +302,6 @@ export default function SearchModal({
                 </div>
               )}
 
-              {/* Show message for less than 3 characters */}
               {query.trim() && query.trim().length < 3 && (
                 <div className="w-full p-8 text-center text-gray-500">
                   <p className="text-lg">Keep typing...</p>
@@ -261,7 +311,6 @@ export default function SearchModal({
                 </div>
               )}
 
-              {/* Discovery Loading */}
               {query.trim().length >= 3 && isDiscovering && (
                 <div className="w-full p-8 text-center">
                   <div className="border-myblue inline-block h-8 w-8 animate-spin rounded-full border-b-2"></div>
@@ -269,7 +318,6 @@ export default function SearchModal({
                 </div>
               )}
 
-              {/* Discovery Error */}
               {query.trim().length >= 3 && discoverError && (
                 <div className="w-full p-8 text-center text-red-600">
                   <p>Discovery failed: {discoverError}</p>
@@ -282,7 +330,6 @@ export default function SearchModal({
                 </div>
               )}
 
-              {/* Suggestion Pills */}
               {showSuggestions && (
                 <div className="w-full p-6">
                   <p className="text-mydarkgrey mb-4 text-sm font-bold">
@@ -293,7 +340,9 @@ export default function SearchModal({
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-bold transition-all hover:shadow-md ${getTypeColor(suggestion.type)}`}
+                        className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold transition-all hover:shadow-md ${getTypeColor(
+                          suggestion.type
+                        )}`}
                       >
                         <span>{suggestion.term}</span>
                       </button>
@@ -302,10 +351,35 @@ export default function SearchModal({
                   <p className="text-mydarkgrey mt-4 text-xs">
                     Click a suggestion or press Enter to search
                   </p>
+                  <div className="mt-6 border-t border-gray-200 pt-4">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600">
+                      <span className="font-bold">Legend:</span>
+                      <span
+                        className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
+                          'COLLECTION'
+                        )}`}
+                      >
+                        Exact Match
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
+                          'TOPIC'
+                        )}`}
+                      >
+                        Topic
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
+                          'CONTENT'
+                        )}`}
+                      >
+                        Text Match
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Retrieve Loading */}
               {isRetrieving && (
                 <div className="w-full p-8 text-center">
                   <div className="border-myblue inline-block h-8 w-8 animate-spin rounded-full border-b-2"></div>
@@ -313,14 +387,12 @@ export default function SearchModal({
                 </div>
               )}
 
-              {/* Retrieve Error */}
               {retrieveError && (
                 <div className="w-full p-8 text-center text-red-600">
                   <p>Search failed: {retrieveError}</p>
                 </div>
               )}
 
-              {/* No Results */}
               {!isRetrieving &&
                 !retrieveError &&
                 showResults &&
@@ -333,7 +405,6 @@ export default function SearchModal({
                   </div>
                 )}
 
-              {/* Search Results */}
               {!isRetrieving &&
                 !retrieveError &&
                 showResults &&
@@ -341,6 +412,7 @@ export default function SearchModal({
                   <SearchResults
                     results={searchResults}
                     contentMap={contentMap}
+                    getTypeColor={getTypeColor}
                   />
                 )}
             </div>

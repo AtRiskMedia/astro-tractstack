@@ -14,6 +14,7 @@ const VERBOSE = false;
 interface SearchResultsProps {
   results: CategorizedResults;
   contentMap: FullContentMapItem[];
+  getTypeColor: (type: string) => string;
 }
 
 interface ResultItem {
@@ -35,6 +36,7 @@ const ITEMS_PER_PAGE = 10;
 export default function SearchResults({
   results,
   contentMap,
+  getTypeColor,
 }: SearchResultsProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -189,28 +191,31 @@ export default function SearchResults({
   };
 
   const getResultBadge = (type: string, categorySlug?: string) => {
+    let styleType = type;
+    let label = '';
     switch (type) {
       case 'StoryFragment':
-        return (
-          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-            Page
-          </span>
-        );
+        label = 'Page';
+        break;
       case 'ContextPane':
-        return (
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-            Context
-          </span>
-        );
+        label = 'Context';
+        break;
       case 'Resource':
-        return (
-          <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
-            {categorySlug || 'Resource'}
-          </span>
-        );
+        styleType = 'COLLECTION';
+        label = categorySlug || 'Resource';
+        break;
       default:
         return null;
     }
+
+    // Get the color classes but extract just the text and background colors for the inline style
+    const colorClasses = getTypeColor(styleType);
+
+    return (
+      <span className={`rounded px-2 py-1 text-xs ${colorClasses}`}>
+        {label}
+      </span>
+    );
   };
 
   if (totalResults === 0) {
@@ -238,7 +243,7 @@ export default function SearchResults({
           >
             <a href={item.url} className="group block">
               <div className="flex flex-col md:flex-row md:items-start md:gap-4">
-                {/* Mobile: Full width image with overlay badge */}
+                {/* Mobile: Full width image without overlay badge */}
                 <div
                   className="bg-mydarkgrey relative w-full overflow-hidden rounded-lg md:hidden"
                   style={{ aspectRatio: '1200/630' }}
@@ -248,12 +253,9 @@ export default function SearchResults({
                     alt={item.title}
                     className="h-full w-full object-contain"
                   />
-                  <div className="absolute left-2 top-2">
-                    {getResultBadge(item.type, item.categorySlug)}
-                  </div>
                 </div>
 
-                {/* Desktop: Side image with overlay badge */}
+                {/* Desktop: Side image without overlay badge */}
                 <div
                   className="bg-mydarkgrey relative hidden flex-shrink-0 overflow-hidden rounded-lg md:block"
                   style={{ width: '240px', height: '135px' }}
@@ -263,9 +265,6 @@ export default function SearchResults({
                     alt={item.title}
                     className="h-full w-full object-contain"
                   />
-                  <div className="absolute left-2 top-2">
-                    {getResultBadge(item.type, item.categorySlug)}
-                  </div>
                 </div>
 
                 <div className="mt-3 min-w-0 flex-1 md:mt-0">
@@ -279,23 +278,31 @@ export default function SearchResults({
                           {item.description}
                         </p>
                       )}
-                      {item.topics && item.topics.length > 0 && (
-                        <div className="mb-2 flex flex-wrap gap-1">
-                          {item.topics.slice(0, 3).map((topic, idx) => (
-                            <span
-                              key={idx}
-                              className="bg-myoffwhite text-mydarkgrey rounded px-2 py-1 text-xs"
-                            >
-                              {topic}
-                            </span>
-                          ))}
-                          {item.topics.length > 3 && (
-                            <span className="text-mydarkgrey text-xs">
-                              +{item.topics.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      )}
+
+                      {/* Category badge and topics in same row */}
+                      <div className="mb-2 flex flex-wrap gap-1">
+                        {/* Always show the category badge first */}
+                        {getResultBadge(item.type, item.categorySlug)}
+
+                        {/* Then show topics if they exist */}
+                        {item.topics && item.topics.length > 0 && (
+                          <>
+                            {item.topics.slice(0, 3).map((topic, idx) => (
+                              <span
+                                key={idx}
+                                className="bg-myoffwhite text-mydarkgrey rounded px-2 py-1 text-xs"
+                              >
+                                {topic}
+                              </span>
+                            ))}
+                            {item.topics.length > 3 && (
+                              <span className="text-mydarkgrey text-xs">
+                                +{item.topics.length - 3} more
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -350,7 +357,7 @@ export default function SearchResults({
 
             <Pagination.NextTrigger className="text-mydarkgrey hover:text-myblue ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50">
               Next
-              <ChevronRightIcon className="h-4 w-6" />
+              <ChevronRightIcon className="h-4 w-4" />
             </Pagination.NextTrigger>
           </Pagination.Root>
         </div>
