@@ -1,179 +1,224 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { TractStackAPI } from '@/utils/api';
-
-export interface SearchResults {
-  storyFragmentIds: string[];
-  contextPaneIds: string[];
-  resourceIds: string[];
-}
+import type {
+  DiscoverySuggestion,
+  CategorizedResults,
+} from '@/types/tractstack';
 
 interface UseSearchReturn {
-  searchResults: SearchResults;
-  isLoading: boolean;
-  error: string | null;
-  totalResults: number;
-  executeSearch: (query: string) => void;
-  clearResults: () => void;
+  // Discovery phase
+  suggestions: DiscoverySuggestion[];
+  isDiscovering: boolean;
+  discoverError: string | null;
+
+  // Retrieve phase
+  searchResults: CategorizedResults | null;
+  isRetrieving: boolean;
+  retrieveError: string | null;
+
+  // Actions
+  discoverTerms: (query: string) => void;
+  selectSuggestion: (suggestion: DiscoverySuggestion) => void;
+  selectExactMatch: (term: string) => void;
+  clearAll: () => void;
 }
 
 const DEBOUNCE_MS = 100;
-const BACKEND_THROTTLE_MS = 1000;
+const BACKEND_THROTTLE_MS = 1200;
 
 export function useSearch(): UseSearchReturn {
-  const [searchResults, setSearchResults] = useState<SearchResults>({
-    storyFragmentIds: [],
-    contextPaneIds: [],
-    resourceIds: [],
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Discovery state
+  const [suggestions, setSuggestions] = useState<DiscoverySuggestion[]>([]);
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+
+  // Retrieve state
+  const [searchResults, setSearchResults] = useState<CategorizedResults | null>(
+    null
+  );
+  const [isRetrieving, setIsRetrieving] = useState(false);
+  const [retrieveError, setRetrieveError] = useState<string | null>(null);
 
   const debounceRef = useRef<NodeJS.Timeout>();
   const lastSearchTimeRef = useRef<number>(0);
-  const queuedQueryRef = useRef<string | null>(null);
-  const queueTimeoutRef = useRef<NodeJS.Timeout>();
-  const isFirstSearchRef = useRef<boolean>(true);
-
+  const pendingQueryRef = useRef<string | null>(null);
+  const throttleTimeoutRef = useRef<NodeJS.Timeout>();
   const api = useMemo(() => new TractStackAPI(), []);
 
-  const performSearch = useCallback(
+  const performDiscovery = useCallback(
     async (query: string) => {
-      if (!query.trim() || query.trim().length < 3) {
+      if (!query.trim()) {
+        setSuggestions([]);
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
+      setIsDiscovering(true);
+      setDiscoverError(null);
+      lastSearchTimeRef.current = Date.now();
 
       try {
-        const response = await api.search(query.trim());
+        const response = await api.discover(query.trim());
 
         if (response.success && response.data) {
-          setSearchResults(response.data);
-          lastSearchTimeRef.current = Date.now();
+          setSuggestions(response.data.suggestions);
         } else {
-          // Handle 429 silently - backend is protecting itself
-          if (response.error?.includes('too frequently')) {
-            // Don't set error for rate limiting, just maintain loading state
-            return;
-          }
-          setError(response.error || 'Search failed');
-          setSearchResults({
-            storyFragmentIds: [],
-            contextPaneIds: [],
-            resourceIds: [],
-          });
+          setDiscoverError(response.error || 'Discovery failed');
+          setSuggestions([]);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Search failed');
-        setSearchResults({
-          storyFragmentIds: [],
-          contextPaneIds: [],
-          resourceIds: [],
-        });
+        setDiscoverError(
+          err instanceof Error ? err.message : 'Discovery failed'
+        );
+        setSuggestions([]);
       } finally {
-        setIsLoading(false);
+        setIsDiscovering(false);
       }
     },
     [api]
   );
 
-  const processQueue = useCallback(() => {
-    if (queuedQueryRef.current) {
-      const queryToProcess = queuedQueryRef.current;
-      queuedQueryRef.current = null;
-      performSearch(queryToProcess);
-    }
-  }, [performSearch]);
+  const performRetrieve = useCallback(
+    async (term: string, isTopic: boolean = false) => {
+      setIsRetrieving(true);
+      setRetrieveError(null);
 
-  const executeSearchWithThrottling = useCallback(
-    (query: string) => {
-      const now = Date.now();
-      const timeSinceLastSearch = now - lastSearchTimeRef.current;
+      try {
+        const response = await api.retrieve(term, isTopic);
 
-      // First search or enough time has passed - execute immediately
-      if (
-        isFirstSearchRef.current ||
-        timeSinceLastSearch >= BACKEND_THROTTLE_MS
-      ) {
-        isFirstSearchRef.current = false;
-        performSearch(query);
-      } else {
-        // Queue the search and schedule it to run when throttle window expires
-        queuedQueryRef.current = query;
-
-        // Clear any existing queue timeout
-        if (queueTimeoutRef.current) {
-          clearTimeout(queueTimeoutRef.current);
+        if (response.success && response.data) {
+          setSearchResults(response.data);
+        } else {
+          setRetrieveError(response.error || 'Retrieval failed');
+          setSearchResults(null);
         }
-
-        // Schedule execution for when the throttle window expires
-        const remainingTime = BACKEND_THROTTLE_MS - timeSinceLastSearch;
-        queueTimeoutRef.current = setTimeout(processQueue, remainingTime);
+      } catch (err) {
+        setRetrieveError(
+          err instanceof Error ? err.message : 'Retrieval failed'
+        );
+        setSearchResults(null);
+      } finally {
+        setIsRetrieving(false);
       }
     },
-    [performSearch, processQueue]
+    [api]
   );
 
-  const executeSearch = useCallback(
+  const executePendingSearch = useCallback(() => {
+    if (pendingQueryRef.current) {
+      const queryToExecute = pendingQueryRef.current;
+      pendingQueryRef.current = null;
+      performDiscovery(queryToExecute);
+    }
+  }, [performDiscovery]);
+
+  const discoverTerms = useCallback(
     (query: string) => {
-      // Clear existing debounce
+      // Clear existing debounce timer
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
 
-      // Handle empty or short queries immediately
-      if (!query.trim() || query.trim().length < 3) {
-        setSearchResults({
-          storyFragmentIds: [],
-          contextPaneIds: [],
-          resourceIds: [],
-        });
-        setError(null);
-        setIsLoading(false);
+      // Clear existing throttle timer
+      if (throttleTimeoutRef.current) {
+        clearTimeout(throttleTimeoutRef.current);
+      }
+
+      // Clear results when starting new discovery
+      setSearchResults(null);
+      setRetrieveError(null);
+
+      // Handle empty queries immediately
+      if (!query.trim()) {
+        setSuggestions([]);
+        setDiscoverError(null);
+        setIsDiscovering(false);
+        pendingQueryRef.current = null;
         return;
       }
 
-      // Debounce the actual search execution
+      // Always store the latest query
+      pendingQueryRef.current = query;
+
+      // Debounce first - wait for user to stop typing
       debounceRef.current = setTimeout(() => {
-        executeSearchWithThrottling(query);
+        const now = Date.now();
+        const timeSinceLastSearch = now - lastSearchTimeRef.current;
+
+        // If enough time has passed since last search, execute immediately
+        if (timeSinceLastSearch >= BACKEND_THROTTLE_MS) {
+          executePendingSearch();
+        } else {
+          // Need to wait for throttle - schedule execution
+          const remainingTime = BACKEND_THROTTLE_MS - timeSinceLastSearch;
+          throttleTimeoutRef.current = setTimeout(
+            executePendingSearch,
+            remainingTime
+          );
+        }
       }, DEBOUNCE_MS);
     },
-    [executeSearchWithThrottling]
+    [executePendingSearch]
   );
 
-  const clearResults = useCallback(() => {
+  const selectSuggestion = useCallback(
+    (suggestion: DiscoverySuggestion) => {
+      // Clear suggestions
+      setSuggestions([]);
+      setDiscoverError(null);
+
+      // Perform retrieve based on suggestion type
+      const isTopic = suggestion.type === 'TOPIC';
+      performRetrieve(suggestion.term, isTopic);
+    },
+    [performRetrieve]
+  );
+
+  const selectExactMatch = useCallback(
+    (term: string) => {
+      // Clear suggestions
+      setSuggestions([]);
+      setDiscoverError(null);
+
+      // Check if term exists in current suggestions to determine if it's a topic
+      const matchingSuggestion = suggestions.find(
+        (s) => s.term.toLowerCase() === term.toLowerCase()
+      );
+      const isTopic = matchingSuggestion?.type === 'TOPIC';
+
+      performRetrieve(term, isTopic);
+    },
+    [suggestions, performRetrieve]
+  );
+
+  const clearAll = useCallback(() => {
     // Clear all timeouts
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    if (queueTimeoutRef.current) {
-      clearTimeout(queueTimeoutRef.current);
+    if (throttleTimeoutRef.current) {
+      clearTimeout(throttleTimeoutRef.current);
     }
 
-    // Reset state
-    setSearchResults({
-      storyFragmentIds: [],
-      contextPaneIds: [],
-      resourceIds: [],
-    });
-    setIsLoading(false);
-    setError(null);
-    queuedQueryRef.current = null;
-    isFirstSearchRef.current = true;
+    // Reset all state
+    setSuggestions([]);
+    setIsDiscovering(false);
+    setDiscoverError(null);
+    setSearchResults(null);
+    setIsRetrieving(false);
+    setRetrieveError(null);
+    pendingQueryRef.current = null;
   }, []);
 
-  const totalResults =
-    searchResults.storyFragmentIds.length +
-    searchResults.contextPaneIds.length +
-    searchResults.resourceIds.length;
-
   return {
+    suggestions,
+    isDiscovering,
+    discoverError,
     searchResults,
-    isLoading,
-    error,
-    totalResults,
-    executeSearch,
-    clearResults,
+    isRetrieving,
+    retrieveError,
+    discoverTerms,
+    selectSuggestion,
+    selectExactMatch,
+    clearAll,
   };
 }

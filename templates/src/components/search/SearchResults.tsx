@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Pagination } from '@ark-ui/react/pagination';
-import type { SearchResults as SearchResultsType } from '@/hooks/useSearch';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import type { CategorizedResults, FTSResult } from '@/types/tractstack';
 import type { FullContentMapItem } from '@/types/tractstack';
 import {
   getResourceUrl,
@@ -8,8 +9,10 @@ import {
   getResourceDescription,
 } from '@/utils/customHelpers';
 
+const VERBOSE = false;
+
 interface SearchResultsProps {
-  results: SearchResultsType;
+  results: CategorizedResults;
   contentMap: FullContentMapItem[];
   onResultClick: () => void;
 }
@@ -40,11 +43,26 @@ export default function SearchResults({
   const allResultItems = useMemo(() => {
     const items: ResultItem[] = [];
 
-    results.storyFragmentIds.forEach((id) => {
+    if (VERBOSE)
+      console.log('DEBUG SearchResults: Processing results', {
+        storyFragmentResults: results.storyFragmentResults.length,
+        contextPaneResults: results.contextPaneResults.length,
+        resourceResults: results.resourceResults.length,
+        contentMapSize: contentMap.length,
+      });
+
+    // Process StoryFragment results
+    results.storyFragmentResults.forEach((ftsResult: FTSResult, index) => {
+      if (VERBOSE) console.log(`DEBUG StoryFragment ${index}:`, ftsResult);
       const item = contentMap.find(
-        (item) => item.id === id && item.type === 'StoryFragment'
+        (item) => item.id === ftsResult.ID && item.type === 'StoryFragment'
       );
       if (item) {
+        if (VERBOSE)
+          console.log(
+            `DEBUG StoryFragment ${index}: Found in contentMap`,
+            item
+          );
         items.push({
           id: item.id,
           type: 'StoryFragment',
@@ -57,14 +75,23 @@ export default function SearchResults({
           url: `/${item.slug}`,
           imageSrc: item.thumbSrc || '/static.jpg',
         });
+      } else {
+        if (VERBOSE)
+          console.log(
+            `DEBUG StoryFragment ${index}: NOT found in contentMap for ID ${ftsResult.ID}`
+          );
       }
     });
 
-    results.contextPaneIds.forEach((id) => {
+    // Process ContextPane results
+    results.contextPaneResults.forEach((ftsResult: FTSResult, index) => {
+      if (VERBOSE) console.log(`DEBUG ContextPane ${index}:`, ftsResult);
       const item = contentMap.find(
-        (item) => item.id === id && item.type === 'Pane'
+        (item) => item.id === ftsResult.ID && item.type === 'Pane'
       );
       if (item) {
+        if (VERBOSE)
+          console.log(`DEBUG ContextPane ${index}: Found in contentMap`, item);
         items.push({
           id: item.id,
           type: 'ContextPane',
@@ -73,14 +100,24 @@ export default function SearchResults({
           url: `/context/${item.slug}`,
           imageSrc: '/static.jpg',
         });
+      } else {
+        if (VERBOSE)
+          console.log(
+            `DEBUG ContextPane ${index}: NOT found in contentMap for ID ${ftsResult.ID}`
+          );
       }
     });
 
-    results.resourceIds.forEach((id) => {
+    // Process Resource results
+    results.resourceResults.forEach((ftsResult: FTSResult, index) => {
+      if (VERBOSE) console.log(`DEBUG Resource ${index}:`, ftsResult);
       const item = contentMap.find(
-        (item) => item.id === id && item.type === 'Resource'
+        (item) => item.id === ftsResult.ID && item.type === 'Resource'
       );
       if (item) {
+        if (VERBOSE)
+          console.log(`DEBUG Resource ${index}: Found in contentMap`, item);
+
         const resourceUrl = getResourceUrl(item.categorySlug || '', item.slug);
         const resourceImage = getResourceImage(
           item.id,
@@ -93,6 +130,16 @@ export default function SearchResults({
           item.categorySlug || ''
         );
 
+        if (VERBOSE)
+          console.log(`DEBUG Resource ${index}: Helper results`, {
+            resourceUrl,
+            resourceImage,
+            description,
+            categorySlug: item.categorySlug,
+            slug: item.slug,
+            id: item.id,
+          });
+
         items.push({
           id: item.id,
           type: 'Resource',
@@ -103,9 +150,24 @@ export default function SearchResults({
           url: resourceUrl,
           imageSrc: resourceImage,
         });
+      } else {
+        if (VERBOSE)
+          console.log(
+            `DEBUG Resource ${index}: NOT found in contentMap for ID ${ftsResult.ID}`
+          );
+        if (VERBOSE)
+          console.log(
+            'DEBUG: Available resource IDs in contentMap:',
+            contentMap
+              .filter((item) => item.type === 'Resource')
+              .map((item) => ({ id: item.id, title: item.title }))
+          );
       }
     });
 
+    if (VERBOSE) console.log('DEBUG SearchResults: Final items', items);
+
+    // Sort by whether they have real images
     return items.sort((a, b) => {
       const aHasRealImage = a.imageSrc !== '/static.jpg';
       const bHasRealImage = b.imageSrc !== '/static.jpg';
@@ -114,17 +176,18 @@ export default function SearchResults({
       if (!aHasRealImage && bHasRealImage) return 1;
       return 0;
     });
-  }, [results]);
+  }, [results, contentMap]);
 
-  const totalPages = Math.ceil(allResultItems.length / ITEMS_PER_PAGE);
+  const totalResults = allResultItems.length;
+  const totalPages = Math.ceil(totalResults / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedItems = allResultItems.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE
   );
 
-  const handlePageChange = (details: { page: number }) => {
-    setCurrentPage(details.page);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const getResultBadge = (type: string, categorySlug?: string) => {
@@ -152,7 +215,7 @@ export default function SearchResults({
     }
   };
 
-  if (allResultItems.length === 0) {
+  if (totalResults === 0) {
     return null;
   }
 
@@ -160,13 +223,12 @@ export default function SearchResults({
     <div className="p-6">
       <div className="mb-6">
         <h2 className="text-mydarkgrey text-lg font-bold">
-          {allResultItems.length} result{allResultItems.length !== 1 ? 's' : ''}{' '}
-          found
+          {totalResults} result{totalResults !== 1 ? 's' : ''} found
         </h2>
         <p className="mt-1 text-sm text-gray-600">
           Showing {startIndex + 1}-
-          {Math.min(startIndex + ITEMS_PER_PAGE, allResultItems.length)} of{' '}
-          {allResultItems.length}
+          {Math.min(startIndex + ITEMS_PER_PAGE, totalResults)} of{' '}
+          {totalResults}
         </p>
       </div>
 
@@ -177,86 +239,65 @@ export default function SearchResults({
             className="rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-100"
           >
             <a href={item.url} onClick={onResultClick} className="group block">
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col md:flex-row md:items-start md:gap-4">
+                {/* Mobile: Full width image with overlay badge */}
                 <div
-                  className="bg-mydarkgrey flex-shrink-0 overflow-hidden rounded-lg p-1 md:hidden"
-                  style={{
-                    width: '100px',
-                    height: '56px',
-                  }}
-                  data-mobile-size="100x56"
+                  className="bg-mydarkgrey relative w-full overflow-hidden rounded-lg md:hidden"
+                  style={{ aspectRatio: '1200/630' }}
                 >
                   <img
                     src={item.imageSrc}
                     alt={item.title}
-                    className="h-full w-full rounded object-contain"
+                    className="h-full w-full object-contain"
                   />
+                  <div className="absolute left-2 top-2">
+                    {getResultBadge(item.type, item.categorySlug)}
+                  </div>
                 </div>
 
+                {/* Desktop: Side image with overlay badge */}
                 <div
-                  className="bg-mydarkgrey hidden flex-shrink-0 overflow-hidden rounded-lg p-1 md:block"
-                  style={{
-                    width: '240px',
-                    height: '135px',
-                  }}
-                  data-desktop-size="240x135"
+                  className="bg-mydarkgrey relative hidden flex-shrink-0 overflow-hidden rounded-lg md:block"
+                  style={{ width: '240px', height: '135px' }}
                 >
                   <img
                     src={item.imageSrc}
                     alt={item.title}
-                    className="h-full w-full rounded object-contain"
+                    className="h-full w-full object-contain"
                   />
+                  <div className="absolute left-2 top-2">
+                    {getResultBadge(item.type, item.categorySlug)}
+                  </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
+                <div className="mt-3 min-w-0 flex-1 md:mt-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="mb-2">
-                        <h3 className="text-mydarkgrey group-hover:text-myblue line-clamp-2 font-bold transition-colors">
-                          {item.title}
-                        </h3>
-                      </div>
-
-                      {(item.type === 'StoryFragment' ||
-                        item.type === 'Resource') &&
-                        item.description && (
-                          <p className="mb-2 line-clamp-2 text-sm text-gray-600">
-                            {item.description}
-                          </p>
-                        )}
-
+                      <h3 className="text-mydarkgrey group-hover:text-myblue mb-2 text-lg font-semibold transition-colors">
+                        {item.title}
+                      </h3>
+                      {item.description && (
+                        <p className="text-mydarkgrey mb-2 text-sm">
+                          {item.description}
+                        </p>
+                      )}
                       {item.topics && item.topics.length > 0 && (
                         <div className="mb-2 flex flex-wrap gap-1">
-                          {item.topics.slice(0, 3).map((topic) => (
+                          {item.topics.slice(0, 3).map((topic, idx) => (
                             <span
-                              key={topic}
-                              className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700"
+                              key={idx}
+                              className="bg-myoffwhite text-mydarkgrey rounded px-2 py-1 text-xs"
                             >
                               {topic}
                             </span>
                           ))}
                           {item.topics.length > 3 && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-mydarkgrey text-xs">
                               +{item.topics.length - 3} more
                             </span>
                           )}
                         </div>
                       )}
-
-                      <p className="truncate text-xs text-gray-500">
-                        {item.url}
-                      </p>
-
-                      {/* Mobile badge row */}
-                      <div className="mt-2 block md:hidden">
-                        {getResultBadge(item.type, item.categorySlug)}
-                      </div>
-                    </div>
-
-                    <div className="hidden flex-shrink-0 text-right md:block">
-                      <div className="mb-2">
-                        {getResultBadge(item.type, item.categorySlug)}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -267,42 +308,52 @@ export default function SearchResults({
       </div>
 
       {totalPages > 1 && (
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-center">
           <Pagination.Root
-            count={allResultItems.length}
+            count={totalResults}
             pageSize={ITEMS_PER_PAGE}
             page={currentPage}
-            siblingCount={1}
-            onPageChange={handlePageChange}
-            className="flex flex-wrap items-center gap-2"
+            onPageChange={(details) => handlePageChange(details.page)}
           >
-            <Pagination.Context>
-              {(pagination) =>
-                pagination.pages.map((page, index) =>
-                  page.type === 'page' ? (
-                    <Pagination.Item
-                      key={index}
-                      {...page}
-                      className={`cursor-pointer rounded-md px-3 py-2 text-sm ${
-                        page.value === currentPage
-                          ? 'bg-gray-900 text-white'
-                          : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page.value}
-                    </Pagination.Item>
-                  ) : (
-                    <Pagination.Ellipsis
-                      key={index}
-                      index={index}
-                      className="px-3 py-2 text-sm text-gray-500"
-                    >
-                      …
-                    </Pagination.Ellipsis>
+            <Pagination.PrevTrigger className="text-mydarkgrey hover:text-myblue mr-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+              <ChevronLeftIcon className="h-4 w-4" />
+              Previous
+            </Pagination.PrevTrigger>
+
+            <div className="flex items-center gap-1">
+              <Pagination.Context>
+                {(pagination) =>
+                  pagination.pages.map((page, index) =>
+                    page.type === 'page' ? (
+                      <Pagination.Item
+                        key={index}
+                        type="page"
+                        value={page.value}
+                        className={`rounded px-3 py-2 text-sm font-medium transition-colors ${
+                          page.value === currentPage
+                            ? 'bg-myblue text-white'
+                            : 'text-mydarkgrey hover:text-myblue'
+                        }`}
+                      >
+                        {page.value}
+                      </Pagination.Item>
+                    ) : (
+                      <span
+                        key={index}
+                        className="text-mydarkgrey px-2 text-sm"
+                      >
+                        {page.type === 'ellipsis' ? '...' : ''}
+                      </span>
+                    )
                   )
-                )
-              }
-            </Pagination.Context>
+                }
+              </Pagination.Context>
+            </div>
+
+            <Pagination.NextTrigger className="text-mydarkgrey hover:text-myblue ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+              Next
+              <ChevronRightIcon className="h-4 w-6" />
+            </Pagination.NextTrigger>
           </Pagination.Root>
         </div>
       )}

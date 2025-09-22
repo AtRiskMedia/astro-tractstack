@@ -20,12 +20,10 @@ export interface Props {
 
 const { target, options, fullContentMap /*, resourcesPayload */ } = Astro.props;
 
-const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
-
 export const components = {
   'featured-content': true,
   'list-content': true,
-  ...(enableBunny && { 'bunny-video': true }),
+  'bunny-video': import.meta.env.PUBLIC_ENABLE_BUNNY === 'true',
   epinet: true,
   // "custom-hero": true,  // Uncomment when you create CustomHero.astro
 };
@@ -36,7 +34,7 @@ export const components = {
     <ListContent options={options} contentMap={fullContentMap} />
   ) : target === 'featured-content' ? (
     <FeaturedContent options={options} contentMap={fullContentMap} />
-  ) : target === 'bunny-video' && enableBunny ? (
+  ) : target === 'bunny-video' && import.meta.env.PUBLIC_ENABLE_BUNNY ? (
     <BunnyVideoWrapper options={options} />
   ) : target === 'epinet' ? (
     <EpinetWrapper fullContentMap={fullContentMap} client:only="react" /> /* 

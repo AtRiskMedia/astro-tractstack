@@ -443,3 +443,20 @@ export interface BunnyPlayer {
 export interface PlayerJS {
   Player: new (elementId: string) => BunnyPlayer;
 }
+
+export interface DiscoverySuggestion {
+  term: string;
+  type: 'CONTENT' | 'TOPIC' | 'TITLE';
+}
+
+export interface FTSResult {
+  ID: string;
+  Relevance: number;
+  Term: string;
+}
+
+export interface CategorizedResults {
+  storyFragmentResults: FTSResult[];
+  contextPaneResults: FTSResult[];
+  resourceResults: FTSResult[];
+}

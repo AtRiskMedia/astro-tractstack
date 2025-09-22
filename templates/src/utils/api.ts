@@ -1,3 +1,9 @@
+import type {
+  DiscoverySuggestion,
+  FTSResult,
+  CategorizedResults,
+} from '@/types/tractstack';
+
 export interface APIResponse<T = any> {
   success: boolean;
   data?: T;
@@ -138,14 +144,19 @@ export class TractStackAPI {
     });
   }
 
-  async search(query: string): Promise<
-    APIResponse<{
-      storyFragmentIds: string[];
-      contextPaneIds: string[];
-      resourceIds: string[];
-    }>
-  > {
-    return this.post('/api/v1/nodes/panes/search', { query });
+  async discover(
+    query: string
+  ): Promise<APIResponse<{ suggestions: DiscoverySuggestion[] }>> {
+    return this.get(`/api/v1/search/discover?q=${encodeURIComponent(query)}`);
+  }
+
+  async retrieve(
+    term: string,
+    isTopic: boolean = false
+  ): Promise<APIResponse<CategorizedResults>> {
+    return this.get(
+      `/api/v1/search/retrieve?term=${encodeURIComponent(term)}&topic=${isTopic}`
+    );
   }
 
   async getContent(slug: string): Promise<APIResponse> {
