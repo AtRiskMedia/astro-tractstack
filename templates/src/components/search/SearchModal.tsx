@@ -189,7 +189,7 @@ export default function SearchModal({
                   {selectedTerms.map((term, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800"
+                      className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-sm font-bold text-blue-800"
                     >
                       <span>{term}</span>
                       <button
@@ -208,7 +208,10 @@ export default function SearchModal({
                 <div className="relative w-full px-6 py-2">
                   {showCompletion && (
                     <div className="pointer-events-none absolute left-0 top-0 flex h-full w-full items-center px-6 py-2 text-xl text-gray-400">
-                      {bestCompletion}
+                      <span style={{ visibility: 'hidden' }}>{query}</span>
+                      {bestCompletion
+                        .slice(query.length)
+                        .replace(/ /g, '\u00A0')}
                     </div>
                   )}
                   <input
@@ -282,7 +285,7 @@ export default function SearchModal({
               {/* Suggestion Pills */}
               {showSuggestions && (
                 <div className="w-full p-6">
-                  <p className="text-mydarkgrey mb-4 text-sm font-medium">
+                  <p className="text-mydarkgrey mb-4 text-sm font-bold">
                     Suggestions ({suggestions.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -290,7 +293,7 @@ export default function SearchModal({
                       <button
                         key={index}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-all hover:shadow-md ${getTypeColor(suggestion.type)}`}
+                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-bold transition-all hover:shadow-md ${getTypeColor(suggestion.type)}`}
                       >
                         <span>{suggestion.term}</span>
                       </button>

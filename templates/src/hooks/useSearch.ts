@@ -23,7 +23,7 @@ interface UseSearchReturn {
   clearAll: () => void;
 }
 
-const DEBOUNCE_MS = 100;
+const DEBOUNCE_MS = 150;
 const BACKEND_THROTTLE_MS = 1200;
 
 export function useSearch(): UseSearchReturn {
@@ -39,11 +39,10 @@ export function useSearch(): UseSearchReturn {
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState<string | null>(null);
 
-  // Race condition protection
-  const debounceRef = useRef<NodeJS.Timeout>();
-  const lastSearchTimeRef = useRef<number>(0);
+  // --- REVISED STATE FOR SEARCH LOGIC ---
+  const searchTimerRef = useRef<NodeJS.Timeout>();
+  const lastExecutionTimeRef = useRef<number>(0);
   const pendingQueryRef = useRef<string | null>(null);
-  const throttleTimeoutRef = useRef<NodeJS.Timeout>();
   const inflightQueryRef = useRef<string | null>(null);
   const api = useMemo(() => new TractStackAPI(), []);
 
@@ -54,21 +53,17 @@ export function useSearch(): UseSearchReturn {
         return;
       }
 
-      // Check if this exact query is already inflight
       if (inflightQueryRef.current === query.trim()) {
         return;
       }
 
-      // Mark this query as inflight
       inflightQueryRef.current = query.trim();
-
       setIsDiscovering(true);
       setDiscoverError(null);
 
       try {
         const response = await api.discover(query.trim());
 
-        // Only process response if this is still the current inflight query
         if (inflightQueryRef.current === query.trim()) {
           if (response.success && response.data) {
             setSuggestions(response.data.suggestions);
@@ -78,7 +73,6 @@ export function useSearch(): UseSearchReturn {
           }
         }
       } catch (err) {
-        // Only process error if this is still the current inflight query
         if (inflightQueryRef.current === query.trim()) {
           setDiscoverError(
             err instanceof Error ? err.message : 'Discovery failed'
@@ -86,7 +80,6 @@ export function useSearch(): UseSearchReturn {
           setSuggestions([]);
         }
       } finally {
-        // Clear inflight tracking only if this is still the current query
         if (inflightQueryRef.current === query.trim()) {
           inflightQueryRef.current = null;
           setIsDiscovering(false);
@@ -122,28 +115,11 @@ export function useSearch(): UseSearchReturn {
     [api]
   );
 
-  const executePendingSearch = useCallback(() => {
-    if (pendingQueryRef.current) {
-      const queryToExecute = pendingQueryRef.current;
-      pendingQueryRef.current = null;
-
-      // Update timestamp immediately when scheduling request, not when executing
-      lastSearchTimeRef.current = Date.now();
-
-      performDiscovery(queryToExecute);
-    }
-  }, [performDiscovery]);
-
   const discoverTerms = useCallback(
     (query: string) => {
-      // Clear existing debounce timer
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-
-      // Clear existing throttle timer
-      if (throttleTimeoutRef.current) {
-        clearTimeout(throttleTimeoutRef.current);
+      // Clear any existing timer.
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
       }
 
       // Clear results when starting new discovery
@@ -160,28 +136,33 @@ export function useSearch(): UseSearchReturn {
         return;
       }
 
-      // Always store the latest query
+      // Always store the latest query for the next execution
       pendingQueryRef.current = query;
 
-      // Debounce first - wait for user to stop typing
-      debounceRef.current = setTimeout(() => {
-        const now = Date.now();
-        const timeSinceLastSearch = now - lastSearchTimeRef.current;
+      const now = Date.now();
+      const timeSinceLastSearch = now - lastExecutionTimeRef.current;
 
-        // If enough time has passed since last search, execute immediately
-        if (timeSinceLastSearch >= BACKEND_THROTTLE_MS) {
-          executePendingSearch();
-        } else {
-          // Need to wait for throttle - schedule execution
-          const remainingTime = BACKEND_THROTTLE_MS - timeSinceLastSearch;
-          throttleTimeoutRef.current = setTimeout(
-            executePendingSearch,
-            remainingTime
-          );
+      // Start with the basic debounce delay
+      let delay = DEBOUNCE_MS;
+
+      // If we are inside the throttle window, we must wait longer
+      if (timeSinceLastSearch < BACKEND_THROTTLE_MS) {
+        const remainingThrottle = BACKEND_THROTTLE_MS - timeSinceLastSearch;
+        delay = Math.max(delay, remainingThrottle);
+      }
+
+      searchTimerRef.current = setTimeout(() => {
+        // Double check there's a query to run
+        if (pendingQueryRef.current !== null) {
+          const queryToExecute = pendingQueryRef.current;
+
+          // Update execution time as soon as the search is initiated
+          lastExecutionTimeRef.current = Date.now();
+          performDiscovery(queryToExecute);
         }
-      }, DEBOUNCE_MS);
+      }, delay);
     },
-    [executePendingSearch]
+    [performDiscovery]
   );
 
   const selectSuggestion = useCallback(
@@ -215,15 +196,12 @@ export function useSearch(): UseSearchReturn {
   );
 
   const clearAll = useCallback(() => {
-    // Clear all timeouts
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    if (throttleTimeoutRef.current) {
-      clearTimeout(throttleTimeoutRef.current);
+    // Clear the main search timer
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
     }
 
-    // Reset all state including race condition protection
+    // Reset all state
     setSuggestions([]);
     setIsDiscovering(false);
     setDiscoverError(null);
@@ -232,6 +210,7 @@ export function useSearch(): UseSearchReturn {
     setRetrieveError(null);
     pendingQueryRef.current = null;
     inflightQueryRef.current = null;
+    lastExecutionTimeRef.current = 0; // Reset throttle timer
   }, []);
 
   return {
