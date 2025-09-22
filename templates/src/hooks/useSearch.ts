@@ -39,10 +39,12 @@ export function useSearch(): UseSearchReturn {
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState<string | null>(null);
 
+  // Race condition protection
   const debounceRef = useRef<NodeJS.Timeout>();
   const lastSearchTimeRef = useRef<number>(0);
   const pendingQueryRef = useRef<string | null>(null);
   const throttleTimeoutRef = useRef<NodeJS.Timeout>();
+  const inflightQueryRef = useRef<string | null>(null);
   const api = useMemo(() => new TractStackAPI(), []);
 
   const performDiscovery = useCallback(
@@ -52,26 +54,43 @@ export function useSearch(): UseSearchReturn {
         return;
       }
 
+      // Check if this exact query is already inflight
+      if (inflightQueryRef.current === query.trim()) {
+        return;
+      }
+
+      // Mark this query as inflight
+      inflightQueryRef.current = query.trim();
+
       setIsDiscovering(true);
       setDiscoverError(null);
-      lastSearchTimeRef.current = Date.now();
 
       try {
         const response = await api.discover(query.trim());
 
-        if (response.success && response.data) {
-          setSuggestions(response.data.suggestions);
-        } else {
-          setDiscoverError(response.error || 'Discovery failed');
-          setSuggestions([]);
+        // Only process response if this is still the current inflight query
+        if (inflightQueryRef.current === query.trim()) {
+          if (response.success && response.data) {
+            setSuggestions(response.data.suggestions);
+          } else {
+            setDiscoverError(response.error || 'Discovery failed');
+            setSuggestions([]);
+          }
         }
       } catch (err) {
-        setDiscoverError(
-          err instanceof Error ? err.message : 'Discovery failed'
-        );
-        setSuggestions([]);
+        // Only process error if this is still the current inflight query
+        if (inflightQueryRef.current === query.trim()) {
+          setDiscoverError(
+            err instanceof Error ? err.message : 'Discovery failed'
+          );
+          setSuggestions([]);
+        }
       } finally {
-        setIsDiscovering(false);
+        // Clear inflight tracking only if this is still the current query
+        if (inflightQueryRef.current === query.trim()) {
+          inflightQueryRef.current = null;
+          setIsDiscovering(false);
+        }
       }
     },
     [api]
@@ -107,6 +126,10 @@ export function useSearch(): UseSearchReturn {
     if (pendingQueryRef.current) {
       const queryToExecute = pendingQueryRef.current;
       pendingQueryRef.current = null;
+
+      // Update timestamp immediately when scheduling request, not when executing
+      lastSearchTimeRef.current = Date.now();
+
       performDiscovery(queryToExecute);
     }
   }, [performDiscovery]);
@@ -133,6 +156,7 @@ export function useSearch(): UseSearchReturn {
         setDiscoverError(null);
         setIsDiscovering(false);
         pendingQueryRef.current = null;
+        inflightQueryRef.current = null;
         return;
       }
 
@@ -199,7 +223,7 @@ export function useSearch(): UseSearchReturn {
       clearTimeout(throttleTimeoutRef.current);
     }
 
-    // Reset all state
+    // Reset all state including race condition protection
     setSuggestions([]);
     setIsDiscovering(false);
     setDiscoverError(null);
@@ -207,6 +231,7 @@ export function useSearch(): UseSearchReturn {
     setIsRetrieving(false);
     setRetrieveError(null);
     pendingQueryRef.current = null;
+    inflightQueryRef.current = null;
   }, []);
 
   return {

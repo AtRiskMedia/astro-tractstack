@@ -205,26 +205,22 @@ export default function SearchModal({
               )}
 
               {!showResults && (
-                <div className="relative">
-                  <div className="relative w-full border-none bg-transparent px-6 py-2 text-xl">
-                    {/* Background layer with completion text */}
-                    {showCompletion && (
-                      <div className="pointer-events-none absolute inset-0 px-6 py-2 text-xl text-gray-400">
-                        {bestCompletion}
-                      </div>
-                    )}
-                    {/* Foreground input */}
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={query}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Search content..."
-                      className="text-mydarkgrey relative z-10 w-full border-none bg-transparent text-xl placeholder-gray-500 outline-none"
-                      style={{ background: 'transparent' }}
-                    />
-                  </div>
+                <div className="relative w-full px-6 py-2">
+                  {showCompletion && (
+                    <div className="pointer-events-none absolute left-0 top-0 flex h-full w-full items-center px-6 py-2 text-xl text-gray-400">
+                      {bestCompletion}
+                    </div>
+                  )}
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search content..."
+                    className="text-mydarkgrey relative z-10 w-full border-none bg-transparent text-xl placeholder-gray-500 outline-none"
+                    style={{ background: 'transparent', padding: '0' }}
+                  />
                 </div>
               )}
               <button
@@ -342,7 +338,6 @@ export default function SearchModal({
                   <SearchResults
                     results={searchResults}
                     contentMap={contentMap}
-                    onResultClick={handleClose}
                   />
                 )}
             </div>

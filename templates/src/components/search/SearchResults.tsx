@@ -14,7 +14,6 @@ const VERBOSE = false;
 interface SearchResultsProps {
   results: CategorizedResults;
   contentMap: FullContentMapItem[];
-  onResultClick: () => void;
 }
 
 interface ResultItem {
@@ -36,7 +35,6 @@ const ITEMS_PER_PAGE = 10;
 export default function SearchResults({
   results,
   contentMap,
-  onResultClick,
 }: SearchResultsProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -238,7 +236,7 @@ export default function SearchResults({
             key={item.id}
             className="rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-100"
           >
-            <a href={item.url} onClick={onResultClick} className="group block">
+            <a href={item.url} className="group block">
               <div className="flex flex-col md:flex-row md:items-start md:gap-4">
                 {/* Mobile: Full width image with overlay badge */}
                 <div
