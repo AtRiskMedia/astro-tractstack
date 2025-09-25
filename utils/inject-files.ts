@@ -2119,6 +2119,7 @@ export async function injectTemplateFiles(
           file.dest.startsWith('src/components/codehooks/') ||
           file.dest.startsWith('src/components/widgets/') ||
           file.dest.startsWith('src/') ||
+          file.dest.startsWith('public/client/') ||
           file.dest === '.gitignore');
 
       if (!existsSync(file.dest) || shouldOverwrite) {

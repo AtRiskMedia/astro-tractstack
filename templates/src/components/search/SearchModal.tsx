@@ -21,13 +21,11 @@ interface SearchModalProps {
   contentMap: FullContentMapItem[];
 }
 
-// --- CHANGE START ---
 // 1. Define a new type for the selected suggestions to include their type
 interface SelectedSuggestion {
   term: string;
   type: string;
 }
-// --- CHANGE END ---
 
 export default function SearchModal({
   isOpen,
@@ -35,12 +33,10 @@ export default function SearchModal({
   contentMap,
 }: SearchModalProps) {
   const [query, setQuery] = useState('');
-  // --- CHANGE START ---
   // 2. Update state to use the new type instead of just string[]
   const [selectedSuggestions, setSelectedSuggestions] = useState<
     SelectedSuggestion[]
   >([]);
-  // --- CHANGE END ---
   const inputRef = useRef<HTMLInputElement>(null);
   const {
     suggestions,
@@ -64,10 +60,8 @@ export default function SearchModal({
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
-      // --- CHANGE START ---
       // 3. Update cleanup logic to use the new state
       setSelectedSuggestions([]);
-      // --- CHANGE END ---
       clearAll();
     }
   }, [isOpen, clearAll]);
@@ -84,10 +78,8 @@ export default function SearchModal({
 
   const handleClose = () => {
     setQuery('');
-    // --- CHANGE START ---
     // 4. Update cleanup logic to use the new state
     setSelectedSuggestions([]);
-    // --- CHANGE END ---
     clearAll();
     onClose();
   };
@@ -120,7 +112,6 @@ export default function SearchModal({
   };
 
   const handleSuggestionSelect = (suggestion: DiscoverySuggestion) => {
-    // --- CHANGE START ---
     // 5. Update how suggestions are added to the state
     // Check for duplicates before adding
     if (!selectedSuggestions.some((s) => s.term === suggestion.term)) {
@@ -129,32 +120,27 @@ export default function SearchModal({
         { term: suggestion.term, type: suggestion.type },
       ]);
     }
-    // --- CHANGE END ---
 
     setQuery('');
     selectSuggestion(suggestion);
   };
 
   const handleExactMatch = (term: string) => {
-    // --- CHANGE START ---
     // 6. Update exact match handling to add a default type
-    // From the legend, "Exact Match" uses the 'COLLECTION' style
+    // From the legend, "Exact Match" uses the 'EXACT' style
     if (!selectedSuggestions.some((s) => s.term === term)) {
-      setSelectedSuggestions((prev) => [...prev, { term, type: 'COLLECTION' }]);
+      setSelectedSuggestions((prev) => [...prev, { term, type: 'EXACT' }]);
     }
-    // --- CHANGE END ---
 
     setQuery('');
     selectExactMatch(term);
   };
 
   const removeTerm = (indexToRemove: number) => {
-    // --- CHANGE START ---
     // 7. Update remove logic to use the new state
     setSelectedSuggestions((prev) =>
       prev.filter((_, index) => index !== indexToRemove)
     );
-    // --- CHANGE END ---
     clearAll();
     if (inputRef.current) {
       inputRef.current.focus();
@@ -165,30 +151,28 @@ export default function SearchModal({
     switch (type) {
       case 'TOPIC':
         return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'COLLECTION':
+      case 'EXACT':
         return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'CONTENT':
+      case 'TEXT':
         return 'bg-green-100 text-green-800 border-green-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  // --- CHANGE START ---
   // 8. (Optional but recommended) Create a helper for the 'X' button color
   const getCloseButtonColor = (type: string) => {
     switch (type) {
       case 'TOPIC':
         return 'text-purple-600 hover:text-purple-800';
-      case 'COLLECTION':
+      case 'EXACT':
         return 'text-orange-600 hover:text-orange-800';
-      case 'CONTENT':
+      case 'TEXT':
         return 'text-green-600 hover:text-green-800';
       default:
         return 'text-gray-600 hover:text-gray-800';
     }
   };
-  // --- CHANGE END ---
 
   const bestCompletion =
     suggestions.length > 0 && query.length >= 3 ? suggestions[0].term : '';
@@ -224,7 +208,6 @@ export default function SearchModal({
             style={{ height: '80vh' }}
           >
             <div className="relative w-full border-b border-gray-200 p-4">
-              {/* --- CHANGE START --- */}
               {/* 9. Update the rendering of selected term pills */}
               {selectedSuggestions.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -251,7 +234,6 @@ export default function SearchModal({
                   ))}
                 </div>
               )}
-              {/* --- CHANGE END --- */}
 
               {!showResults && (
                 <div className="relative w-full px-6 py-2">
@@ -289,10 +271,8 @@ export default function SearchModal({
               className="w-full overflow-y-auto"
               style={{ height: 'calc(80vh - 80px)' }}
             >
-              {/* --- CHANGE START --- */}
               {/* 10. Final cleanup logic update */}
               {!query.trim() && selectedSuggestions.length === 0 && (
-                // --- CHANGE END ---
                 <div className="w-full p-8 text-center text-gray-500">
                   <MagnifyingGlassIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                   <p className="text-lg">Search across all content</p>
@@ -356,7 +336,7 @@ export default function SearchModal({
                       <span className="font-bold">Legend:</span>
                       <span
                         className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
-                          'COLLECTION'
+                          'EXACT'
                         )}`}
                       >
                         Exact Match
@@ -370,7 +350,7 @@ export default function SearchModal({
                       </span>
                       <span
                         className={`inline-flex items-center rounded-lg border px-3 py-1.5 text-sm font-bold ${getTypeColor(
-                          'CONTENT'
+                          'TEXT'
                         )}`}
                       >
                         Text Match

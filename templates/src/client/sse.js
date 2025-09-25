@@ -25,7 +25,7 @@ function log(...args) {
 }
 
 function logCritical(...args) {
-  if (VERBOSE) console.error('🚨 SSE CRITICAL:', ...args);
+  if (VERBOSE) console.warn('🚨 SSE CRITICAL:', ...args);
 }
 
 function logStoryfragmentChange(action, oldId, newId, source) {
@@ -151,57 +151,6 @@ async function performSSEHandshake(sessionId) {
     localStorage.setItem('tractstack_consent', result.consent);
     log('💾 Set consent:', result.consent);
 
-    if (
-      result.restored &&
-      result.affectedPanes &&
-      result.affectedPanes.length > 0
-    ) {
-      log('🔄 State restoration needed. Affected panes:', result.affectedPanes);
-
-      if (window.htmx && isHtmxReady) {
-        log('✅ HTMX ready, triggering immediate pane refreshes');
-        result.affectedPanes.forEach((paneId) => {
-          const element = document.querySelector(`[data-pane-id="${paneId}"]`);
-          if (element) {
-            log(`🔄 Restoring pane: ${paneId}`);
-            window.htmx.trigger(element, 'refresh');
-          } else {
-            log(`⚠️  Restoration pane element not found: ${paneId}`);
-          }
-        });
-      } else {
-        log(
-          '⚠️  HTMX not ready during restoration, setting up delayed refresh'
-        );
-        document.addEventListener(
-          'astro:page-load',
-          () => {
-            if (window.htmx && result.affectedPanes) {
-              log(
-                '🔄 HTMX now ready after page load, triggering delayed pane refreshes'
-              );
-              result.affectedPanes.forEach((paneId) => {
-                const element = document.querySelector(
-                  `[data-pane-id="${paneId}"]`
-                );
-                if (element) {
-                  log(`🔄 Delayed restoration for pane: ${paneId}`);
-                  window.htmx.trigger(element, 'refresh');
-                } else {
-                  log(
-                    `⚠️  Delayed restoration pane element not found: ${paneId}`
-                  );
-                }
-              });
-            }
-          },
-          { once: true }
-        );
-      }
-    } else {
-      log('ℹ️  No state restoration needed');
-    }
-
     if (window.TRACTSTACK_CONFIG) {
       window.TRACTSTACK_CONFIG.session = { isReady: true };
       log('✅ Marked session as ready in config');
@@ -297,6 +246,7 @@ function initializeSSE(sessionId) {
         for (const update of data.updates) {
           logCritical(`🔍 CHECKING UPDATE:`, {
             updateStoryfragment: update.storyfragmentId,
+            payload: update,
             currentStoryfragment: currentStoryfragmentId,
             configStoryfragment: window.TRACTSTACK_CONFIG?.storyfragmentId,
             willProcess: update.storyfragmentId === currentStoryfragmentId,
@@ -380,6 +330,7 @@ function processStoryfragmentUpdate(update) {
     storyfragmentId: update.storyfragmentId,
     affectedPanes: update.affectedPanes,
     gotoPaneId: update.gotoPaneId,
+    codeHookVisibility: update.CodeHookVisibility,
     currentContext: currentStoryfragmentId,
   });
 
@@ -395,10 +346,111 @@ function processStoryfragmentUpdate(update) {
     return;
   }
 
+  // Split pane IDs: code hooks vs regular panes
+  const codeHookPaneIds = [];
+  const regularPaneIds = [];
+
+  uniquePaneIds.forEach((paneId) => {
+    if (
+      update.CodeHookVisibility &&
+      update.CodeHookVisibility.hasOwnProperty(paneId)
+    ) {
+      codeHookPaneIds.push(paneId);
+    } else {
+      regularPaneIds.push(paneId);
+    }
+  });
+
+  log('🎭 Code hook pane IDs:', codeHookPaneIds);
+  log('📄 Regular pane IDs:', regularPaneIds);
+
+  // Process code hook visibility changes (CSS toggling)
+  if (codeHookPaneIds.length > 0) {
+    log('🎭 Processing code hook visibility changes');
+    codeHookPaneIds.forEach((paneId) => {
+      const element = document.querySelector(`#pane-${paneId}`);
+      if (element) {
+        const visibilityValue = update.CodeHookVisibility[paneId];
+        log(
+          `🎭 Code hook ${paneId} visibility value:`,
+          visibilityValue,
+          typeof visibilityValue
+        );
+
+        // Handle pane visibility
+        if (visibilityValue === false) {
+          element.style.display = 'none';
+          log(`🎭 Code hook pane ${paneId} HIDDEN`);
+        } else if (visibilityValue === true || Array.isArray(visibilityValue)) {
+          element.style.display = 'block';
+          log(`🎭 Code hook pane ${paneId} VISIBLE`);
+        }
+
+        // Handle unset button visibility
+        const unsetDiv = document.querySelector(`#pane-${paneId}-unset`);
+        if (unsetDiv) {
+          if (Array.isArray(visibilityValue)) {
+            // Show unset button - pane is visible and has beliefs to unset
+            const hxValsObject = {
+              unsetBeliefIds: visibilityValue.join(','),
+              paneId: paneId,
+            };
+            const hxValsJson = JSON.stringify(hxValsObject);
+
+            unsetDiv.innerHTML = `
+          <button
+            type="button"
+            class="text-mydarkgrey absolute right-2 top-2 z-10 rounded-full bg-white p-1.5 hover:bg-black hover:text-white"
+            title="Go Back"
+            hx-post="/api/v1/state"
+            hx-trigger="click"
+            hx-swap="none"
+            hx-vals='${hxValsJson}'
+            hx-preserve="true"
+          >
+            <svg
+              class="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+              />
+            </svg>
+          </button>
+        `;
+
+            // Tell HTMX to process the new button so hx-post works
+            if (window.htmx) {
+              window.htmx.process(unsetDiv);
+            }
+
+            log(
+              `🔄 Added unset button for pane ${paneId} with beliefs: ${visibilityValue.join(',')}`
+            );
+          } else {
+            // Clear unset button - pane is hidden or visible without unset needs
+            unsetDiv.innerHTML = '';
+            log(`🚫 Cleared unset button for pane ${paneId}`);
+          }
+        } else {
+          log(`⚠️ Unset div not found: pane-${paneId}-unset`);
+        }
+      } else {
+        log(`⚠️ Code hook element not found: pane-${paneId}`);
+      }
+    });
+  }
+
+  // Process regular panes (HTMX refresh)
   let refreshedCount = 0;
   let errorCount = 0;
 
-  uniquePaneIds.forEach((paneId) => {
+  regularPaneIds.forEach((paneId) => {
     const element = document.querySelector(`[data-pane-id="${paneId}"]`);
 
     if (element && window.htmx) {
@@ -431,7 +483,7 @@ function processStoryfragmentUpdate(update) {
   if (update.gotoPaneId) {
     const targetElement = document.getElementById(`pane-${update.gotoPaneId}`);
     if (targetElement) {
-      log(`📍 Scrolling to target pane: ${update.gotoPaneId}`);
+      log(`🔍 Scrolling to target pane: ${update.gotoPaneId}`);
       try {
         targetElement.scrollIntoView({ behavior: 'smooth' });
         log('✅ Scroll completed successfully');
