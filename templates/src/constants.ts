@@ -219,7 +219,7 @@ export const widgetMeta: WidgetMeta = {
   bunny: {
     title: `BunnyCDN Video Embed`,
     parameters: [
-      { label: 'Embed URL', defaultValue: '*', type: 'string' },
+      { label: 'Video ID', defaultValue: '234/uuid', type: 'string' },
       { label: 'Title', defaultValue: 'Descriptive Title', type: 'string' },
     ],
   },

@@ -9,8 +9,10 @@ interface BunnyWidgetProps {
   onUpdate: (params: string[]) => void;
 }
 
+const BUNNY_EMBED_BASE_URL = 'https://iframe.mediadelivery.net/embed/';
+
 function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
-  const [embedUrl, setEmbedUrl] = useState(
+  const [videoId, setVideoId] = useState(
     String(node.codeHookParams?.[0] || '')
   );
   const [title, setTitle] = useState(String(node.codeHookParams?.[1] || ''));
@@ -20,105 +22,85 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
   const widgetInfo = widgetMeta.bunny;
 
   useEffect(() => {
-    setEmbedUrl(String(node.codeHookParams?.[0] || ''));
+    const newVideoId = String(node.codeHookParams?.[0] || '');
+    setVideoId(newVideoId);
     setTitle(String(node.codeHookParams?.[1] || ''));
-    validateUrl(String(node.codeHookParams?.[0] || ''));
+    validateVideoId(newVideoId);
   }, [node]);
 
-  const checkForDuplicates = (url: string): boolean => {
-    if (!url) return false;
-
+  const checkForDuplicates = (id: string): boolean => {
+    if (!id) return false;
     try {
-      const videoId = extractVideoId(url);
-      if (!videoId) return false;
-
       const ctx = getCtx();
       const existingVideos = ctx.getAllBunnyVideoInfo();
-
-      // Check if this video ID already exists in another node
-      return existingVideos.some(
-        (video) =>
-          video.videoId === videoId &&
-          !(node.codeHookParams?.[0] || '').includes(videoId)
-      );
+      const count = existingVideos.filter(
+        (video) => video.videoId === id
+      ).length;
+      return count > 1;
     } catch (e) {
       console.error('Error checking for duplicates:', e);
       return false;
     }
   };
 
-  const extractVideoId = (url: string): string | null => {
-    try {
-      const match = url.match(/embed\/([^/]+\/[^/?]+)/);
-      return match ? match[1] : null;
-    } catch (e) {
-      console.error('Error extracting video ID:', e);
-      return null;
-    }
+  const isValidVideoIdFormat = (id: string): boolean => {
+    if (!id) return true; // An empty string is not an error itself.
+    const videoIdRegex = /^\d+\/[a-f0-9\-]{36}$/;
+    return videoIdRegex.test(id);
   };
 
-  // Validate URL format and check for duplicates
-  const validateUrl = (url: string): void => {
-    if (!url) {
+  const validateVideoId = (id: string) => {
+    if (!id) {
       setValidationError(null);
       setIsDuplicate(false);
       return;
     }
 
-    const isValid = isValidUrl(url);
-    if (!isValid) {
-      setValidationError('URL should be a valid Bunny embed URL');
+    if (!isValidVideoIdFormat(id)) {
+      setValidationError(
+        "Invalid format. Use 'LibraryID/VideoGUID' from Bunny."
+      );
       setIsDuplicate(false);
       return;
     }
 
-    const duplicate = checkForDuplicates(url);
+    const duplicate = checkForDuplicates(id);
     setIsDuplicate(duplicate);
     setValidationError(
-      duplicate ? 'This video is already used elsewhere in this page' : null
+      duplicate ? 'This video is already used elsewhere on this page.' : null
     );
   };
 
-  const handleEmbedUrlChange = (value: string) => {
-    setEmbedUrl(value);
-    validateUrl(value);
+  const handleVideoIdChange = (value: string) => {
+    setVideoId(value);
+    validateVideoId(value);
     onUpdate([value, title]);
   };
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    onUpdate([embedUrl, value]);
+    onUpdate([videoId, value]);
   };
 
-  // Validate URL format
-  const isValidUrl = (url: string): boolean => {
-    try {
-      if (!url) return false;
-      new URL(url);
-      return (
-        url.includes('//iframe.mediadelivery.net/embed/') ||
-        url.includes('//video.bunnycdn.com/')
-      );
-    } catch (e) {
-      return false;
-    }
-  };
+  const showPreview = videoId && !validationError && !isDuplicate;
+  const embedUrlForPreview = showPreview
+    ? `${BUNNY_EMBED_BASE_URL}${videoId}`
+    : '';
 
   return (
     <div className="space-y-4">
       <SingleParam
-        label={widgetInfo.parameters[0].label}
-        value={embedUrl}
-        onChange={handleEmbedUrlChange}
+        label="Video ID"
+        value={videoId}
+        onChange={handleVideoIdChange}
+        placeholder="e.g., 12345/abcde-12345-fghij-67890"
       />
-      {validationError && embedUrl && (
+      {validationError && videoId && (
         <div className="mt-1 text-xs text-red-500">{validationError}</div>
       )}
       {isDuplicate && (
         <div className="rounded border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-800">
-          Warning: This video is already used elsewhere in this page. Using the
-          same video multiple times may cause playback conflicts. Consider using
-          a single video with chapter navigation instead.
+          Warning: This video is already used elsewhere on this page.
         </div>
       )}
 
@@ -127,6 +109,22 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
         value={title}
         onChange={handleTitleChange}
       />
+
+      {showPreview && (
+        <div className="mt-4 space-y-2">
+          <label className="block text-sm font-medium text-gray-500">
+            Preview
+          </label>
+          <div className="aspect-video w-full">
+            <iframe
+              src={embedUrlForPreview}
+              className="h-full w-full rounded border"
+              title={`Preview: ${title}`}
+              allow="autoplay; fullscreen"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

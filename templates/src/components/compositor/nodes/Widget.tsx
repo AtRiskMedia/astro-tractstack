@@ -79,7 +79,7 @@ const getWidgetElement = (
     case 'bunny':
       return value1 ? (
         <div className={`${classNames} pointer-events-none`}>
-          <BunnyVideo embedUrl={value1} title={value2 || 'Bunny Video'} />
+          <BunnyVideo videoId={value1} title={value2 || 'Bunny Video'} />
         </div>
       ) : null;
 
