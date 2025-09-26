@@ -30,7 +30,9 @@ let storyData;
 try {
   storyData = await getStoryData(Astro, lookup, sessionId, tenantId);
 } catch (error) {
-  if (error instanceof Response) {
+  if (error instanceof Response && error.status === 404) {
+    return Astro.redirect('/404');
+  } else if (error instanceof Response) {
     return error;
   }
   console.error('Error fetching storyfragment:', error);
