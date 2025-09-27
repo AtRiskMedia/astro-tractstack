@@ -6,9 +6,15 @@ interface BunnyVideoProps {
 
 const BUNNY_EMBED_BASE_URL = 'https://iframe.mediadelivery.net/embed/';
 
+const isValidBunnyVideoId = (id: string): boolean => {
+  if (!id) return false;
+  const videoIdRegex = /^\d+\/[a-f0-9\-]{36}$/;
+  return videoIdRegex.test(id);
+};
+
 const BunnyVideo = ({ videoId, title, className = '' }: BunnyVideoProps) => {
-  // If no videoId is provided, render the placeholder.
-  if (!videoId) {
+  // If the videoId is missing or has an invalid format, render the placeholder.
+  if (!isValidBunnyVideoId(videoId)) {
     return (
       <div
         className={`flex aspect-video w-full items-center justify-center bg-gray-100 ${className}`}
