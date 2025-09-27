@@ -12,7 +12,12 @@ export const RenderChildren = (props: RenderChildrenProps) => {
   return (
     <>
       {children.map((id: string) => (
-        <Node nodeId={id} key={id} ctx={nodeProps.ctx} />
+        <Node
+          nodeId={id}
+          key={id}
+          ctx={nodeProps.ctx}
+          config={nodeProps.config}
+        />
       ))}
     </>
   );

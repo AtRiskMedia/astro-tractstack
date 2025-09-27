@@ -106,12 +106,7 @@ const createdDate = created ? new Date(created) : new Date();
             {allLinks.map((item: any) => (
               <a
                 href={item.to}
-                class={
-                  'z-10 whitespace-nowrap rounded px-3.5 py-1.5 text-lg shadow-sm transition-colors ' +
-                  (item.featured
-                    ? 'bg-brand-7 hover:bg-myblack focus:bg-brand-7 text-white hover:text-white focus:text-white'
-                    : 'text-brand-7 hover:bg-myblack focus:bg-brand-7 bg-white hover:text-white focus:text-white')
-                }
+                class="bg-brand-7 hover:bg-myblack focus:bg-brand-7 z-10 whitespace-nowrap rounded px-3.5 py-1.5 text-lg text-white shadow-sm transition-colors hover:text-white focus:text-white"
                 title={item.description}
               >
                 <span class="font-bold">{item.name}</span>

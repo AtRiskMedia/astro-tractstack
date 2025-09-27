@@ -163,7 +163,11 @@ const Pane = memo(
           ) : codeHookPayload && codeHookTarget === 'list-content' ? (
             <ListContentSetup nodeId={props.nodeId} params={codeHookParams} />
           ) : codeHookPayload && codeHookTarget === 'bunny-video' ? (
-            <BunnyVideoSetup nodeId={props.nodeId} params={codeHookParams} />
+            <BunnyVideoSetup
+              nodeId={props.nodeId}
+              params={codeHookParams}
+              config={props.config}
+            />
           ) : codeHookPayload && codeHookTarget ? (
             <CodeHookContainer
               payload={{ target: codeHookTarget, params: codeHookParams }}

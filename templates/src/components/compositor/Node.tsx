@@ -87,7 +87,7 @@ const getElement = (
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
   const hasPanes = useStore(getCtx(props).hasPanes);
   const isTemplate = useStore(getCtx(props).isTemplate);
-  const sharedProps = { nodeId: node.id, ctx: props.ctx };
+  const sharedProps = { nodeId: node.id, ctx: props.ctx, config: props.config };
   const type = getType(node);
 
   switch (type) {

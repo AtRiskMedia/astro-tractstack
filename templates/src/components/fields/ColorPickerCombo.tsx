@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Combobox } from '@ark-ui/react';
+import { Portal } from '@ark-ui/react/portal';
 import { createListCollection } from '@ark-ui/react/collection';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
@@ -42,7 +43,7 @@ const ColorPickerCombo = ({
 
   // Add ref and useDropdownDirection hook
   const comboboxRef = useRef<HTMLDivElement>(null);
-  const { openAbove, maxHeight } = useDropdownDirection(comboboxRef);
+  const { openAbove } = useDropdownDirection(comboboxRef);
 
   // Get all available Tailwind color options
   const allTailwindColorOptions = useMemo(() => {
@@ -223,56 +224,69 @@ const ColorPickerCombo = ({
               onValueChange={handleTailwindColorChange}
               onInputValueChange={handleInputChange}
               selectionBehavior="replace"
+              loopFocus={true}
+              openOnKeyPress={true}
+              composite={true}
+              positioning={{
+                placement: openAbove ? 'top' : 'bottom',
+                gutter: 4,
+                sameWidth: true,
+              }}
             >
-              <div ref={comboboxRef} className="relative max-w-48">
-                <Combobox.Input
-                  className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full rounded-md py-2 pl-3 pr-10 shadow-sm"
-                  placeholder="Search Tailwind colors..."
-                  autoComplete="off"
-                />
-                <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-                  <ChevronUpDownIcon
-                    className="text-mydarkgrey h-5 w-5"
-                    aria-hidden="true"
+              <Combobox.Control ref={comboboxRef}>
+                <div className="relative">
+                  <Combobox.Input
+                    className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full max-w-48 rounded-md py-2 pl-3 pr-10 shadow-sm"
+                    placeholder="Search Tailwind colors..."
+                    autoComplete="off"
                   />
-                </Combobox.Trigger>
-                <Combobox.Content
-                  className={`xs:text-sm absolute z-10 mt-1 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${
-                    openAbove ? 'bottom-full mb-1' : 'top-full'
-                  }`}
-                  style={{ maxHeight }}
-                >
-                  {filteredColors.length === 0 ? (
-                    <div className="relative cursor-default select-none py-2 pl-3 pr-4 text-black">
-                      Nothing found.
-                    </div>
-                  ) : (
-                    filteredColors.map((color) => (
-                      <Combobox.Item
-                        key={color}
-                        item={color}
-                        className="color-item relative cursor-default select-none py-2 pl-3 pr-4"
-                      >
-                        <div className="flex items-center">
-                          <div
-                            className="mr-3 h-6 w-6 flex-shrink-0 rounded"
-                            style={{
-                              backgroundColor: tailwindToHex(
-                                `bg-${color}`,
-                                config.BRAND_COLOURS || null
-                              ),
-                            }}
-                          />
-                          <span className="block truncate">{color}</span>
-                          <span className="color-indicator absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-600">
-                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                          </span>
-                        </div>
-                      </Combobox.Item>
-                    ))
-                  )}
-                </Combobox.Content>
-              </div>
+                  <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
+                    <ChevronUpDownIcon
+                      className="text-mydarkgrey h-5 w-5"
+                      aria-hidden="true"
+                    />
+                  </Combobox.Trigger>
+                </div>
+              </Combobox.Control>
+
+              <Portal>
+                <Combobox.Positioner style={{ zIndex: 1002 }}>
+                  <Combobox.Content className="xs:text-sm max-h-64 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    {filteredColors.length === 0 ? (
+                      <div className="relative cursor-default select-none py-2 pl-3 pr-4 text-black">
+                        Nothing found.
+                      </div>
+                    ) : (
+                      filteredColors.map((color) => (
+                        <Combobox.Item
+                          key={color}
+                          item={color}
+                          className="color-item relative cursor-default select-none py-2 pl-3 pr-4"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className="mr-3 h-6 w-6 flex-shrink-0 rounded"
+                              style={{
+                                backgroundColor: tailwindToHex(
+                                  `bg-${color}`,
+                                  config.BRAND_COLOURS || null
+                                ),
+                              }}
+                            />
+                            <span className="block truncate">{color}</span>
+                            <span className="color-indicator absolute inset-y-0 right-0 flex items-center pr-3 text-cyan-600">
+                              <CheckIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </div>
+                        </Combobox.Item>
+                      ))
+                    )}
+                  </Combobox.Content>
+                </Combobox.Positioner>
+              </Portal>
             </Combobox.Root>
           </div>
         )}

@@ -75,7 +75,9 @@ function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
     newNode.codeHookParams = stringParams;
 
     // Update the copy field to match the new params
-    newNode.copy = `${widgetType}(${stringParams.join('|')})`;
+    const paramsForCopy = stringParams.slice(0, widgetInfo.parameters.length);
+    newNode.copy = `${widgetType}(${paramsForCopy.join('|')})`;
+    console.log(newNode.copy);
 
     // Mark the node as changed
     newNode.isChanged = true;

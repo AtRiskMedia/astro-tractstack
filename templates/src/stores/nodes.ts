@@ -2190,9 +2190,10 @@ export class NodesContext {
   getAllBunnyVideoInfo(): { url: string; title: string; videoId: string }[] {
     const results: { url: string; title: string; videoId: string }[] = [];
     const processedVideoIds = new Set<string>();
-
-    // Find panes with bunny-video code hook
     const allNodes = Array.from(this.allNodes.get().values());
+    const BUNNY_EMBED_BASE_URL = 'https://iframe.mediadelivery.net/embed/';
+
+    // Process pane-level bunny videos (which use full URLs)
     const paneNodes = allNodes.filter(
       (node) =>
         node.nodeType === 'Pane' &&
@@ -2200,7 +2201,6 @@ export class NodesContext {
         node.codeHookTarget === 'bunny-video'
     ) as PaneNode[];
 
-    // Process pane-level bunny videos
     for (const paneNode of paneNodes) {
       try {
         if (
@@ -2243,7 +2243,7 @@ export class NodesContext {
       }
     }
 
-    // Find inline bunny widgets
+    // Process inline bunny widgets (which use ID/GUID fragments)
     const codeNodes = allNodes.filter(
       (node) =>
         node.nodeType === 'TagElement' &&
@@ -2255,47 +2255,26 @@ export class NodesContext {
         node.copy.includes('bunny(')
     ) as FlatNode[];
 
-    // Process inline widgets
     for (const codeNode of codeNodes) {
       if (
         Array.isArray(codeNode.codeHookParams) &&
-        codeNode.codeHookParams.length >= 2
+        codeNode.codeHookParams.length > 0
       ) {
-        const urlParam = codeNode.codeHookParams[0];
-        const titleParam = codeNode.codeHookParams[1];
+        const videoId = String(codeNode.codeHookParams[0] || '');
+        const title = String(codeNode.codeHookParams[1] || 'Untitled Video');
 
-        const url = Array.isArray(urlParam)
-          ? urlParam[0]
-          : String(urlParam || '');
-        const title = Array.isArray(titleParam)
-          ? titleParam[0]
-          : String(titleParam || 'Untitled Video');
-
-        if (url) {
-          let videoId = '';
-          try {
-            const urlObj = new URL(url);
-            if (
-              urlObj.hostname === 'iframe.mediadelivery.net' &&
-              urlObj.pathname.startsWith('/embed/')
-            ) {
-              const pathParts = urlObj.pathname.split('/');
-              if (pathParts.length >= 4) {
-                videoId = `${pathParts[2]}/${pathParts[3]}`;
-              }
-            }
-          } catch (error) {
-            console.error('Error extracting video ID from URL:', error);
-          }
-
-          if (videoId && !processedVideoIds.has(videoId)) {
-            results.push({ url, title, videoId });
+        if (videoId && /^\d+\/[a-f0-9\-]{36}$/.test(videoId)) {
+          if (!processedVideoIds.has(videoId)) {
+            results.push({
+              url: `${BUNNY_EMBED_BASE_URL}${videoId}`,
+              title,
+              videoId,
+            });
             processedVideoIds.add(videoId);
           }
         }
       }
     }
-
     return results;
   }
 
