@@ -63,15 +63,15 @@ export const PageCreationSelector = ({
       },
       ...(hasAssemblyAIStore.get()
         ? [
-          {
-            id: 'generate',
-            name: 'Generate with AI',
-            description:
-              'Tell us what kind of page you want and AI will generate a first draft',
-            icon: CubeTransparentIcon,
-            active: hasAssemblyAIStore.get(),
-          },
-        ]
+            {
+              id: 'generate',
+              name: 'Generate with AI',
+              description:
+                'Tell us what kind of page you want and AI will generate a first draft',
+              icon: CubeTransparentIcon,
+              active: hasAssemblyAIStore.get(),
+            },
+          ]
         : []),
     ];
 
@@ -166,10 +166,11 @@ export const PageCreationSelector = ({
                   key={mode.id}
                   value={mode.id}
                   disabled={mode.disabled}
-                  className={`radio-item relative flex cursor-pointer rounded-lg px-5 py-6 shadow-md focus:outline-none ${mode.disabled
-                    ? 'bg-gray-50'
-                    : 'bg-white hover:ring-2 hover:ring-cyan-600 hover:ring-offset-2'
-                    }`}
+                  className={`radio-item relative flex cursor-pointer rounded-lg px-5 py-6 shadow-md focus:outline-none ${
+                    mode.disabled
+                      ? 'bg-gray-50'
+                      : 'bg-white hover:ring-2 hover:ring-cyan-600 hover:ring-offset-2'
+                  }`}
                 >
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center">
