@@ -199,8 +199,6 @@ export default function SearchWidget({ fullContentMap }: SearchWidgetProps) {
     }
   };
 
-  // Determine the correct suggestion for autocompletion, prioritizing an exact match
-  // to align with the behavior of the 'Enter' key press.
   const suggestionForDisplay = useMemo(() => {
     if (query.length < 3 || suggestions.length === 0) {
       return null;
@@ -355,6 +353,17 @@ export default function SearchWidget({ fullContentMap }: SearchWidgetProps) {
                   </div>
                 </div>
               )}
+              {/* Show this block only when discovery is finished, the user has typed, and there are no suggestions. */}
+              {!isDiscovering &&
+                suggestions.length === 0 &&
+                query.trim().length >= 3 && (
+                  <div className="mx-auto mt-2 max-w-5xl rounded-xl border border-gray-200 bg-white p-4 text-center shadow-lg">
+                    <p className="text-gray-600">
+                      No suggestions found for "
+                      <span className="font-bold">{query}</span>".
+                    </p>
+                  </div>
+                )}
             </div>
           )}
 
