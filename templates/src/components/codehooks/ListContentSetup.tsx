@@ -139,11 +139,8 @@ const ListContentSetup = ({
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const filteredPages = validPages.filter((page) => {
-    if (excludedIds.includes(page.id)) {
+    if (excludedIds.includes(page.id) || selectedTopics.length === 0) {
       return false;
-    }
-    if (selectedTopics.length === 0) {
-      return true;
     }
     return (
       page.topics && page.topics.some((topic) => selectedTopics.includes(topic))

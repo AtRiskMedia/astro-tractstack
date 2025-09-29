@@ -1,0 +1,109 @@
+---
+import type { FullContentMapItem } from '@/types/tractstack';
+
+export interface Props {
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+  contentMap: FullContentMapItem[];
+}
+
+const { options, contentMap } = Astro.props;
+
+// Parse component options
+let parsedOptions;
+try {
+  parsedOptions = JSON.parse(options?.params?.options || '{}');
+} catch (e) {
+  console.error('Invalid options for FeaturedArticle', e);
+  parsedOptions = { slug: '' };
+}
+
+const slug = parsedOptions.slug || '';
+
+// Find the featured story from the contentMap
+// It must have a description, panes, AND a thumbnail image to be valid
+const featuredStory = contentMap.find(
+  (item: FullContentMapItem) =>
+    item.slug === slug &&
+    item.type === 'StoryFragment' &&
+    item.description &&
+    item.panes &&
+    item.panes.length > 0 &&
+    item.thumbSrc
+);
+---
+
+{
+  featuredStory ? (
+    <div class="mx-auto w-full max-w-7xl px-8 py-24">
+      {/* A robust grid layout that ensures spacing and alignment */}
+      <div class="grid grid-cols-1 items-center gap-x-16 gap-y-12 md:grid-cols-2">
+        {/* --- TEXT COLUMN --- */}
+        <div class="w-full">
+          <a href={`/${featuredStory.slug}`} class="block">
+            {/* Constrained width for readability */}
+            <div class="max-w-lg pr-12">
+              <p class="font-action mb-4 text-lg font-bold uppercase text-gray-500">
+                Featured Article
+              </p>
+              <div class="space-y-6">
+                <h2 class="py-2 text-3xl font-bold leading-snug text-black transition-colors md:text-4xl xl:text-5xl">
+                  {featuredStory.title}
+                </h2>
+                {featuredStory.description && (
+                  <p class="text-sm leading-relaxed text-gray-700 md:text-lg xl:text-xl">
+                    {featuredStory.description}
+                  </p>
+                )}
+                {featuredStory.topics && featuredStory.topics.length > 0 && (
+                  <div class="flex flex-wrap gap-2 pb-6 pt-2">
+                    {featuredStory.topics.map((topic: string) => (
+                      <span class="inline-flex items-center rounded-full bg-cyan-100 px-3 py-1 text-sm font-bold text-cyan-800">
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </a>
+        </div>
+
+        {/* --- IMAGE COLUMN --- */}
+        <div class="w-full py-6">
+          {/* Max width constraint on the image container */}
+          <div class="mx-auto max-w-2xl">
+            <a href={`/${featuredStory.slug}`}>
+              <img
+                src={featuredStory.thumbSrc}
+                srcset={featuredStory.thumbSrcSet}
+                sizes="(min-width: 768px) 50vw, 100vw"
+                alt={`Preview of ${featuredStory.title}`}
+                class="w-full rounded-lg shadow-lg"
+                style="aspect-ratio: 1200 / 630;"
+              />
+            </a>
+          </div>
+        </div>
+        <div class="md:py-6">
+          <a
+            href={`/${featuredStory.slug}`}
+            class="inline-block w-fit rounded-md bg-gray-100 px-5 py-3 text-sm font-bold text-gray-900 transition-colors hover:bg-gray-200"
+          >
+            Read More
+          </a>
+        </div>
+      </div>
+    </div>
+  ) : (
+    <div class="mx-auto max-w-7xl px-4 py-16">
+      <p class="italic text-cyan-600">
+        Featured article not found or is missing required content (description,
+        panes, thumbnail).
+      </p>
+    </div>
+  )
+}

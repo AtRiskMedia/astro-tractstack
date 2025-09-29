@@ -550,9 +550,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/preview/FeaturedContentPreview.tsx'
+        '../templates/src/components/compositor/preview/FeaturedArticlePreview.tsx'
       ),
-      dest: 'src/components/compositor/preview/FeaturedContentPreview.tsx',
+      dest: 'src/components/compositor/preview/FeaturedArticlePreview.tsx',
     },
 
     // Server side stores
@@ -1239,16 +1239,20 @@ export async function injectTemplateFiles(
       dest: 'src/components/codehooks/SankeyDiagram.tsx',
     },
     {
-      src: resolve(
-        '../templates/src/components/codehooks/FeaturedContent.astro'
-      ),
-      dest: 'src/components/codehooks/FeaturedContent.astro',
+      src: resolve('../templates/src/components/codehooks/SearchWidget.tsx'),
+      dest: 'src/components/codehooks/SearchWidget.tsx',
     },
     {
       src: resolve(
-        '../templates/src/components/codehooks/FeaturedContentSetup.tsx'
+        '../templates/src/components/codehooks/FeaturedArticle.astro'
       ),
-      dest: 'src/components/codehooks/FeaturedContentSetup.tsx',
+      dest: 'src/components/codehooks/FeaturedArticle.astro',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/codehooks/FeaturedArticleSetup.tsx'
+      ),
+      dest: 'src/components/codehooks/FeaturedArticleSetup.tsx',
     },
     {
       src: resolve('../templates/src/components/codehooks/ListContent.astro'),

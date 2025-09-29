@@ -446,7 +446,7 @@ export interface PlayerJS {
 
 export interface DiscoverySuggestion {
   term: string;
-  type: 'CONTENT' | 'TOPIC' | 'TITLE';
+  type: 'EXACT' | 'TOPIC' | 'TEXT' | 'TITLE';
 }
 
 export interface FTSResult {

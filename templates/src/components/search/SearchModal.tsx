@@ -2,6 +2,7 @@ import {
   useState,
   useEffect,
   useRef,
+  useMemo,
   type ChangeEvent,
   type KeyboardEvent,
 } from 'react';
@@ -174,11 +175,25 @@ export default function SearchModal({
     }
   };
 
-  const bestCompletion =
-    suggestions.length > 0 && query.length >= 3 ? suggestions[0].term : '';
+  // Determine the correct suggestion for autocompletion, prioritizing an exact match
+  // to align with the behavior of the 'Enter' key press.
+  const suggestionForDisplay = useMemo(() => {
+    if (query.length < 3 || suggestions.length === 0) {
+      return null;
+    }
+    const exactMatch = suggestions.find(
+      (s) => s.term.toLowerCase() === query.trim().toLowerCase()
+    );
+    return exactMatch || suggestions[0];
+  }, [suggestions, query]);
+
+  const bestCompletion = suggestionForDisplay ? suggestionForDisplay.term : '';
+
   const showCompletion =
     bestCompletion.toLowerCase().startsWith(query.toLowerCase()) &&
-    query.length >= 3;
+    query.length >= 3 &&
+    bestCompletion.length > query.length;
+
   let preservedCompletion = '';
   if (showCompletion) {
     const completionText = bestCompletion.slice(query.length);
@@ -186,6 +201,7 @@ export default function SearchModal({
       ? '\u00A0' + completionText.slice(1)
       : completionText;
   }
+
   const showSuggestions =
     suggestions.length > 0 && !searchResults && query.length >= 3;
   const showResults = searchResults !== null;

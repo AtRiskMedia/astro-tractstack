@@ -1,6 +1,7 @@
 ---
 import CustomHero from './CustomHero.astro';
-import FeaturedContent from '@/components/codehooks/FeaturedContent.astro';
+import SearchWidget from '@/components/codehooks/SearchWidget.tsx';
+import FeaturedArticle from '@/components/codehooks/FeaturedArticle.astro';
 import ListContent from '@/components/codehooks/ListContent.astro';
 import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
 import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
@@ -22,8 +23,9 @@ const { target, options, fullContentMap /*, resourcesPayload */ } = Astro.props;
 
 export const components = {
   'custom-hero': true,
-  'featured-content': true,
+  'featured-article': true,
   'list-content': true,
+  'search-widget': true,
   'bunny-video': import.meta.env.PUBLIC_ENABLE_BUNNY === 'true',
   epinet: true,
 };
@@ -32,8 +34,10 @@ export const components = {
 {
   target === 'list-content' ? (
     <ListContent options={options} contentMap={fullContentMap} />
-  ) : target === 'featured-content' ? (
-    <FeaturedContent options={options} contentMap={fullContentMap} />
+  ) : target === 'featured-article' ? (
+    <FeaturedArticle options={options} contentMap={fullContentMap} />
+  ) : target === 'search-widget' ? (
+    <SearchWidget fullContentMap={fullContentMap} client:load />
   ) : target === 'bunny-video' && import.meta.env.PUBLIC_ENABLE_BUNNY ? (
     <BunnyVideoWrapper options={options} />
   ) : target === 'custom-hero' ? (

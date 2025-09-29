@@ -62,7 +62,12 @@ const AddPaneCodeHookPanel = ({
   }, [filteredHooks]);
 
   const isHookAvailable = (hookName: string) => {
-    if (hookName === 'featured-content' || hookName === 'list-content') {
+    if (
+      (hookName === 'featured-content' ||
+        hookName === 'list-content' ||
+        hookName === 'featured-article') &&
+      !hasStoryFragments
+    ) {
       return hasStoryFragments;
     }
     return true;

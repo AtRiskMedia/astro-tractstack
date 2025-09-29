@@ -52,51 +52,19 @@ if (topicsArray.length > 0) {
   filteredStories = validPages;
 }
 
-// The server now ONLY sorts by recent. 'Popular' sort is handled on the client.
-const sortedByRecent = [...filteredStories].sort((a, b) => {
+// Simple sort by date - most recent first
+const sortedStories = [...filteredStories].sort((a, b) => {
   const dateA = a.changed ? new Date(a.changed).getTime() : 0;
   const dateB = b.changed ? new Date(b.changed).getTime() : 0;
   return dateB - dateA;
 });
 
-// The initial display will always be the most recent stories.
-const initialStories = sortedByRecent.slice(0, pageSize);
-const totalPages = Math.ceil(sortedByRecent.length / pageSize);
-
-// Date formatting helper
-function formatDate(dateString: string | null): string {
-  if (!dateString) return 'Unknown';
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(date);
-}
+// The initial display
+const initialStories = sortedStories.slice(0, pageSize);
+const totalPages = Math.ceil(sortedStories.length / pageSize);
 ---
 
 <div class="mx-auto max-w-7xl p-4 py-12">
-  <div
-    id="toggle-container"
-    class="mb-4 flex justify-center"
-    style="display: none;"
-  >
-    <div class="inline-flex rounded-md shadow-sm" role="group">
-      <button
-        id="recent-toggle"
-        class="rounded-l-md border border-cyan-600 bg-cyan-600 px-4 py-2 text-sm font-bold text-white transition-colors"
-      >
-        Newest
-      </button>
-      <button
-        id="popular-toggle"
-        class="rounded-r-md border border-cyan-600 bg-white px-4 py-2 text-sm font-bold text-gray-800 transition-colors hover:bg-gray-100"
-      >
-        Most Active
-      </button>
-    </div>
-  </div>
-
   {
     initialStories.length === 0 && (
       <div class="rounded-lg bg-gray-50 px-4 py-12 text-center">
@@ -113,9 +81,10 @@ function formatDate(dateString: string | null): string {
             {story.thumbSrc && (
               <img
                 src={story.thumbSrc}
+                srcset={story.thumbSrcSet}
                 alt={story.title}
-                style="width: 100px; height: auto;"
-                class="rounded-md"
+                style="aspect-ratio: 1200 / 630;"
+                class="w-36 flex-shrink-0 rounded-md md:w-48 xl:w-72"
               />
             )}
             <div class="flex-1">
@@ -128,7 +97,7 @@ function formatDate(dateString: string | null): string {
                 </p>
               )}
               {story.topics && story.topics.length > 0 && (
-                <div class="mt-1 flex flex-wrap gap-1">
+                <div class="mt-4 flex flex-wrap gap-1">
                   {story.topics.slice(0, 3).map((topic: string) => (
                     <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
                       {topic}
@@ -136,9 +105,6 @@ function formatDate(dateString: string | null): string {
                   ))}
                 </div>
               )}
-              <p class="mt-1 text-xs text-gray-600">
-                {story.changed && formatDate(story.changed)}
-              </p>
             </div>
           </div>
         </a>
@@ -157,9 +123,10 @@ function formatDate(dateString: string | null): string {
                 {story.thumbSrc && (
                   <img
                     src={story.thumbSrc}
+                    srcset={story.thumbSrcSet}
                     alt={story.title}
-                    style="width: 100px; height: auto;"
-                    class="rounded-md"
+                    style="aspect-ratio: 1200 / 630;"
+                    class="w-36 flex-shrink-0 rounded-md md:w-48 xl:w-72"
                   />
                 )}
                 <div class="flex-1">
@@ -180,9 +147,6 @@ function formatDate(dateString: string | null): string {
                       ))}
                     </div>
                   )}
-                  <p class="mt-1 text-xs text-gray-600">
-                    {story.changed && formatDate(story.changed)}
-                  </p>
                 </div>
               </div>
             </a>
@@ -199,9 +163,10 @@ function formatDate(dateString: string | null): string {
                 {story.thumbSrc && (
                   <img
                     src={story.thumbSrc}
+                    srcset={story.thumbSrcSet}
                     alt={story.title}
-                    style="width: 100px; height: auto;"
-                    class="rounded-md"
+                    style="aspect-ratio: 1200 / 630;"
+                    class="w-36 flex-shrink-0 rounded-md md:w-48 xl:w-72"
                   />
                 )}
                 <div class="flex-1">
@@ -222,9 +187,6 @@ function formatDate(dateString: string | null): string {
                       ))}
                     </div>
                   )}
-                  <p class="mt-1 text-xs text-gray-600">
-                    {story.changed && formatDate(story.changed)}
-                  </p>
                 </div>
               </div>
             </a>
@@ -264,100 +226,30 @@ function formatDate(dateString: string | null): string {
 <script
   is:inline
   define:vars={{
-    sortedByRecent,
+    sortedStories,
     pageSize,
   }}
 >
   // === CLIENT-SIDE STATE ===
   let currentPage = 1;
-  let currentMode = 'recent'; // Default mode is always 'recent' on initial load
-  let sortedByPopular = []; // This will be populated by the fetch function
 
   // === DOM ELEMENTS ===
   const mobileContainer = document.getElementById('mobile-content');
   const desktopContainer = document.getElementById('desktop-content');
-  const toggleContainer = document.getElementById('toggle-container');
-  const recentToggle = document.getElementById('recent-toggle');
-  const popularToggle = document.getElementById('popular-toggle');
   const prevPageBtn = document.getElementById('prev-page');
   const nextPageBtn = document.getElementById('next-page');
 
-  // === DATA FETCHING & PROCESSING ===
-  async function fetchHotContent() {
-    let retryCount = 0;
-    const maxRetries = 2;
-
-    const attemptFetch = async () => {
-      try {
-        const goBackend =
-          window.location.protocol + '//' + window.location.host;
-        const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
-        const response = await fetch(
-          `${goBackend}/api/v1/analytics/content-summary`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Tenant-ID': tenantId,
-            },
-          }
-        );
-
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-        const data = await response.json();
-
-        if (data.hotContent && data.hotContent.length > 0) {
-          // On success, create the popular sort array
-          const viewsMap = new Map(
-            data.hotContent.map((item) => [item.id, item.totalEvents])
-          );
-          sortedByPopular = [...sortedByRecent].sort((a, b) => {
-            const aViews = viewsMap.get(a.id) || 0;
-            const bViews = viewsMap.get(b.id) || 0;
-            if (bViews === aViews) {
-              const dateA = a.changed ? new Date(a.changed).getTime() : 0;
-              const dateB = b.changed ? new Date(b.changed).getTime() : 0;
-              return dateB - dateA;
-            }
-            return bViews - aViews;
-          });
-
-          // Show the toggle buttons
-          if (toggleContainer) toggleContainer.style.display = 'flex';
-        } else if (retryCount < maxRetries) {
-          retryCount++;
-          setTimeout(attemptFetch, retryCount * 3000);
-        }
-      } catch (error) {
-        console.warn('Could not fetch hot content:', error);
-        if (retryCount < maxRetries) {
-          retryCount++;
-          setTimeout(attemptFetch, retryCount * 3000);
-        }
-      }
-    };
-    await attemptFetch();
-  }
-
   // === DOM UPDATING ===
   function createStoryItem(story) {
-    const formattedDate = story.changed
-      ? new Intl.DateTimeFormat('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }).format(new Date(story.changed))
-      : 'Unknown';
     const imageHtml = story.thumbSrc
-      ? `<img src="${story.thumbSrc}" alt="${story.title}" style="width: 100px; height: auto;" class="rounded-md">`
+      ? `<img src="${story.thumbSrc}" srcset="${story.thumbSrcSet || ''}" alt="${story.title}" style="aspect-ratio: 1200 / 630;" class="w-36 flex-shrink-0 rounded-md md:w-48 xl:w-72">`
       : '';
     const descriptionHtml = story.description
       ? `<p class="text-sm text-gray-800 line-clamp-2">${story.description}</p>`
       : '';
     const topicsHtml =
       story.topics && story.topics.length > 0
-        ? `<div class="mt-1 flex flex-wrap gap-1">${story.topics
+        ? `<div class="mt-4 flex flex-wrap gap-1">${story.topics
             .slice(0, 3)
             .map(
               (topic) =>
@@ -374,7 +266,6 @@ function formatDate(dateString: string | null): string {
             <h3 class="text-lg font-bold text-black transition-colors group-hover:text-gray-900">${story.title}</h3>
             ${descriptionHtml}
             ${topicsHtml}
-            <p class="mt-1 text-xs text-gray-600">${formattedDate}</p>
           </div>
         </div>
       </a>
@@ -382,13 +273,10 @@ function formatDate(dateString: string | null): string {
   }
 
   function updateDisplayedContent() {
-    const currentData =
-      currentMode === 'recent' ? sortedByRecent : sortedByPopular;
-    const totalPages = Math.ceil(currentData.length / pageSize);
-
+    const totalPages = Math.ceil(sortedStories.length / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
     const endIdx = startIdx + pageSize;
-    const pageData = currentData.slice(startIdx, endIdx);
+    const pageData = sortedStories.slice(startIdx, endIdx);
 
     if (mobileContainer)
       mobileContainer.innerHTML = pageData.map(createStoryItem).join('');
@@ -413,28 +301,6 @@ function formatDate(dateString: string | null): string {
   }
 
   // === EVENT LISTENERS ===
-  function switchMode(newMode) {
-    if (currentMode === newMode) return;
-    currentMode = newMode;
-    currentPage = 1;
-
-    recentToggle.classList.toggle('bg-cyan-600', newMode === 'recent');
-    recentToggle.classList.toggle('text-white', newMode === 'recent');
-    recentToggle.classList.toggle('bg-white', newMode !== 'recent');
-    recentToggle.classList.toggle('text-gray-800', newMode !== 'recent');
-
-    popularToggle.classList.toggle('bg-cyan-600', newMode === 'popular');
-    popularToggle.classList.toggle('text-white', newMode === 'popular');
-    popularToggle.classList.toggle('bg-white', newMode !== 'popular');
-    popularToggle.classList.toggle('text-gray-800', newMode !== 'popular');
-
-    updateDisplayedContent();
-  }
-
-  if (recentToggle)
-    recentToggle.addEventListener('click', () => switchMode('recent'));
-  if (popularToggle)
-    popularToggle.addEventListener('click', () => switchMode('popular'));
   if (prevPageBtn)
     prevPageBtn.addEventListener('click', () => {
       if (currentPage > 1) {
@@ -444,17 +310,10 @@ function formatDate(dateString: string | null): string {
     });
   if (nextPageBtn)
     nextPageBtn.addEventListener('click', () => {
-      const currentData =
-        currentMode === 'recent' ? sortedByRecent : sortedByPopular;
-      const totalPages = Math.ceil(currentData.length / pageSize);
+      const totalPages = Math.ceil(sortedStories.length / pageSize);
       if (currentPage < totalPages) {
         currentPage++;
         updateDisplayedContent();
       }
     });
-
-  // === INITIALIZATION ===
-  document.addEventListener('DOMContentLoaded', () => {
-    fetchHotContent();
-  });
 </script>

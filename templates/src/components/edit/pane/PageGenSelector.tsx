@@ -4,7 +4,7 @@ import { RadioGroup } from '@ark-ui/react/radio-group';
 import CheckCircleIcon from '@heroicons/react/20/solid/CheckCircleIcon';
 import CubeTransparentIcon from '@heroicons/react/24/outline/CubeTransparentIcon';
 import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
-import NewspaperIcon from '@heroicons/react/24/outline/NewspaperIcon';
+//import NewspaperIcon from '@heroicons/react/24/outline/NewspaperIcon';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import AddPanePanel from './AddPanePanel';
 import PageCreationGen from './PageGen';
@@ -63,33 +63,33 @@ export const PageCreationSelector = ({
       },
       ...(hasAssemblyAIStore.get()
         ? [
-            {
-              id: 'generate',
-              name: 'Generate with AI',
-              description:
-                'Tell us what kind of page you want and AI will generate a first draft',
-              icon: CubeTransparentIcon,
-              active: hasAssemblyAIStore.get(),
-            },
-          ]
+          {
+            id: 'generate',
+            name: 'Generate with AI',
+            description:
+              'Tell us what kind of page you want and AI will generate a first draft',
+            icon: CubeTransparentIcon,
+            active: hasAssemblyAIStore.get(),
+          },
+        ]
         : []),
     ];
 
-    const featuredMode = {
-      id: 'featured',
-      name: 'Featured Content home page',
-      description:
-        'A layout with a prominent hero section showcasing a featured article and grid of additional top articles',
-      icon: NewspaperIcon,
-      active: true,
-      disabled: validPagesCount < 3,
-      disabledReason:
-        validPagesCount === 0
-          ? 'Not yet available; no pages with SEO metadata found.'
-          : `Not yet available; requires at least 3 pages with SEO metadata (currently ${validPagesCount}).`,
-    };
+    //const featuredMode = {
+    //  id: 'featured',
+    //  name: 'Featured Content home page',
+    //  description:
+    //    'A layout with a prominent hero section showcasing a featured article and grid of additional top articles',
+    //   icon: NewspaperIcon,
+    //  active: true,
+    //  disabled: validPagesCount < 3,
+    //  disabledReason:
+    //   validPagesCount === 0
+    //     ? 'Not yet available; no pages with SEO metadata found.'
+    //     : `Not yet available; requires at least 3 pages with SEO metadata (currently ${validPagesCount}).`,
+    //};
 
-    return [...baseModesWithoutFeature, featuredMode] as CreationMode[];
+    return [...baseModesWithoutFeature /*, featuredMode */] as CreationMode[];
   }, [validPagesCount]);
 
   const handleContinue = () => {
@@ -166,11 +166,10 @@ export const PageCreationSelector = ({
                   key={mode.id}
                   value={mode.id}
                   disabled={mode.disabled}
-                  className={`radio-item relative flex cursor-pointer rounded-lg px-5 py-6 shadow-md focus:outline-none ${
-                    mode.disabled
-                      ? 'bg-gray-50'
-                      : 'bg-white hover:ring-2 hover:ring-cyan-600 hover:ring-offset-2'
-                  }`}
+                  className={`radio-item relative flex cursor-pointer rounded-lg px-5 py-6 shadow-md focus:outline-none ${mode.disabled
+                    ? 'bg-gray-50'
+                    : 'bg-white hover:ring-2 hover:ring-cyan-600 hover:ring-offset-2'
+                    }`}
                 >
                   <div className="flex w-full items-center justify-between">
                     <div className="flex items-center">

@@ -2,8 +2,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { RadioGroup } from '@ark-ui/react/radio-group';
 import { ulid } from 'ulid';
-import FeaturedContentPreview from '@/components/compositor/preview/FeaturedContentPreview';
-import ListContentPreview from '@/components/compositor/preview/ListContentPreview';
 import VisualBreakPreview from '@/components/compositor/preview/VisualBreakPreview';
 import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
 import { fullContentMapStore } from '@/stores/storykeep';
@@ -95,19 +93,14 @@ const PageCreationSpecial = ({
       const featuredContentPane: TemplatePane = {
         id: ulid(),
         nodeType: 'Pane',
-        title: 'Featured Content',
-        slug: findUniqueSlug(`featured-content`, existingSlugs),
+        title: 'Featured Article',
+        slug: findUniqueSlug(`featured-article`, existingSlugs),
         isDecorative: false,
         parentId: nodeId,
-        codeHookTarget: 'featured-content',
+        codeHookTarget: 'featured-article',
         codeHookPayload: {
           options: JSON.stringify({
-            title: 'Featured Content',
-            featured: true,
-            slugs: '',
-            category: '',
-            limit: '6',
-            showDate: 'true',
+            title: 'Featured Article',
           }),
         },
       };
@@ -295,39 +288,6 @@ const PageCreationSpecial = ({
                 </div>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-8 rounded-lg border bg-white p-4 shadow-md">
-        <h3 className="mb-4 text-lg font-bold">Preview</h3>
-
-        {selectedLayout === 'featured-only' && <FeaturedContentPreview />}
-
-        {selectedLayout === 'featured-list' && (
-          <div>
-            <FeaturedContentPreview />
-            <ListContentPreview bgColour="#ffffff" />
-          </div>
-        )}
-
-        {selectedLayout === 'complete-home' && (
-          <div>
-            <FeaturedContentPreview />
-            <VisualBreakPreview
-              bgColour={
-                breakVariants.find((b) => b.id === selectedBreak)?.odd
-                  ? '#ffffff'
-                  : '#f1f5f9'
-              }
-              fillColour={
-                breakVariants.find((b) => b.id === selectedBreak)?.odd
-                  ? '#f1f5f9'
-                  : '#ffffff'
-              }
-              variant={selectedBreak}
-            />
-            <ListContentPreview bgColour="#f1f5f9" />
           </div>
         )}
       </div>

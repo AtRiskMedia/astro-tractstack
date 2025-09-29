@@ -780,7 +780,7 @@ const StoryFragmentOpenGraphPanel = ({
               <div className="mb-3 flex space-x-1">
                 <input
                   type="text"
-                  className="flex-grow rounded-l-md border border-gray-300 p-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
+                  className="w-full flex-grow rounded-l-md border border-gray-300 p-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
                   placeholder="Add a new tag..."
                   value={newTopicTitle}
                   onChange={(e) => setNewTopicTitle(e.target.value)}

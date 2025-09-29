@@ -2,11 +2,13 @@ import { useEffect, useState, memo, Fragment, type CSSProperties } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
-import FeaturedContentSetup from '@/components/codehooks/FeaturedContentSetup';
+import FeaturedArticleSetup from '@/components/codehooks/FeaturedArticleSetup';
 import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
 import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
+
+const TARGETS = ['list-content', 'featured-article', 'bunny-video'];
 
 const CodeHookContainer = ({
   payload,
@@ -155,13 +157,17 @@ const Pane = memo(
           id={getCtx(props).getNodeSlug(props.nodeId)}
           className={useFlexLayout ? '' : wrapperClasses}
         >
-          {codeHookPayload && codeHookTarget === 'featured-content' ? (
-            <FeaturedContentSetup
+          {codeHookPayload && codeHookTarget === 'featured-article' ? (
+            <FeaturedArticleSetup
               nodeId={props.nodeId}
               params={codeHookParams}
             />
           ) : codeHookPayload && codeHookTarget === 'list-content' ? (
-            <ListContentSetup nodeId={props.nodeId} params={codeHookParams} />
+            <ListContentSetup
+              nodeId={props.nodeId}
+              params={codeHookParams}
+              config={props.config}
+            />
           ) : codeHookPayload && codeHookTarget === 'bunny-video' ? (
             <BunnyVideoSetup
               nodeId={props.nodeId}
@@ -220,11 +226,7 @@ const Pane = memo(
                   !(
                     codeHookPayload &&
                     typeof codeHookTarget === 'string' &&
-                    [
-                      'list-content',
-                      'featured-content',
-                      'bunny-video',
-                    ].includes(codeHookTarget)
+                    TARGETS.includes(codeHookTarget)
                   )
                 )
                   getCtx(props).setClickedNodeId(props.nodeId, true);
@@ -250,11 +252,7 @@ const Pane = memo(
                   !(
                     codeHookPayload &&
                     typeof codeHookTarget === 'string' &&
-                    [
-                      'list-content',
-                      'featured-content',
-                      'bunny-video',
-                    ].includes(codeHookTarget)
+                    TARGETS.includes(codeHookTarget)
                   )
                 )
                   getCtx(props).setClickedNodeId(props.nodeId, true);
