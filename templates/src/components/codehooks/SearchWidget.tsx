@@ -292,7 +292,7 @@ export default function SearchWidget({ fullContentMap }: SearchWidgetProps) {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-2">
       <div className={searchResults ? `rounded-xl border-2 p-6 md:p-12` : ``}>
         <div
           className={`relative mx-auto mb-8 ${!searchResults ? `max-w-5xl` : ``}`}

@@ -12,7 +12,6 @@ export interface Props {
 
 const { options, contentMap } = Astro.props;
 
-// Parse component options
 let parsedOptions;
 try {
   parsedOptions = JSON.parse(options?.params?.options || '{}');
@@ -23,8 +22,6 @@ try {
 
 const slug = parsedOptions.slug || '';
 
-// Find the featured story from the contentMap
-// It must have a description, panes, AND a thumbnail image to be valid
 const featuredStory = contentMap.find(
   (item: FullContentMapItem) =>
     item.slug === slug &&
@@ -38,13 +35,10 @@ const featuredStory = contentMap.find(
 
 {
   featuredStory ? (
-    <div class="mx-auto w-full max-w-7xl px-8 py-24">
-      {/* A robust grid layout that ensures spacing and alignment */}
+    <div class="mx-auto w-full max-w-7xl px-8 py-12">
       <div class="grid grid-cols-1 items-center gap-x-16 gap-y-12 md:grid-cols-2">
-        {/* --- TEXT COLUMN --- */}
         <div class="w-full">
           <a href={`/${featuredStory.slug}`} class="block">
-            {/* Constrained width for readability */}
             <div class="max-w-lg pr-12">
               <p class="font-action mb-4 text-lg font-bold uppercase text-gray-500">
                 Featured Article
@@ -72,9 +66,7 @@ const featuredStory = contentMap.find(
           </a>
         </div>
 
-        {/* --- IMAGE COLUMN --- */}
         <div class="w-full py-6">
-          {/* Max width constraint on the image container */}
           <div class="mx-auto max-w-2xl">
             <a href={`/${featuredStory.slug}`}>
               <img
