@@ -9,24 +9,10 @@ import type { PaneNode } from '@/types/compositorTypes';
 
 const PER_PAGE = 20;
 
-// V2 Analytics Data Structure
-interface StoryfragmentAnalytics {
-  id: string;
-  total_actions: number;
-  unique_visitors: number;
-  last_24h_actions: number;
-  last_7d_actions: number;
-  last_28d_actions: number;
-  last_24h_unique_visitors: number;
-  last_7d_unique_visitors: number;
-  last_28d_unique_visitors: number;
-  total_leads: number;
-}
-
 interface ListContentSetupProps {
   params?: Record<string, string>;
   nodeId: string;
-  config?: BrandConfig;
+  config: BrandConfig;
 }
 
 const ListContentSetup = ({
@@ -34,17 +20,9 @@ const ListContentSetup = ({
   nodeId,
   config,
 }: ListContentSetupProps) => {
-  const [analyticsData, setAnalyticsData] = useState<
-    Record<string, StoryfragmentAnalytics>
-  >({});
-  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(true);
   const $contentMap = useStore(fullContentMapStore);
-
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  const [selectedMode, setSelectedMode] = useState(
-    params?.defaultMode || 'recent'
-  );
   const [excludedIds, setExcludedIds] = useState<string[]>(
     params?.excludedIds ? params.excludedIds.split(',') : []
   );
@@ -89,47 +67,6 @@ const ListContentSetup = ({
     }
   });
 
-  const fetchAnalyticsData = async () => {
-    try {
-      setIsAnalyticsLoading(true);
-      // Updated to use V2 API endpoint
-      const response = await fetch('/api/v1/analytics/storyfragments', {
-        headers: {
-          'X-Tenant-ID': window.TRACTSTACK_CONFIG?.tenantId || 'default',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const analyticsArray = await response.json();
-
-      // Transform array to a map keyed by ID for easier lookup
-      // V2 API returns array directly, not wrapped in a success/data structure
-      const analyticsById = Array.isArray(analyticsArray)
-        ? analyticsArray.reduce(
-            (
-              acc: Record<string, StoryfragmentAnalytics>,
-              item: StoryfragmentAnalytics
-            ) => {
-              acc[item.id] = item;
-              return acc;
-            },
-            {}
-          )
-        : {};
-
-      setAnalyticsData(analyticsById);
-    } catch (error) {
-      console.error('Error fetching analytics data:', error);
-      // Set empty analytics on error to prevent blocking the UI
-      setAnalyticsData({});
-    } finally {
-      setIsAnalyticsLoading(false);
-    }
-  };
-
   const topics = Array.from(topicMap.entries())
     .map(([name, { count, pageIds }]) => ({
       name,
@@ -147,12 +84,8 @@ const ListContentSetup = ({
     );
   });
 
+  // Always sort by most recent
   const sortedPages = [...filteredPages].sort((a, b) => {
-    if (selectedMode === 'popular') {
-      const aViews = analyticsData[a.id]?.total_actions || 0;
-      const bViews = analyticsData[b.id]?.total_actions || 0;
-      return bViews - aViews;
-    }
     const bDate = b.changed ? new Date(b.changed) : new Date(0);
     const aDate = a.changed ? new Date(a.changed) : new Date(0);
     return bDate.getTime() - aDate.getTime();
@@ -174,7 +107,6 @@ const ListContentSetup = ({
           codeHookTarget: 'list-content',
           codeHookPayload: {
             options: JSON.stringify({
-              defaultMode: selectedMode,
               excludedIds: excludedIds.join(','),
               topics: selectedTopics.join(','),
               pageSize: pageSize,
@@ -196,10 +128,6 @@ const ListContentSetup = ({
   };
 
   useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
-
-  useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
@@ -210,7 +138,7 @@ const ListContentSetup = ({
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [selectedMode, excludedIds, selectedTopics, pageSize, bgColor]);
+  }, [excludedIds, selectedTopics, pageSize, bgColor]);
 
   // Toggle a page's exclusion status
   const toggleExclude = (id: string) => {
@@ -336,7 +264,6 @@ const ListContentSetup = ({
     );
   }
 
-  if (isAnalyticsLoading) return null;
   return (
     <div className="w-full space-y-6 bg-slate-50 p-6">
       <div className="flex items-center justify-between">
@@ -375,29 +302,6 @@ const ListContentSetup = ({
               <option value="15">15 items</option>
               <option value="20">20 items</option>
             </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="sort-mode"
-              className="block text-sm font-bold text-gray-700"
-            >
-              Default sort order
-            </label>
-            <select
-              id="sort-mode"
-              name="sort-mode"
-              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-600 focus:outline-none focus:ring-cyan-600 sm:text-sm"
-              value={selectedMode}
-              onChange={(e) => setSelectedMode(e.target.value)}
-            >
-              <option value="recent">Most Recent</option>
-              <option value="popular">Most Popular</option>
-            </select>
-            <p className="mt-1 text-xs text-gray-500">
-              Note: Users can toggle between views regardless of the default
-              setting
-            </p>
           </div>
 
           <div>
@@ -533,7 +437,6 @@ const ListContentSetup = ({
           <div className="divide-y divide-gray-200">
             {paginatedPages.map((page) => {
               const isExcluded = excludedIds.includes(page.id);
-              const analytics = analyticsData[page.id];
 
               return (
                 <div key={page.id} className="flex items-center p-4">
@@ -586,19 +489,10 @@ const ListContentSetup = ({
                       </div>
                     )}
                     <div className="mt-1 flex items-center text-xs text-gray-500">
-                      {analytics && (
-                        <>
-                          <span>{analytics.total_actions} views</span>
-                          {page.changed && (
-                            <>
-                              <span className="mx-2">•</span>
-                              <span>
-                                Updated{' '}
-                                {new Date(page.changed).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
-                        </>
+                      {page.changed && (
+                        <span>
+                          Updated {new Date(page.changed).toLocaleDateString()}
+                        </span>
                       )}
                     </div>
                   </div>

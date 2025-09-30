@@ -255,44 +255,53 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
     </script>
   </head>
   <body class="font-main w-full">
-    {
-      !isEditor && (
-        <Header
-          title={title}
-          slug={slug}
-          brandConfig={brandConfig}
-          isContext={isContext}
-          isStoryKeep={isStoryKeep}
-          isEditable={isEditable}
-          sessionId={sessionId}
-          menu={menu}
-          storyfragmentId={storyfragmentId}
-          impressions={impressions}
-        />
-      )
-    }
-    <div
-      id="loading-indicator"
-      class="bg-myorange fixed left-0 top-0 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
-      style="opacity: 0.5; filter: blur(0.5px); z-index: 10070;"
-    >
+    <div class="overflow-hidden">
+      {
+        !isEditor && (
+          <Header
+            title={title}
+            slug={slug}
+            brandConfig={brandConfig}
+            isContext={isContext}
+            isStoryKeep={isStoryKeep}
+            isEditable={isEditable}
+            sessionId={sessionId}
+            menu={menu}
+            storyfragmentId={storyfragmentId}
+            impressions={impressions}
+          />
+        )
+      }
+      <div
+        id="loading-backdrop"
+        class="pointer-events-none fixed inset-0"
+        style="opacity: 0; z-index: 10069; display: none; background-color: rgba(255, 255, 255, 0.3); backdrop-filter: blur(4px); transition: opacity 300ms;"
+      >
+      </div>
+      <div
+        id="loading-indicator"
+        class="bg-myorange fixed left-0 top-0 h-1 w-full scale-x-0 transform transition-transform duration-300 ease-out"
+        style="opacity: 0.5; filter: blur(0.5px); z-index: 99999;"
+      >
+      </div>
+
+      <div id="content" class="transition-opacity duration-300">
+        <slot />
+      </div>
+      {
+        !isEditor && (
+          <Footer
+            slug={slug}
+            brandConfig={brandConfig}
+            isContext={isContext}
+            menu={menu}
+            created={created}
+            backToTop={true}
+          />
+        )
+      }
     </div>
 
-    <div id="content" class="transition-opacity duration-300">
-      <slot />
-    </div>
-    {
-      !isEditor && (
-        <Footer
-          slug={slug}
-          brandConfig={brandConfig}
-          isContext={isContext}
-          menu={menu}
-          created={created}
-          backToTop={true}
-        />
-      )
-    }
     <script type="module" is:inline is:persist is:raw>
       import '/client/sse.js';
       import '/client/belief-events.js';
@@ -300,17 +309,20 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
     </script>
 
     <script is:inline is:persist>
-      // Navigation loading animation - exact copy of helpers.ts implementation
+      // Navigation loading animation with blur backdrop
       let navProgressInterval = null;
       let navSafetyTimeout = null;
 
       function startNavLoadingAnimation() {
         const loadingIndicator = document.getElementById('loading-indicator');
+        const loadingBackdrop = document.getElementById('loading-backdrop');
+        const content = document.getElementById('content');
 
         if (
           window.matchMedia('(prefers-reduced-motion: no-preference)')
             .matches &&
-          loadingIndicator
+          loadingIndicator &&
+          loadingBackdrop
         ) {
           // Clear any existing safety timeout
           if (navSafetyTimeout !== null) {
@@ -318,6 +330,18 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
             navSafetyTimeout = null;
           }
 
+          // Show and animate backdrop
+          loadingBackdrop.style.display = 'block';
+          // Force reflow to ensure display:block is applied before opacity transition
+          void loadingBackdrop.offsetHeight;
+          loadingBackdrop.style.opacity = '1';
+
+          // Fade out content slightly
+          if (content) {
+            content.style.opacity = '0.7';
+          }
+
+          // Animate progress bar
           loadingIndicator.style.transform = 'scaleX(0)';
           loadingIndicator.style.display = 'block';
 
@@ -342,6 +366,7 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
 
       function stopNavLoadingAnimation() {
         const loadingIndicator = document.getElementById('loading-indicator');
+        const loadingBackdrop = document.getElementById('loading-backdrop');
         const content = document.getElementById('content');
 
         // Clear safety timeout
@@ -353,18 +378,30 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
         if (
           window.matchMedia('(prefers-reduced-motion: no-preference)')
             .matches &&
-          loadingIndicator
+          loadingIndicator &&
+          loadingBackdrop
         ) {
+          // Clear interval
           if (navProgressInterval !== null) {
             clearInterval(navProgressInterval);
             navProgressInterval = null;
           }
+
+          // Complete progress bar
           loadingIndicator.style.transform = 'scaleX(1)';
-          content.style.opacity = '1';
+
+          // Restore content opacity
+          if (content) {
+            content.style.opacity = '1';
+          }
+
+          // Hide backdrop
+          loadingBackdrop.style.opacity = '0';
 
           setTimeout(() => {
             loadingIndicator.style.display = 'none';
             loadingIndicator.style.transform = 'scaleX(0)';
+            loadingBackdrop.style.display = 'none';
           }, 300);
         }
       }

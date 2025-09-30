@@ -195,5 +195,14 @@ export const PaneSnapshotGenerator = ({
     generateSnapshot();
   }, [id, htmlString, isGenerating, onComplete, onError, config, outputWidth]);
 
+  // Show spinner while generating
+  if (isGenerating) {
+    return (
+      <div className="flex h-24 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
+      </div>
+    );
+  }
+
   return null;
 };

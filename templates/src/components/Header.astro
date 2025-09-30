@@ -185,7 +185,11 @@ const authStatus = {
         ) : null
       }
 
-      <SearchWrapper contentMap={fullContentMap} client:load />
+      {
+        !isStoryKeep && (
+          <SearchWrapper contentMap={fullContentMap} client:load />
+        )
+      }
 
       <script is:inline define:vars={{ sessionId }}>
         function initRememberMe() {

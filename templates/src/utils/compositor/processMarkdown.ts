@@ -1,6 +1,8 @@
 import { ulid } from 'ulid';
 import { NodesContext } from '@/stores/nodes';
 import { fullContentMapStore } from '@/stores/storykeep';
+import { tailwindToHex } from './tailwindColors';
+import { SvgBreaks } from '@/constants/shapes';
 import { findUniqueSlug } from '@/utils/helpers';
 import type {
   PageDesign,
@@ -276,8 +278,20 @@ export async function createPagePanes(
         const aboveColor = abovePane?.bgColour || 'white';
         const nextContentPane = design.contentDesign(!useOdd);
         const belowColor = nextContentPane.bgColour;
-        breakTemplate.bgColour = aboveColor;
-        const svgFill = belowColor;
+        const breakData = breakTemplate.bgPane?.breakDesktop;
+        const shapeName = breakData
+          ? `${breakData.collection}${breakData.image}`
+          : '';
+        const isFlipped = (shapeName && SvgBreaks[shapeName]?.flipped) || false;
+
+        breakTemplate.bgColour = tailwindToHex(
+          isFlipped ? belowColor : aboveColor,
+          null
+        );
+        const svgFill = tailwindToHex(
+          isFlipped ? aboveColor : belowColor,
+          null
+        );
         if (breakTemplate.bgPane) {
           if (breakTemplate.bgPane.breakDesktop) {
             breakTemplate.bgPane.breakDesktop.svgFill = svgFill;

@@ -14,7 +14,9 @@ import {
   type SnapshotData,
 } from '@/components/compositor/preview/PaneSnapshotGenerator';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
+import { tailwindToHex } from '@/utils/compositor/tailwindColors';
 import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
+import { SvgBreaks } from '@/constants/shapes';
 import {
   PaneAddMode,
   type PaneNode,
@@ -243,8 +245,16 @@ const AddPaneBreakPanel = ({
       }
     }
 
-    template.bgColour = belowColor;
-    const svgFill = aboveColor === belowColor ? 'black' : aboveColor;
+    const shapeName = `kCz${variant}`;
+    const isFlipped = SvgBreaks[shapeName]?.flipped || false;
+    template.bgColour = tailwindToHex(
+      isFlipped ? aboveColor : belowColor,
+      null
+    );
+    const svgFill = tailwindToHex(
+      isFlipped ? belowColor : aboveColor === belowColor ? 'black' : aboveColor,
+      null
+    );
 
     if (template.bgPane) {
       if (template.bgPane.type === 'visual-break') {

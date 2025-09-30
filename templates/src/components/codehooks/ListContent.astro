@@ -62,9 +62,14 @@ const sortedStories = [...filteredStories].sort((a, b) => {
 // The initial display
 const initialStories = sortedStories.slice(0, pageSize);
 const totalPages = Math.ceil(sortedStories.length / pageSize);
+
+const bgColor = parsedOptions.bgColor || '';
 ---
 
-<div class="mx-auto max-w-7xl p-4 py-12">
+<div
+  class="mx-auto max-w-7xl p-4 py-12"
+  style={bgColor ? `background-color: ${bgColor}` : ''}
+>
   {
     initialStories.length === 0 && (
       <div class="rounded-lg bg-gray-50 px-4 py-12 text-center">

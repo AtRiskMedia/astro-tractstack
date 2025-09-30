@@ -109,6 +109,11 @@ const ogImage =
   typeof storyData.socialImagePath === `string`
     ? storyData.socialImagePath
     : undefined;
+const paneSlugLookup: Record<string, string> = {};
+paneIds.forEach((paneId: string) => {
+  const paneData = fullContentMap.find((item) => item.id === paneId);
+  paneSlugLookup[paneId] = paneData?.slug || paneId;
+});
 ---
 
 <Layout
@@ -129,71 +134,73 @@ const ogImage =
     <div class="panes-container">
       {
         paneIds.map((paneId: string) => (
-          <div
-            id={`pane-${paneId}`}
-            data-pane-id={paneId}
-            class="pane-fragment-container"
-            style={
-              !codeHookTargets[paneId]
-                ? undefined
-                : !storyData.codeHookVisibility?.[paneId]
-                  ? 'display:none;'
-                  : 'display:block;'
-            }
-            hx-get={`/api/v1/fragments/panes/${paneId}`}
-            hx-trigger="refresh"
-            hx-swap="innerHTML"
-          >
-            {codeHookTargets[paneId] ? (
-              <div class="relative overflow-hidden">
-                <CodeHook
-                  target={codeHookTargets[paneId]}
-                  options={(() => {
-                    const optionsStr =
-                      codeHookTargets[paneId + '-' + codeHookTargets[paneId]];
-                    return optionsStr
-                      ? { params: { options: optionsStr } }
-                      : undefined;
-                  })()}
-                  fullContentMap={fullContentMap}
-                  resourcesPayload={resourcesPayload}
-                />
-                <div id={`pane-${paneId}-unset`}>
-                  {Array.isArray(storyData.codeHookVisibility?.[paneId]) && (
-                    <button
-                      type="button"
-                      class="text-mydarkgrey absolute right-2 top-2 z-10 rounded-full bg-white p-1.5 hover:bg-black hover:text-white"
-                      title="Go Back"
-                      hx-post="/api/v1/state"
-                      hx-trigger="click"
-                      hx-swap="none"
-                      hx-vals={JSON.stringify({
-                        unsetBeliefIds:
-                          storyData.codeHookVisibility[paneId].join(','),
-                        paneId: paneId,
-                      })}
-                      hx-preserve="true"
-                    >
-                      <svg
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
+          <div id={paneSlugLookup[paneId]}>
+            <div
+              id={`pane-${paneId}`}
+              data-pane-id={paneId}
+              class="pane-fragment-container"
+              style={
+                !codeHookTargets[paneId]
+                  ? undefined
+                  : !storyData.codeHookVisibility?.[paneId]
+                    ? 'display:none;'
+                    : 'display:block;'
+              }
+              hx-get={`/api/v1/fragments/panes/${paneId}`}
+              hx-trigger="refresh"
+              hx-swap="innerHTML"
+            >
+              {codeHookTargets[paneId] ? (
+                <div class="relative overflow-hidden">
+                  <CodeHook
+                    target={codeHookTargets[paneId]}
+                    options={(() => {
+                      const optionsStr =
+                        codeHookTargets[paneId + '-' + codeHookTargets[paneId]];
+                      return optionsStr
+                        ? { params: { options: optionsStr } }
+                        : undefined;
+                    })()}
+                    fullContentMap={fullContentMap}
+                    resourcesPayload={resourcesPayload}
+                  />
+                  <div id={`pane-${paneId}-unset`}>
+                    {Array.isArray(storyData.codeHookVisibility?.[paneId]) && (
+                      <button
+                        type="button"
+                        class="text-mydarkgrey absolute right-2 top-2 z-10 rounded-full bg-white p-1.5 hover:bg-black hover:text-white"
+                        title="Go Back"
+                        hx-post="/api/v1/state"
+                        hx-trigger="click"
+                        hx-swap="none"
+                        hx-vals={JSON.stringify({
+                          unsetBeliefIds:
+                            storyData.codeHookVisibility[paneId].join(','),
+                          paneId: paneId,
+                        })}
+                        hx-preserve="true"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
-                        />
-                      </svg>
-                    </button>
-                  )}
+                        <svg
+                          class="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="1.5"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <Fragment set:html={fragmentsData[paneId] || ''} />
-            )}
+              ) : (
+                <Fragment set:html={fragmentsData[paneId] || ''} />
+              )}
+            </div>
           </div>
         ))
       }

@@ -155,25 +155,23 @@ const StyleBreakPanel = ({ node, parentNode, config }: BasePanelProps) => {
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <ColorPickerCombo
-            title="Shape Color"
-            defaultColor={settings.svgFill}
-            onColorChange={(color: string) =>
-              setSettings((prev) => ({ ...prev, svgFill: color }))
-            }
-            config={config!}
-          />
-          <ColorPickerCombo
-            title="Background Color"
-            defaultColor={settings.bgColor}
-            onColorChange={(color: string) =>
-              setSettings((prev) => ({ ...prev, bgColor: color }))
-            }
-            config={config!}
-            allowNull={true}
-          />
-        </div>
+        <ColorPickerCombo
+          title="Shape Color"
+          defaultColor={settings.svgFill}
+          onColorChange={(color: string) =>
+            setSettings((prev) => ({ ...prev, svgFill: color }))
+          }
+          config={config!}
+        />
+        <ColorPickerCombo
+          title="Background Color"
+          defaultColor={settings.bgColor}
+          onColorChange={(color: string) =>
+            setSettings((prev) => ({ ...prev, bgColor: color }))
+          }
+          config={config!}
+          allowNull={true}
+        />
       </div>
     </div>
   );

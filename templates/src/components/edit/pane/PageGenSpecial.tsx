@@ -7,6 +7,8 @@ import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
 import { fullContentMapStore } from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
 import { findUniqueSlug } from '@/utils/helpers';
+import { tailwindToHex } from '@/utils/compositor/tailwindColors';
+import { SvgBreaks } from '@/constants/shapes';
 import type { StoryFragmentNode, TemplatePane } from '@/types/compositorTypes';
 
 // Layout options with IDs, labels, and descriptions
@@ -121,24 +123,36 @@ const PageCreationSpecial = ({
         const bgColor = breakVariant?.odd ? 'white' : 'gray-50';
         const fillColor = breakVariant?.odd ? 'gray-50' : 'white';
 
+        const shapeName = `kCz${selectedBreak}`;
+        const isFlipped = SvgBreaks[shapeName]?.flipped || false;
+
+        const finalBgColor = tailwindToHex(
+          isFlipped ? fillColor : bgColor,
+          null
+        );
+        const finalFillColor = tailwindToHex(
+          isFlipped ? bgColor : fillColor,
+          null
+        );
+
         // 2. Create Visual Break pane
         const visualBreakTemplate = getTemplateVisualBreakPane(selectedBreak);
         visualBreakTemplate.id = ulid();
         visualBreakTemplate.title = 'Visual Break';
         visualBreakTemplate.slug = `${storyfragment.slug}-visual-break`;
-        visualBreakTemplate.bgColour = bgColor;
+        visualBreakTemplate.bgColour = finalBgColor;
 
         // Configure the SVG fill color
         if (visualBreakTemplate.bgPane) {
           if (visualBreakTemplate.bgPane.type === 'visual-break') {
             if (visualBreakTemplate.bgPane.breakDesktop) {
-              visualBreakTemplate.bgPane.breakDesktop.svgFill = fillColor;
+              visualBreakTemplate.bgPane.breakDesktop.svgFill = finalFillColor;
             }
             if (visualBreakTemplate.bgPane.breakTablet) {
-              visualBreakTemplate.bgPane.breakTablet.svgFill = fillColor;
+              visualBreakTemplate.bgPane.breakTablet.svgFill = finalFillColor;
             }
             if (visualBreakTemplate.bgPane.breakMobile) {
-              visualBreakTemplate.bgPane.breakMobile.svgFill = fillColor;
+              visualBreakTemplate.bgPane.breakMobile.svgFill = finalFillColor;
             }
           }
         }
@@ -164,7 +178,10 @@ const PageCreationSpecial = ({
           isDecorative: false,
           parentId: nodeId,
           // For complete-home layout, match the background color with the visual break
-          bgColour: selectedLayout === 'complete-home' ? 'gray-50' : 'white',
+          bgColour: tailwindToHex(
+            selectedLayout === 'complete-home' ? 'gray-50' : 'white',
+            null
+          ),
           codeHookTarget: 'list-content',
           codeHookPayload: {
             options: JSON.stringify({

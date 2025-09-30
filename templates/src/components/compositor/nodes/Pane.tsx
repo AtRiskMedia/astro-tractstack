@@ -161,18 +161,19 @@ const Pane = memo(
             <FeaturedArticleSetup
               nodeId={props.nodeId}
               params={codeHookParams}
+              config={props.config!}
             />
           ) : codeHookPayload && codeHookTarget === 'list-content' ? (
             <ListContentSetup
               nodeId={props.nodeId}
               params={codeHookParams}
-              config={props.config}
+              config={props.config!}
             />
           ) : codeHookPayload && codeHookTarget === 'bunny-video' ? (
             <BunnyVideoSetup
               nodeId={props.nodeId}
               params={codeHookParams}
-              config={props.config}
+              config={props.config!}
             />
           ) : codeHookPayload && codeHookTarget ? (
             <CodeHookContainer

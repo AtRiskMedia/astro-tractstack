@@ -12,6 +12,8 @@ import StringInput from '@/components/form/StringInput';
 import EnumSelect from '@/components/form/EnumSelect';
 import ActionBuilderField from '@/components/form/ActionBuilderField';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
+import ArrowUpIcon from '@heroicons/react/24/outline/ArrowUpIcon';
+import ArrowDownIcon from '@heroicons/react/24/outline/ArrowDownIcon';
 import type {
   MenuNode,
   MenuNodeState,
@@ -88,6 +90,26 @@ export default function MenuForm({
     formState.updateField('menuLinks', newState.menuLinks);
   };
 
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const newMenuLinks = [...formState.state.menuLinks];
+    [newMenuLinks[index - 1], newMenuLinks[index]] = [
+      newMenuLinks[index],
+      newMenuLinks[index - 1],
+    ];
+    formState.updateField('menuLinks', newMenuLinks);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === formState.state.menuLinks.length - 1) return;
+    const newMenuLinks = [...formState.state.menuLinks];
+    [newMenuLinks[index], newMenuLinks[index + 1]] = [
+      newMenuLinks[index + 1],
+      newMenuLinks[index],
+    ];
+    formState.updateField('menuLinks', newMenuLinks);
+  };
+
   const handleCancel = () => {
     onClose?.(false);
   };
@@ -155,13 +177,39 @@ export default function MenuForm({
                   <h4 className="text-sm font-bold text-gray-900">
                     Link {index + 1}
                   </h4>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLink(index)}
-                    className="text-sm font-bold text-red-600 hover:text-red-800"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* Reorder buttons */}
+                    <div className="flex items-center gap-1">
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleMoveUp(index)}
+                          className="rounded p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          title="Move up"
+                        >
+                          <ArrowUpIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                      {index < formState.state.menuLinks.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleMoveDown(index)}
+                          className="rounded p-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                          title="Move down"
+                        >
+                          <ArrowDownIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {/* Remove button */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLink(index)}
+                      className="text-sm font-bold text-red-600 hover:text-red-800"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

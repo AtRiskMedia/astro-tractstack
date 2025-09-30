@@ -20,8 +20,8 @@ import type {
 
 interface BunnyVideoSetupProps {
   nodeId: string;
-  params?: any;
-  config?: BrandConfig;
+  params: any;
+  config: BrandConfig;
 }
 
 interface Chapter extends VideoMoment {

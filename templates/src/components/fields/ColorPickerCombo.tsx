@@ -236,7 +236,7 @@ const ColorPickerCombo = ({
               <Combobox.Control ref={comboboxRef}>
                 <div className="relative">
                   <Combobox.Input
-                    className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full max-w-48 rounded-md py-2 pl-3 pr-10 shadow-sm"
+                    className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full max-w-xl rounded-md py-2 pl-3 pr-10 shadow-sm"
                     placeholder="Search Tailwind colors..."
                     autoComplete="off"
                   />

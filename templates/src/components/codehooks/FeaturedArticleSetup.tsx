@@ -6,11 +6,14 @@ import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/20/solid';
 import { fullContentMapStore, viewportKeyStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import type { PaneNode } from '@/types/compositorTypes';
+import type { BrandConfig } from '@/types/tractstack';
 
 interface FeaturedArticleSetupProps {
-  params?: Record<string, string>;
+  params: Record<string, string>;
   nodeId: string;
+  config: BrandConfig;
 }
 
 const comboboxItemStyles = `
@@ -25,6 +28,7 @@ const comboboxItemStyles = `
 const FeaturedArticleSetup = ({
   params,
   nodeId,
+  config,
 }: FeaturedArticleSetupProps) => {
   const $contentMap = useStore(fullContentMapStore);
   const $viewportKey = useStore(viewportKeyStore);
@@ -52,6 +56,7 @@ const FeaturedArticleSetup = ({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedSlug, setSelectedSlug] = useState(initialSlug);
   const [query, setQuery] = useState(initialStory?.title || '');
+  const [bgColor, setBgColor] = useState(params?.bgColor || '');
 
   const selectedStory = useMemo(
     () => availableStories.find((story) => story.slug === selectedSlug),
@@ -81,10 +86,20 @@ const FeaturedArticleSetup = ({
         ...paneNode,
         codeHookTarget: 'featured-article',
         codeHookPayload: {
-          options: JSON.stringify({ slug: selectedSlug }),
+          options: JSON.stringify({
+            slug: selectedSlug,
+            bgColor: bgColor,
+          }),
         },
+        bgColour: bgColor || undefined,
         isChanged: true,
       };
+
+      // If bgColor is empty, remove the property
+      if (!bgColor) {
+        delete updatedNode.bgColour;
+      }
+
       ctx.modifyNodes([updatedNode]);
     }
   };
@@ -96,7 +111,7 @@ const FeaturedArticleSetup = ({
     }
     const timeoutId = setTimeout(updatePaneNode, 500);
     return () => clearTimeout(timeoutId);
-  }, [selectedSlug]);
+  }, [selectedSlug, bgColor]);
 
   const handleSelection = (details: { value: string[] }) => {
     const slug = details.value[0] || '';
@@ -266,6 +281,26 @@ const FeaturedArticleSetup = ({
             ))}
           </Combobox.Content>
         </Combobox.Root>
+      </div>
+
+      <div className="rounded-lg bg-white p-4 shadow">
+        <div className="border-b border-gray-200 pb-4">
+          <h3 className="text-lg font-bold text-gray-900">Display Settings</h3>
+        </div>
+        <div className="space-y-4 pt-4">
+          <div>
+            <ColorPickerCombo
+              title="Background Color"
+              defaultColor={bgColor}
+              onColorChange={(color: string) => setBgColor(color)}
+              config={config!}
+              allowNull={true}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Set a background color for the featured article section
+            </p>
+          </div>
+        </div>
       </div>
 
       {selectedStory && (
