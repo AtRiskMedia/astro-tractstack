@@ -351,7 +351,10 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
             className="fixed inset-0 flex items-center justify-center p-4"
             style={{ zIndex: 10010 }}
           >
-            <Dialog.Content className="dialog-content">
+            <Dialog.Content
+              className="dialog-content overflow-y-auto"
+              style={{ maxHeight: '80vh' }}
+            >
               <Dialog.Title className="mb-4 text-lg font-bold">
                 Select Artpack Image
               </Dialog.Title>
