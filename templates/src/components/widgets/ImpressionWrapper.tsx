@@ -191,7 +191,6 @@ const ImpressionWrapper = ({
     <div
       className="impressions-wrapper pointer-events-none fixed z-50"
       style={{
-        bottom: 'var(--bottom-right-controls-bottom-offset, 16px)',
         right: '16px',
       }}
     >

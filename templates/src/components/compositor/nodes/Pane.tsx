@@ -32,7 +32,7 @@ const CodeHookContainer = ({
               <Fragment key={key}>
                 <span className="min-w-24 font-bold text-gray-600">{key}:</span>
                 <div className="ml-2 flex flex-wrap gap-1">
-                  {value.split('|').map((item, index) => (
+                  {value.split(/,|\|/).map((item, index) => (
                     <span
                       key={index}
                       className="inline-block rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-800"

@@ -168,16 +168,10 @@ for (const [key, value] of Astro.url.searchParams) {
     <StoryKeepToolMode isContext={false} client:only="react" />
 
     <!-- Main Content Area -->
-    <main
-      id="mainContent"
-      class="relative flex-1 overflow-x-auto"
-      style={{
-        paddingBottom: 'var(--bottom-right-controls-bottom-offset, 16px)',
-      }}
-    >
+    <main id="mainContent" class="relative flex-1 overflow-x-auto">
       <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
         <div
-          class="h-fit min-h-screen"
+          class="h-fit min-h-screen pb-24"
           style={{
             backgroundImage:
               'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
@@ -224,7 +218,6 @@ for (const [key, value] of Astro.url.searchParams) {
 </Layout>
 
 <script>
-  import { setupLayoutObservers, setupLayoutStyles } from '@/utils/layout';
-  setupLayoutStyles();
+  import { setupLayoutObservers } from '@/utils/layout';
   setupLayoutObservers();
 </script>

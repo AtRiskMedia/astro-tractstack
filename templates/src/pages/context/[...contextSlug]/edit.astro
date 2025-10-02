@@ -215,7 +215,6 @@ for (const [key, value] of Astro.url.searchParams) {
 </Layout>
 
 <script>
-  import { setupLayoutObservers, setupLayoutStyles } from '@/utils/layout';
-  setupLayoutStyles();
+  import { setupLayoutObservers } from '@/utils/layout';
   setupLayoutObservers();
 </script>
