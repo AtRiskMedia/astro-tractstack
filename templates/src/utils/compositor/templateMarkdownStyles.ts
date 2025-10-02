@@ -361,18 +361,18 @@ export function getJustCopyDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -386,18 +386,18 @@ export function getJustCopyDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -409,18 +409,18 @@ export function getJustCopyDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
     }
   }
 
@@ -508,18 +508,18 @@ export function getSubTitleDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -558,18 +558,18 @@ export function getSubTitleDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -606,18 +606,18 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.maxW = '3xl';
       if (bordered) {
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -654,18 +654,18 @@ export function getSubTitleDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -701,18 +701,18 @@ export function getSubTitleDesign(
       baseClasses[2].mobile.textWRAP = 'pretty';
       if (bordered) {
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -749,18 +749,18 @@ export function getSubTitleDesign(
       if (bordered) {
         baseClasses[2].mobile.rounded = 'lg';
         baseClasses[2].mobile.shadow = 'md';
+        baseClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      baseClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
     }
   }
 
@@ -995,18 +995,18 @@ export const getIntroDesign = (
       if (bordered) {
         parentClasses[2].mobile.rounded = 'lg';
         parentClasses[2].mobile.shadow = 'lg';
+        parentClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      parentClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -1020,18 +1020,18 @@ export const getIntroDesign = (
       parentClasses[2].mobile.maxW = '3xl';
       if (bordered) {
         parentClasses[2].mobile.shadow = 'lg';
+        parentClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      parentClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
       break;
     }
 
@@ -1042,18 +1042,18 @@ export const getIntroDesign = (
       parentClasses[2].mobile.textWRAP = 'pretty';
       if (bordered) {
         parentClasses[2].mobile.shadow = 'lg';
+        parentClasses[2].mobile.bgCOLOR = getColor(
+          {
+            light: useOdd ? 'brand-2' : 'white',
+            'light-bw': useOdd ? 'white' : 'brand-2',
+            'light-bold': useOdd ? 'brand-2' : 'white',
+            dark: useOdd ? 'black' : 'brand-1',
+            'dark-bw': useOdd ? 'black' : 'brand-1',
+            'dark-bold': useOdd ? 'brand-1' : 'black',
+          },
+          theme
+        );
       }
-      parentClasses[2].mobile.bgCOLOR = getColor(
-        {
-          light: useOdd ? 'brand-2' : 'white',
-          'light-bw': useOdd ? 'white' : 'brand-2',
-          'light-bold': useOdd ? 'brand-2' : 'white',
-          dark: useOdd ? 'black' : 'brand-1',
-          'dark-bw': useOdd ? 'black' : 'brand-1',
-          'dark-bold': useOdd ? 'brand-1' : 'black',
-        },
-        theme
-      );
     }
   }
 
@@ -1102,18 +1102,18 @@ export const getImageHeroSectionDefault = (
   parentClasses[2].mobile.textWRAP = 'pretty';
   if (bordered) {
     parentClasses[2].mobile.shadow = 'lg';
+    parentClasses[2].mobile.bgCOLOR = getColor(
+      {
+        light: useOdd ? 'brand-2' : 'white',
+        'light-bw': useOdd ? 'white' : 'brand-2',
+        'light-bold': useOdd ? 'brand-2' : 'white',
+        dark: useOdd ? 'black' : 'brand-1',
+        'dark-bw': useOdd ? 'black' : 'brand-1',
+        'dark-bold': useOdd ? 'brand-1' : 'black',
+      },
+      theme
+    );
   }
-  parentClasses[2].mobile.bgCOLOR = getColor(
-    {
-      light: useOdd ? 'brand-2' : 'white',
-      'light-bw': useOdd ? 'white' : 'brand-2',
-      'light-bold': useOdd ? 'brand-2' : 'white',
-      dark: useOdd ? 'black' : 'brand-1',
-      'dark-bw': useOdd ? 'black' : 'brand-1',
-      'dark-bold': useOdd ? 'brand-1' : 'black',
-    },
-    theme
-  );
 
   return {
     nodeType: 'Pane',
