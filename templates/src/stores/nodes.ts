@@ -556,7 +556,6 @@ export class NodesContext {
       tagNames.length > offset
         ? allowInsert(node, node.tagName as Tag, tagName, tagNames[offset + 1])
         : allowInsert(node, node.tagName as Tag, tagName);
-
     return { allowInsertBefore, allowInsertAfter };
   }
 
@@ -1074,56 +1073,6 @@ export class NodesContext {
     }
     return '';
   }
-
-  //addPaneToStoryFragment(
-  //  nodeId: string,
-  //  pane: PaneNode,
-  //  location: 'before' | 'after'
-  ///) {
-  //  const node = this.allNodes.get().get(nodeId) as BaseNode;
-  //  if (
-  //    !node ||
-  //    (node.nodeType !== 'StoryFragment' && node.nodeType !== 'Pane')
-  //  ) {
-  //    return;
-  //  }
-
-  //  pane.id = ulid();
-  //  this.addNode(pane);
-
-  //  if (node.nodeType === 'Pane') {
-  //    const storyFragmentId = this.getClosestNodeTypeFromId(
-  //      nodeId,
-  //      'StoryFragment'
-  //    );
-  //    const storyFragment = this.allNodes
-  //      .get()
-  //      .get(storyFragmentId) as StoryFragmentNode;
-  //    if (storyFragment) {
-  //      pane.parentId = storyFragmentId;
-  //      const originalPaneIndex = storyFragment.paneIds.indexOf(pane.parentId);
-  //      let insertIdx = -1;
-  //      if (location === 'before')
-  //        insertIdx = Math.max(0, originalPaneIndex - 1);
-  //      else
-  //        insertIdx = Math.min(
-  //          storyFragment.paneIds.length - 1,
-  //          originalPaneIndex + 1
-  //        );
-  //      storyFragment.paneIds.splice(insertIdx, 0, pane.id);
-  //    }
-  //  } else if (node.nodeType !== 'StoryFragment') {
-  //    const storyFragment = node as StoryFragmentNode;
-  //    if (storyFragment) {
-  //      pane.parentId = node.id;
-  //      if (location === 'after') {
-  //        storyFragment.paneIds.push(pane.id);
-  //      } else {
-  //        storyFragment.paneIds.unshift(pane.id);
-  //      }
-  //    }
-  //  }
-  //}
 
   addContextTemplatePane(ownerId: string, pane: TemplatePane) {
     const ownerNode = this.allNodes.get().get(ownerId);

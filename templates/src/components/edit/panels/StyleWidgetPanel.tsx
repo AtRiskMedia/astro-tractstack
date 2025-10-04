@@ -4,7 +4,7 @@ import { settingsPanelStore } from '@/stores/storykeep';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
-import { widgetMeta } from '@/constants';
+import { regexpHook, widgetMeta } from '@/constants';
 import { getCtx } from '@/stores/nodes';
 import type {
   FlatNode,
@@ -42,8 +42,6 @@ const StyleWidgetPanel = ({
   const outerOverrideClasses = outerContainerNode.overrideClasses;
 
   // Extract the widget type from the node's copy
-  const regexpHook =
-    /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|signup)\((.*)\)$/;
   const hookMatch = node.copy?.match(regexpHook);
   const widgetId = hookMatch ? hookMatch[1] : 'unknown';
   const widgetName = widgetMeta[widgetId]?.title || `Widget`;

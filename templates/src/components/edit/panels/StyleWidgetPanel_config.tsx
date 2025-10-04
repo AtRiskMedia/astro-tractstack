@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
-import { widgetMeta } from '@/constants';
+import { regexpHook, widgetMeta } from '@/constants';
 import SingleParam from '@/components/fields/SingleParam';
 import BooleanParam from '@/components/fields/BooleanParam';
 import MultiParam from '@/components/fields/MultiParam';
@@ -11,13 +11,16 @@ import IdentifyAsWidget from '@/components/edit/widgets/IdentifyAsWidget';
 import SignupWidget from '@/components/edit/widgets/SignupWidget';
 import ToggleWidget from '@/components/edit/widgets/ToggleWidget';
 import YouTubeWidget from '@/components/edit/widgets/YouTubeWidget';
+import InteractiveDisclosureWidget from '@/components/edit/widgets/InteractiveDisclosureWidget';
 import type { FlatNode } from '@/types/compositorTypes';
+import type { BrandConfig } from '@/types/tractstack';
 
 interface StyleWidgetConfigPanelProps {
   node: FlatNode;
+  config: BrandConfig;
 }
 
-function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
+function StyleWidgetConfigPanel({ node, config }: StyleWidgetConfigPanelProps) {
   const [init, setInit] = useState(false);
 
   useEffect(() => {
@@ -27,8 +30,6 @@ function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
   if (!node || !('copy' in node) || typeof node.copy !== 'string') return null;
 
   // Extract the widget type from the node's copy
-  const regexpHook =
-    /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|signup)\((.*)\)$/;
   const hookMatch = node.copy?.match(regexpHook);
   if (!hookMatch) return null;
 
@@ -77,7 +78,6 @@ function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
     // Update the copy field to match the new params
     const paramsForCopy = stringParams.slice(0, widgetInfo.parameters.length);
     newNode.copy = `${widgetType}(${paramsForCopy.join('|')})`;
-    console.log(newNode.copy);
 
     // Mark the node as changed
     newNode.isChanged = true;
@@ -96,6 +96,13 @@ function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
     signup: () => <SignupWidget node={node} onUpdate={handleParamUpdate} />,
     toggle: () => <ToggleWidget node={node} onUpdate={handleParamUpdate} />,
     youtube: () => <YouTubeWidget node={node} onUpdate={handleParamUpdate} />,
+    interactiveDisclosure: () => (
+      <InteractiveDisclosureWidget
+        node={node}
+        onUpdate={handleParamUpdate}
+        config={config}
+      />
+    ),
   };
 
   // Generic parameter editor for widget types without specific editors

@@ -62,9 +62,9 @@ export function validateMenuNode(state: MenuNodeState): FieldErrors {
         errors[`menuLinks.${index}.actionLisp`] = 'Action is required';
       } else {
         // Basic ActionLisp validation
-        if (!link.actionLisp.startsWith('(goto ')) {
+        if (!link.actionLisp.startsWith('(')) {
           errors[`menuLinks.${index}.actionLisp`] =
-            'Action must start with "(goto "';
+            'Action must start with "("';
         }
         if (!link.actionLisp.endsWith('))')) {
           errors[`menuLinks.${index}.actionLisp`] = 'Action must end with "))"';

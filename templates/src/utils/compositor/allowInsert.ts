@@ -18,6 +18,7 @@ const allowInsert = (
         switch (tagNameNew) {
           case 'bunny':
           case 'yt':
+          case 'interactiveDisclosure':
           case 'belief':
           case 'toggle':
           case 'identify':
@@ -43,14 +44,14 @@ const allowInsert = (
 
               default:
                 console.log(
-                  `1 miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
+                  `miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
                 );
             }
             break;
 
           default:
             console.log(
-              `2 miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
+              `miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
             );
         }
       }
@@ -61,6 +62,7 @@ const allowInsert = (
         case 'bunny':
         case 'yt':
         case 'belief':
+        case 'interactiveDisclosure':
         case 'toggle':
         case 'identify':
         case 'signup':
@@ -83,7 +85,7 @@ const allowInsert = (
           return false;
         default:
           console.log(
-            `3 miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
+            `miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
           );
       }
       break;

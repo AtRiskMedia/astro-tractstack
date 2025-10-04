@@ -116,6 +116,13 @@ export const TemplateBeliefNode = {
   codeHookParams: ['BeliefTag', 'likert', 'prompt'],
 } as TemplateNode;
 
+export const TemplateDisclosureNode = {
+  nodeType: 'TagElement',
+  tagName: 'code',
+  copy: 'interactiveDisclosure(BeliefTag)',
+  codeHookParams: ['BeliefTag'],
+} as TemplateNode;
+
 export const TemplateBunnyNode = {
   nodeType: 'TagElement',
   tagName: 'code',

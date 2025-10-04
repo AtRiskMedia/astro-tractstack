@@ -2,36 +2,9 @@ import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
 import { toggleSettingsPanel } from '@/stores/storykeep';
+import { toolAddModeTitles, toolAddModes } from '@/constants';
 
 import type { ToolAddMode } from '@/types/compositorTypes';
-
-const toolAddModeTitles: Record<ToolAddMode, string> = {
-  p: 'Paragraph',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  img: 'Image',
-  signup: 'Email Sign-up Widget',
-  yt: 'YouTube Video',
-  bunny: 'Bunny Video',
-  belief: 'Belief Select',
-  identify: 'Identity As',
-  toggle: 'Toggle Belief',
-};
-
-const toolAddModes: ToolAddMode[] = [
-  'p',
-  'h2',
-  'h3',
-  'h4',
-  'img',
-  'signup',
-  'yt',
-  'bunny',
-  'belief',
-  'identify',
-  'toggle',
-];
 
 const AddElementsPanel = ({
   currentToolAddMode,

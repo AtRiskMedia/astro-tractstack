@@ -30,6 +30,7 @@ import StoryFragmentConfigPanel from '@/components/edit/storyfragment/StoryFragm
 import StoryFragmentTitlePanel from '@/components/edit/storyfragment/StoryFragmentPanel_title';
 import ContextPanePanel from '@/components/edit/context/ContextPaneConfig';
 import ContextPaneTitlePanel from '@/components/edit/context/ContextPaneConfig_title';
+import { regexpHook } from '@/constants';
 import type {
   StoryFragmentNode,
   PaneNode,
@@ -40,8 +41,6 @@ import type { NodeProps } from '@/types/nodeProps';
 
 function parseCodeHook(node: BaseNode | FlatNode) {
   if ('codeHookParams' in node && Array.isArray(node.codeHookParams)) {
-    const regexpHook =
-      /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|signup)\((.*)\)$/;
     const hookMatch = node.copy?.match(regexpHook);
 
     if (!hookMatch) return null;
@@ -58,8 +57,6 @@ function parseCodeHook(node: BaseNode | FlatNode) {
     const firstChild = node.children[0];
     if (!firstChild?.value) return null;
 
-    const regexpHook =
-      /(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|signup)\((.*?)\)/;
     const regexpValues = /((?:[^\\|]+|\\\|?)+)/g;
     const hookMatch = firstChild.value.match(regexpHook);
 

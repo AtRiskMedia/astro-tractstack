@@ -313,7 +313,8 @@ const PanelSwitch = ({
       break;
 
     case 'style-code-config':
-      if (clickedNode) return <StyleWidgetConfigPanel node={clickedNode} />;
+      if (clickedNode)
+        return <StyleWidgetConfigPanel node={clickedNode} config={config} />;
       break;
 
     case 'style-code-add':

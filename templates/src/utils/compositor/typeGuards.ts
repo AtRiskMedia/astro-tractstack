@@ -136,6 +136,7 @@ export function isValidTag(tagName: string): tagName is Tag {
     'yt',
     'bunny',
     'belief',
+    'interactiveDisclosure',
     'identify',
     'toggle',
     'code',

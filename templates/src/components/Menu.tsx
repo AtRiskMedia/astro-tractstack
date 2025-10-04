@@ -2,7 +2,8 @@ import { Menu } from '@ark-ui/react';
 import { Portal } from '@ark-ui/react/portal';
 import ChevronDownIcon from '@heroicons/react/20/solid/ChevronDownIcon';
 import { lispLexer } from '@/utils/actions/lispLexer';
-import { preParseAction } from '@/utils/actions//preParse_Action';
+import { preParseAction } from '@/utils/actions/preParse_Action';
+import type { LispToken } from '@/types/compositorTypes';
 
 // CSS to style the menu items with hover and selection states
 const menuStyles = `
@@ -46,9 +47,10 @@ interface MenuDatum {
   optionsPayload: MenuLink[];
 }
 
-interface MenuLinkDatum extends MenuLink {
-  to: string;
-  internal: boolean;
+interface ProcessedMenuLinkDatum extends MenuLink {
+  renderAs: 'a' | 'button' | 'span';
+  href?: string;
+  htmxVals?: string;
 }
 
 interface MenuProps {
@@ -62,7 +64,77 @@ const MenuComponent = (props: MenuProps) => {
   const { payload, slug, isContext, brandConfig } = props;
   const thisPayload = payload.optionsPayload;
 
-  // Process featured and additional links
+  // Helper function to process menu links - MODIFIED to build the correct hx-vals payload
+  function processMenuLink(e: MenuLink): ProcessedMenuLinkDatum {
+    const item = { ...e } as ProcessedMenuLinkDatum;
+    const actionLisp = item.actionLisp?.trim();
+
+    if (!actionLisp) {
+      item.renderAs = 'span';
+      return item;
+    }
+
+    try {
+      if (actionLisp.startsWith('(goto')) {
+        const tokens = lispLexer(actionLisp);
+        const to = preParseAction(tokens, slug, isContext, brandConfig);
+        item.renderAs = 'a';
+        item.href = to || '#';
+        return item;
+      }
+
+      if (
+        actionLisp.startsWith('(declare') ||
+        actionLisp.startsWith('(identifyAs')
+      ) {
+        const tokens = lispLexer(actionLisp);
+        const commandExpression = (
+          tokens?.[0] as LispToken[]
+        )?.[0] as LispToken[];
+        const command = commandExpression?.[0] as string;
+        const parameters = commandExpression?.[1] as (string | number)[];
+        const beliefId = parameters?.[0];
+        const value = parameters?.[1];
+
+        if (command && beliefId !== undefined && value !== undefined) {
+          let hxValsMap: { [key: string]: string } = {};
+
+          // CORRECTED: Build the hx-vals payload to match server expectations.
+          if (command === 'declare') {
+            hxValsMap = {
+              beliefId: String(beliefId),
+              beliefType: 'Belief', // This was the missing required field.
+              beliefValue: String(value), // Key changed from beliefVerb to beliefValue.
+            };
+          } else if (command === 'identifyAs') {
+            hxValsMap = {
+              beliefId: String(beliefId),
+              beliefType: 'Belief', // This was the missing required field.
+              beliefVerb: 'IDENTIFY_AS', // This is specific to identifyAs.
+              beliefObject: String(value),
+            };
+          }
+
+          if (Object.keys(hxValsMap).length > 0) {
+            item.renderAs = 'button';
+            item.htmxVals = JSON.stringify(hxValsMap);
+            return item;
+          }
+        }
+      }
+    } catch (error) {
+      console.error(
+        `Failed to process menu item for action: ${actionLisp}`,
+        error
+      );
+    }
+
+    // Fallback for unknown commands or parsing failures
+    item.renderAs = 'span';
+    return item;
+  }
+
+  // Process featured and additional links using the modified helper
   const featuredLinks = thisPayload
     .filter((e: MenuLink) => e.featured)
     .map(processMenuLink);
@@ -70,19 +142,48 @@ const MenuComponent = (props: MenuProps) => {
     .filter((e: MenuLink) => !e.featured)
     .map(processMenuLink);
 
-  // Helper function to process menu links
-  function processMenuLink(e: MenuLink): MenuLinkDatum {
-    const item = { ...e } as MenuLinkDatum;
-    const thisPayload = lispLexer(e.actionLisp);
-    const to = preParseAction(thisPayload, slug, isContext, brandConfig);
-    if (typeof to === `string`) {
-      item.to = to;
-      item.internal = true;
-    } else if (typeof to === `object`) {
-      item.to = to[0];
+  // Helper component to render either a link or a button, avoiding repetition.
+  const InteractiveMenuItem = ({ item }: { item: ProcessedMenuLinkDatum }) => {
+    if (item.renderAs === 'button') {
+      return (
+        <button
+          type="button"
+          className="text-mydarkgrey focus:ring-myblue block text-2xl font-bold leading-6 hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2"
+          title={item.description}
+          aria-label={`${item.name} - ${item.description}`}
+          hx-post="/api/v1/state"
+          hx-swap="none"
+          hx-vals={item.htmxVals}
+        >
+          {item.name}
+        </button>
+      );
     }
-    return item;
-  }
+
+    if (item.renderAs === 'a') {
+      return (
+        <a
+          href={item.href}
+          className="text-mydarkgrey focus:ring-myblue block text-2xl font-bold leading-6 hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2"
+          title={item.description}
+          aria-label={`${item.name} - ${item.description}`}
+        >
+          {item.name}
+        </a>
+      );
+    }
+
+    // Fallback for 'span'
+    return (
+      <span
+        className="text-mydarkgrey block text-2xl font-bold leading-6 opacity-50"
+        title={item.description}
+        aria-label={`${item.name} - ${item.description}`}
+      >
+        {item.name}
+      </span>
+    );
+  };
 
   return (
     <>
@@ -90,16 +191,9 @@ const MenuComponent = (props: MenuProps) => {
 
       {/* Desktop Navigation */}
       <nav className="font-action ml-6 hidden flex-wrap items-center justify-end space-x-3 md:flex md:space-x-6">
-        {featuredLinks.map((item: MenuLinkDatum) => (
+        {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
           <div key={item.name} className="relative py-1.5">
-            <a
-              href={item.to}
-              className="text-mydarkgrey focus:ring-myblue block text-2xl font-bold leading-6 hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2"
-              title={item.description}
-              aria-label={`${item.name} - ${item.description}`}
-            >
-              {item.name}
-            </a>
+            <InteractiveMenuItem item={item} />
           </div>
         ))}
       </nav>
@@ -122,21 +216,42 @@ const MenuComponent = (props: MenuProps) => {
                   <div className="text-md ring-mydarkgrey/5 flex-auto overflow-hidden rounded-3xl bg-white p-4 leading-6 shadow-lg ring-1">
                     {/* Featured Links Section */}
                     <div className="px-8">
-                      {featuredLinks.map((item: MenuLinkDatum) => (
+                      {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
                         <Menu.Item
                           key={item.name}
                           value={item.name}
                           className="menu-item hover:bg-mygreen/20 group relative flex gap-x-6 rounded-lg p-4"
                         >
                           <div>
-                            <a
-                              href={item.to}
-                              className="font-action text-myblack text-xl hover:text-black focus:text-black focus:outline-none"
-                              aria-label={`${item.name} - ${item.description}`}
-                            >
-                              {item.name}
-                              <span className="absolute inset-0" />
-                            </a>
+                            {item.renderAs === 'button' ? (
+                              <button
+                                type="button"
+                                className="font-action text-myblack text-xl hover:text-black focus:text-black focus:outline-none"
+                                aria-label={`${item.name} - ${item.description}`}
+                                hx-post="/api/v1/state"
+                                hx-swap="none"
+                                hx-vals={item.htmxVals}
+                              >
+                                {item.name}
+                                <span className="absolute inset-0" />
+                              </button>
+                            ) : item.renderAs === 'a' ? (
+                              <a
+                                href={item.href}
+                                className="font-action text-myblack text-xl hover:text-black focus:text-black focus:outline-none"
+                                aria-label={`${item.name} - ${item.description}`}
+                              >
+                                {item.name}
+                                <span className="absolute inset-0" />
+                              </a>
+                            ) : (
+                              <span
+                                className="font-action text-myblack text-xl opacity-50"
+                                aria-label={`${item.name} - ${item.description}`}
+                              >
+                                {item.name}
+                              </span>
+                            )}
                             <p className="text-mydarkgrey mt-1">
                               {item.description}
                             </p>
@@ -161,24 +276,49 @@ const MenuComponent = (props: MenuProps) => {
                           className="mt-6 space-y-6"
                           aria-labelledby="additional-links-heading"
                         >
-                          {additionalLinks.map((item: MenuLinkDatum) => (
-                            <li key={item.name} className="relative">
-                              <Menu.Item
-                                value={item.name}
-                                className="menu-item block w-full text-left"
-                              >
-                                <a
-                                  href={item.to}
-                                  className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 hover:text-black focus:text-black focus:underline focus:outline-none"
-                                  title={item.description}
-                                  aria-label={`${item.name} - ${item.description}`}
+                          {additionalLinks.map(
+                            (item: ProcessedMenuLinkDatum) => (
+                              <li key={item.name} className="relative">
+                                <Menu.Item
+                                  value={item.name}
+                                  className="menu-item block w-full text-left"
                                 >
-                                  {item.name}
-                                  <span className="absolute inset-0" />
-                                </a>
-                              </Menu.Item>
-                            </li>
-                          ))}
+                                  {item.renderAs === 'button' ? (
+                                    <button
+                                      type="button"
+                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 hover:text-black focus:text-black focus:underline focus:outline-none"
+                                      title={item.description}
+                                      aria-label={`${item.name} - ${item.description}`}
+                                      hx-post="/api/v1/state"
+                                      hx-swap="none"
+                                      hx-vals={item.htmxVals}
+                                    >
+                                      {item.name}
+                                      <span className="absolute inset-0" />
+                                    </button>
+                                  ) : item.renderAs === 'a' ? (
+                                    <a
+                                      href={item.href}
+                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 hover:text-black focus:text-black focus:underline focus:outline-none"
+                                      title={item.description}
+                                      aria-label={`${item.name} - ${item.description}`}
+                                    >
+                                      {item.name}
+                                      <span className="absolute inset-0" />
+                                    </a>
+                                  ) : (
+                                    <span
+                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 opacity-50"
+                                      title={item.description}
+                                      aria-label={`${item.name} - ${item.description}`}
+                                    >
+                                      {item.name}
+                                    </span>
+                                  )}
+                                </Menu.Item>
+                              </li>
+                            )
+                          )}
                         </ul>
                       </div>
                     )}

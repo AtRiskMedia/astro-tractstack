@@ -2,6 +2,7 @@ import { ulid } from 'ulid';
 import {
   TemplateBeliefNode,
   TemplateBunnyNode,
+  TemplateDisclosureNode,
   TemplateEmailSignUpNode,
   TemplateH2Node,
   TemplateH3Node,
@@ -55,6 +56,9 @@ export const getTemplateNode = (value: ToolAddMode): TemplateNode => {
       break;
     case 'identify':
       templateNode = cloneDeep(TemplateIdentifyAsNode);
+      break;
+    case 'interactiveDisclosure':
+      templateNode = cloneDeep(TemplateDisclosureNode);
       break;
     case 'p':
     default:

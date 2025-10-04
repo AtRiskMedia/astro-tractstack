@@ -232,6 +232,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/widgets/InteractiveDisclosureWidget.tsx'
+      ),
+      dest: 'src/components/edit/widgets/InteractiveDisclosureWidget.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/widgets/IdentifyAsWidget.tsx'
       ),
       dest: 'src/components/edit/widgets/IdentifyAsWidget.tsx',
@@ -1001,6 +1007,12 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/form/ActionBuilderField.tsx'),
       dest: 'src/components/form/ActionBuilderField.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/form/ActionBuilderBeliefSelector.tsx'
+      ),
+      dest: 'src/components/form/ActionBuilderBeliefSelector.tsx',
     },
     {
       src: resolve('../templates/src/components/form/MagicPathBuilder.tsx'),

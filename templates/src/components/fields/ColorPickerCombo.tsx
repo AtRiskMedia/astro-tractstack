@@ -60,19 +60,10 @@ const ColorPickerCombo = ({
   }, [allTailwindColorOptions, query]);
 
   // Create collection for combobox
-  const collection = useMemo(() => {
-    // Make sure all tailwind colors are included in the collection
-    const items = [...allTailwindColorOptions];
-
-    // Ensure the initial color is in the collection if it exists
-    if (initialTailwindColor && !items.includes(initialTailwindColor)) {
-      items.push(initialTailwindColor);
-    }
-
-    return createListCollection({
-      items,
-    });
-  }, [allTailwindColorOptions, initialTailwindColor]);
+  const collection = useMemo(
+    () => createListCollection({ items: filteredColors }),
+    [filteredColors]
+  );
 
   // Set default value during initial render
   useEffect(() => {
@@ -226,7 +217,6 @@ const ColorPickerCombo = ({
               selectionBehavior="replace"
               loopFocus={true}
               openOnKeyPress={true}
-              composite={true}
               positioning={{
                 placement: openAbove ? 'top' : 'bottom',
                 gutter: 4,

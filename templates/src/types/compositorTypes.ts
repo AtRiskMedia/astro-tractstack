@@ -1,5 +1,7 @@
 import type { BrandConfig } from './tractstack';
 
+export type LispToken = string | number | LispToken[];
+
 export type ViewportKey = 'mobile' | 'tablet' | 'desktop' | 'auto';
 export type ViewportAuto = 'mobile' | 'tablet' | 'desktop';
 export type ToolModeVal =
@@ -21,6 +23,7 @@ export const toolAddModes = [
   'yt',
   'bunny',
   'belief',
+  'interactiveDisclosure',
   'identify',
   'toggle',
   //"aside",
@@ -136,6 +139,7 @@ export type Tag =
   | 'signup'
   | 'yt'
   | 'bunny'
+  | 'interactiveDisclosure'
   | 'belief'
   | 'identify'
   | 'toggle'
@@ -157,6 +161,7 @@ export const tagTitles: Record<Tag, string> = {
   signup: 'Email Signup Widget',
   yt: 'YouTube Widget',
   bunny: 'Bunny Video Widget',
+  interactiveDisclosure: 'Interactive Disclosure',
   belief: 'Belief Select Widget',
   toggle: 'Belief Toggle Widget',
   identify: 'Identify As Widget',

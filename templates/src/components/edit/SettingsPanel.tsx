@@ -33,7 +33,7 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
           animation: window.matchMedia(
             '(prefers-reduced-motion: no-preference)'
           ).matches
-            ? 'fadeInFromHalf 150ms ease-in'
+            ? 'fadeInFromHalf 450ms ease-in'
             : 'none',
           '--fade-start': '0.5',
           '--fade-end': '1',

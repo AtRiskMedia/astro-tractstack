@@ -1,11 +1,11 @@
+import type { LispToken } from '@/types/compositorTypes';
+
 const DOUBLEQUOTE = [`"`];
 const BRACKETLEFT = `(`;
 const BRACKETRIGHT = `)`;
 const SEMICOLON = `;`;
 const NEWLINE = `\n`;
 const WHITESPACE = [` `, `\n`, `\t`];
-
-type LispToken = string | number | LispToken[];
 
 export function lispLexer(
   payload: string = ``,

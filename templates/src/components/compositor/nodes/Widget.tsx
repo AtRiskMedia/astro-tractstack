@@ -83,8 +83,22 @@ const getWidgetElement = (
         </div>
       ) : null;
 
+    case 'interactiveDisclosure':
+      return (
+        <div className={`${classNames} pointer-events-none`}>
+          <div className="rounded-md border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+            <p className="text-sm font-bold text-gray-700">
+              Interactive Disclosure
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Belief Trigger: <code className="font-bold">{value1}</code>
+            </p>
+          </div>
+        </div>
+      );
+
     default:
-      return null;
+      return <div>Widget {hook} not found.</div>;
   }
 };
 
