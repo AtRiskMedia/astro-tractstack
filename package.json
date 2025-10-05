@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.0-rc.63",
+  "version": "2.0.0-rc.64",
   "description": "Astro integration for TractStack - redeeming the web from boring experiences",
   "type": "module",
   "main": "dist/index.js",
@@ -55,7 +55,7 @@
     "@ark-ui/react": "^5.21.0",
     "@astrojs/react": "^3.6.3",
     "@heroicons/react": "^2.1.1",
-    "@internationalized/date": "3.8.2",
+    "@internationalized/date": "^3.9.0",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
     "@nanostores/persistent": "^1.1.0",
     "@nanostores/react": "^1.0.0",

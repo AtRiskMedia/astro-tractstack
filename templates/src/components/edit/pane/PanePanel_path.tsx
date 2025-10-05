@@ -60,7 +60,6 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
       if (!idsResponse.ok) throw new Error('Failed to fetch belief IDs');
 
       const idsResult = await idsResponse.json();
-      // CORRECTED: The key from the backend is "beliefIds", not "beliefs"
       if (!idsResult.beliefIds || idsResult.beliefIds.length === 0) {
         setAvailableBeliefs([]);
         setIsLoading(false);
@@ -74,7 +73,6 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
           'Content-Type': 'application/json',
           'X-Tenant-ID': tenantId,
         },
-        // CORRECTED: Pass the array from the correct key "beliefIds"
         body: JSON.stringify({ beliefIds: idsResult.beliefIds }),
       });
 

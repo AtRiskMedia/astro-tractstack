@@ -80,10 +80,27 @@ export default function ActionBuilderField({
 
   const handleParamChange = (newParams: string) => {
     setParams(newParams);
-    if (newParams && newParams.trim() !== '' && newParams.trim() !== '()') {
-      onChange(`(${command} ${newParams})`);
-    } else {
+    const trimmedParams = newParams.trim();
+
+    if (!trimmedParams || trimmedParams === '()') {
       onChange('');
+      return;
+    }
+
+    if (command === 'identifyAs') {
+      const firstSpaceIndex = trimmedParams.indexOf(' ');
+      if (firstSpaceIndex === -1) {
+        // Handle case with only beliefId and no value
+        onChange(`(${command} ${trimmedParams})`);
+      } else {
+        const beliefId = trimmedParams.substring(0, firstSpaceIndex);
+        const value = trimmedParams.substring(firstSpaceIndex + 1);
+        const finalValue = value.includes(' ') ? `"${value}"` : value;
+        onChange(`(${command} ${beliefId} ${finalValue})`);
+      }
+    } else {
+      // Original behavior for all other commands
+      onChange(`(${command} ${trimmedParams})`);
     }
   };
 

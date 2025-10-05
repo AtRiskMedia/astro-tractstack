@@ -64,7 +64,6 @@ const MenuComponent = (props: MenuProps) => {
   const { payload, slug, isContext, brandConfig } = props;
   const thisPayload = payload.optionsPayload;
 
-  // Helper function to process menu links - MODIFIED to build the correct hx-vals payload
   function processMenuLink(e: MenuLink): ProcessedMenuLinkDatum {
     const item = { ...e } as ProcessedMenuLinkDatum;
     const actionLisp = item.actionLisp?.trim();
@@ -83,35 +82,36 @@ const MenuComponent = (props: MenuProps) => {
         return item;
       }
 
-      if (
-        actionLisp.startsWith('(declare') ||
-        actionLisp.startsWith('(identifyAs')
-      ) {
-        const tokens = lispLexer(actionLisp);
-        const commandExpression = (
-          tokens?.[0] as LispToken[]
-        )?.[0] as LispToken[];
-        const command = commandExpression?.[0] as string;
-        const parameters = commandExpression?.[1] as (string | number)[];
-        const beliefId = parameters?.[0];
-        const value = parameters?.[1];
+      const [lispTokens] = lispLexer(actionLisp);
 
-        if (command && beliefId !== undefined && value !== undefined) {
+      if (lispTokens && lispTokens.length > 0) {
+        // Deconstruct the nested structure: e.g., ['declare', ['HotLead', 'BELIEVES_YES']]
+        const tokens = lispTokens[0] as LispToken[];
+
+        if (
+          (tokens[0] === 'declare' || tokens[0] === 'identifyAs') &&
+          Array.isArray(tokens[1]) &&
+          tokens[1].length >= 2
+        ) {
+          const command = tokens[0] as string;
+          const params = tokens[1] as (string | number)[];
+          const beliefId = params[0] as string;
+          const value = params[1] as string;
+
           let hxValsMap: { [key: string]: string } = {};
 
-          // CORRECTED: Build the hx-vals payload to match server expectations.
           if (command === 'declare') {
             hxValsMap = {
-              beliefId: String(beliefId),
-              beliefType: 'Belief', // This was the missing required field.
-              beliefValue: String(value), // Key changed from beliefVerb to beliefValue.
+              beliefId: beliefId,
+              beliefType: 'Belief',
+              beliefValue: value,
             };
           } else if (command === 'identifyAs') {
             hxValsMap = {
-              beliefId: String(beliefId),
-              beliefType: 'Belief', // This was the missing required field.
-              beliefVerb: 'IDENTIFY_AS', // This is specific to identifyAs.
-              beliefObject: String(value),
+              beliefId: beliefId,
+              beliefType: 'Belief',
+              beliefVerb: 'IDENTIFY_AS',
+              beliefObject: value,
             };
           }
 
@@ -129,12 +129,10 @@ const MenuComponent = (props: MenuProps) => {
       );
     }
 
-    // Fallback for unknown commands or parsing failures
     item.renderAs = 'span';
     return item;
   }
 
-  // Process featured and additional links using the modified helper
   const featuredLinks = thisPayload
     .filter((e: MenuLink) => e.featured)
     .map(processMenuLink);
@@ -142,7 +140,6 @@ const MenuComponent = (props: MenuProps) => {
     .filter((e: MenuLink) => !e.featured)
     .map(processMenuLink);
 
-  // Helper component to render either a link or a button, avoiding repetition.
   const InteractiveMenuItem = ({ item }: { item: ProcessedMenuLinkDatum }) => {
     if (item.renderAs === 'button') {
       return (
@@ -173,7 +170,6 @@ const MenuComponent = (props: MenuProps) => {
       );
     }
 
-    // Fallback for 'span'
     return (
       <span
         className="text-mydarkgrey block text-2xl font-bold leading-6 opacity-50"

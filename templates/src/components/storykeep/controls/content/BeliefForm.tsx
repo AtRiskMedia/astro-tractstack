@@ -37,16 +37,14 @@ export default function BeliefForm({
   onClose,
 }: BeliefFormProps) {
   const [customValue, setCustomValue] = useState('');
+  const [customValueError, setCustomValueError] = useState<string | null>(null);
 
-  // Subscribe to orphan analysis store
   const orphanState = useStore(orphanAnalysisStore);
 
-  // Load orphan analysis on component mount
   useEffect(() => {
     loadOrphanAnalysis();
   }, []);
 
-  // Get usage information for this belief
   const getBeliefUsage = (): string[] => {
     if (!belief?.id || !orphanState.data || !orphanState.data.beliefs) {
       return [];
@@ -54,7 +52,6 @@ export default function BeliefForm({
     return orphanState.data.beliefs[belief.id] || [];
   };
 
-  // Check if belief is in use
   const isBeliefInUse = (): boolean => {
     if (isCreate || !belief?.id) return false;
     return getBeliefUsage().length > 0;
@@ -63,7 +60,6 @@ export default function BeliefForm({
   const beliefInUse = isBeliefInUse();
   const usageCount = getBeliefUsage().length;
 
-  // Initialize form state
   const initialState: BeliefNodeState = belief
     ? convertToLocalState(belief)
     : {
@@ -85,7 +81,6 @@ export default function BeliefForm({
           data
         );
 
-        // Call success callback after save (original pattern)
         setTimeout(() => {
           onClose?.(true);
         }, 1000);
@@ -102,23 +97,30 @@ export default function BeliefForm({
     },
   });
 
-  const handleAddCustomValue = () => {
-    if (!customValue.trim()) return;
+  const handleCustomValueChange = (value: string) => {
+    setCustomValue(value);
+    const valueRegex = /^[a-zA-Z]([a-zA-Z0-9?!]| (?=[a-zA-Z0-9?!]))*$/;
+    if (value && !valueRegex.test(value)) {
+      setCustomValueError(
+        'Must start with a letter. No double or trailing spaces.'
+      );
+    } else {
+      setCustomValueError(null);
+    }
+  };
 
+  const handleAddCustomValue = () => {
+    if (!customValue.trim() || customValueError) return;
     const newState = addCustomValue(formState.state, customValue);
     formState.updateField('customValues', newState.customValues);
     setCustomValue('');
   };
 
   const handleRemoveCustomValue = (index: number) => {
-    // Check if this is a newly added value (not saved yet)
     const currentValue = formState.state.customValues[index];
     const originalValues = formState.originalState.customValues || [];
     const isNewValue = !originalValues.includes(currentValue);
 
-    // Allow removal if:
-    // 1. Belief is not in use, OR
-    // 2. This is a new value that hasn't been saved yet
     if (!beliefInUse || isNewValue) {
       const newState = removeCustomValue(formState.state, index);
       formState.updateField('customValues', newState.customValues);
@@ -188,7 +190,6 @@ export default function BeliefForm({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">
           {isCreate ? 'Create Belief' : 'Edit Belief'}
@@ -200,10 +201,8 @@ export default function BeliefForm({
         </p>
       </div>
 
-      {/* Usage Warning */}
       {renderUsageWarning()}
 
-      {/* Info Box */}
       <div className="rounded-md bg-blue-50 p-4">
         <div className="text-sm text-blue-700">
           <p className="font-bold">What are Beliefs?</p>
@@ -225,7 +224,6 @@ export default function BeliefForm({
         </div>
       </div>
 
-      {/* Basic Fields */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <StringInput
           value={formState.state.title}
@@ -254,7 +252,6 @@ export default function BeliefForm({
         </div>
       </div>
 
-      {/* Scale Selection */}
       <div className="space-y-4">
         <div className="relative">
           <EnumSelect
@@ -276,7 +273,6 @@ export default function BeliefForm({
         {renderScalePreview()}
       </div>
 
-      {/* Custom Values Section */}
       {formState.state.scale === 'custom' && (
         <div className="space-y-4">
           <div>
@@ -286,31 +282,41 @@ export default function BeliefForm({
             </p>
           </div>
 
-          {/* Add Custom Value */}
           <div className="flex gap-2">
             <div className="flex-1">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={customValue}
-                  onChange={(e) => setCustomValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Enter custom value"
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-cyan-600 sm:text-sm sm:leading-6"
-                />
-              </div>
+              <input
+                type="text"
+                value={customValue}
+                onChange={(e) => handleCustomValueChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter custom value"
+                className={`block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+                  customValueError
+                    ? 'ring-red-500 focus:ring-red-600'
+                    : 'ring-gray-300 focus:ring-cyan-600'
+                }`}
+              />
             </div>
             <button
               type="button"
               onClick={handleAddCustomValue}
-              disabled={!customValue.trim()}
+              disabled={!customValue.trim() || !!customValueError}
               className="inline-flex items-center rounded-md bg-cyan-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <PlusIcon className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Custom Values List */}
+          {customValueError && (
+            <p className="mt-1 text-sm text-red-600">{customValueError}</p>
+          )}
+
+          {formState.errors.customValues && (
+            <p className="text-sm text-red-600">
+              {formState.errors.customValues}
+            </p>
+          )}
+
           {formState.state.customValues.length > 0 && (
             <div className="space-y-2">
               {formState.state.customValues.map((value, index) => {
@@ -355,7 +361,6 @@ export default function BeliefForm({
         </div>
       )}
 
-      {/* Save/Cancel Bar */}
       <UnsavedChangesBar
         formState={formState}
         message="You have unsaved belief changes"
@@ -363,7 +368,6 @@ export default function BeliefForm({
         cancelLabel="Discard Changes"
       />
 
-      {/* Cancel Navigation Button */}
       <div className="flex justify-start">
         <button
           type="button"

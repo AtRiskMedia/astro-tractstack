@@ -1,8 +1,10 @@
 const VERBOSE = false;
 
-// This function now contains all essential one-time and recurring HTMX setup.
 function configureHtmx() {
-  if (!window.htmx) return;
+  if (!window.htmx || window.HTMX_LISTENER_ATTACHED) {
+    return;
+  }
+  window.HTMX_LISTENER_ATTACHED = true;
 
   if (!window.HTMX_CONFIGURED) {
     window.htmx.config.selfRequestsOnly = false;
@@ -11,18 +13,38 @@ function configureHtmx() {
 
   window.htmx.on(document.body, 'htmx:configRequest', function (evt) {
     const config = window.TRACTSTACK_CONFIG;
-    if (!config || !config.sessionId) return; // Check for config and session ID
+    if (!config || !config.sessionId) return;
 
     if (evt.detail.path && evt.detail.path.startsWith('/api/v1/')) {
       evt.detail.path = config.backendUrl + evt.detail.path;
     }
 
-    // MODIFIED: Use session ID from the global config object
     const sessionId = config.sessionId;
     evt.detail.headers['X-Tenant-ID'] = config.tenantId;
     evt.detail.headers['X-StoryFragment-ID'] = config.storyfragmentId;
     if (sessionId) {
       evt.detail.headers['X-TractStack-Session-ID'] = sessionId;
+    }
+  });
+
+  window.htmx.on(document.body, 'htmx:beforeRequest', async function (evt) {
+    const params = evt.detail.requestConfig.parameters;
+    if (params && params.beliefVerb === 'IDENTIFY_AS') {
+      evt.preventDefault();
+
+      const originalPayload = params;
+      const unsetPayload = {
+        unsetBeliefIds: originalPayload.beliefId,
+        paneId: originalPayload.paneId || '',
+      };
+
+      try {
+        await sendBeliefUpdate(unsetPayload);
+        await sendBeliefUpdate(originalPayload);
+      } catch (error) {
+        if (VERBOSE)
+          console.error('🔴 BELIEF: Two-step identifyAs update failed', error);
+      }
     }
   });
 }
@@ -32,7 +54,6 @@ let activeStoryfragmentId = null;
 
 function waitForSessionReady() {
   return new Promise((resolve) => {
-    // This event is fired by sse.ts after the handshake is complete.
     if (window.TRACTSTACK_CONFIG?.session?.isReady) {
       resolve();
     } else {
@@ -54,7 +75,7 @@ function initializeBeliefs() {
       '🔧 BELIEF: First-time initialization of belief handlers and HTMX config.'
     );
 
-  configureHtmx(); // Run config on initial load.
+  configureHtmx();
 
   document.addEventListener('change', function (event) {
     const target = event.target;
@@ -96,7 +117,6 @@ async function handleBeliefChange(element) {
 
   trackBeliefState(beliefId, beliefValue);
 
-  // Pass the current page's beliefs to the backend
   await sendBeliefUpdate({
     beliefId,
     beliefType,
@@ -110,7 +130,7 @@ async function sendBeliefUpdate(data) {
 
   try {
     const config = window.TRACTSTACK_CONFIG;
-    if (!config || !config.sessionId) return; // Check for config and session ID
+    if (!config || !config.sessionId) return;
 
     if (VERBOSE)
       console.log('🚨 FRONTEND DEBUG: Sending belief update with headers:', {
@@ -170,7 +190,7 @@ function setActiveStoryFragment() {
       console.log(
         `📖 BELIEF: Active story fragment set to ${activeStoryfragmentId}`
       );
-    // Ensure a state object exists for the newly active page
+
     if (!pageBeliefs[activeStoryfragmentId]) {
       pageBeliefs[activeStoryfragmentId] = {};
     }
@@ -184,7 +204,6 @@ document.addEventListener('astro:page-load', () => {
   setActiveStoryFragment();
 });
 
-// Also set the active story on the very first page load.
 document.addEventListener('DOMContentLoaded', setActiveStoryFragment);
 
 if (VERBOSE)

@@ -50,6 +50,13 @@ interface InteractiveDisclosureWidgetProps {
 
 const generateId = (): string => Math.random().toString(36).substring(2, 9);
 
+const quoteIfNecessary = (command: string, value: string): string => {
+  if (command === 'identifyAs' && value.includes(' ')) {
+    return `"${value}"`;
+  }
+  return value;
+};
+
 const IconSelector = ({
   value,
   onChange,
@@ -136,7 +143,9 @@ const DisclosureItemEditor = ({
 }) => {
   return (
     <div
-      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'}`}
+      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${
+        item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'
+      }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -168,7 +177,9 @@ const DisclosureItemEditor = ({
         <button
           type="button"
           onClick={onToggle}
-          className={`rounded p-1 hover:bg-gray-100 ${item.isDisabled ? 'text-blue-600' : 'text-red-600'}`}
+          className={`rounded p-1 hover:bg-gray-100 ${
+            item.isDisabled ? 'text-blue-600' : 'text-red-600'
+          }`}
         >
           {item.isDisabled ? (
             <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -274,7 +285,6 @@ export default function InteractiveDisclosureWidget({
 
         const actionCommand =
           currentBelief.scale === 'custom' ? 'identifyAs' : 'declare';
-
         const finalDisclosures: DisclosureItem[] = loadedDisclosures.map(
           (loadedItem) => {
             const isFromScale = scaleKeys.some(
@@ -285,13 +295,12 @@ export default function InteractiveDisclosureWidget({
               id: generateId(),
               isCustom: !isFromScale,
               actionLisp: isFromScale
-                ? `(${actionCommand} ${beliefTag} ${loadedItem.beliefValue})`
+                ? `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, loadedItem.beliefValue)})`
                 : loadedItem.actionLisp,
               isDisabled: false,
             };
           }
         );
-
         scaleKeys.forEach(({ slug, name }) => {
           if (!finalDisclosures.some((d) => d.beliefValue === slug)) {
             finalDisclosures.push({
@@ -300,13 +309,12 @@ export default function InteractiveDisclosureWidget({
               title: name,
               description: '',
               icon: 'app',
-              actionLisp: `(${actionCommand} ${beliefTag} ${slug})`,
+              actionLisp: `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, slug)})`,
               isCustom: false,
               isDisabled: true,
             });
           }
         });
-
         setDisclosures(finalDisclosures);
       } catch (e) {
         console.error('Error parsing disclosure payload:', e);
@@ -345,7 +353,6 @@ export default function InteractiveDisclosureWidget({
     const disclosuresToStore: StoredDisclosureItem[] = disclosures
       .filter((d) => !d.isDisabled)
       .map(({ id, isCustom, isDisabled, ...rest }) => rest);
-
     const payload = { styles: widgetStyles, disclosures: disclosuresToStore };
     onUpdate([selectedBeliefTag, JSON.stringify(payload)]);
   };
@@ -369,7 +376,7 @@ export default function InteractiveDisclosureWidget({
         title: name,
         description: '',
         icon: 'app',
-        actionLisp: `(${actionCommand} ${tag} ${slug})`,
+        actionLisp: `(${actionCommand} ${tag} ${quoteIfNecessary(actionCommand, slug)})`,
         isCustom: false,
         isDisabled: false,
       }));
@@ -407,8 +414,10 @@ export default function InteractiveDisclosureWidget({
     setDisclosures(
       disclosures.map((d) => (d.id === id ? { ...d, ...updates } : d))
     );
+
   const updateWidgetStyles = (updates: Partial<WidgetStyles>) =>
     setWidgetStyles((prev) => ({ ...prev, ...updates }));
+
   const toggleDisclosure = (id: string) =>
     setDisclosures(
       disclosures.map((d) =>

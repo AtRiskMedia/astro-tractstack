@@ -4,9 +4,6 @@ import type {
   FieldErrors,
 } from '@/types/tractstack';
 
-/**
- * Convert backend BeliefNode to frontend BeliefNodeState
- */
 export function convertToLocalState(beliefNode: BeliefNode): BeliefNodeState {
   return {
     id: beliefNode.id,
@@ -17,9 +14,6 @@ export function convertToLocalState(beliefNode: BeliefNode): BeliefNodeState {
   };
 }
 
-/**
- * Convert frontend BeliefNodeState to backend BeliefNode format
- */
 export function convertToBackendFormat(state: BeliefNodeState): BeliefNode {
   return {
     id: state.id,
@@ -31,47 +25,45 @@ export function convertToBackendFormat(state: BeliefNodeState): BeliefNode {
   };
 }
 
-/**
- * Validate belief node state
- */
 export function validateBeliefNode(state: BeliefNodeState): FieldErrors {
   const errors: FieldErrors = {};
 
-  // Validate title
   if (!state.title?.trim()) {
     errors.title = 'Title is required';
   }
 
-  // Validate slug
   if (!state.slug?.trim()) {
     errors.slug = 'Slug is required';
+  } else {
+    const slugRegex = /^[a-zA-Z]+$/;
+    if (!slugRegex.test(state.slug)) {
+      errors.slug = 'Slug must contain only letters (a-z, A-Z)';
+    }
   }
 
-  // Validate scale
   if (!state.scale?.trim()) {
     errors.scale = 'Scale is required';
   }
 
-  // Validate custom values if scale is custom
   if (state.scale === 'custom') {
     if (!state.customValues || state.customValues.length === 0) {
       errors.customValues =
         'At least one custom value is required for custom scale';
     } else {
-      state.customValues.forEach((value, index) => {
-        if (!value?.trim()) {
-          errors[`customValues.${index}`] = 'Custom value cannot be empty';
+      const valueRegex = /^[a-zA-Z]([a-zA-Z0-9?!]| (?=[a-zA-Z0-9?!]))*$/;
+      for (const value of state.customValues) {
+        if (value.trim() && !valueRegex.test(value)) {
+          errors.customValues =
+            'Values must start with a letter, have no double or trailing spaces, and use valid characters.';
+          break;
         }
-      });
+      }
     }
   }
 
   return errors;
 }
 
-/**
- * State interceptor for form state management
- */
 export function beliefStateIntercept(
   state: BeliefNodeState,
   field: keyof BeliefNodeState,
@@ -88,7 +80,6 @@ export function beliefStateIntercept(
       break;
     case 'scale':
       newState.scale = value || '';
-      // Clear custom values when scale changes away from custom
       if (value !== 'custom') {
         newState.customValues = [];
       }
@@ -103,9 +94,6 @@ export function beliefStateIntercept(
   return newState;
 }
 
-/**
- * Add a new custom value to the state
- */
 export function addCustomValue(
   state: BeliefNodeState,
   value: string
@@ -118,9 +106,6 @@ export function addCustomValue(
   };
 }
 
-/**
- * Remove a custom value from the state
- */
 export function removeCustomValue(
   state: BeliefNodeState,
   index: number
@@ -131,9 +116,6 @@ export function removeCustomValue(
   };
 }
 
-/**
- * Update a specific custom value in the state
- */
 export function updateCustomValue(
   state: BeliefNodeState,
   index: number,
@@ -148,9 +130,6 @@ export function updateCustomValue(
   };
 }
 
-/**
- * Scale options for the belief form
- */
 export const SCALE_OPTIONS = [
   { value: 'likert', label: 'Likert Scale (1-5)' },
   { value: 'agreement', label: 'Agreement (Agree/Disagree)' },
@@ -160,9 +139,6 @@ export const SCALE_OPTIONS = [
   { value: 'custom', label: 'Custom Values' },
 ];
 
-/**
- * Get scale preview data for displaying scale options
- */
 export function getScalePreview(scale: string) {
   const scalePreviewData: {
     [key: string]: Array<{ id: number; name: string; color: string }>;
