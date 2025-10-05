@@ -18,22 +18,30 @@ import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import ArrowUpIcon from '@heroicons/react/24/outline/ArrowUpIcon';
+import ArrowDownIcon from '@heroicons/react/24/outline/ArrowDownIcon';
 
 interface DisclosureItem {
   id: string;
   beliefValue: string;
+  isCustom: boolean;
   title: string;
   description?: string;
   icon: string;
   actionLisp: string;
   isDisabled?: boolean;
 }
+
 interface WidgetStyles {
   textColor: string;
   bgColor: string;
   bgOpacity: number;
 }
-type StoredDisclosureItem = Omit<DisclosureItem, 'id' | 'isDisabled'>;
+type StoredDisclosureItem = Omit<
+  DisclosureItem,
+  'id' | 'isDisabled' | 'isCustom'
+>;
 interface InteractiveDisclosureWidgetProps {
   node: FlatNode;
   onUpdate: (params: string[]) => void;
@@ -61,12 +69,7 @@ const IconSelector = ({
     () => createListCollection({ items: filteredIcons }),
     [filteredIcons]
   );
-
-  const iconSelectorStyles = `
-    .icon-item .icon-indicator { display: none; }
-    .icon-item[data-state="checked"] .icon-indicator { display: flex; }
-  `;
-
+  const iconSelectorStyles = `.icon-item .icon-indicator { display: none; } .icon-item[data-state="checked"] .icon-indicator { display: flex; }`;
   return (
     <div>
       <style>{iconSelectorStyles}</style>
@@ -88,8 +91,8 @@ const IconSelector = ({
           </Combobox.Trigger>
         </Combobox.Control>
         <Portal>
-          <Combobox.Positioner style={{ zIndex: 9010 }}>
-            <Combobox.Content className="max-h-60 w-[--reference-width] overflow-y-auto rounded-md bg-white shadow-lg">
+          <Combobox.Positioner style={{ zIndex: 9010, minWidth: '250px' }}>
+            <Combobox.Content className="max-h-60 w-full overflow-y-auto rounded-md bg-white shadow-lg">
               {filteredIcons.map((icon) => (
                 <Combobox.Item
                   key={icon}
@@ -117,23 +120,51 @@ const DisclosureItemEditor = ({
   onUpdate,
   onToggle,
   config,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }: {
   item: DisclosureItem;
   onUpdate: (updates: Partial<DisclosureItem>) => void;
   onToggle: () => void;
   config: BrandConfig;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
 }) => {
   return (
     <div
       className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'}`}
     >
       <div className="flex items-center justify-between">
-        <h4 className="font-bold text-gray-800">
-          {item.title}{' '}
-          <span className="text-xs font-normal text-gray-500">
-            (for value: {item.beliefValue})
-          </span>
-        </h4>
+        <div className="flex items-center gap-2">
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={onMoveUp}
+              disabled={isFirst}
+              className="rounded p-0.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25"
+            >
+              <ArrowUpIcon className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onMoveDown}
+              disabled={isLast}
+              className="rounded p-0.5 text-gray-500 hover:bg-gray-100 disabled:opacity-25"
+            >
+              <ArrowDownIcon className="h-4 w-4" />
+            </button>
+          </div>
+          <h4 className="font-bold text-gray-800">
+            {item.title}{' '}
+            <span className="text-xs font-normal text-gray-500">
+              (Key: {item.beliefValue})
+            </span>
+          </h4>
+        </div>
         <button
           type="button"
           onClick={onToggle}
@@ -147,6 +178,13 @@ const DisclosureItemEditor = ({
         </button>
       </div>
       <fieldset disabled={item.isDisabled} className="space-y-4">
+        {item.isCustom && (
+          <SingleParam
+            label="Key / Value"
+            value={item.beliefValue}
+            onChange={(value) => onUpdate({ beliefValue: value })}
+          />
+        )}
         <SingleParam
           label="Display Title"
           value={item.title}
@@ -161,13 +199,25 @@ const DisclosureItemEditor = ({
           value={item.icon}
           onChange={(value) => onUpdate({ icon: value })}
         />
-        <div className="relative rounded-md border p-3">
-          <ActionBuilderField
-            value={item.actionLisp}
-            onChange={(value) => onUpdate({ actionLisp: value })}
-            contentMap={fullContentMapStore.get()}
-          />
-        </div>
+
+        {item.isCustom ? (
+          <div className="relative rounded-md border p-3">
+            <ActionBuilderField
+              value={item.actionLisp}
+              onChange={(value) => onUpdate({ actionLisp: value })}
+              contentMap={fullContentMapStore.get()}
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="block text-xs font-bold text-gray-600">
+              Action (Locked)
+            </label>
+            <div className="mt-1 rounded-md border border-gray-200 bg-gray-50 p-2 font-mono text-xs text-gray-500">
+              {item.actionLisp}
+            </div>
+          </div>
+        )}
       </fieldset>
     </div>
   );
@@ -187,6 +237,7 @@ export default function InteractiveDisclosureWidget({
     bgOpacity: 100,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const selectedBelief = beliefs.find((b) => b.slug === selectedBeliefTag);
   const hasRealSelection = !!selectedBelief;
@@ -194,8 +245,12 @@ export default function InteractiveDisclosureWidget({
   useEffect(() => {
     const beliefTag = String(node.codeHookParams?.[0] || '');
     const payloadJson = String(node.codeHookParams?.[1] || '');
-    setSelectedBeliefTag(beliefTag && beliefTag !== 'BELIEF' ? beliefTag : '');
 
+    if (beliefs.length === 0 && beliefTag && beliefTag !== 'BELIEF') {
+      return;
+    }
+
+    setSelectedBeliefTag(beliefTag && beliefTag !== 'BELIEF' ? beliefTag : '');
     const currentBelief = beliefs.find((b) => b.slug === beliefTag);
 
     if (payloadJson && currentBelief) {
@@ -204,9 +259,10 @@ export default function InteractiveDisclosureWidget({
         setWidgetStyles(
           parsed.styles || { textColor: '', bgColor: '', bgOpacity: 100 }
         );
-        const loadedDisclosures = parsed.disclosures || {};
+        const loadedDisclosures =
+          (parsed.disclosures as StoredDisclosureItem[]) || [];
 
-        const possibleKeys =
+        const scaleKeys =
           currentBelief.scale === 'custom'
             ? (currentBelief.customValues || []).map((v) => ({
                 slug: v,
@@ -216,34 +272,50 @@ export default function InteractiveDisclosureWidget({
                 currentBelief.scale as keyof typeof heldBeliefsScales
               ] || [];
 
-        const allDisclosures = possibleKeys.map(({ slug, name }) => {
-          if (loadedDisclosures[slug]) {
+        const actionCommand =
+          currentBelief.scale === 'custom' ? 'identifyAs' : 'declare';
+
+        const finalDisclosures: DisclosureItem[] = loadedDisclosures.map(
+          (loadedItem) => {
+            const isFromScale = scaleKeys.some(
+              (sk) => sk.slug === loadedItem.beliefValue
+            );
             return {
-              ...(loadedDisclosures[slug] as StoredDisclosureItem),
+              ...loadedItem,
               id: generateId(),
-              beliefValue: slug,
+              isCustom: !isFromScale,
+              actionLisp: isFromScale
+                ? `(${actionCommand} ${beliefTag} ${loadedItem.beliefValue})`
+                : loadedItem.actionLisp,
               isDisabled: false,
             };
           }
-          return {
-            id: generateId(),
-            beliefValue: slug,
-            title: name,
-            description: '',
-            icon: 'app',
-            actionLisp: '',
-            isDisabled: true,
-          };
+        );
+
+        scaleKeys.forEach(({ slug, name }) => {
+          if (!finalDisclosures.some((d) => d.beliefValue === slug)) {
+            finalDisclosures.push({
+              id: generateId(),
+              beliefValue: slug,
+              title: name,
+              description: '',
+              icon: 'app',
+              actionLisp: `(${actionCommand} ${beliefTag} ${slug})`,
+              isCustom: false,
+              isDisabled: true,
+            });
+          }
         });
-        setDisclosures(allDisclosures);
+
+        setDisclosures(finalDisclosures);
       } catch (e) {
-        setDisclosures([]);
-        setWidgetStyles({ textColor: '', bgColor: '', bgOpacity: 100 });
+        console.error('Error parsing disclosure payload:', e);
       }
     } else {
       setDisclosures([]);
       setWidgetStyles({ textColor: '', bgColor: '', bgOpacity: 100 });
     }
+    setIsDataLoaded(true);
   }, [node, beliefs]);
 
   useEffect(() => {
@@ -253,30 +325,27 @@ export default function InteractiveDisclosureWidget({
         const {
           data: { beliefIds },
         } = await api.get('/api/v1/nodes/beliefs');
-        if (!beliefIds?.length) return;
+        if (!beliefIds?.length) {
+          setBeliefs([]);
+          return;
+        }
         const {
           data: { beliefs },
         } = await api.post('/api/v1/nodes/beliefs', { beliefIds });
         setBeliefs(beliefs || []);
       } catch (error) {
         console.error('Error fetching beliefs:', error);
+        setBeliefs([]);
       }
     };
     fetchData();
-  }, []);
+  }, [node]);
 
   const handleUpdate = () => {
-    const disclosuresToStore: Record<
-      string,
-      Omit<StoredDisclosureItem, 'beliefValue'>
-    > = {};
-    disclosures
+    const disclosuresToStore: StoredDisclosureItem[] = disclosures
       .filter((d) => !d.isDisabled)
-      .forEach(({ id, beliefValue, isDisabled, ...rest }) => {
-        if (beliefValue) {
-          disclosuresToStore[beliefValue] = rest;
-        }
-      });
+      .map(({ id, isCustom, isDisabled, ...rest }) => rest);
+
     const payload = { styles: widgetStyles, disclosures: disclosuresToStore };
     onUpdate([selectedBeliefTag, JSON.stringify(payload)]);
   };
@@ -286,22 +355,52 @@ export default function InteractiveDisclosureWidget({
     const belief = beliefs.find((b) => b.slug === tag);
     let newDisclosures: DisclosureItem[] = [];
     if (belief) {
+      const actionCommand =
+        belief.scale === 'custom' ? 'identifyAs' : 'declare';
       const keys =
         belief.scale === 'custom'
           ? (belief.customValues || []).map((v) => ({ slug: v, name: v }))
           : heldBeliefsScales[belief.scale as keyof typeof heldBeliefsScales] ||
             [];
+
       newDisclosures = keys.map(({ slug, name }) => ({
         id: generateId(),
         beliefValue: slug,
         title: name,
         description: '',
         icon: 'app',
-        actionLisp: '',
+        actionLisp: `(${actionCommand} ${tag} ${slug})`,
+        isCustom: false,
         isDisabled: false,
       }));
     }
     setDisclosures(newDisclosures);
+  };
+
+  const moveDisclosure = (id: string, direction: 'up' | 'down') => {
+    const index = disclosures.findIndex((d) => d.id === id);
+    if (index === -1) return;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= disclosures.length) return;
+
+    const newDisclosures = [...disclosures];
+    const [movedItem] = newDisclosures.splice(index, 1);
+    newDisclosures.splice(newIndex, 0, movedItem);
+    setDisclosures(newDisclosures);
+  };
+
+  const addCustomDisclosure = () => {
+    const newItem: DisclosureItem = {
+      id: generateId(),
+      beliefValue: `custom-key-${disclosures.length + 1}`,
+      title: 'New Custom Item',
+      description: '',
+      icon: 'plus-circle',
+      actionLisp: '',
+      isCustom: true,
+      isDisabled: false,
+    };
+    setDisclosures([...disclosures, newItem]);
   };
 
   const updateDisclosure = (id: string, updates: Partial<DisclosureItem>) =>
@@ -316,6 +415,13 @@ export default function InteractiveDisclosureWidget({
         d.id === id ? { ...d, isDisabled: !d.isDisabled } : d
       )
     );
+
+  const handleColorChange = (
+    key: 'textColor' | 'bgColor',
+    hex: string | null
+  ) => {
+    updateWidgetStyles({ [key]: hex || '' });
+  };
 
   return (
     <div className="space-y-4">
@@ -347,7 +453,6 @@ export default function InteractiveDisclosureWidget({
           </button>
         )}
       </div>
-
       {hasRealSelection && (
         <div className="mt-4 border-t border-gray-200 pt-4">
           <button
@@ -393,64 +498,94 @@ export default function InteractiveDisclosureWidget({
                   </Dialog.Title>
                 </div>
                 <div className="flex-1 space-y-6 overflow-y-auto p-4">
-                  <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="font-bold text-gray-800">Widget Styles</h3>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <div>
-                        <ColorPickerCombo
-                          title="Background Color"
-                          defaultColor={widgetStyles.bgColor}
-                          onColorChange={(hex) =>
-                            updateWidgetStyles({ bgColor: hex })
-                          }
-                          config={config}
-                          allowNull={true}
-                        />
-                      </div>
-                      <div>
-                        <ColorPickerCombo
-                          title="Text Color"
-                          defaultColor={widgetStyles.textColor}
-                          onColorChange={(hex) =>
-                            updateWidgetStyles({ textColor: hex })
-                          }
-                          config={config}
-                          allowNull={true}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-600">
-                          BG Opacity (%)
-                        </label>
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={widgetStyles.bgOpacity}
-                            onChange={(e) =>
-                              updateWidgetStyles({
-                                bgOpacity: parseInt(e.target.value),
-                              })
-                            }
-                            className="w-full"
-                          />
-                          <span className="w-12 text-center font-mono text-sm">
-                            {widgetStyles.bgOpacity}%
-                          </span>
+                  {isDataLoaded ? (
+                    <>
+                      <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                        <h3 className="font-bold text-gray-800">
+                          Widget Styles
+                        </h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div>
+                            <ColorPickerCombo
+                              title="Background Color"
+                              defaultColor={widgetStyles.bgColor}
+                              onColorChange={(hex) =>
+                                handleColorChange('bgColor', hex)
+                              }
+                              config={config}
+                              allowNull={true}
+                              skipTailwind={false}
+                            />
+                          </div>
+                          <div>
+                            <ColorPickerCombo
+                              title="Text Color"
+                              defaultColor={widgetStyles.textColor}
+                              onColorChange={(hex) =>
+                                handleColorChange('textColor', hex)
+                              }
+                              config={config}
+                              allowNull={true}
+                              skipTailwind={false}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-600">
+                              BG Opacity (%)
+                            </label>
+                            <div className="mt-1 flex items-center gap-2">
+                              <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={widgetStyles.bgOpacity}
+                                onChange={(e) =>
+                                  updateWidgetStyles({
+                                    bgOpacity: parseInt(e.target.value),
+                                  })
+                                }
+                                className="w-full"
+                              />
+                              <span className="w-12 text-center font-mono text-sm">
+                                {widgetStyles.bgOpacity}%
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      {disclosures.map((item, index) => (
+                        <DisclosureItemEditor
+                          key={item.id}
+                          item={item}
+                          onUpdate={(updates) =>
+                            updateDisclosure(item.id, updates)
+                          }
+                          onToggle={() => toggleDisclosure(item.id)}
+                          config={config}
+                          onMoveUp={() => moveDisclosure(item.id, 'up')}
+                          onMoveDown={() => moveDisclosure(item.id, 'down')}
+                          isFirst={index === 0}
+                          isLast={index === disclosures.length - 1}
+                        />
+                      ))}
+
+                      <div className="pt-4">
+                        <button
+                          type="button"
+                          onClick={addCustomDisclosure}
+                          className="flex w-full items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-500 hover:border-cyan-600 hover:text-cyan-600"
+                        >
+                          <PlusIcon className="mr-2 h-5 w-5" />
+                          Add Custom Disclosure
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-8 text-center">
+                      Loading configuration...
                     </div>
-                  </div>
-                  {disclosures.map((item) => (
-                    <DisclosureItemEditor
-                      key={item.id}
-                      item={item}
-                      onUpdate={(updates) => updateDisclosure(item.id, updates)}
-                      onToggle={() => toggleDisclosure(item.id)}
-                      config={config}
-                    />
-                  ))}
+                  )}
                 </div>
                 <div className="flex-shrink-0 justify-end border-t border-gray-200 bg-white px-6 py-3">
                   <Dialog.CloseTrigger asChild>

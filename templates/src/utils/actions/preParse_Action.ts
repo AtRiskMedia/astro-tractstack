@@ -17,6 +17,9 @@ export const preParseAction = (
   //const parameterFour = (parameters && parameters[3]) || null;
 
   switch (command) {
+    case `declare`:
+    case `identifyAs`:
+      return ``;
     case `goto`:
       switch (parameterOne) {
         case `storykeep`:

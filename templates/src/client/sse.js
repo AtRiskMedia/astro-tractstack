@@ -481,23 +481,41 @@ function processStoryfragmentUpdate(update) {
   log(`📊 Refresh summary: ${refreshedCount} successful, ${errorCount} failed`);
 
   if (update.gotoPaneId) {
-    const targetElement = document.getElementById(`pane-${update.gotoPaneId}`);
-    if (targetElement) {
-      log(`🔍 Scrolling to target pane: ${update.gotoPaneId}`);
-      try {
-        targetElement.scrollIntoView({ behavior: 'smooth' });
-        log('✅ Scroll completed successfully');
-      } catch (error) {
-        log('❌ Scroll failed:', error);
+    // Wait a brief moment for the DOM to update and the element to become visible.
+    setTimeout(() => {
+      const targetElement = document.getElementById(
+        `pane-${update.gotoPaneId}`
+      );
+      if (targetElement) {
+        log(`🔍 Smart scrolling to target pane: ${update.gotoPaneId}`);
+        try {
+          const elementRect = targetElement.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+
+          // If the element is taller than the viewport, just scroll to the top of it.
+          if (elementRect.height > viewportHeight) {
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            });
+            log('✅ Scroll completed (long element - align to top).');
+          } else {
+            // Otherwise, center it in the viewport.
+            targetElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+            log('✅ Scroll completed (short element - align to center).');
+          }
+        } catch (error) {
+          log('❌ Smart scroll failed:', error);
+        }
+      } else {
+        log(
+          `⚠️  Target pane element not found after delay: pane-${update.gotoPaneId}`
+        );
       }
-    } else {
-      log(`⚠️  Target pane element not found: pane-${update.gotoPaneId}`, {
-        expectedId: `pane-${update.gotoPaneId}`,
-        availablePaneElements: Array.from(
-          document.querySelectorAll('[id^="pane-"]')
-        ).map((el) => el.id),
-      });
-    }
+    }, 100);
   }
 
   log('🔄 === UPDATE PROCESSING COMPLETE ===');
