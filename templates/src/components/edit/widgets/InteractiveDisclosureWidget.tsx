@@ -38,10 +38,7 @@ interface WidgetStyles {
   bgColor: string;
   bgOpacity: number;
 }
-type StoredDisclosureItem = Omit<
-  DisclosureItem,
-  'id' | 'isDisabled' | 'isCustom'
->;
+type StoredDisclosureItem = Omit<DisclosureItem, 'id' | 'isDisabled'>;
 interface InteractiveDisclosureWidgetProps {
   node: FlatNode;
   onUpdate: (params: string[]) => void;
@@ -91,6 +88,7 @@ const IconSelector = ({
           <Combobox.Input
             className="w-full rounded-md border-gray-300 py-1.5 pl-3 pr-10 shadow-sm"
             placeholder="Search icons..."
+            autoFocus
           />
           <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
             <i className={`bi bi-${value} mr-2 text-lg`}></i>
@@ -141,6 +139,13 @@ const DisclosureItemEditor = ({
   isFirst: boolean;
   isLast: boolean;
 }) => {
+  const [isEditingIcon, setIsEditingIcon] = useState(false);
+
+  const handleIconChange = (newIcon: string) => {
+    onUpdate({ icon: newIcon });
+    setIsEditingIcon(false);
+  };
+
   return (
     <div
       className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${
@@ -169,9 +174,11 @@ const DisclosureItemEditor = ({
           </div>
           <h4 className="font-bold text-gray-800">
             {item.title}{' '}
-            <span className="text-xs font-normal text-gray-500">
-              (Key: {item.beliefValue})
-            </span>
+            {!item.isCustom && (
+              <span className="text-xs font-normal text-gray-500">
+                (Key: {item.beliefValue})
+              </span>
+            )}
           </h4>
         </div>
         <button
@@ -189,13 +196,6 @@ const DisclosureItemEditor = ({
         </button>
       </div>
       <fieldset disabled={item.isDisabled} className="space-y-4">
-        {item.isCustom && (
-          <SingleParam
-            label="Key / Value"
-            value={item.beliefValue}
-            onChange={(value) => onUpdate({ beliefValue: value })}
-          />
-        )}
         <SingleParam
           label="Display Title"
           value={item.title}
@@ -206,10 +206,29 @@ const DisclosureItemEditor = ({
           value={item.description || ''}
           onChange={(value) => onUpdate({ description: value })}
         />
-        <IconSelector
-          value={item.icon}
-          onChange={(value) => onUpdate({ icon: value })}
-        />
+
+        {isEditingIcon ? (
+          <IconSelector value={item.icon} onChange={handleIconChange} />
+        ) : (
+          <div>
+            <label className="block text-xs font-bold text-gray-600">
+              Icon
+            </label>
+            <div className="mt-1 flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-1.5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <i className={`bi bi-${item.icon} text-lg`}></i>
+                <span className="text-sm">{item.icon}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingIcon(true)}
+                className="text-sm font-bold text-cyan-600 hover:text-cyan-800"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        )}
 
         {item.isCustom ? (
           <div className="relative rounded-md border p-3">
@@ -243,8 +262,8 @@ export default function InteractiveDisclosureWidget({
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([]);
   const [widgetStyles, setWidgetStyles] = useState<WidgetStyles>({
-    textColor: '',
-    bgColor: '',
+    textColor: '#000000',
+    bgColor: '#ffffff',
     bgOpacity: 100,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -268,7 +287,11 @@ export default function InteractiveDisclosureWidget({
       try {
         const parsed = JSON.parse(payloadJson);
         setWidgetStyles(
-          parsed.styles || { textColor: '', bgColor: '', bgOpacity: 100 }
+          parsed.styles || {
+            textColor: '#000000',
+            bgColor: '#ffffff',
+            bgOpacity: 100,
+          }
         );
         const loadedDisclosures =
           (parsed.disclosures as StoredDisclosureItem[]) || [];
@@ -290,6 +313,7 @@ export default function InteractiveDisclosureWidget({
             const isFromScale = scaleKeys.some(
               (sk) => sk.slug === loadedItem.beliefValue
             );
+
             return {
               ...loadedItem,
               id: generateId(),
@@ -308,7 +332,7 @@ export default function InteractiveDisclosureWidget({
               beliefValue: slug,
               title: name,
               description: '',
-              icon: 'app',
+              icon: 'chat-heart-fill',
               actionLisp: `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, slug)})`,
               isCustom: false,
               isDisabled: true,
@@ -321,7 +345,11 @@ export default function InteractiveDisclosureWidget({
       }
     } else {
       setDisclosures([]);
-      setWidgetStyles({ textColor: '', bgColor: '', bgOpacity: 100 });
+      setWidgetStyles({
+        textColor: '#000000',
+        bgColor: '#ffffff',
+        bgOpacity: 100,
+      });
     }
     setIsDataLoaded(true);
   }, [node, beliefs]);
@@ -352,13 +380,18 @@ export default function InteractiveDisclosureWidget({
   const handleUpdate = () => {
     const disclosuresToStore: StoredDisclosureItem[] = disclosures
       .filter((d) => !d.isDisabled)
-      .map(({ id, isCustom, isDisabled, ...rest }) => rest);
+      .map(({ id, isDisabled, ...rest }) => rest);
     const payload = { styles: widgetStyles, disclosures: disclosuresToStore };
     onUpdate([selectedBeliefTag, JSON.stringify(payload)]);
   };
 
   const handleBeliefChange = (tag: string) => {
     setSelectedBeliefTag(tag);
+    setWidgetStyles({
+      textColor: '#000000',
+      bgColor: '#ffffff',
+      bgOpacity: 100,
+    });
     const belief = beliefs.find((b) => b.slug === tag);
     let newDisclosures: DisclosureItem[] = [];
     if (belief) {
@@ -375,7 +408,7 @@ export default function InteractiveDisclosureWidget({
         beliefValue: slug,
         title: name,
         description: '',
-        icon: 'app',
+        icon: 'chat-heart-fill',
         actionLisp: `(${actionCommand} ${tag} ${quoteIfNecessary(actionCommand, slug)})`,
         isCustom: false,
         isDisabled: false,
@@ -399,10 +432,12 @@ export default function InteractiveDisclosureWidget({
   const addCustomDisclosure = () => {
     const newItem: DisclosureItem = {
       id: generateId(),
-      beliefValue: `custom-key-${disclosures.length + 1}`,
+      beliefValue: `custom-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 6)}`,
       title: 'New Custom Item',
       description: '',
-      icon: 'plus-circle',
+      icon: 'chat-heart-fill',
       actionLisp: '',
       isCustom: true,
       isDisabled: false,
@@ -418,12 +453,20 @@ export default function InteractiveDisclosureWidget({
   const updateWidgetStyles = (updates: Partial<WidgetStyles>) =>
     setWidgetStyles((prev) => ({ ...prev, ...updates }));
 
-  const toggleDisclosure = (id: string) =>
-    setDisclosures(
-      disclosures.map((d) =>
-        d.id === id ? { ...d, isDisabled: !d.isDisabled } : d
-      )
-    );
+  const toggleDisclosure = (id: string) => {
+    const itemToToggle = disclosures.find((d) => d.id === id);
+    if (!itemToToggle) return;
+
+    if (itemToToggle.isCustom) {
+      setDisclosures(disclosures.filter((d) => d.id !== id));
+    } else {
+      setDisclosures(
+        disclosures.map((d) =>
+          d.id === id ? { ...d, isDisabled: !d.isDisabled } : d
+        )
+      );
+    }
+  };
 
   const handleColorChange = (
     key: 'textColor' | 'bgColor',
