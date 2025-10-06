@@ -120,7 +120,7 @@ if (!brandConfig.SITE_INIT) {
       class="context-pane-container"
       hx-get={`/api/v1/fragments/panes/${paneId}`}
       hx-trigger="refresh"
-      hx-swap="innerHTML"
+      hx-swap="innerHTML scroll:none"
     >
       {
         codeHookTarget ? (

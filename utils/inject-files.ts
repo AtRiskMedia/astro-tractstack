@@ -1317,16 +1317,12 @@ export async function injectTemplateFiles(
       dest: 'public/client/htmx.min.js',
     },
     {
-      src: resolve('../templates/src/client/sse.js'),
-      dest: 'public/client/sse.js',
+      src: resolve('../templates/src/client/view.js'),
+      dest: 'public/client/view.js',
     },
     {
-      src: resolve('../templates/src/client/belief-events.js'),
-      dest: 'public/client/belief-events.js',
-    },
-    {
-      src: resolve('../templates/src/client/analytics-events.js'),
-      dest: 'public/client/analytics-events.js',
+      src: resolve('../templates/src/client/app.js'),
+      dest: 'public/client/app.js',
     },
 
     // StoryKeep Editor (add new section)

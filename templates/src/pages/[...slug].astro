@@ -148,7 +148,7 @@ paneIds.forEach((paneId: string) => {
               }
               hx-get={`/api/v1/fragments/panes/${paneId}`}
               hx-trigger="refresh"
-              hx-swap="innerHTML"
+              hx-swap="innerHTML scroll:none"
             >
               {codeHookTargets[paneId] ? (
                 <div class="relative overflow-hidden">

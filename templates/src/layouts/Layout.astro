@@ -45,41 +45,28 @@ const {
   impressions = [],
 } = Astro.props;
 
-// Get site status from the store
 const isInitialized = !freshInstallStore.get().needsSetup;
-
-// ensure we have brand config!
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
-
-// Conditionally set asset paths based on initialization status
 const cssBasePath = isInitialized ? '/media/css' : '/styles';
 const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
 const mainStylesUrl = (() => {
-  const baseUrl = isStoryKeep // || isDev
+  const baseUrl = isStoryKeep
     ? `${cssBasePath}/storykeep.css`
     : `${cssBasePath}/frontend.css`;
-
-  // Only add version for frontend.css (the dynamic one)
   if (!isStoryKeep && brandConfig?.STYLES_VER) {
     return `${baseUrl}?v=${brandConfig.STYLES_VER}`;
   }
-
   return baseUrl;
 })();
 
-// Social media and SEO setup
 const defaultFavIcon = brandConfig.FAVICON || `/brand/favicon.ico`;
 const defaultSocialImageURL = ogImage || brandConfig.OG || `/brand/og.png`;
 const defaultSocialLogoURL = brandConfig.OGLOGO || `/brand/oglogo.png`;
 const defaultSocialTitle =
-  typeof title === `string` && title
-    ? title
-    : typeof brandConfig.OGTITLE === `string`
-      ? brandConfig.OGTITLE
-      : `TractStack dynamic website`;
+  title || brandConfig.OGTITLE || `TractStack dynamic website`;
 const defaultSocialAuthor = brandConfig.OGAUTHOR || `TractStack`;
 const defaultSocialDesc =
   description ||
@@ -93,7 +80,7 @@ const socialLogoFullURL = brandConfig?.SITE_URL
   : `${defaultSocialLogoURL}`;
 const gtagId = brandConfig?.GTAG || false;
 const gtagUrl =
-  typeof gtagId === `string` && gtagId.length > 1
+  gtagId && typeof gtagId === `string` && gtagId.length > 1
     ? `https://www.googletagmanager.com/gtag/js?id=${gtagId}`
     : null;
 const fullCanonicalUrl = brandConfig?.SITE_URL
@@ -207,7 +194,7 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
       )
     }
 
-    <script src="/client/htmx.min.js" is:inline is:persist></script>
+    <script src="/client/htmx.min.js" is:inline></script>
 
     <script
       define:vars={{
@@ -219,43 +206,32 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
       }}
       is:inline
     >
-      function createTractstackConfig() {
-        window.TRACTSTACK_CONFIG = {
-          configured: true,
-          backendUrl: goBackend,
-          tenantId: tenantId,
-          fontBasePath: fontBasePath,
-          storyfragmentId: storyfragmentId,
-          sessionId: sessionId,
-        };
-      }
+      // Capture the initial, server-rendered values from define:vars into top-level constants.
+      // This makes the scope explicit and resolves the linter error.
+      const initialStoryfragmentId = storyfragmentId;
+      const initialSessionId = sessionId;
 
       function updateTractstackConfig() {
-        // Get current values from meta tags
         const storyfragmentMeta = document.querySelector(
           'meta[name="storyfragment-id"]'
         );
         const sessionMeta = document.querySelector('meta[name="session-id"]');
 
-        const currentStoryfragmentId = storyfragmentMeta
-          ? storyfragmentMeta.content
-          : null;
-        const currentSessionId = sessionMeta ? sessionMeta.content : sessionId;
-        if (window.TRACTSTACK_CONFIG && currentStoryfragmentId) {
-          window.TRACTSTACK_CONFIG.storyfragmentId = currentStoryfragmentId;
-          window.TRACTSTACK_CONFIG.sessionId = currentSessionId;
-        } else {
-          createTractstackConfig();
-        }
+        window.TRACTSTACK_CONFIG = {
+          configured: true,
+          backendUrl: goBackend,
+          tenantId: tenantId,
+          fontBasePath: fontBasePath,
+          // Use the meta tag if it exists (for subsequent client-side loads),
+          // otherwise fall back to the initial server-rendered value.
+          storyfragmentId: storyfragmentMeta
+            ? storyfragmentMeta.content
+            : initialStoryfragmentId,
+          sessionId: sessionMeta ? sessionMeta.content : initialSessionId,
+        };
       }
 
-      // Check if config exists.
-      // If not, create it. This handles the very first load.
-      if (!window.TRACTSTACK_CONFIG) {
-        createTractstackConfig();
-      }
-
-      // Update on subsequent loads, or set for the first time if script runs after initial setup
+      updateTractstackConfig();
       document.addEventListener('astro:page-load', updateTractstackConfig);
     </script>
   </head>
@@ -307,14 +283,11 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
       }
     </div>
 
-    <script type="module" is:inline is:persist is:raw>
-      import '/client/sse.js';
-      import '/client/belief-events.js';
-      import '/client/analytics-events.js';
-    </script>
+    <script type="module" src="/client/app.js" is:inline is:persist></script>
+
+    <script type="module" src="/client/view.js" is:inline></script>
 
     <script is:inline is:persist>
-      // Navigation loading animation with blur backdrop
       let navProgressInterval = null;
       let navSafetyTimeout = null;
 
@@ -329,24 +302,19 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
           loadingIndicator &&
           loadingBackdrop
         ) {
-          // Clear any existing safety timeout
           if (navSafetyTimeout !== null) {
             clearTimeout(navSafetyTimeout);
             navSafetyTimeout = null;
           }
 
-          // Show and animate backdrop
           loadingBackdrop.style.display = 'block';
-          // Force reflow to ensure display:block is applied before opacity transition
           void loadingBackdrop.offsetHeight;
           loadingBackdrop.style.opacity = '1';
 
-          // Fade out content slightly
           if (content) {
             content.style.opacity = '0.7';
           }
 
-          // Animate progress bar
           loadingIndicator.style.transform = 'scaleX(0)';
           loadingIndicator.style.display = 'block';
 
@@ -362,7 +330,6 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
             loadingIndicator.style.transform = `scaleX(${progress / 100})`;
           }, 20);
 
-          // AUTOMATIC SHUTOFF: Always stop after 10 seconds
           navSafetyTimeout = setTimeout(() => {
             stopNavLoadingAnimation();
           }, 10000);
@@ -374,7 +341,6 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
         const loadingBackdrop = document.getElementById('loading-backdrop');
         const content = document.getElementById('content');
 
-        // Clear safety timeout
         if (navSafetyTimeout !== null) {
           clearTimeout(navSafetyTimeout);
           navSafetyTimeout = null;
@@ -386,21 +352,17 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
           loadingIndicator &&
           loadingBackdrop
         ) {
-          // Clear interval
           if (navProgressInterval !== null) {
             clearInterval(navProgressInterval);
             navProgressInterval = null;
           }
 
-          // Complete progress bar
           loadingIndicator.style.transform = 'scaleX(1)';
 
-          // Restore content opacity
           if (content) {
             content.style.opacity = '1';
           }
 
-          // Hide backdrop
           loadingBackdrop.style.opacity = '0';
 
           setTimeout(() => {
@@ -411,7 +373,6 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
         }
       }
 
-      // Set up navigation loading
       function setupNavigationLoading() {
         document.addEventListener('astro:before-preparation', () => {
           startNavLoadingAnimation();
@@ -426,14 +387,12 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
         });
       }
 
-      // Initialize
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupNavigationLoading);
       } else {
         setupNavigationLoading();
       }
 
-      // Re-setup after navigation
       document.addEventListener('astro:page-load', setupNavigationLoading);
     </script>
   </body>
