@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.0-rc.67",
+  "version": "2.0.0-rc.68",
   "description": "Astro integration for TractStack - redeeming the web from boring experiences",
   "type": "module",
   "main": "dist/index.js",
@@ -34,7 +34,7 @@
     "go"
   ],
   "author": "AtRiskMedia",
-  "license": "FSL-1.1-MIT",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AtRiskMedia/astro-tractstack.git"

@@ -80,7 +80,7 @@ cd ~/t8k/src/my-tractstack
 pnpm dev
 ```
 
-Visit https://127.0.0.1:4321 to access your site and activate your Story Keep (CMS).
+Visit <https://127.0.0.1:4321> to access your site and activate your Story Keep (CMS).
 
 ## Installation Types
 
@@ -283,14 +283,16 @@ sudo ~/t8k/src/tractstack-go/pkg/scripts/t8k-uninstall.sh
 
 ## Support & Documentation
 
-- **Documentation**: https://tractstack.org
-- **GitHub Issues**: https://github.com/AtRiskMedia/tractstack-go/issues
-- **Email Support**: hello@tractstack.com
+- **Documentation**: <https://tractstack.org>
+- **GitHub Issues**: <https://github.com/AtRiskMedia/tractstack-go/issues>
+- **Email Support**: <hello@tractstack.com>
 - **Community**: Join discussions about adaptive web experiences
 
 ## License
 
-**Functional Source License (FSL)** - Commercial use encouraged!
+The frontend Astro integration is available via the MIT license.
+
+The backend epistemic hypermedia server is available via the **Functional Source License (FSL)** - Commercial use encouraged!
 
 The only restriction is no re-selling TractStack as-a-service. Perfect for:
 
