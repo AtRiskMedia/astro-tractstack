@@ -12,28 +12,27 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
+  const [currentScale, setCurrentScale] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Get parameter metadata from the widgetMeta constant
   const widgetInfo = widgetMeta.toggle;
 
   const params = node.codeHookParams || [];
   const beliefTag = String(params[0] || '');
   const prompt = String(params[1] || '');
+  const scale = String(params[2] || '');
 
-  // Check if beliefTag is the placeholder value
   const isPlaceholder = beliefTag === 'BeliefTag';
 
-  // Update local state when props change
   useEffect(() => {
     if (!isPlaceholder && beliefTag) {
       setSelectedBeliefTag(beliefTag);
     }
     setCurrentPrompt(prompt);
+    setCurrentScale(scale);
     setIsInitialized(true);
-  }, [beliefTag, prompt, isPlaceholder]);
+  }, [beliefTag, prompt, scale, isPlaceholder]);
 
-  // Fetch beliefs using new Go backend pattern
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -41,7 +40,6 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
           import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
         const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
-        // Step 1: Get all belief IDs
         const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
           headers: {
             'X-Tenant-ID': tenantId,
@@ -60,7 +58,6 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
           return;
         }
 
-        // Step 2: Get belief data by IDs
         const beliefsResponse = await fetch(
           `${goBackend}/api/v1/nodes/beliefs`,
           {
@@ -92,34 +89,30 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
   const handleBeliefChange = (selectedValue: string) => {
     if (!isInitialized) return;
     setSelectedBeliefTag(selectedValue);
-    onUpdate([selectedValue, currentPrompt]);
+    const selectedBelief = beliefs.find((b) => b.slug === selectedValue);
+    const newScale = selectedBelief ? selectedBelief.scale || '' : '';
+    setCurrentScale(newScale);
+    onUpdate([selectedValue, currentPrompt, newScale]);
   };
 
   const handlePromptChange = (value: string) => {
     if (!isInitialized) return;
-    // Sanitize the input value (remove newlines and pipe characters)
     const sanitizedValue = value.replace(/[\n\r|]/g, '');
     setCurrentPrompt(sanitizedValue);
-
-    // Use the actual selected tag (from state) or the original belief tag as fallback
     const tagToUse = selectedBeliefTag || (isPlaceholder ? '' : beliefTag);
-    onUpdate([tagToUse, sanitizedValue]);
+    onUpdate([tagToUse, sanitizedValue, currentScale]);
   };
 
-  // Show beliefs that can be selected for the toggle
   const filteredBeliefs = beliefs.filter(
     (b) => b.scale === 'yn' || b.scale === 'tf'
   );
 
-  // Find the selected belief (if any)
   const selectedBelief = beliefs.find(
     (b) => b.slug === (selectedBeliefTag || (isPlaceholder ? '' : beliefTag))
   );
 
-  // Determine if we have a real selection - either from state or props
   const hasRealSelection = !!selectedBelief || (!isPlaceholder && !!beliefTag);
 
-  // Calculate the current value to show in the select dropdown
   const selectValue = selectedBeliefTag || (isPlaceholder ? '' : beliefTag);
 
   return (

@@ -414,6 +414,7 @@ const EpinetWrapper = ({
           <EpinetDurationSelector
             fullContentMap={fullContentMap}
             isLoading={isLoading || status === 'loading'}
+            hourlyNodeActivity={$epinetCustomFilters.hourlyNodeActivity}
           />
         </div>
       </ErrorBoundary>

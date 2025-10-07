@@ -327,7 +327,7 @@ function processStoryfragmentUpdate(update, config) {
           `Target pane element for scrolling not found: #pane-${update.gotoPaneId}`
         );
       }
-    }, 150);
+    }, 350);
   }
 }
 
@@ -361,6 +361,7 @@ function initializeCurrentView() {
 
 function resetViewState() {
   log('Resetting view state before new page preparation.');
+  flushPendingPaneEvents();
   isPageInitialized = false;
   paneViewTimes.clear();
 }
@@ -385,8 +386,13 @@ if (!window.tractstackViewLifecycleListenersAttached) {
 
       let beliefValue;
       if (target.type === 'checkbox') {
-        // TEMPORARY HARDCODING: Use YES/NO for all toggles.
-        beliefValue = target.checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
+        const onVerb = target.getAttribute('data-verb');
+        const offVerb = target.getAttribute('data-off-verb');
+        if (onVerb && offVerb) {
+          beliefValue = target.checked ? onVerb : offVerb;
+        } else {
+          beliefValue = target.checked ? 'BELIEVES_YES' : 'BELIEVES_NO';
+        }
       } else {
         beliefValue = target.value;
       }
