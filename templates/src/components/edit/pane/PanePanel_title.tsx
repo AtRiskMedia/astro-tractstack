@@ -285,14 +285,14 @@ const PaneTitlePanel = ({ nodeId, setMode }: PaneTitlePanelProps) => {
         {/* Help Text */}
         <div className="space-y-4 text-sm text-gray-600">
           <div>
-            <h4 className="font-semibold">Title Guidelines:</h4>
+            <h4 className="font-bold">Title Guidelines:</h4>
             <ul className="ml-4 mt-1 list-disc">
               <li>5-35 characters recommended for optimal display</li>
               <li>Clear, descriptive title for the pane content</li>
             </ul>
           </div>
           <div>
-            <h4 className="font-semibold">Slug Guidelines:</h4>
+            <h4 className="font-bold">Slug Guidelines:</h4>
             <ul className="ml-4 mt-1 list-disc">
               <li>Used for analytics tracking</li>
               <li>Only lowercase letters, numbers, and hyphens</li>

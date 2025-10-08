@@ -22,7 +22,6 @@ const ListContentSetup = ({
 }: ListContentSetupProps) => {
   const $contentMap = useStore(fullContentMapStore);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-
   const [excludedIds, setExcludedIds] = useState<string[]>(
     params?.excludedIds ? params.excludedIds.split(',') : []
   );
@@ -34,6 +33,7 @@ const ListContentSetup = ({
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [bgColor, setBgColor] = useState(params?.bgColor || '');
+  const [title, setTitle] = useState(params?.title || '');
 
   const isInitialMount = useRef(true);
 
@@ -43,15 +43,15 @@ const ListContentSetup = ({
     selectedTopics.length > 0 ||
     excludedIds.length > 0 ||
     pageSize !== 10 ||
-    bgColor !== '';
+    bgColor !== '' ||
+    title !== '';
 
   const validPages = $contentMap.filter(
     (item) =>
       item.type === 'StoryFragment' &&
       typeof item.description === 'string' &&
       typeof item.thumbSrc === 'string' &&
-      typeof item.thumbSrcSet === 'string' &&
-      typeof item.changed === 'string'
+      typeof item.thumbSrcSet === 'string'
   );
 
   // Build topic map for filtering
@@ -111,6 +111,7 @@ const ListContentSetup = ({
               topics: selectedTopics.join(','),
               pageSize: pageSize,
               bgColor: bgColor,
+              title: title,
             }),
           },
           bgColour: bgColor || undefined,
@@ -138,7 +139,7 @@ const ListContentSetup = ({
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [excludedIds, selectedTopics, pageSize, bgColor]);
+  }, [excludedIds, selectedTopics, pageSize, bgColor, title]);
 
   // Toggle a page's exclusion status
   const toggleExclude = (id: string) => {
@@ -283,6 +284,23 @@ const ListContentSetup = ({
           <h3 className="text-lg font-bold text-gray-900">Content Settings</h3>
         </div>
         <div className="space-y-4 pt-4">
+          <div>
+            <label
+              htmlFor="list-title"
+              className="block text-sm font-bold text-gray-700"
+            >
+              Optional Title
+            </label>
+            <input
+              type="text"
+              id="list-title"
+              className="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 sm:text-sm"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Recent Articles"
+            />
+          </div>
+
           <div>
             <label
               htmlFor="page-size"
@@ -449,23 +467,9 @@ const ListContentSetup = ({
                     />
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="truncate text-sm font-bold text-gray-900">
-                        {page.title}
-                      </p>
-                      <div className="flex items-center space-x-4">
-                        <button
-                          onClick={() => toggleExclude(page.id)}
-                          className={`rounded px-2 py-1 text-xs font-bold ${
-                            isExcluded
-                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              : 'bg-red-100 text-red-600 hover:bg-red-200'
-                          }`}
-                        >
-                          {isExcluded ? 'Restore' : 'Exclude'}
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-sm font-bold text-gray-900">
+                      {page.title}
+                    </p>
                     <div className="mt-1">
                       <p className="line-clamp-1 text-sm text-gray-500">
                         {page.description}
@@ -486,6 +490,16 @@ const ListContentSetup = ({
                             {topic}
                           </span>
                         ))}
+                        <button
+                          onClick={() => toggleExclude(page.id)}
+                          className={`rounded px-2 py-1 text-xs font-bold ${
+                            isExcluded
+                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              : 'bg-red-100 text-red-600 hover:bg-red-200'
+                          }`}
+                        >
+                          {isExcluded ? 'Restore' : 'Exclude'}
+                        </button>
                       </div>
                     )}
                     <div className="mt-1 flex items-center text-xs text-gray-500">

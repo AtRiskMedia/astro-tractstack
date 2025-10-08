@@ -217,7 +217,7 @@ const StoryFragmentSlugPanel = ({
 
         {isHomeSlug && (
           <div className="mt-4">
-            <div className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1.5 text-sm font-medium text-blue-800">
+            <div className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1.5 text-sm font-bold text-blue-800">
               <LockClosedIcon className="mr-1.5 h-4 w-4" />
               Home Page
             </div>

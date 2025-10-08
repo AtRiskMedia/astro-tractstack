@@ -270,7 +270,7 @@ export default function SearchResults({
                 <div className="mt-3 min-w-0 flex-1 md:mt-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-mydarkgrey group-hover:text-myblue mb-2 text-lg font-semibold transition-colors">
+                      <h3 className="text-mydarkgrey group-hover:text-myblue mb-2 text-lg font-bold transition-colors">
                         {item.title}
                       </h3>
                       {item.description && (
@@ -320,7 +320,7 @@ export default function SearchResults({
             page={currentPage}
             onPageChange={(details) => handlePageChange(details.page)}
           >
-            <Pagination.PrevTrigger className="text-mydarkgrey hover:text-myblue mr-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+            <Pagination.PrevTrigger className="text-mydarkgrey hover:text-myblue mr-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold transition-colors disabled:opacity-50">
               <ChevronLeftIcon className="h-4 w-4" />
               Previous
             </Pagination.PrevTrigger>
@@ -334,7 +334,7 @@ export default function SearchResults({
                         key={index}
                         type="page"
                         value={page.value}
-                        className={`rounded px-3 py-2 text-sm font-medium transition-colors ${
+                        className={`rounded px-3 py-2 text-sm font-bold transition-colors ${
                           page.value === currentPage
                             ? 'bg-myblue text-white'
                             : 'text-mydarkgrey hover:text-myblue'
@@ -355,7 +355,7 @@ export default function SearchResults({
               </Pagination.Context>
             </div>
 
-            <Pagination.NextTrigger className="text-mydarkgrey hover:text-myblue ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50">
+            <Pagination.NextTrigger className="text-mydarkgrey hover:text-myblue ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold transition-colors disabled:opacity-50">
               Next
               <ChevronRightIcon className="h-4 w-4" />
             </Pagination.NextTrigger>
