@@ -67,10 +67,6 @@ const PanelVisibilityWrapper = ({
               currentActiveMode.panel === panelType &&
               currentActiveMode.paneId === nodeId;
             if (!entries[0].isIntersecting && stillActive) {
-              console.log('❌ CLOSING PANEL DUE TO INTERSECTION OBSERVER!', {
-                panelType,
-                nodeId,
-              });
               nodesCtx.closeAllPanels();
             }
           }, 100); // Small delay to allow panel to render

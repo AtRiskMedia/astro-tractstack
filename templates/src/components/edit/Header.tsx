@@ -102,7 +102,7 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 p-2">
         {/* Viewport Section with stacked label */}
         <div className="flex flex-col items-center">
-          <span className="text-xs font-medium text-gray-600">Viewport:</span>
+          <span className="text-xs font-bold text-gray-600">Viewport:</span>
           <span className="text-xs text-gray-700">{viewport}</span>
         </div>
 

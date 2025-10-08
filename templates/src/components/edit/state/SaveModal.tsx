@@ -905,7 +905,7 @@ export default function SaveModal({
 
               {stage === 'ERROR' && (
                 <div className="mb-4 rounded bg-red-50 p-3 text-red-800">
-                  <div className="font-medium">Save failed</div>
+                  <div className="font-bold">Save failed</div>
                   <div className="mt-1 text-sm">{error}</div>
                 </div>
               )}

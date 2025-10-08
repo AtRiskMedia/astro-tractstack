@@ -504,7 +504,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
                           />
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium">
+                          <div className="font-bold">
                             {file.altDescription || file.filename}
                           </div>
                           {file.altDescription && (

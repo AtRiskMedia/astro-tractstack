@@ -252,12 +252,26 @@ export default function ResourceForm({
           />
         );
 
-      case 'image':
+      case 'image': {
+        let fileUploadValue = ''; // Default to an empty string.
+
+        if (typeof fieldValue === 'string') {
+          // Case 1: The value is a string (Base64 URI).
+          fileUploadValue = fieldValue;
+        } else if (
+          fieldValue &&
+          typeof fieldValue === 'object' &&
+          fieldValue.src
+        ) {
+          // already saved, url
+          fileUploadValue = fieldValue.src;
+        }
+
         return (
           <FileUpload
             key={fieldName}
             label={fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-            value={fieldValue || ''}
+            value={fileUploadValue}
             onChange={(value) => updateOptionsField(fieldName, value)}
             accept="image/*"
             showPreview={true}
@@ -265,6 +279,7 @@ export default function ResourceForm({
             required={!fieldDef.optional}
           />
         );
+      }
 
       default:
         return (
