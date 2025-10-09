@@ -1,0 +1,29 @@
+---
+import type { ResourceNode } from '@/types/compositorTypes';
+
+export interface Props {
+  product?: ResourceNode;
+}
+
+const { product } = Astro.props;
+---
+
+<div class="rounded-lg border bg-white p-6 shadow-sm">
+  <h2 class="mb-4 text-xl font-bold text-gray-900">
+    Product Card (Parameter Dump)
+  </h2>
+
+  {
+    product ? (
+      <pre class="whitespace-pre-wrap rounded-md bg-gray-50 p-4 text-xs text-gray-700">
+        {JSON.stringify(product, null, 2)}
+      </pre>
+    ) : (
+      <div class="rounded-md bg-red-50 p-4 text-center">
+        <p class="font-bold text-red-800">
+          Error: ProductCard component received no product data.
+        </p>
+      </div>
+    )
+  }
+</div>

@@ -5,10 +5,18 @@ import { RenderChildren } from './RenderChildren';
 import FeaturedArticleSetup from '@/components/codehooks/FeaturedArticleSetup';
 import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
+import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
+import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
 import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
-const TARGETS = ['list-content', 'featured-article', 'bunny-video'];
+const TARGETS = [
+  'list-content',
+  'featured-article',
+  'bunny-video',
+  'product-card',
+  'product-grid',
+];
 
 const CodeHookContainer = ({
   payload,
@@ -157,7 +165,19 @@ const Pane = memo(
           id={getCtx(props).getNodeSlug(props.nodeId)}
           className={useFlexLayout ? '' : wrapperClasses}
         >
-          {codeHookPayload && codeHookTarget === 'featured-article' ? (
+          {codeHookPayload && codeHookTarget === 'product-card' ? (
+            <ProductCardSetup
+              nodeId={props.nodeId}
+              params={codeHookParams}
+              config={props.config!}
+            />
+          ) : codeHookPayload && codeHookTarget === 'product-grid' ? (
+            <ProductGridSetup
+              nodeId={props.nodeId}
+              params={codeHookParams}
+              config={props.config!}
+            />
+          ) : codeHookPayload && codeHookTarget === 'featured-article' ? (
             <FeaturedArticleSetup
               nodeId={props.nodeId}
               params={codeHookParams}
