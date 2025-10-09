@@ -1,0 +1,43 @@
+---
+import type { ResourceNode } from '@/types/compositorTypes';
+import ProductCard from './ProductCard.astro';
+
+export interface Props {
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+  resourcesPayload?: Record<string, ResourceNode[]>;
+}
+
+const { options, resourcesPayload } = Astro.props;
+
+let product: ResourceNode | undefined = undefined;
+let parsedOptions: { slug?: string } = {};
+
+if (options?.params?.options && typeof options.params.options === 'string') {
+  try {
+    parsedOptions = JSON.parse(options.params.options);
+  } catch (e) {
+    console.error('Failed to parse ProductCard options JSON:', e);
+  }
+}
+
+const targetSlug = parsedOptions?.slug;
+
+if (targetSlug && resourcesPayload) {
+  for (const key in resourcesPayload) {
+    const resourceArray = resourcesPayload[key] as ResourceNode[];
+    const found = resourceArray.find(
+      (resource) => resource.slug === targetSlug
+    );
+    if (found) {
+      product = found;
+      break;
+    }
+  }
+}
+---
+
+<ProductCard product={product} />

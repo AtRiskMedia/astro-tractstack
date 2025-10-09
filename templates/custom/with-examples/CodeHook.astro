@@ -5,6 +5,8 @@ import FeaturedArticle from '@/components/codehooks/FeaturedArticle.astro';
 import ListContent from '@/components/codehooks/ListContent.astro';
 import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
 import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
+import ProductCardWrapper from './ProductCardWrapper.astro';
+import ProductGrid from './ProductGrid.astro';
 import type { FullContentMapItem } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -19,20 +21,26 @@ export interface Props {
   };
 }
 
-const { target, options, fullContentMap /*, resourcesPayload */ } = Astro.props;
+const { target, options, fullContentMap, resourcesPayload } = Astro.props;
 
 export const components = {
   'custom-hero': true,
   'featured-article': true,
   'list-content': true,
   'search-widget': true,
+  'product-card': true,
+  'product-grid': true,
   'bunny-video': import.meta.env.PUBLIC_ENABLE_BUNNY === 'true',
   epinet: true,
 };
 ---
 
 {
-  target === 'list-content' ? (
+  target === 'product-card' ? (
+    <ProductCardWrapper options={options} resourcesPayload={resourcesPayload} />
+  ) : target === 'product-grid' ? (
+    <ProductGrid options={options} resourcesPayload={resourcesPayload} />
+  ) : target === 'list-content' ? (
     <ListContent options={options} contentMap={fullContentMap} />
   ) : target === 'featured-article' ? (
     <FeaturedArticle options={options} contentMap={fullContentMap} />

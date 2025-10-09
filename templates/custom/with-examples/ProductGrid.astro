@@ -1,0 +1,64 @@
+---
+import type { ResourceNode } from '@/types/compositorTypes';
+import ProductCard from './ProductCard.astro';
+
+export interface Props {
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
+  resourcesPayload?: Record<string, ResourceNode[]>;
+}
+
+const { options, resourcesPayload } = Astro.props;
+
+let productsToDisplay: ResourceNode[] = [];
+let allFetchedProducts: ResourceNode[] = [];
+let parsedOptions: { productType?: string; category?: string; slugs?: string } =
+  {};
+
+if (options?.params?.options && typeof options.params.options === 'string') {
+  try {
+    parsedOptions = JSON.parse(options.params.options);
+  } catch (e) {
+    console.error('Failed to parse ProductGrid options JSON:', e);
+  }
+}
+
+if (resourcesPayload) {
+  for (const key in resourcesPayload) {
+    allFetchedProducts = resourcesPayload[key] as ResourceNode[];
+    break;
+  }
+}
+
+if (parsedOptions?.productType) {
+  productsToDisplay = allFetchedProducts.filter(
+    (product) =>
+      product.optionsPayload?.productType === parsedOptions.productType
+  );
+} else {
+  productsToDisplay = allFetchedProducts;
+}
+---
+
+<div class="space-y-6">
+  {
+    productsToDisplay.length > 0 ? (
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {productsToDisplay.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+    ) : (
+      <div class="rounded-lg border bg-yellow-50 p-6 text-center shadow-sm">
+        <p class="font-medium text-yellow-800">No products to display.</p>
+        <p class="mt-1 text-sm text-yellow-700">
+          Check the grid configuration or ensure products match the specified
+          filters.
+        </p>
+      </div>
+    )
+  }
+</div>

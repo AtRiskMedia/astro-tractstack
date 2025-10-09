@@ -1278,6 +1278,18 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/codehooks/ProductCardSetup.tsx'
+      ),
+      dest: 'src/components/codehooks/ProductCardSetup.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/codehooks/ProductGridSetup.tsx'
+      ),
+      dest: 'src/components/codehooks/ProductGridSetup.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/codehooks/BunnyVideoWrapper.astro'
       ),
       dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
@@ -2098,6 +2110,23 @@ export async function injectTemplateFiles(
           {
             src: resolve('../templates/custom/with-examples/CustomHero.astro'),
             dest: 'src/custom/CustomHero.astro',
+            protected: true,
+          },
+          {
+            src: resolve('../templates/custom/with-examples/ProductGrid.astro'),
+            dest: 'src/custom/ProductGrid.astro',
+            protected: true,
+          },
+          {
+            src: resolve(
+              '../templates/custom/with-examples/ProductCardWrapper.astro'
+            ),
+            dest: 'src/custom/ProductCardWrapper.astro',
+            protected: true,
+          },
+          {
+            src: resolve('../templates/custom/with-examples/ProductCard.astro'),
+            dest: 'src/custom/ProductCard.astro',
             protected: true,
           },
           {
