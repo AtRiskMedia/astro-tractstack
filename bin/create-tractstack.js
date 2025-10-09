@@ -339,7 +339,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install core dependencies
     execSync(
-      `${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid`,
+      `${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1`,
       {
         stdio: 'inherit',
       }
@@ -348,7 +348,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install UI components
     execSync(
-      `${addCommand} @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@3.8.2`,
+      `${addCommand} @ark-ui/react@^5.26.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0`,
       {
         stdio: 'inherit',
       }
@@ -357,7 +357,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install visualization dependencies
     execSync(
-      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2 html-to-image`,
+      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@^1.6.0 html-to-image@^1.11.13`,
       {
         stdio: 'inherit',
       }
@@ -370,7 +370,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install dev dependencies
     execSync(
-      `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2 @mhsdesign/jit-browser-tailwindcss`,
+      `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2@^1.4.6 @mhsdesign/jit-browser-tailwindcss@^0.4.2`,
       { stdio: 'inherit' }
     );
     console.log(kleur.green('✅ Dev dependencies installed'));
@@ -379,12 +379,12 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid @ark-ui/react@^5.21.0 @heroicons/react@^2.1.1 @internationalized/date@3.8.2 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2 html-to-image path-to-regexp@^8.0.0`
+        `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.26.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0`
       )
     );
     console.log(
       kleur.cyan(
-        `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2 @mhsdesign/jit-browser-tailwindcss`
+        `${addCommand} -D @types/node@^22.18.0 @types/react@^18.3.11 @types/react-dom@^18.3.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.3.3 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.6.8 typescript@^5.9.2 @types/tinycolor2@^1.4.6 @mhsdesign/jit-browser-tailwindcss@^0.4.2`
       )
     );
     process.exit(1);

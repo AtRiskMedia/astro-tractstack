@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.0-rc.70",
+  "version": "2.0.0-rc.71",
   "description": "Astro integration for TractStack - redeeming the web from boring experiences",
   "type": "module",
   "main": "dist/index.js",
@@ -52,10 +52,10 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@ark-ui/react": "^5.21.0",
+    "@ark-ui/react": "^5.26.0",
     "@astrojs/react": "^3.6.3",
     "@heroicons/react": "^2.1.1",
-    "@internationalized/date": "^3.9.0",
+    "@internationalized/date": "^3.10.0",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
     "@nanostores/persistent": "^1.1.0",
     "@nanostores/react": "^1.0.0",
