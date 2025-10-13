@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [2.0.1] - 2025-10-13
+
+### Changed
+
+- visual tune-up on epinet
+
+### [2.0.0] - 2025-10-10
+
+### Changed
+
+- released 2.0.0 under MIT license
+
 ### [2.0.0-rc.71] - 2025-10-09
 
 ### Updated

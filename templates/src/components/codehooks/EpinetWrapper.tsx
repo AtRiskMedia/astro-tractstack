@@ -330,18 +330,18 @@ const EpinetWrapper = ({
     );
   }
 
-  if ((isLoading || status === 'loading') && !epinet) {
+  if (
+    !epinet ||
+    !epinet.nodes ||
+    !epinet.links ||
+    epinet.nodes.length === 0 ||
+    epinet.links.length === 0
+  )
     return (
-      <div className="flex h-96 w-full items-center justify-center rounded bg-gray-100">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-cyan-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 text-sm text-gray-600">
-            Computing user journey data...
-          </p>
-        </div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
       </div>
     );
-  }
 
   if (error && !epinet) {
     return (

@@ -194,9 +194,8 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
         .text((d) => {
           const sourceNode = d.source as { index: number };
           const targetNode = d.target as { index: number };
-          return `${data.nodes[sourceNode.index].name} → ${
-            data.nodes[targetNode.index].name
-          }\n${d.value} events`;
+          return `${data.nodes[sourceNode.index].name} → ${data.nodes[targetNode.index].name
+            }\n${d.value} events`;
         });
 
       svg
@@ -301,11 +300,10 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
 
       {/* SVG Container - Clickable when compressed */}
       <div
-        className={`transition-all duration-300 ${
-          needsCompression
+        className={`transition-all duration-300 ${needsCompression
             ? 'cursor-pointer hover:bg-gray-50 hover:shadow-md'
             : ''
-        }`}
+          }`}
         style={{
           height: `${displayHeight}px`,
           overflow: 'hidden',
@@ -316,11 +314,11 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
         onKeyDown={
           needsCompression
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleExpand();
-                }
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleExpand();
               }
+            }
             : undefined
         }
         aria-label={
