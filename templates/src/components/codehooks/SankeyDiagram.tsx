@@ -3,7 +3,8 @@ import * as d3 from 'd3';
 import { sankey, sankeyLinkHorizontal } from 'd3-sankey';
 
 const MAX_HEIGHT = 1600;
-const COMPRESSED_HEIGHT = 256; // Fixed height for compressed view
+const COMPRESSED_HEIGHT = 256;
+const MIN_DIAGRAM_WIDTH = 800; // Define a minimum width for the diagram
 
 const colors = [
   '#ef4444',
@@ -52,7 +53,7 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hasScrolledRef = useRef(false);
   const [dimensions, setDimensions] = useState({
-    width: 800,
+    width: MIN_DIAGRAM_WIDTH,
     height: 500,
   });
   const [isExpanded, setIsExpanded] = useState(false);
@@ -60,7 +61,11 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
+        // Ensure the diagram width is the larger of the container or our defined minimum
+        const containerWidth = Math.max(
+          MIN_DIAGRAM_WIDTH,
+          containerRef.current.offsetWidth
+        );
         const nodeCount = data.nodes.length || 1;
         const optimalHeight = nodeCount * (40 + 10) + 50;
         const finalHeight = Math.min(MAX_HEIGHT, optimalHeight);
@@ -245,7 +250,6 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Expand/Compress Controls */}
       <div className="mb-3 flex items-center justify-between">
         <div className="text-sm text-gray-600">
           {data.nodes.length} nodes • {data.links.length} connections
@@ -292,23 +296,21 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
         </button>
       </div>
 
-      {/* Compression Warning */}
       {needsCompression && (
         <div className="mb-2 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
           <strong>Compressed view</strong> - click anywhere to expand!
         </div>
       )}
 
-      {/* SVG Container - Clickable when compressed */}
       <div
-        className={`transition-all duration-300 ${
+        className={`overflow-x-auto transition-all duration-300 md:overflow-visible ${
           needsCompression
             ? 'cursor-pointer hover:bg-gray-50 hover:shadow-md'
             : ''
         }`}
         style={{
           height: `${displayHeight}px`,
-          overflow: 'hidden',
+          overflowY: 'hidden',
         }}
         onClick={needsCompression ? handleExpand : undefined}
         role={needsCompression ? 'button' : undefined}
@@ -333,7 +335,7 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
           height={dimensions.height}
           style={{
             display: 'block',
-            width: '100%',
+            minWidth: `${dimensions.width}px`, // Ensure SVG itself doesn't shrink
             height: `${dimensions.height}px`,
             transform: needsCompression
               ? `scaleY(${displayHeight / dimensions.height})`
@@ -343,6 +345,10 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
           preserveAspectRatio="xMidYMid meet"
         ></svg>
+      </div>
+
+      <div className="mt-2 text-center text-xs text-gray-500 md:hidden">
+        &larr; Scroll to see full journey map &rarr;
       </div>
 
       {isLoading && (

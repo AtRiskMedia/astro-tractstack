@@ -39,36 +39,25 @@ const FIELD_TYPES = [
   { value: 'image', label: 'Image' },
 ];
 
-const KnownResourceForm = ({
+const KnownResourceFormRenderer = ({
   categorySlug,
   contentMap,
   onClose,
-}: KnownResourceFormProps) => {
+  brandConfig,
+}: KnownResourceFormProps & { brandConfig: BrandConfig }) => {
   const [newFieldName, setNewFieldName] = useState('');
   const [showAddField, setShowAddField] = useState(false);
-  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!brandConfig && !loading) {
-      setLoading(true);
-      getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
-        .then(setBrandConfig)
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }
-  }, [brandConfig, loading]);
-
-  const knownResources = brandConfig?.KNOWN_RESOURCES || {};
   const isCreate = categorySlug === 'new';
-  const currentCategory = isCreate ? {} : knownResources[categorySlug] || {};
+  const knownResources = brandConfig.KNOWN_RESOURCES || {};
+  const currentCategory = isCreate ? {} : knownResources[categorySlug];
 
   const hasExistingResources =
     !isCreate && contentMap.some((item) => item.categorySlug === categorySlug);
 
   const initialState: KnownResourceState = {
     categorySlug: isCreate ? '' : categorySlug,
-    fields: isCreate ? {} : currentCategory,
+    fields: currentCategory,
   };
 
   const validator = (state: KnownResourceState): FieldErrors => {
@@ -90,8 +79,6 @@ const KnownResourceForm = ({
     validator,
     onSave: async (data) => {
       try {
-        // Update known resources in brand config
-        if (!brandConfig) throw new Error('Brand config not loaded');
         const brandState = convertToLocalState(brandConfig);
         const updatedKnownResources = {
           ...brandState.knownResources,
@@ -108,7 +95,6 @@ const KnownResourceForm = ({
           updatedBrandState
         );
 
-        // Call success callback after save (original pattern)
         setTimeout(() => {
           onClose?.(true);
         }, 1000);
@@ -179,7 +165,6 @@ const KnownResourceForm = ({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="border-b border-gray-200 pb-4">
         <h2 className="text-2xl font-bold text-gray-900">
           {isCreate ? 'Create Resource Category' : `Edit ${categorySlug}`}
@@ -200,7 +185,6 @@ const KnownResourceForm = ({
       </div>
 
       <div className="space-y-6">
-        {/* Category Name */}
         <StringInput
           label="Category Name"
           value={formState.state.categorySlug}
@@ -214,7 +198,6 @@ const KnownResourceForm = ({
           Must be lowercase with hyphens. Cannot be changed after creation.
         </p>
 
-        {/* Fields Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">Fields</h3>
@@ -228,7 +211,6 @@ const KnownResourceForm = ({
             </button>
           </div>
 
-          {/* Add Field Form */}
           {showAddField && (
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
               <h4 className="mb-3 text-sm font-bold text-gray-900">
@@ -264,7 +246,6 @@ const KnownResourceForm = ({
             </div>
           )}
 
-          {/* Existing Fields */}
           {Object.keys(formState.state.fields).length === 0 ? (
             <div className="py-6 text-center text-gray-500">
               No fields defined yet. Click "Add Field" to create your first
@@ -275,7 +256,6 @@ const KnownResourceForm = ({
               {Object.entries(formState.state.fields).map(
                 ([fieldName, fieldDef]) => {
                   const locked = isFieldLocked(fieldName);
-
                   return (
                     <div
                       key={fieldName}
@@ -304,7 +284,6 @@ const KnownResourceForm = ({
                           </button>
                         )}
                       </div>
-
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <EnumSelect
                           label="Type"
@@ -315,7 +294,6 @@ const KnownResourceForm = ({
                           options={FIELD_TYPES}
                           disabled={locked}
                         />
-
                         <BooleanToggle
                           label="Optional"
                           value={fieldDef.optional || false}
@@ -324,7 +302,6 @@ const KnownResourceForm = ({
                           }
                           disabled={locked}
                         />
-
                         {fieldDef.type === 'categoryReference' && (
                           <EnumSelect
                             label="Reference Category"
@@ -341,7 +318,6 @@ const KnownResourceForm = ({
                             disabled={locked}
                           />
                         )}
-
                         {fieldDef.type === 'number' && (
                           <>
                             <NumberInput
@@ -372,7 +348,6 @@ const KnownResourceForm = ({
         </div>
       </div>
 
-      {/* Save/Cancel Bar */}
       <UnsavedChangesBar
         formState={formState}
         message="You have unsaved resource category changes"
@@ -380,7 +355,6 @@ const KnownResourceForm = ({
         cancelLabel="Discard Changes"
       />
 
-      {/* Cancel Navigation Button */}
       <div className="flex justify-start">
         <button
           type="button"
@@ -391,6 +365,62 @@ const KnownResourceForm = ({
         </button>
       </div>
     </div>
+  );
+};
+
+const KnownResourceForm = ({
+  categorySlug,
+  contentMap,
+  onClose,
+}: KnownResourceFormProps) => {
+  const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getBrandConfig(window.TRACTSTACK_CONFIG?.tenantId || 'default')
+      .then(setBrandConfig)
+      .catch((err) => {
+        console.error('Failed to load brand configuration:', err);
+        setError(
+          'Could not load resource category configuration. Please try again.'
+        );
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-12 text-center text-gray-500">
+        Loading configuration...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md bg-red-50 p-4 text-center text-red-700">
+        {error}
+      </div>
+    );
+  }
+
+  const isCreate = categorySlug === 'new';
+  if (!isCreate && !(brandConfig?.KNOWN_RESOURCES || {})[categorySlug]) {
+    return (
+      <div className="py-12 text-center text-gray-500">
+        Resource category "{categorySlug}" not found.
+      </div>
+    );
+  }
+
+  return (
+    <KnownResourceFormRenderer
+      categorySlug={categorySlug}
+      contentMap={contentMap}
+      onClose={onClose}
+      brandConfig={brandConfig!}
+    />
   );
 };
 

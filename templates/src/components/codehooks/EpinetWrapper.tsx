@@ -353,7 +353,7 @@ const EpinetWrapper = ({
         }
       >
         <div className="space-y-6">
-          <div className="rounded-lg bg-white p-6 shadow">
+          <div className="rounded-lg bg-white p-2 shadow md:p-6">
             <div className="mb-4 flex items-center justify-between">
               {(isLoading || status === 'loading') && (
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
