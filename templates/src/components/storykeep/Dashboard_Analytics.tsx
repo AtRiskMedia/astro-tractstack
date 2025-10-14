@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, Component } from 'react';
+import { useState, useCallback, useMemo, Component } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
@@ -103,6 +103,30 @@ export default function StoryKeepDashboard_Analytics({
     status: 'idle',
     error: null,
   });
+
+  const handleBeliefFilterChange = (beliefSlug: string, value: string) => {
+    const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+    const currentFilters = epinetCustomFilters.get();
+    let newFilters = [...(currentFilters.appliedFilters || [])];
+
+    if (value === 'All') {
+      newFilters = newFilters.filter((f) => f.beliefSlug !== beliefSlug);
+    } else {
+      const existingIndex = newFilters.findIndex(
+        (f) => f.beliefSlug === beliefSlug
+      );
+      if (existingIndex > -1) {
+        newFilters[existingIndex] = { beliefSlug, value };
+      } else {
+        newFilters.push({ beliefSlug, value });
+      }
+    }
+
+    epinetCustomFilters.set(tenantId, {
+      ...currentFilters,
+      appliedFilters: newFilters,
+    });
+  };
 
   // Duration helper for UI
   const currentDurationHelper = useMemo(():
@@ -440,6 +464,10 @@ export default function StoryKeepDashboard_Analytics({
                     analytics.isLoading || analytics.status === 'loading'
                   }
                   hourlyNodeActivity={analytics.hourlyNodeActivity}
+                  // MODIFICATION: Read availableFilters from the store, not local state
+                  availableFilters={$epinetCustomFilters.availableFilters}
+                  appliedFilters={$epinetCustomFilters.appliedFilters}
+                  onBeliefFilterChange={handleBeliefFilterChange}
                 />
               </div>
             </ErrorBoundary>
@@ -455,6 +483,10 @@ export default function StoryKeepDashboard_Analytics({
                   analytics.isLoading || analytics.status === 'loading'
                 }
                 hourlyNodeActivity={analytics.hourlyNodeActivity}
+                // MODIFICATION: Read availableFilters from the store, not local state
+                availableFilters={$epinetCustomFilters.availableFilters}
+                appliedFilters={$epinetCustomFilters.appliedFilters}
+                onBeliefFilterChange={handleBeliefFilterChange}
               />
             </>
           )
@@ -468,6 +500,10 @@ export default function StoryKeepDashboard_Analytics({
               fullContentMap={fullContentMap}
               isLoading={analytics.isLoading || analytics.status === 'loading'}
               hourlyNodeActivity={analytics.hourlyNodeActivity}
+              // MODIFICATION: Read availableFilters from the store, not local state
+              availableFilters={$epinetCustomFilters.availableFilters}
+              appliedFilters={$epinetCustomFilters.appliedFilters}
+              onBeliefFilterChange={handleBeliefFilterChange}
             />
           </>
         )}

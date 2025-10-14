@@ -20,13 +20,12 @@ interface FetchAnalyticsProps {
   onAnalyticsUpdate: (analytics: AnalyticsState) => void;
 }
 
-// Global singleton state to prevent multi-component conflicts
 class AnalyticsService {
   private static instance: AnalyticsService;
   private isInitialized = false;
   private activeRequest: AbortController | null = null;
   private requestCache = new Map<string, { data: any; timestamp: number }>();
-  private readonly CACHE_TTL = 5000; // 5 seconds
+  private readonly CACHE_TTL = 5000;
   private readonly DEBOUNCE_MS = 300;
   private debounceTimer: NodeJS.Timeout | null = null;
   private floodProtection = {
@@ -34,7 +33,7 @@ class AnalyticsService {
     windowStart: 0,
     isBlocked: false,
   };
-  private readonly FLOOD_WINDOW_MS = 10000; // 10 seconds
+  private readonly FLOOD_WINDOW_MS = 10000;
   private readonly FLOOD_THRESHOLD = 5;
 
   static getInstance(): AnalyticsService {
@@ -51,35 +50,25 @@ class AnalyticsService {
 
   private isFloodBlocked(): boolean {
     const now = Date.now();
-
-    // Reset window if needed
     if (now - this.floodProtection.windowStart > this.FLOOD_WINDOW_MS) {
       this.floodProtection.requestCount = 0;
       this.floodProtection.windowStart = now;
       this.floodProtection.isBlocked = false;
     }
-
-    // Check if blocked
     if (this.floodProtection.isBlocked) {
       if (VERBOSE) console.log('🚫 Request blocked by flood protection');
       return true;
     }
-
-    // Increment counter and check threshold
     this.floodProtection.requestCount++;
     if (this.floodProtection.requestCount > this.FLOOD_THRESHOLD) {
       this.floodProtection.isBlocked = true;
       if (VERBOSE) console.log('🚨 Flood protection activated');
-
-      // Auto-unblock after delay
       setTimeout(() => {
         this.floodProtection.isBlocked = false;
         if (VERBOSE) console.log('✅ Flood protection deactivated');
-      }, 30000); // 30 second cooldown
-
+      }, 30000);
       return true;
     }
-
     return false;
   }
 
@@ -94,8 +83,6 @@ class AnalyticsService {
 
   private setCachedResponse(cacheKey: string, data: any): void {
     this.requestCache.set(cacheKey, { data, timestamp: Date.now() });
-
-    // Cleanup old cache entries
     const cutoff = Date.now() - this.CACHE_TTL;
     for (const [key, value] of this.requestCache.entries()) {
       if (value.timestamp < cutoff) {
@@ -108,35 +95,29 @@ class AnalyticsService {
     filters: any,
     onUpdate: (data: AnalyticsState) => void
   ): Promise<void> {
-    // Flood protection
     if (this.isFloodBlocked()) {
       return;
     }
 
     try {
-      // Cancel any existing request
       if (this.activeRequest) {
         this.activeRequest.abort();
         if (VERBOSE) console.log('🛑 Cancelled previous request');
       }
 
-      // Create new abort controller
       this.activeRequest = new AbortController();
 
-      // Build URL parameters
       const params = new URLSearchParams();
       if (filters.startTimeUTC && filters.endTimeUTC) {
         const now = new Date();
         const startTime = new Date(filters.startTimeUTC);
         const endTime = new Date(filters.endTimeUTC);
-
         const startHour = Math.ceil(
           (now.getTime() - startTime.getTime()) / (1000 * 60 * 60)
         );
         const endHour = Math.floor(
           (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
         );
-
         params.append('startHour', startHour.toString());
         params.append('endHour', endHour.toString());
       }
@@ -146,16 +127,18 @@ class AnalyticsService {
       if (filters.selectedUserId)
         params.append('userId', filters.selectedUserId);
 
-      const cacheKey = this.getCacheKey(params);
+      // MODIFICATION: Properly format appliedFilters for the backend
+      if (filters.appliedFilters && filters.appliedFilters.length > 0) {
+        params.append('appliedFilters', JSON.stringify(filters.appliedFilters));
+      }
 
-      // Check cache first
+      const cacheKey = this.getCacheKey(params);
       const cachedData = this.getCachedResponse(cacheKey);
       if (cachedData) {
         onUpdate(cachedData);
         return;
       }
 
-      // Set loading state
       onUpdate({
         dashboard: null,
         leads: null,
@@ -167,23 +150,17 @@ class AnalyticsService {
         error: null,
       });
 
-      // Make request using existing TractStackAPI
       const api = new TractStackAPI(
         window.TRACTSTACK_CONFIG?.tenantId || 'default'
       );
       const endpoint = `/api/v1/analytics/all${params.toString() ? `?${params.toString()}` : ''}`;
-
       if (VERBOSE) console.log('🔥 Making API request', { endpoint });
 
       const response = await api.get(endpoint);
-
-      if (!response.success) {
+      if (!response.success)
         throw new Error(response.error || 'Failed to fetch analytics data');
-      }
-
       const data = response.data;
 
-      // Check if data is still loading - implement polling logic
       const isStillLoading =
         data?.status === 'loading' ||
         data?.status === 'refreshing' ||
@@ -196,8 +173,6 @@ class AnalyticsService {
 
       if (isStillLoading) {
         if (VERBOSE) console.log('⏳ Backend data still loading, will poll...');
-
-        // Update with partial data but keep loading state
         const partialAnalytics = {
           dashboard: data.dashboard,
           leads: data.leads,
@@ -208,27 +183,20 @@ class AnalyticsService {
           error: null,
           isLoading: true,
         };
-
         onUpdate(partialAnalytics);
 
-        // Schedule polling retry - use the cache key to prevent multiple polls
         const pollKey = `poll_${cacheKey}`;
         if (!this.requestCache.has(pollKey)) {
           this.requestCache.set(pollKey, { data: null, timestamp: Date.now() });
-
           setTimeout(() => {
             this.requestCache.delete(pollKey);
-            // Clear the main cache entry to force fresh request
             this.requestCache.delete(cacheKey);
-            // Retry the fetch
             this.fetchAnalytics(filters, onUpdate);
           }, 2000);
         }
-
         return;
       }
 
-      // Process successful response
       const analyticsData = {
         dashboard: data.dashboard,
         leads: data.leads,
@@ -240,23 +208,23 @@ class AnalyticsService {
         isLoading: false,
       };
 
-      // Cache the response
       this.setCachedResponse(cacheKey, analyticsData);
-
-      // Update caller
       onUpdate(analyticsData);
 
-      if (VERBOSE) console.log('✅ Analytics request completed successfully');
+      // MODIFICATION: Correctly extract top-level availableFilters and update the store
+      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+        ...filters,
+        availableFilters: data.availableFilters || [],
+      });
 
+      if (VERBOSE) console.log('✅ Analytics request completed successfully');
       this.activeRequest = null;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         if (VERBOSE) console.log('🔄 Request aborted');
         return;
       }
-
       console.error('❌ Analytics fetch error:', error);
-
       onUpdate({
         dashboard: null,
         leads: null,
@@ -268,7 +236,6 @@ class AnalyticsService {
           error instanceof Error ? error.message : 'Unknown error occurred',
         isLoading: false,
       });
-
       this.activeRequest = null;
     }
   }
@@ -286,13 +253,9 @@ class AnalyticsService {
 
   initializeFilters(tenantId: string): void {
     if (this.isInitialized) return;
-
     if (VERBOSE) console.log('🏁 Initializing analytics filters');
-
     const nowUTC = new Date();
     const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Only set if not already initialized to prevent store churn
     const current = epinetCustomFilters.get();
     if (!current.enabled) {
       epinetCustomFilters.set(tenantId, {
@@ -301,19 +264,15 @@ class AnalyticsService {
         selectedUserId: null,
         startTimeUTC: oneWeekAgoUTC.toISOString(),
         endTimeUTC: nowUTC.toISOString(),
+        availableFilters: [],
+        appliedFilters: [],
       });
     }
-
     this.isInitialized = true;
   }
 
   debouncedFetch(filters: any, onUpdate: (data: AnalyticsState) => void): void {
-    // Clear existing debounce timer
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-    }
-
-    // Set new debounced fetch
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       this.fetchAnalytics(filters, onUpdate);
     }, this.DEBOUNCE_MS);
@@ -329,29 +288,21 @@ export default function FetchAnalytics({
 
   if (VERBOSE) {
     console.log('🔄 FetchAnalytics render', {
-      filters: {
-        startTimeUTC: $epinetCustomFilters.startTimeUTC,
-        endTimeUTC: $epinetCustomFilters.endTimeUTC,
-        visitorType: $epinetCustomFilters.visitorType,
-        selectedUserId: $epinetCustomFilters.selectedUserId,
-      },
+      filters: { ...$epinetCustomFilters },
     });
   }
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       analyticsService.current.cleanup();
     };
   }, []);
 
-  // Initialize filters once
   useEffect(() => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
     analyticsService.current.initializeFilters(tenantId);
   }, []);
 
-  // Debounced fetch when filters change
   useEffect(() => {
     if (
       !$epinetCustomFilters.enabled ||
@@ -362,15 +313,14 @@ export default function FetchAnalytics({
       return;
     }
 
-    // Create stable filter signature to prevent unnecessary fetches
     const filtersSignature = JSON.stringify({
       startTimeUTC: $epinetCustomFilters.startTimeUTC,
       endTimeUTC: $epinetCustomFilters.endTimeUTC,
       visitorType: $epinetCustomFilters.visitorType,
       selectedUserId: $epinetCustomFilters.selectedUserId,
+      appliedFilters: $epinetCustomFilters.appliedFilters,
     });
 
-    // Skip if filters haven't actually changed
     if (filtersSignature === lastFiltersRef.current) {
       return;
     }
@@ -389,6 +339,7 @@ export default function FetchAnalytics({
     $epinetCustomFilters.selectedUserId,
     $epinetCustomFilters.startTimeUTC,
     $epinetCustomFilters.endTimeUTC,
+    $epinetCustomFilters.appliedFilters,
     onAnalyticsUpdate,
   ]);
 

@@ -1,6 +1,16 @@
 import { atom } from 'nanostores';
 import { TractStackAPI } from '@/utils/api';
 
+interface AvailableFilter {
+  beliefSlug: string;
+  values: string[];
+}
+
+export interface AppliedFilter {
+  beliefSlug: string;
+  value: string;
+}
+
 // Internal tenant-keyed storage
 const tenantEpinetCustomFilters = atom<
   Record<
@@ -22,6 +32,8 @@ const tenantEpinetCustomFilters = atom<
           }
         >
       >;
+      availableFilters: AvailableFilter[];
+      appliedFilters: AppliedFilter[];
     }
   >
 >({});
@@ -53,6 +65,8 @@ const defaultEpinetFilters = {
   endTimeUTC: null,
   userCounts: [],
   hourlyNodeActivity: {},
+  availableFilters: [],
+  appliedFilters: [],
 };
 
 // Create tenant-aware atoms that work with useStore

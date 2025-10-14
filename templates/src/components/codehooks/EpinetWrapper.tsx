@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '@/stores/analytics';
+import { epinetCustomFilters, type AppliedFilter } from '@/stores/analytics';
 import { TractStackAPI } from '@/utils/api';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
@@ -34,7 +34,6 @@ const EpinetWrapper = ({
 }: {
   fullContentMap: FullContentMapItem[];
 }) => {
-  // Use the global store instead of local state
   const $epinetCustomFilters = useStore(epinetCustomFilters);
 
   const [analytics, setAnalytics] = useState<{
@@ -54,15 +53,13 @@ const EpinetWrapper = ({
   const [epinetId, setEpinetId] = useState<string | null>(null);
 
   const MAX_POLLING_ATTEMPTS = 3;
-  const POLLING_DELAYS = [2000, 5000, 10000]; // 2s, 5s, 10s
+  const POLLING_DELAYS = [2000, 5000, 10000];
 
-  // Initialize TractStackAPI
   const api = useMemo(
     () => new TractStackAPI(window.TRACTSTACK_CONFIG?.tenantId || 'default'),
     []
   );
 
-  // Clear polling timer on unmount
   useEffect(() => {
     return () => {
       if (pollingTimer) {
@@ -74,43 +71,32 @@ const EpinetWrapper = ({
   useEffect(() => {
     const discoverEpinetId = async () => {
       try {
-        // First, try to find a promoted epinet from content map
         const promotedEpinet = fullContentMap.find(
           (item) => item.type === 'Epinet' && item.promoted
         );
-
         if (promotedEpinet) {
           setEpinetId(promotedEpinet.id);
           return;
         }
-
-        // If no promoted epinet, get first epinet from content map
         const firstEpinet = fullContentMap.find(
           (item) => item.type === 'Epinet'
         );
-
         if (firstEpinet) {
           setEpinetId(firstEpinet.id);
           return;
         }
-
-        // Fallback: no epinet found
-        console.warn('No epinet found in content map');
         setEpinetId(null);
       } catch (error) {
         console.error('Error discovering epinet ID:', error);
         setEpinetId(null);
       }
     };
-
     discoverEpinetId();
   }, [fullContentMap]);
 
-  // Initialize epinet custom filters with default values on mount
   useEffect(() => {
     const nowUTC = new Date();
     const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
-
     epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       enabled: true,
       visitorType: 'all',
@@ -119,40 +105,11 @@ const EpinetWrapper = ({
       endTimeUTC: nowUTC.toISOString(),
       userCounts: [],
       hourlyNodeActivity: {},
+      availableFilters: [],
+      appliedFilters: [],
     });
   }, []);
 
-  // Detect current duration type from epinetCustomFilters (for UI helpers only)
-  //const currentDurationHelper = useMemo(():
-  //  | 'daily'
-  //  | 'weekly'
-  //  | 'monthly'
-  //  | 'custom' => {
-  //  const { startTimeUTC, endTimeUTC } = $epinetCustomFilters;
-
-  //  if (startTimeUTC && endTimeUTC) {
-  //    const startTime = new Date(startTimeUTC);
-  //    const endTime = new Date(endTimeUTC);
-  //    const diffMs = endTime.getTime() - startTime.getTime();
-  //    const diffHours = diffMs / (1000 * 60 * 60);
-
-  //    if (Math.abs(diffHours - 24) <= 1) return 'daily';
-  //    if (Math.abs(diffHours - 168) <= 1) return 'weekly';
-  //    if (Math.abs(diffHours - 672) <= 1) return 'monthly';
-  //    return 'custom';
-  //  }
-
-  //  return 'weekly'; // default
-  //}, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
-
-  // Fetch data when epinet ID is available
-  useEffect(() => {
-    if (epinetId) {
-      fetchEpinetData();
-    }
-  }, [epinetId]);
-
-  // Watch for changes in the global filters and refetch data
   useEffect(() => {
     if (
       epinetId &&
@@ -171,43 +128,44 @@ const EpinetWrapper = ({
     $epinetCustomFilters.selectedUserId,
     $epinetCustomFilters.startTimeUTC,
     $epinetCustomFilters.endTimeUTC,
+    $epinetCustomFilters.appliedFilters,
   ]);
 
-  // Handle filter preset changes
-  //const handleFilterChange = useCallback(
-  //  (newValue: string) => {
-  //    const nowUTC = new Date();
-  //    const hoursBack: number =
-  //      newValue === 'daily' ? 24 : newValue === 'weekly' ? 168 : 672;
-  //    const startTimeUTC = new Date(
-  //      nowUTC.getTime() - hoursBack * 60 * 60 * 1000
-  //    );
+  const handleBeliefFilterChange = (beliefSlug: string, value: string) => {
+    const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+    const currentFilters = epinetCustomFilters.get();
+    let newFilters: AppliedFilter[] = [
+      ...(currentFilters.appliedFilters || []),
+    ];
 
-  //    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
-  //      ...$epinetCustomFilters,
-  //      enabled: true,
-  //      startTimeUTC: startTimeUTC.toISOString(),
-  //      endTimeUTC: nowUTC.toISOString(),
-  //    });
-  //  },
-  //  [$epinetCustomFilters]
-  //);
+    if (value === 'All') {
+      newFilters = newFilters.filter((f) => f.beliefSlug !== beliefSlug);
+    } else {
+      const existingIndex = newFilters.findIndex(
+        (f) => f.beliefSlug === beliefSlug
+      );
+      if (existingIndex > -1) {
+        newFilters[existingIndex] = { beliefSlug, value };
+      } else {
+        newFilters.push({ beliefSlug, value });
+      }
+    }
+
+    epinetCustomFilters.set(tenantId, {
+      ...currentFilters,
+      appliedFilters: newFilters,
+    });
+  };
 
   const fetchEpinetData = useCallback(async () => {
     if (!epinetId) return;
-
     try {
-      setAnalytics((prev) => ({ ...prev, isLoading: true }));
-
+      setAnalytics((prev) => ({ ...prev, isLoading: true, status: 'loading' }));
       if (pollingTimer) {
         clearTimeout(pollingTimer);
         setPollingTimer(null);
       }
-
-      // Build query parameters
       const params = new URLSearchParams();
-
-      // Convert UTC timestamps to hours-back integers (what backend expects)
       if (
         $epinetCustomFilters.startTimeUTC &&
         $epinetCustomFilters.endTimeUTC
@@ -215,76 +173,71 @@ const EpinetWrapper = ({
         const now = new Date();
         const startTime = new Date($epinetCustomFilters.startTimeUTC);
         const endTime = new Date($epinetCustomFilters.endTimeUTC);
-
         const startHour = Math.ceil(
           (now.getTime() - startTime.getTime()) / (1000 * 60 * 60)
         );
         const endHour = Math.floor(
           (now.getTime() - endTime.getTime()) / (1000 * 60 * 60)
         );
-
         params.append('startHour', startHour.toString());
         params.append('endHour', endHour.toString());
       }
-
       params.append('visitorType', $epinetCustomFilters.visitorType || 'all');
       if ($epinetCustomFilters.selectedUserId) {
         params.append('userId', $epinetCustomFilters.selectedUserId);
       }
 
-      // Use TractStackAPI instead of raw fetch
+      // MODIFICATION: Properly format appliedFilters for the backend
+      if (
+        $epinetCustomFilters.appliedFilters &&
+        $epinetCustomFilters.appliedFilters.length > 0
+      ) {
+        params.append(
+          'appliedFilters',
+          JSON.stringify($epinetCustomFilters.appliedFilters)
+        );
+      }
+
       const response = await api.get(
         `/api/v1/analytics/epinet/${epinetId}?${params.toString()}`
       );
-
-      if (!response.success) {
+      if (!response.success)
         throw new Error(`API request failed: ${response.error}`);
-      }
-
       const result = response.data;
-
       if (result.success !== false) {
-        // Check if data is still loading
         const epinetData = result.epinet;
-
         if (
           epinetData &&
           (epinetData.status === 'loading' ||
             epinetData.status === 'refreshing')
         ) {
-          // If data is still loading, poll again after delay
           if (pollingAttempts < MAX_POLLING_ATTEMPTS) {
             const delayMs =
               POLLING_DELAYS[pollingAttempts] ||
               POLLING_DELAYS[POLLING_DELAYS.length - 1];
-
             const newTimer = setTimeout(() => {
               setPollingAttempts(pollingAttempts + 1);
               fetchEpinetData();
             }, delayMs);
-
             setPollingTimer(newTimer);
             return;
           }
         }
-
-        setAnalytics((prev) => ({
-          ...prev,
+        setAnalytics({
           epinet: result.epinet,
           status: 'complete',
           error: null,
-        }));
-
-        // Update the global store with additional data from API response
+          isLoading: false,
+        });
         epinetCustomFilters.set(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
           {
             ...$epinetCustomFilters,
             userCounts: result.userCounts || [],
             hourlyNodeActivity: result.hourlyNodeActivity || {},
+            availableFilters: result?.availableFilters || [],
           }
         );
-
         setPollingAttempts(0);
       } else {
         throw new Error(result.error || 'Unknown API error');
@@ -295,18 +248,14 @@ const EpinetWrapper = ({
         error: error instanceof Error ? error.message : 'Unknown error',
         status: 'error',
       }));
-
-      // Schedule a retry if we haven't reached max attempts
       if (pollingAttempts < MAX_POLLING_ATTEMPTS) {
         const delayMs =
           POLLING_DELAYS[pollingAttempts] ||
           POLLING_DELAYS[POLLING_DELAYS.length - 1];
-
         const newTimer = setTimeout(() => {
           setPollingAttempts(pollingAttempts + 1);
           fetchEpinetData();
         }, delayMs);
-
         setPollingTimer(newTimer);
       }
     } finally {
@@ -316,7 +265,6 @@ const EpinetWrapper = ({
 
   const { epinet, isLoading, status, error } = analytics;
 
-  // Show loading while discovering epinet ID
   if (!epinetId) {
     return (
       <div className="flex h-96 w-full items-center justify-center rounded bg-gray-100">
@@ -330,18 +278,13 @@ const EpinetWrapper = ({
     );
   }
 
-  if (
-    !epinet ||
-    !epinet.nodes ||
-    !epinet.links ||
-    epinet.nodes.length === 0 ||
-    epinet.links.length === 0
-  )
+  if ((isLoading || status === 'loading') && !epinet) {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
       </div>
     );
+  }
 
   if (error && !epinet) {
     return (
@@ -368,13 +311,27 @@ const EpinetWrapper = ({
     epinet.nodes.length === 0 ||
     epinet.links.length === 0
   ) {
+    if (isLoading || status === 'loading') {
+      return (
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
+        </div>
+      );
+    }
     return (
-      <div className="rounded-lg bg-gray-50 p-8 text-center text-gray-800">
-        <p>
-          No user journey data is available yet. This visualization will appear
-          when users start interacting with your content.
-        </p>
-      </div>
+      <>
+        <div className="rounded-lg bg-gray-50 p-8 text-center text-gray-800">
+          <p>No user journey data is available for the selected filters.</p>
+        </div>
+        <EpinetDurationSelector
+          fullContentMap={fullContentMap}
+          isLoading={isLoading || status === 'loading'}
+          hourlyNodeActivity={$epinetCustomFilters.hourlyNodeActivity}
+          availableFilters={$epinetCustomFilters.availableFilters}
+          appliedFilters={$epinetCustomFilters.appliedFilters}
+          onBeliefFilterChange={handleBeliefFilterChange}
+        />
+      </>
     );
   }
 
@@ -410,11 +367,13 @@ const EpinetWrapper = ({
               isLoading={isLoading || status === 'loading'}
             />
           </div>
-
           <EpinetDurationSelector
             fullContentMap={fullContentMap}
             isLoading={isLoading || status === 'loading'}
             hourlyNodeActivity={$epinetCustomFilters.hourlyNodeActivity}
+            availableFilters={$epinetCustomFilters.availableFilters}
+            appliedFilters={$epinetCustomFilters.appliedFilters}
+            onBeliefFilterChange={handleBeliefFilterChange}
           />
         </div>
       </ErrorBoundary>

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { sankey, sankeyLinkHorizontal } from 'd3-sankey';
 
-const MAX_HEIGHT = 1200;
-const COMPRESSED_HEIGHT = 384; // Fixed height for compressed view
+const MAX_HEIGHT = 1600;
+const COMPRESSED_HEIGHT = 256; // Fixed height for compressed view
 
 const colors = [
   '#ef4444',
@@ -194,8 +194,9 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
         .text((d) => {
           const sourceNode = d.source as { index: number };
           const targetNode = d.target as { index: number };
-          return `${data.nodes[sourceNode.index].name} → ${data.nodes[targetNode.index].name
-            }\n${d.value} events`;
+          return `${data.nodes[sourceNode.index].name} → ${
+            data.nodes[targetNode.index].name
+          }\n${d.value} events`;
         });
 
       svg
@@ -300,10 +301,11 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
 
       {/* SVG Container - Clickable when compressed */}
       <div
-        className={`transition-all duration-300 ${needsCompression
+        className={`transition-all duration-300 ${
+          needsCompression
             ? 'cursor-pointer hover:bg-gray-50 hover:shadow-md'
             : ''
-          }`}
+        }`}
         style={{
           height: `${displayHeight}px`,
           overflow: 'hidden',
@@ -314,11 +316,11 @@ const SankeyDiagram = ({ data, isLoading = false }: SankeyDiagramProps) => {
         onKeyDown={
           needsCompression
             ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleExpand();
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleExpand();
+                }
               }
-            }
             : undefined
         }
         aria-label={
