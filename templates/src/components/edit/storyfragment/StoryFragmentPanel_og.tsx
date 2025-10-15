@@ -187,21 +187,27 @@ const StoryFragmentOpenGraphPanel = ({
         (item) => item.type === 'Topic' && item.id === 'all-topics'
       );
 
-      // Convert topic strings to Topic objects with mock IDs (since V2 doesn't expose topic IDs in content map)
+      // Convert topic strings to Topic objects with mock IDs
       const allTopicsArray = topicsContent?.topics || [];
       const topicsWithIds: Topic[] = allTopicsArray.map(
         (topicTitle, index) => ({
-          id: index + 1, // Mock ID - in V2 we don't have access to actual topic IDs from content map
+          id: index + 1,
           title: topicTitle,
         })
       );
 
       setExistingTopics(topicsWithIds);
 
-      let initialTopics: Topic[] = [];
-      let initialDescription = '';
+      // Prioritize the description from the definitive fullContentMap
+      const sfContent = $contentMap.find(
+        (item) => item.type === 'StoryFragment' && item.id === nodeId
+      );
+      const initialDescription = sfContent?.description || '';
+      setDraftDetails(initialDescription);
 
-      // Check stored draft data first
+      let initialTopics: Topic[] = [];
+
+      // Check stored draft data for topics
       if (storedData) {
         initialTopics = Array.isArray(storedData.topics)
           ? storedData.topics.map((t) => ({
@@ -209,29 +215,18 @@ const StoryFragmentOpenGraphPanel = ({
               title: t.title,
             }))
           : [];
-        initialDescription = storedData.description || '';
         setDraftTopics(initialTopics);
-        setDraftDetails(initialDescription);
+      } else if (sfContent && sfContent.topics && sfContent.topics.length > 0) {
+        // Fall back to content map data for initial topics if no draft exists
+        initialTopics = sfContent.topics.map((topicTitle) => {
+          const existingTopic = topicsWithIds.find(
+            (t) => t.title.toLowerCase() === topicTitle.toLowerCase()
+          );
+          return existingTopic || { id: -1, title: topicTitle };
+        });
+        setDraftTopics(initialTopics);
       } else {
-        // Fall back to content map data
-        const sfContent = $contentMap.find(
-          (item) => item.type === 'StoryFragment' && item.id === nodeId
-        );
-
-        if (sfContent && sfContent.topics && sfContent.topics.length > 0) {
-          initialTopics = sfContent.topics.map((topicTitle) => {
-            const existingTopic = topicsWithIds.find(
-              (t) => t.title.toLowerCase() === topicTitle.toLowerCase()
-            );
-            return existingTopic || { id: -1, title: topicTitle };
-          });
-          initialDescription = sfContent.description || '';
-          setDraftTopics(initialTopics);
-          setDraftDetails(initialDescription);
-        } else {
-          setDraftTopics([]);
-          setDraftDetails('');
-        }
+        setDraftTopics([]);
       }
 
       if (initialState.current) {

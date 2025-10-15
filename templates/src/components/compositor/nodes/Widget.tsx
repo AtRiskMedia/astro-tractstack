@@ -95,7 +95,8 @@ const getWidgetElement = (
             </p>
             {value1 ? (
               <p className="mt-1 text-xs text-gray-500">
-                Mode: Belief-Driven (<code className="font-bold">{value1}</code>)
+                Mode: Belief-Driven (<code className="font-bold">{value1}</code>
+                )
               </p>
             ) : (
               <p className="mt-1 text-xs text-gray-500">

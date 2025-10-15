@@ -8,15 +8,41 @@ import {
 import { debounce } from '@/utils/helpers';
 
 let hasScrolledForSettingsPanel = false;
+let currentPaneObserver: IntersectionObserver | null = null;
+let settingsPanelSubscription: (() => void) | null = null;
+let debouncedUpdateListener: (() => void) | null = null;
 
-// Replace your existing setupPaneObserver with this one.
+function cleanupLayoutObservers() {
+  if (currentPaneObserver) {
+    currentPaneObserver.disconnect();
+    currentPaneObserver = null;
+  }
+  if (settingsPanelSubscription) {
+    settingsPanelSubscription();
+    settingsPanelSubscription = null;
+  }
+  if (debouncedUpdateListener) {
+    window.removeEventListener('scroll', debouncedUpdateListener);
+    window.removeEventListener('resize', debouncedUpdateListener);
+    debouncedUpdateListener = null;
+  }
+  const storykeepHeader = document.getElementById('storykeepHeader');
+  if (storykeepHeader) {
+    document.body.style.paddingTop = '';
+    storykeepHeader.style.position = '';
+    storykeepHeader.style.top = '';
+  }
+}
+
 function setupPaneObserver() {
-  let currentObserver: IntersectionObserver | null = null;
+  if (currentPaneObserver) {
+    currentPaneObserver.disconnect();
+  }
 
-  settingsPanelStore.subscribe((signalValue) => {
-    if (currentObserver) {
-      currentObserver.disconnect();
-      currentObserver = null;
+  settingsPanelSubscription = settingsPanelStore.subscribe((signalValue) => {
+    if (currentPaneObserver) {
+      currentPaneObserver.disconnect();
+      currentPaneObserver = null;
     }
 
     if (signalValue && signalValue.nodeId) {
@@ -28,7 +54,7 @@ function setupPaneObserver() {
           document.querySelector(`[data-node-id="${nodeId}"]`);
 
         if (targetElement) {
-          currentObserver = new IntersectionObserver(
+          currentPaneObserver = new IntersectionObserver(
             ([entry]) => {
               const signal = settingsPanelStore.get();
               const now = Date.now();
@@ -41,7 +67,7 @@ function setupPaneObserver() {
             },
             { threshold: 0 }
           );
-          currentObserver.observe(targetElement);
+          currentPaneObserver.observe(targetElement);
         }
       }, 100);
     }
@@ -49,6 +75,8 @@ function setupPaneObserver() {
 }
 
 export function setupLayoutObservers(): void {
+  cleanupLayoutObservers();
+
   const storykeepHeader = document.getElementById('storykeepHeader');
   const settingsControls = document.getElementById('settingsControls');
   const standardHeader = document.querySelector('header');
@@ -86,7 +114,7 @@ export function setupLayoutObservers(): void {
     }
   };
 
-  const debouncedUpdate = debounce(() => {
+  debouncedUpdateListener = debounce(() => {
     updateStandardHeaderHeight();
     handleScroll();
     updatePanelPosition();
@@ -98,8 +126,8 @@ export function setupLayoutObservers(): void {
     }
   };
 
-  window.addEventListener('scroll', debouncedUpdate, { passive: true });
-  window.addEventListener('resize', debouncedUpdate);
+  window.addEventListener('scroll', debouncedUpdateListener, { passive: true });
+  window.addEventListener('resize', debouncedUpdateListener);
   settingsPanelOpenStore.subscribe(handleSettingsPanelChange);
 
   setupPaneObserver();
@@ -128,3 +156,5 @@ export function handleSettingsPanelMobile(isOpen: boolean): void {
     hasScrolledForSettingsPanel = false;
   }
 }
+
+document.addEventListener('astro:before-swap', cleanupLayoutObservers);

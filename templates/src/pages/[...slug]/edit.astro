@@ -125,6 +125,9 @@ const ogImage = storyFragment?.socialImagePath
 const fullContentMap = await getFullContentMap(
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
 );
+const description = fullContentMap.find(
+  (item) => item.id === storyFragmentID
+)?.description;
 const urlParams: Record<string, string | boolean> = {};
 for (const [key, value] of Astro.url.searchParams) {
   urlParams[key] = value === '' ? true : value;
@@ -133,6 +136,7 @@ for (const [key, value] of Astro.url.searchParams) {
 
 <Layout
   title={title}
+  description={description}
   slug={slug}
   canonicalURL={canonicalURL}
   pubDatetime={pubDatetime}
@@ -219,5 +223,5 @@ for (const [key, value] of Astro.url.searchParams) {
 
 <script>
   import { setupLayoutObservers } from '@/utils/layout';
-  setupLayoutObservers();
+  document.addEventListener('astro:page-load', setupLayoutObservers);
 </script>

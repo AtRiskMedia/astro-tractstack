@@ -146,8 +146,9 @@ const DisclosureItemEditor = ({
 
   return (
     <div
-      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'
-        }`}
+      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${
+        item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'
+      }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -181,8 +182,9 @@ const DisclosureItemEditor = ({
         <button
           type="button"
           onClick={onToggle}
-          className={`rounded p-1 hover:bg-gray-100 ${item.isDisabled ? 'text-blue-600' : 'text-red-600'
-            }`}
+          className={`rounded p-1 hover:bg-gray-100 ${
+            item.isDisabled ? 'text-blue-600' : 'text-red-600'
+          }`}
         >
           {item.isDisabled ? (
             <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -299,12 +301,12 @@ export default function InteractiveDisclosureWidget({
           const scaleKeys =
             currentBelief.scale === 'custom'
               ? (currentBelief.customValues || []).map((v) => ({
-                slug: v,
-                name: v,
-              }))
+                  slug: v,
+                  name: v,
+                }))
               : heldBeliefsScales[
-              currentBelief.scale as keyof typeof heldBeliefsScales
-              ] || [];
+                  currentBelief.scale as keyof typeof heldBeliefsScales
+                ] || [];
 
           const actionCommand =
             currentBelief.scale === 'custom' ? 'identifyAs' : 'declare';
@@ -412,7 +414,7 @@ export default function InteractiveDisclosureWidget({
         belief.scale === 'custom'
           ? (belief.customValues || []).map((v) => ({ slug: v, name: v }))
           : heldBeliefsScales[belief.scale as keyof typeof heldBeliefsScales] ||
-          [];
+            [];
 
       newDisclosures = keys.map(({ slug, name }) => ({
         id: generateId(),
@@ -515,20 +517,22 @@ export default function InteractiveDisclosureWidget({
           <button
             type="button"
             onClick={() => handleModeChange('belief')}
-            className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${mode === 'belief'
-              ? 'bg-cyan-600 text-white'
-              : 'bg-white text-gray-900 hover:bg-gray-50'
-              }`}
+            className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${
+              mode === 'belief'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-white text-gray-900 hover:bg-gray-50'
+            }`}
           >
             Belief-Driven
           </button>
           <button
             type="button"
             onClick={() => handleModeChange('open')}
-            className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${mode === 'open'
-              ? 'bg-cyan-600 text-white'
-              : 'bg-white text-gray-900 hover:bg-gray-50'
-              }`}
+            className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${
+              mode === 'open'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-white text-gray-900 hover:bg-gray-50'
+            }`}
           >
             Open
           </button>

@@ -99,6 +99,9 @@ if (!fragmentsData) {
 }
 
 const fullContentMap = await getFullContentMap(tenantId);
+const description = fullContentMap.find(
+  (item) => item.id === storyfragmentId
+)?.description;
 const brandConfig = await getBrandConfig(tenantId);
 
 if (!brandConfig.SITE_INIT) {
@@ -118,6 +121,7 @@ paneIds.forEach((paneId: string) => {
 
 <Layout
   title={storyfragmentTitle}
+  description={description}
   slug={lookup || brandConfig.HOME_SLUG}
   ogImage={ogImage}
   menu={storyData.menu || null}
