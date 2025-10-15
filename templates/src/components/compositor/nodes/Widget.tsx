@@ -22,15 +22,16 @@ const getWidgetElement = (
   classNames: string
 ): ReactElement | null => {
   const { hook, value1, value2, value3, nodeId } = props;
-  if (!hook || !value1) return null;
+  if (!hook) return null;
 
   switch (hook) {
     case 'youtube':
-      return value2 ? (
-        <div className={`${classNames} pointer-events-none`}>
-          <YouTubeWrapper embedCode={value1} title={value2} />
-        </div>
-      ) : null;
+      if (value1)
+        return value2 ? (
+          <div className={`${classNames} pointer-events-none`}>
+            <YouTubeWrapper embedCode={value1} title={value2} />
+          </div>
+        ) : null;
 
     case 'signup':
       return (
@@ -45,19 +46,21 @@ const getWidgetElement = (
       );
 
     case 'belief':
-      return value2 ? (
-        <div className={`${classNames} pointer-events-none`}>
-          <Belief value={{ slug: value1, scale: value2, extra: value3 }} />
-        </div>
-      ) : null;
+      if (value1)
+        return value2 ? (
+          <div className={`${classNames} pointer-events-none`}>
+            <Belief value={{ slug: value1, scale: value2, extra: value3 }} />
+          </div>
+        ) : null;
 
     case 'identifyAs':
-      return value2 ? (
-        <IdentifyAs
-          classNames={`${classNames} pointer-events-none`}
-          value={{ slug: value1, target: value2, extra: value3 || `` }}
-        />
-      ) : null;
+      if (value1)
+        return value2 ? (
+          <IdentifyAs
+            classNames={`${classNames} pointer-events-none`}
+            value={{ slug: value1, target: value2, extra: value3 || `` }}
+          />
+        ) : null;
 
     case 'toggle':
       return value2 ? (
@@ -90,9 +93,15 @@ const getWidgetElement = (
             <p className="text-sm font-bold text-gray-700">
               Interactive Disclosure
             </p>
-            <p className="mt-1 text-xs text-gray-500">
-              Belief Trigger: <code className="font-bold">{value1}</code>
-            </p>
+            {value1 ? (
+              <p className="mt-1 text-xs text-gray-500">
+                Mode: Belief-Driven (<code className="font-bold">{value1}</code>)
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500">
+                Mode: Open (Custom Actions)
+              </p>
+            )}
           </div>
         </div>
       );

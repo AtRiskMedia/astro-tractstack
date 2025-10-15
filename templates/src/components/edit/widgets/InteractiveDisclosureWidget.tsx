@@ -124,7 +124,6 @@ const DisclosureItemEditor = ({
   item,
   onUpdate,
   onToggle,
-  config,
   onMoveUp,
   onMoveDown,
   isFirst,
@@ -133,7 +132,6 @@ const DisclosureItemEditor = ({
   item: DisclosureItem;
   onUpdate: (updates: Partial<DisclosureItem>) => void;
   onToggle: () => void;
-  config: BrandConfig;
   onMoveUp: () => void;
   onMoveDown: () => void;
   isFirst: boolean;
@@ -148,9 +146,8 @@ const DisclosureItemEditor = ({
 
   return (
     <div
-      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${
-        item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'
-      }`}
+      className={`space-y-4 rounded-lg border bg-white p-4 shadow-sm transition-opacity ${item.isDisabled ? 'border-gray-100 opacity-40' : 'border-gray-200'
+        }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -184,9 +181,8 @@ const DisclosureItemEditor = ({
         <button
           type="button"
           onClick={onToggle}
-          className={`rounded p-1 hover:bg-gray-100 ${
-            item.isDisabled ? 'text-blue-600' : 'text-red-600'
-          }`}
+          className={`rounded p-1 hover:bg-gray-100 ${item.isDisabled ? 'text-blue-600' : 'text-red-600'
+            }`}
         >
           {item.isDisabled ? (
             <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -258,6 +254,7 @@ export default function InteractiveDisclosureWidget({
   onUpdate,
   config,
 }: InteractiveDisclosureWidgetProps) {
+  const [mode, setMode] = useState<'belief' | 'open'>('belief');
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [disclosures, setDisclosures] = useState<DisclosureItem[]>([]);
@@ -276,14 +273,16 @@ export default function InteractiveDisclosureWidget({
     const beliefTag = String(node.codeHookParams?.[0] || '');
     const payloadJson = String(node.codeHookParams?.[1] || '');
 
-    if (beliefs.length === 0 && beliefTag && beliefTag !== 'BELIEF') {
-      return;
+    if (beliefTag && beliefTag !== 'BELIEF') {
+      setMode('belief');
+    } else {
+      setMode('open');
     }
 
     setSelectedBeliefTag(beliefTag && beliefTag !== 'BELIEF' ? beliefTag : '');
     const currentBelief = beliefs.find((b) => b.slug === beliefTag);
 
-    if (payloadJson && currentBelief) {
+    if (payloadJson) {
       try {
         const parsed = JSON.parse(payloadJson);
         setWidgetStyles(
@@ -296,50 +295,62 @@ export default function InteractiveDisclosureWidget({
         const loadedDisclosures =
           (parsed.disclosures as StoredDisclosureItem[]) || [];
 
-        const scaleKeys =
-          currentBelief.scale === 'custom'
-            ? (currentBelief.customValues || []).map((v) => ({
+        if (currentBelief) {
+          const scaleKeys =
+            currentBelief.scale === 'custom'
+              ? (currentBelief.customValues || []).map((v) => ({
                 slug: v,
                 name: v,
               }))
-            : heldBeliefsScales[
-                currentBelief.scale as keyof typeof heldBeliefsScales
+              : heldBeliefsScales[
+              currentBelief.scale as keyof typeof heldBeliefsScales
               ] || [];
 
-        const actionCommand =
-          currentBelief.scale === 'custom' ? 'identifyAs' : 'declare';
-        const finalDisclosures: DisclosureItem[] = loadedDisclosures.map(
-          (loadedItem) => {
-            const isFromScale = scaleKeys.some(
-              (sk) => sk.slug === loadedItem.beliefValue
-            );
+          const actionCommand =
+            currentBelief.scale === 'custom' ? 'identifyAs' : 'declare';
+          const finalDisclosures: DisclosureItem[] = loadedDisclosures.map(
+            (loadedItem) => {
+              const isFromScale = scaleKeys.some(
+                (sk) => sk.slug === loadedItem.beliefValue
+              );
 
-            return {
+              return {
+                ...loadedItem,
+                id: generateId(),
+                isCustom: !isFromScale,
+                actionLisp: isFromScale
+                  ? `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, loadedItem.beliefValue)})`
+                  : loadedItem.actionLisp,
+                isDisabled: false,
+              };
+            }
+          );
+          scaleKeys.forEach(({ slug, name }) => {
+            if (!finalDisclosures.some((d) => d.beliefValue === slug)) {
+              finalDisclosures.push({
+                id: generateId(),
+                beliefValue: slug,
+                title: name,
+                description: '',
+                icon: 'chat-heart-fill',
+                actionLisp: `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, slug)})`,
+                isCustom: false,
+                isDisabled: true,
+              });
+            }
+          });
+          setDisclosures(finalDisclosures);
+        } else {
+          const finalDisclosures: DisclosureItem[] = loadedDisclosures.map(
+            (loadedItem) => ({
               ...loadedItem,
               id: generateId(),
-              isCustom: !isFromScale,
-              actionLisp: isFromScale
-                ? `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, loadedItem.beliefValue)})`
-                : loadedItem.actionLisp,
+              isCustom: true,
               isDisabled: false,
-            };
-          }
-        );
-        scaleKeys.forEach(({ slug, name }) => {
-          if (!finalDisclosures.some((d) => d.beliefValue === slug)) {
-            finalDisclosures.push({
-              id: generateId(),
-              beliefValue: slug,
-              title: name,
-              description: '',
-              icon: 'chat-heart-fill',
-              actionLisp: `(${actionCommand} ${beliefTag} ${quoteIfNecessary(actionCommand, slug)})`,
-              isCustom: false,
-              isDisabled: true,
-            });
-          }
-        });
-        setDisclosures(finalDisclosures);
+            })
+          );
+          setDisclosures(finalDisclosures);
+        }
       } catch (e) {
         console.error('Error parsing disclosure payload:', e);
       }
@@ -401,7 +412,7 @@ export default function InteractiveDisclosureWidget({
         belief.scale === 'custom'
           ? (belief.customValues || []).map((v) => ({ slug: v, name: v }))
           : heldBeliefsScales[belief.scale as keyof typeof heldBeliefsScales] ||
-            [];
+          [];
 
       newDisclosures = keys.map(({ slug, name }) => ({
         id: generateId(),
@@ -415,6 +426,25 @@ export default function InteractiveDisclosureWidget({
       }));
     }
     setDisclosures(newDisclosures);
+  };
+
+  const handleModeChange = (newMode: 'belief' | 'open') => {
+    if (mode === newMode) return;
+
+    setMode(newMode);
+    setSelectedBeliefTag('');
+    setDisclosures([]);
+    setWidgetStyles({
+      textColor: '#000000',
+      bgColor: '#ffffff',
+      bgOpacity: 100,
+    });
+
+    if (newMode === 'open') {
+      onUpdate(['', '{}']);
+    } else {
+      onUpdate(['BELIEF', '{}']);
+    }
   };
 
   const moveDisclosure = (id: string, direction: 'up' | 'down') => {
@@ -477,35 +507,64 @@ export default function InteractiveDisclosureWidget({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <select
-          value={selectedBeliefTag}
-          onChange={(e) => handleBeliefChange(e.target.value)}
-          className="flex-1 rounded-md border-gray-300 shadow-sm"
-          disabled={hasRealSelection}
-        >
-          <option value="">Select a Belief...</option>
-          {beliefs.map((b) => (
-            <option key={b.slug} value={b.slug}>
-              {b.title} ({b.scale})
-            </option>
-          ))}
-        </select>
-        {hasRealSelection && (
+      <div>
+        <label className="block text-xs font-bold text-gray-600">
+          Configuration Mode
+        </label>
+        <div className="isolate mt-1 inline-flex rounded-md shadow-sm">
           <button
             type="button"
-            onClick={() => {
-              setSelectedBeliefTag('');
-              setDisclosures([]);
-              onUpdate(['BELIEF', '{}']);
-            }}
-            className="rounded p-1 text-red-600 hover:bg-gray-100"
+            onClick={() => handleModeChange('belief')}
+            className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${mode === 'belief'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-white text-gray-900 hover:bg-gray-50'
+              }`}
           >
-            <XMarkIcon className="h-5 w-5" />
+            Belief-Driven
           </button>
-        )}
+          <button
+            type="button"
+            onClick={() => handleModeChange('open')}
+            className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${mode === 'open'
+              ? 'bg-cyan-600 text-white'
+              : 'bg-white text-gray-900 hover:bg-gray-50'
+              }`}
+          >
+            Open
+          </button>
+        </div>
       </div>
-      {hasRealSelection && (
+      {mode === 'belief' && (
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedBeliefTag}
+            onChange={(e) => handleBeliefChange(e.target.value)}
+            className="flex-1 rounded-md border-gray-300 shadow-sm"
+            disabled={hasRealSelection}
+          >
+            <option value="">Select a Belief...</option>
+            {beliefs.map((b) => (
+              <option key={b.slug} value={b.slug}>
+                {b.title} ({b.scale})
+              </option>
+            ))}
+          </select>
+          {hasRealSelection && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBeliefTag('');
+                setDisclosures([]);
+                onUpdate(['BELIEF', '{}']);
+              }}
+              className="rounded p-1 text-red-600 hover:bg-gray-100"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      )}
+      {(hasRealSelection || mode === 'open') && (
         <div className="mt-4 border-t border-gray-200 pt-4">
           <button
             type="button"
@@ -513,8 +572,8 @@ export default function InteractiveDisclosureWidget({
             className="flex w-full items-center justify-center rounded-md bg-gray-100 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-200"
           >
             <ChevronDownIcon className="mr-2 h-5 w-5" />
-            Configure {disclosures.filter((d) => !d.isDisabled).length} of{' '}
-            {disclosures.length} Disclosure(s) & Styles
+            Configure {disclosures.filter((d) => !d.isDisabled).length}{' '}
+            Disclosure(s) & Styles
           </button>
         </div>
       )}
@@ -546,7 +605,8 @@ export default function InteractiveDisclosureWidget({
               <div className="flex h-full flex-col">
                 <div className="flex-shrink-0 border-b border-gray-200 bg-white px-6 py-3">
                   <Dialog.Title className="text-lg font-bold text-gray-900">
-                    Disclosure Configuration: {selectedBelief?.title}
+                    Disclosure Configuration
+                    {selectedBelief && `: ${selectedBelief.title}`}
                   </Dialog.Title>
                 </div>
                 <div className="flex-1 space-y-6 overflow-y-auto p-4">
@@ -614,7 +674,6 @@ export default function InteractiveDisclosureWidget({
                             updateDisclosure(item.id, updates)
                           }
                           onToggle={() => toggleDisclosure(item.id)}
-                          config={config}
                           onMoveUp={() => moveDisclosure(item.id, 'up')}
                           onMoveDown={() => moveDisclosure(item.id, 'down')}
                           isFirst={index === 0}
