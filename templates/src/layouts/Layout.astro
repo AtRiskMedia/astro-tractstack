@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import HeaderWidget from '@/custom/HeaderWidget.astro';
 import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
@@ -238,6 +239,7 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
   </head>
   <body class="font-main w-full">
     <div class="overflow-hidden">
+      {!isStoryKeep && !isEditor && <HeaderWidget tenantId={tenantId} />}
       {
         !isEditor && (
           <Header

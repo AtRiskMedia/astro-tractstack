@@ -566,6 +566,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/stores/backend.ts'),
       dest: 'src/stores/backend.ts',
     },
+    {
+      src: resolve('../templates/src/stores/resources.ts'),
+      dest: 'src/stores/resources.ts',
+    },
 
     // Compositor stores
     {
@@ -1321,6 +1325,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/lib/session.ts'),
       dest: 'src/lib/session.ts',
+    },
+    {
+      src: resolve('../templates/src/lib/resources.ts'),
+      dest: 'src/lib/resources.ts',
     },
 
     // Client Scripts
@@ -2096,6 +2104,15 @@ export async function injectTemplateFiles(
           : '../templates/custom/minimal/CustomRoutes.astro'
       ),
       dest: 'src/custom/CustomRoutes.astro',
+      protected: true,
+    },
+    {
+      src: resolve(
+        config?.includeExamples
+          ? '../templates/custom/with-examples/HeaderWidget.astro'
+          : '../templates/custom/minimal/HeaderWidget.astro'
+      ),
+      dest: 'src/custom/HeaderWidget.astro',
       protected: true,
     },
     {
