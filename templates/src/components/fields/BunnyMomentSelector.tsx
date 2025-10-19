@@ -14,31 +14,43 @@ export default function BunnyMomentSelector({
   const [timestamp, setTimestamp] = useState('0');
 
   useEffect(() => {
-    if (value) {
-      try {
-        const match = value.match(
-          /\(bunnyMoment\s+\(\s*([^\s]+)\s+(\d+)\s*\)\)/
-        );
-        if (match) {
-          setSelectedVideoId(match[1]);
-          setTimestamp(match[2]);
-        }
-      } catch (e) {
-        console.error('Error parsing value:', e);
+    if (!value || value.trim() === '()') {
+      setSelectedVideoId('');
+      setTimestamp('0');
+      return;
+    }
+
+    try {
+      const match = value.match(/^\(\s*([^\s]+)\s+(\d+)\s*\)$/);
+      if (match && match[1] && match[2]) {
+        setSelectedVideoId(match[1]);
+        setTimestamp(match[2]);
+      } else {
+        console.warn('Could not parse BunnyMoment value:', value);
+        setSelectedVideoId('');
+        setTimestamp('0');
       }
+    } catch (e) {
+      console.error('Error parsing value:', e);
+      setSelectedVideoId('');
+      setTimestamp('0');
     }
   }, [value]);
 
   const handleTimeSelect = (time: string, videoId?: string) => {
-    if (videoId) {
-      setSelectedVideoId(videoId);
-    }
+    const finalVideoId = videoId || selectedVideoId;
+    if (!finalVideoId) return;
+
+    setSelectedVideoId(finalVideoId);
     setTimestamp(time);
-    updateValue(videoId || selectedVideoId, time);
+    updateValue(finalVideoId, time);
   };
 
   const updateValue = (videoId: string, time: string) => {
-    if (!videoId) return;
+    if (!videoId) {
+      onChange('');
+      return;
+    }
     onChange(`(bunnyMoment (${videoId} ${time}))`);
   };
 
