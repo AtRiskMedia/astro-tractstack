@@ -87,10 +87,11 @@ export default function ActionBuilderField({
       return;
     }
 
-    if (command === 'identifyAs') {
+    if (command === 'bunnyMoment') {
+      onChange(trimmedParams);
+    } else if (command === 'identifyAs') {
       const firstSpaceIndex = trimmedParams.indexOf(' ');
       if (firstSpaceIndex === -1) {
-        // Handle case with only beliefId and no value
         onChange(`(${command} ${trimmedParams})`);
       } else {
         const beliefId = trimmedParams.substring(0, firstSpaceIndex);
@@ -99,7 +100,6 @@ export default function ActionBuilderField({
         onChange(`(${command} ${beliefId} ${finalValue})`);
       }
     } else {
-      // Original behavior for all other commands
       onChange(`(${command} ${trimmedParams})`);
     }
   };

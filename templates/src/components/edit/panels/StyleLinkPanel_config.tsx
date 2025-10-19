@@ -67,8 +67,20 @@ const StyleLinkConfigPanel = ({ node, config }: StyleLinkConfigPanelProps) => {
         linkNode.tagName = 'button';
       } else if (callbackPayload.startsWith('(bunnyMoment')) {
         linkNode.tagName = 'button';
-        newButtonPayload.bunnyPayload =
-          (tokens && preParseBunny([tokens])) ?? undefined;
+        if (
+          tokens &&
+          Array.isArray(tokens) &&
+          tokens[0] === 'bunnyMoment' &&
+          Array.isArray(tokens[1])
+        ) {
+          const params = tokens[1];
+          if (params.length === 2) {
+            newButtonPayload.bunnyPayload = {
+              videoId: String(params[0]),
+              t: String(params[1]),
+            };
+          }
+        }
       } else if (callbackPayload.startsWith('(goto')) {
         const targetUrl =
           tokens && preParseAction([tokens], slug, isContext, config);
