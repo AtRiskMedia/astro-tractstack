@@ -21,6 +21,8 @@ import { cloneDeep } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
+import { useStore } from '@nanostores/react';
+import { XMarkIcon } from '@heroicons/react/20/solid';
 
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
@@ -38,6 +40,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const elementRef = useRef<HTMLElement | null>(null);
   const originalContentRef = useRef<string>('');
   const cursorPositionRef = useRef<{ node: Node; offset: number } | null>(null);
+
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
 
   // Get node data
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
@@ -228,8 +232,65 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     }
   }, [editState]);
 
-  // For formatting nodes and interactive elements like <a> and <button>
-  if (['em', 'strong', 'a', 'button'].includes(props.tagName)) {
+  // For formatting nodes <em> and <strong>
+  if (['em', 'strong'].includes(props.tagName)) {
+    const isEditorActive = toolModeVal === 'text' || toolModeVal === 'styles';
+
+    const handleUnwrapClick = (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ctx.unwrapNode(nodeId);
+    };
+
+    let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
+
+    if (isEditorActive) {
+      baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
+    }
+
+    return createElement(
+      Tag,
+      {
+        className: baseClasses,
+        onClick: (e: MouseEvent) => {
+          if (isEditableMode) {
+            ctx.setClickedNodeId(nodeId);
+          } else {
+            ctx.setClickedNodeId(nodeId);
+            e.stopPropagation();
+          }
+        },
+        'data-node-id': nodeId,
+        tabIndex: isEditableMode ? -1 : undefined,
+        style: {
+          position: isEditorActive ? 'relative' : undefined,
+          outlineOffset: '1px',
+        },
+      },
+      [
+        <RenderChildren key="children" children={children} nodeProps={props} />,
+        isEditorActive && (
+          <span
+            key="chip"
+            className="absolute z-10 select-none"
+            style={{ top: '-.85rem', right: '0' }}
+          >
+            <button
+              type="button"
+              onClick={handleUnwrapClick}
+              className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
+              aria-label="Remove formatting"
+            >
+              <XMarkIcon className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        ),
+      ]
+    );
+  }
+
+  // For interactive elements like <a> and <button>
+  if (['a', 'button'].includes(props.tagName)) {
     return createElement(
       Tag,
       {

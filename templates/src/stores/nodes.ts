@@ -2296,6 +2296,194 @@ export class NodesContext {
   }
 
   /**
+   * "Unwraps" a formatting node (like <strong> or <em>), merging its text
+   * content with any adjacent text nodes.
+   * @param nodeId - The ID of the formatting node (e.g., the <strong> tag) to unwrap.
+   */
+  unwrapNode(nodeId: string) {
+    const formatNode = this.allNodes.get().get(nodeId) as FlatNode;
+    if (!formatNode || !formatNode.parentId) {
+      console.warn('unwrapNode: Node or parentId not found.');
+      return;
+    }
+
+    const parentId = formatNode.parentId;
+    const parentNode = this.allNodes.get().get(parentId) as FlatNode;
+    if (!parentNode) {
+      console.warn('unwrapNode: Parent node not found.');
+      return;
+    }
+
+    // --- 1. Gather all node information for the operation ---
+
+    // Get the children of the formatting node (these are the nodes we want to keep)
+    const childrenToKeepIds = this.getChildNodeIDs(nodeId);
+    const childrenToKeepNodes = childrenToKeepIds
+      .map((id) => this.allNodes.get().get(id))
+      .filter((n): n is BaseNode => n !== undefined);
+
+    // Get the siblings of the formatting node
+    const parentChildrenIds = this.getChildNodeIDs(parentId);
+    const formatNodeIndex = parentChildrenIds.indexOf(nodeId);
+    if (formatNodeIndex === -1) {
+      console.warn('unwrapNode: Node not found in parent children list.');
+      return;
+    }
+
+    // Find adjacent siblings
+    const prevSiblingId =
+      formatNodeIndex > 0 ? parentChildrenIds[formatNodeIndex - 1] : null;
+    const nextSiblingId =
+      formatNodeIndex < parentChildrenIds.length - 1
+        ? parentChildrenIds[formatNodeIndex + 1]
+        : null;
+
+    const prevSibling = prevSiblingId
+      ? (this.allNodes.get().get(prevSiblingId) as FlatNode)
+      : null;
+    const nextSibling = nextSiblingId
+      ? (this.allNodes.get().get(nextSiblingId) as FlatNode)
+      : null;
+
+    // Check if siblings are 'text' nodes
+    const isPrevText =
+      prevSibling &&
+      prevSibling.nodeType === 'TagElement' &&
+      prevSibling.tagName === 'text';
+    const isNextText =
+      nextSibling &&
+      nextSibling.nodeType === 'TagElement' &&
+      nextSibling.tagName === 'text';
+
+    // Get the combined text content from the formatting node's children
+    const unwrappedText = childrenToKeepNodes
+      .map((n) => (n as FlatNode).copy || '')
+      .join('');
+
+    // --- 2. Prepare state snapshots for history ---
+    const originalAllNodes = new Map(this.allNodes.get());
+    const originalParentNodes = new Map(this.parentNodes.get());
+    const originalPaneNode = cloneDeep(
+      this.allNodes
+        .get()
+        .get(this.getClosestNodeTypeFromId(nodeId, 'Pane')) as PaneNode
+    );
+
+    // --- 3. Define the atomic "redo" (forward) operation ---
+    const applyUnwrap = () => {
+      const newAllNodes = new Map(this.allNodes.get());
+      const newParentNodes = new Map(this.parentNodes.get());
+      const newParentChildren = [...(newParentNodes.get(parentId) || [])];
+
+      const nodesToDelete = [formatNode, ...childrenToKeepNodes];
+      const nodesToModify: BaseNode[] = [];
+      const nodesToAdd: BaseNode[] = [];
+
+      let mergedText = unwrappedText;
+      let targetNode: FlatNode | null = null;
+
+      if (isPrevText && prevSibling) {
+        // --- Merge with PREVIOUS sibling ---
+        mergedText = (prevSibling.copy || '') + mergedText;
+        targetNode = cloneDeep(prevSibling);
+
+        if (isNextText && nextSibling) {
+          // --- Also merge with NEXT sibling (3-way merge) ---
+          mergedText += nextSibling.copy || '';
+          nodesToDelete.push(nextSibling);
+          // Remove nextSibling from parent's children list
+          const nextSiblingIndex = newParentChildren.indexOf(nextSiblingId!);
+          if (nextSiblingIndex > -1) {
+            newParentChildren.splice(nextSiblingIndex, 1);
+          }
+        }
+
+        targetNode.copy = mergedText;
+        nodesToModify.push(targetNode);
+      } else if (isNextText && nextSibling) {
+        // --- Merge with NEXT sibling only ---
+        mergedText = mergedText + (nextSibling.copy || '');
+        targetNode = cloneDeep(nextSibling);
+        targetNode.copy = mergedText;
+        nodesToModify.push(targetNode);
+      } else {
+        // --- No merge. Just insert unwrapped text as new node(s) ---
+        // For simplicity, we merge all children into a single new text node
+        const newTextNode: FlatNode = {
+          id: ulid(),
+          nodeType: 'TagElement',
+          parentId: parentId,
+          tagName: 'text',
+          copy: unwrappedText,
+        };
+        nodesToAdd.push(newTextNode);
+        // Add new text node to parent's children list
+        newParentChildren.splice(formatNodeIndex, 0, newTextNode.id);
+      }
+
+      // Apply deletions
+      for (const node of nodesToDelete) {
+        newAllNodes.delete(node.id);
+        const childIndex = newParentChildren.indexOf(node.id);
+        if (childIndex > -1) {
+          newParentChildren.splice(childIndex, 1);
+        }
+        // Remove from parentNodes map if it's a parent itself (unlikely for text)
+        newParentNodes.delete(node.id);
+      }
+
+      // Apply modifications
+      for (const node of nodesToModify) {
+        newAllNodes.set(node.id, node);
+      }
+
+      // Apply additions
+      for (const node of nodesToAdd) {
+        newAllNodes.set(node.id, node);
+      }
+
+      // Update the parent's children array in the map
+      newParentNodes.set(parentId, newParentChildren);
+
+      // Set the new state
+      this.allNodes.set(newAllNodes);
+      this.parentNodes.set(newParentNodes);
+
+      // Mark pane as dirty
+      this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+        notify: false,
+        recordHistory: false,
+      });
+
+      this.notifyNode(parentId);
+    };
+
+    // --- 4. Define the atomic "undo" (backward) operation ---
+    const applyRewrap = () => {
+      // Just restore the original maps
+      this.allNodes.set(originalAllNodes);
+      this.parentNodes.set(originalParentNodes);
+
+      // Restore original pane state
+      this.modifyNodes([originalPaneNode], {
+        notify: false,
+        recordHistory: false,
+      });
+
+      this.notifyNode(parentId);
+    };
+
+    // --- 5. Execute the operation and add to history ---
+    applyUnwrap();
+
+    this.history.addPatch({
+      op: PatchOp.REPLACE, // Using REPLACE as it's a complex operation
+      undo: () => applyRewrap(),
+      redo: () => applyUnwrap(),
+    });
+  }
+
+  /**
    * Executes a series of updates on a temporary context and then applies the
    * results to the main context in a single operation, triggering one UI update.
    * @param work - An async function that receives the temporary context and performs modifications.
