@@ -9,8 +9,15 @@ import {
   useState,
   createElement,
 } from 'react';
+import { useStore } from '@nanostores/react';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import { getCtx } from '@/stores/nodes';
-import { viewportKeyStore, isEditingStore } from '@/stores/storykeep';
+import {
+  viewportKeyStore,
+  isEditingStore,
+  settingsPanelStore,
+} from '@/stores/storykeep';
 import TabIndicator from './TabIndicator';
 import { RenderChildren } from '../RenderChildren';
 import {
@@ -21,8 +28,6 @@ import { cloneDeep } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
-import { useStore } from '@nanostores/react';
-import { XMarkIcon } from '@heroicons/react/20/solid';
 
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
@@ -34,7 +39,18 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const ctx = getCtx(props);
   const Tag = ctx.showGuids.get() ? `div` : props.tagName;
 
-  // Core state
+  if (props.tagName === 'span') {
+    const node = ctx.allNodes.get().get(props.nodeId);
+    const children = ctx.parentNodes.get().get(props.nodeId);
+
+    if (VERBOSE)
+      console.log('%c[NodeBasicTag] RENDERING SPAN', 'color: purple; font-weight: bold;', {
+        nodeId: props.nodeId,
+        node: node ? cloneDeep(node) : 'NODE NOT FOUND',
+        childrenIds: children ? cloneDeep(children) : 'CHILDREN NOT FOUND',
+      });
+  }
+
   const [editState, setEditState] = useState<EditState>('viewing');
   const [showTabIndicator, setShowTabIndicator] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
@@ -232,10 +248,18 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     }
   }, [editState]);
 
-  // For formatting nodes <em> and <strong>
-  if (['em', 'strong'].includes(props.tagName)) {
+  // For formatting nodes <em> and <strong> and <span>
+  if (['em', 'strong', 'span'].includes(props.tagName)) {
     const isEditorActive = toolModeVal === 'text' || toolModeVal === 'styles';
-
+    const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      settingsPanelStore.set({
+        action: 'style-element',
+        nodeId: nodeId,
+        expanded: true,
+      });
+    };
     const handleUnwrapClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -272,9 +296,19 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         isEditorActive && (
           <span
             key="chip"
-            className="absolute z-10 select-none"
+            className="absolute z-10 flex select-none gap-x-1"
             style={{ top: '-.85rem', right: '0' }}
           >
+            {props.tagName === 'span' && (
+              <button
+                type="button"
+                onClick={handleStyleClick}
+                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
+                aria-label="Style selection"
+              >
+                <PaintBrushIcon className="h-3 w-3" />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleUnwrapClick}
@@ -614,6 +648,10 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClick = (e: MouseEvent) => {
+    if (toolModeVal === 'styles') {
+      console.log(`skipping handleClick on purpose`);
+      return;
+    }
     if (
       isEditableMode &&
       (e.target instanceof HTMLAnchorElement ||

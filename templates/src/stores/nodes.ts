@@ -1,4 +1,15 @@
 import { atom, map } from 'nanostores';
+import { ulid } from 'ulid';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
+import { NotificationSystem } from '@/stores/notificationSystem';
+import { cloneDeep, isDeepEqual } from '@/utils/helpers';
+import { extractClassesFromNodes } from '@/utils/compositor/nodesHelper';
+import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
+import allowInsert from '@/utils/compositor/allowInsert';
+import { reservedSlugs } from '@/constants';
+import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
+import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
+import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
 import {
   hasButtonPayload,
   hasTagName,
@@ -40,22 +51,13 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps, WidgetProps } from '@/types/nodeProps';
 import type { CSSProperties } from 'react';
-import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
-import { ulid } from 'ulid';
-import { NotificationSystem } from '@/stores/notificationSystem';
-import { cloneDeep, isDeepEqual } from '@/utils/helpers';
-import { extractClassesFromNodes } from '@/utils/compositor/nodesHelper';
-import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
-import allowInsert from '@/utils/compositor/allowInsert';
-import { reservedSlugs } from '@/constants';
-import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
-import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
-import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
+import type { SelectionRange } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
 const blockedClickNodes = new Set<string>(['em', 'strong']);
 export const ROOT_NODE_NAME = 'root';
 export const UNDO_REDO_HISTORY_CAPACITY = 500;
+const VERBOSE = false;
 
 function strippedStyles(obj: Record<string, string[]>) {
   return Object.fromEntries(
@@ -70,7 +72,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() {}
+  constructor() { }
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -377,6 +379,311 @@ export class NodesContext {
     this.setClickedParentLayer(null);
   }
 
+  /**
+   * Splits a text node at a given character offset.
+   * If the split is at the beginning or end, it returns the original node.
+   * Otherwise, it creates a new text node for the second half and returns
+   * the original (now-truncated) node and the new node.
+   *
+   * @param nodeId - The ID of the 'text' node to split.
+   * @param offset - The character offset at which to split.
+   * @returns An object containing the left and (optional) right node.
+   */
+  private _splitTextNode(
+    nodeId: string,
+    offset: number
+  ): { left: FlatNode; right: FlatNode | null } {
+    const allNodes = new Map(this.allNodes.get());
+    const parentNodes = new Map(this.parentNodes.get());
+    const originalNode = allNodes.get(nodeId) as FlatNode;
+
+    if (
+      !originalNode ||
+      originalNode.tagName !== 'text' ||
+      !originalNode.copy
+    ) {
+      console.warn('_splitTextNode: Invalid node or type.', { nodeId, offset });
+      return { left: originalNode, right: null };
+    }
+
+    const text = originalNode.copy;
+
+    if (offset === 0) {
+      return { left: originalNode, right: null };
+    }
+    if (offset >= text.length) {
+      return { left: originalNode, right: null };
+    }
+
+    const leftText = text.substring(0, offset);
+    const rightText = text.substring(offset);
+
+    const leftNode = cloneDeep(originalNode);
+    leftNode.copy = leftText;
+    allNodes.set(leftNode.id, leftNode);
+
+    const rightNode: FlatNode = {
+      id: ulid(),
+      nodeType: 'TagElement',
+      parentId: leftNode.parentId,
+      tagName: 'text',
+      copy: rightText,
+    };
+    allNodes.set(rightNode.id, rightNode);
+
+    const parentChildren = parentNodes.get(leftNode.parentId!)!;
+    if (!parentChildren) {
+      console.error('_splitTextNode: Could not find parent children list for', {
+        parentId: leftNode.parentId,
+      });
+      return { left: leftNode, right: null };
+    }
+
+    const nodeIndex = parentChildren.indexOf(leftNode.id);
+    const newParentChildren = [...parentChildren];
+
+    if (nodeIndex > -1) {
+      newParentChildren.splice(nodeIndex + 1, 0, rightNode.id);
+    } else {
+      console.warn('_splitTextNode: Could not find node in parent, appending.', {
+        nodeId: leftNode.id,
+        parentId: leftNode.parentId,
+      });
+      newParentChildren.push(rightNode.id);
+    }
+
+    parentNodes.set(leftNode.parentId!, newParentChildren);
+
+    this.allNodes.set(allNodes);
+    this.parentNodes.set(parentNodes);
+
+    return { left: leftNode, right: rightNode };
+  }
+
+  /**
+   * Wraps a range of nodes (typically text nodes) inside a new formatting
+   * element, like a <span>. This is an atomic operation with history support.
+   *
+   * @param range - The selection range state.
+   * @param tagName - The tag name for the wrapper element (e.g., 'span').
+   * @returns A Promise that resolves with the new wrapper node's ID, or null.
+   */
+  // Replacement for wrapRangeInSpan in src/stores/nodes.ts
+
+  public async wrapRangeInSpan(
+    range: SelectionRange,
+    tagName: 'span'
+  ): Promise<string | null> {
+    if (
+      !range.startNodeId ||
+      !range.endNodeId ||
+      !range.lcaNodeId ||
+      !range.blockNodeId
+    ) {
+      return Promise.resolve(null);
+    }
+
+    const originalAllNodes = new Map(this.allNodes.get());
+    const originalParentNodes = new Map(this.parentNodes.get());
+    const paneNodeId = this.getClosestNodeTypeFromId(range.blockNodeId, 'Pane');
+    const originalPaneNode = this.allNodes.get().get(paneNodeId)
+      ? (cloneDeep(
+        this.allNodes.get().get(paneNodeId)
+      ) as PaneNode)
+      : null;
+    const wrapperNodeId = ulid();
+
+    const redoLogic = (): string | null => {
+      if (VERBOSE)
+        console.log('%c[wrapRangeInSpan] START', 'color: blue; font-weight: bold;', {
+          range: cloneDeep(range),
+          lcaChildren_BEFORE: cloneDeep(this.parentNodes.get().get(range.lcaNodeId!)),
+        });
+      if (!range.startNodeId || !range.endNodeId || !range.lcaNodeId)
+        return null;
+
+      let startNodeToFind: string | null = null;
+      let endNodeToFind: string | null = null;
+
+      if (range.startNodeId === range.endNodeId) {
+        // SINGLE-NODE SELECTION
+        const { left: nodeSplitAtEnd } = this._splitTextNode(
+          range.endNodeId,
+          range.endCharOffset
+        );
+
+        const { right: middleNode } = this._splitTextNode(
+          nodeSplitAtEnd.id,
+          range.startCharOffset
+        );
+
+        if (!middleNode) {
+          console.error(
+            'wrapRangeInSpan: Single-node split failed to create a middle node.'
+          );
+          return null;
+        }
+        startNodeToFind = middleNode.id;
+        endNodeToFind = middleNode.id;
+      } else {
+        // MULTI-NODE SELECTION
+        const { left: endNodeAfterSplit } = this._splitTextNode(
+          range.endNodeId,
+          range.endCharOffset
+        );
+        endNodeToFind = endNodeAfterSplit.id;
+
+        const { right: startNodeAfterSplit } = this._splitTextNode(
+          range.startNodeId,
+          range.startCharOffset
+        );
+
+        if (!startNodeAfterSplit) {
+          console.error(
+            'wrapRangeInSpan: Multi-node split failed to create a start node.'
+          );
+          return null;
+        }
+        startNodeToFind = startNodeAfterSplit.id;
+      }
+      if (VERBOSE)
+        console.log('%c[wrapRangeInSpan] SPLIT COMPLETE', 'color: blue;', {
+          startNodeToFind,
+          endNodeToFind,
+          lcaChildren_AFTER_SPLIT: cloneDeep(
+            this.parentNodes.get().get(range.lcaNodeId!)
+          ),
+        });
+
+      const newAllNodes = new Map(this.allNodes.get());
+      const newParentNodes = new Map(this.parentNodes.get());
+      const parentChildren = newParentNodes.get(range.lcaNodeId!);
+
+      if (!parentChildren) {
+        console.error('wrapRangeInSpan: Could not find parent children');
+        return null;
+      }
+
+      const startIndex = parentChildren.indexOf(startNodeToFind!);
+      const endIndex = parentChildren.indexOf(endNodeToFind!);
+
+      if (startIndex === -1 || endIndex === -1) {
+        console.error(
+          'wrapRangeInSpan: Could not find split nodes in parent',
+          { startIndex, endIndex, startNodeToFind, endNodeToFind }
+        );
+        return null;
+      }
+
+      const actualStartIndex = Math.min(startIndex, endIndex);
+      const actualEndIndex = Math.max(startIndex, endIndex);
+
+      const newParentChildren = [...parentChildren];
+      const nodesToWrapIds = newParentChildren.slice(
+        actualStartIndex,
+        actualEndIndex + 1
+      );
+      if (VERBOSE)
+        console.log('%c[wrapRangeInSpan] INDEXES', 'color: blue;', {
+          startIndex,
+          endIndex,
+          actualStartIndex,
+          actualEndIndex,
+        });
+
+      if (nodesToWrapIds.length === 0) {
+        console.error('wrapRangeInSpan: No nodes to wrap.');
+        return null;
+      }
+      if (VERBOSE)
+        console.log('%c[wrapRangeInSpan] NODES TO WRAP', 'color: orange;', {
+          nodesToWrapIds: cloneDeep(nodesToWrapIds),
+        });
+
+      const nodesToWrap = nodesToWrapIds
+        .map((id) => newAllNodes.get(id))
+        .filter((n): n is BaseNode => !!n);
+
+      const wrapperNode: FlatNode = {
+        id: wrapperNodeId,
+        nodeType: 'TagElement',
+        parentId: range.lcaNodeId,
+        tagName: tagName,
+      };
+      newAllNodes.set(wrapperNode.id, wrapperNode);
+      newParentNodes.set(wrapperNode.id, []);
+
+      for (const node of nodesToWrap) {
+        node.parentId = wrapperNode.id;
+        newParentNodes.get(wrapperNode.id)!.push(node.id);
+      }
+
+      newParentChildren.splice(
+        actualStartIndex,
+        nodesToWrapIds.length,
+        wrapperNode.id
+      );
+      newParentNodes.set(range.lcaNodeId!, newParentChildren);
+
+      this.allNodes.set(newAllNodes);
+      this.parentNodes.set(newParentNodes);
+
+      if (originalPaneNode) {
+        this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+          notify: false,
+          recordHistory: false,
+        });
+      }
+      const lcaChildrenIds = newParentNodes.get(range.lcaNodeId!);
+      const finalLCAChildrenNodes = lcaChildrenIds
+        ? lcaChildrenIds.map((id) => newAllNodes.get(id))
+        : [];
+
+      const wrapperChildrenIds = newParentNodes.get(wrapperNodeId);
+      const finalWrapperChildrenNodes = wrapperChildrenIds
+        ? wrapperChildrenIds.map((id) => newAllNodes.get(id))
+        : [];
+
+      if (VERBOSE)
+        console.log(
+          '%c[wrapRangeInSpan] END (FINAL PAYLOAD)',
+          'color: green; font-weight: bold;',
+          {
+            wrapperNodeId,
+            lcaChildren_FINAL: finalLCAChildrenNodes,
+            wrapperChildren_FINAL: finalWrapperChildrenNodes,
+          }
+        );
+      this.notifyNode(range.blockNodeId!);
+      return wrapperNode.id;
+    };
+
+    const undoLogic = () => {
+      this.allNodes.set(originalAllNodes);
+      this.parentNodes.set(originalParentNodes);
+
+      if (originalPaneNode) {
+        this.modifyNodes([originalPaneNode], {
+          notify: false,
+          recordHistory: false,
+        });
+      }
+      this.notifyNode(range.blockNodeId!);
+    };
+
+    const newSpanId = redoLogic();
+
+    this.history.addPatch({
+      op: PatchOp.REPLACE,
+      undo: undoLogic,
+      redo: redoLogic,
+    });
+
+    return new Promise(
+      (resolve) => setTimeout(() => resolve(newSpanId), 310)
+    );
+  }
+
   private clickTimer: number | null = null;
   private DOUBLE_CLICK_DELAY = 300;
   private isProcessingDoubleClick = false;
@@ -545,11 +852,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-            node,
-            node.tagName as Tag,
-            tagName,
-            offset ? tagNames[offset - 1] : undefined
-          )
+          node,
+          node.tagName as Tag,
+          tagName,
+          offset ? tagNames[offset - 1] : undefined
+        )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -784,10 +1091,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-      {
-        heldBeliefs: {},
-        withheldBeliefs: {},
-      };
+    {
+      heldBeliefs: {},
+      withheldBeliefs: {},
+    };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -871,12 +1178,38 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
-                ? addHoverPrefix(classesHoverPayload[0])
-                : ``
-            }`;
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
+              ? addHoverPrefix(classesHoverPayload[0])
+              : ``
+              }`;
           }
+
+          if ('tagName' in node && node.tagName === 'span') {
+            const spanNode = node as FlatNode;
+            const [all, mobile, tablet, desktop] = processClassesForViewports(
+              { mobile: {}, tablet: {}, desktop: {} },
+              spanNode.overrideClasses || {},
+              1
+            );
+            const outlineClass = this.toolModeValStore.get().value === 'styles'
+              ? ' outline outline-1 outline-dotted outline-gray-400/60'
+              : '';
+
+            const getClassString = (classes: string[]): string => (classes && classes.length > 0 ? classes[0] : '');
+
+            if (isPreview) return getClassString(desktop) + outlineClass;
+            switch (viewport) {
+              case 'desktop':
+                return getClassString(desktop) + outlineClass;
+              case 'tablet':
+                return getClassString(tablet) + outlineClass;
+              case 'mobile':
+                return getClassString(mobile) + outlineClass;
+              default:
+                return getClassString(all) + outlineClass;
+            }
+          }
+
           const closestPaneId = this.getClosestNodeTypeFromId(
             nodeId,
             'Markdown'
@@ -2455,7 +2788,7 @@ export class NodesContext {
         recordHistory: false,
       });
 
-      this.notifyNode(parentId);
+      this.notifyNode(`root`);
     };
 
     // --- 4. Define the atomic "undo" (backward) operation ---
@@ -2470,7 +2803,7 @@ export class NodesContext {
         recordHistory: false,
       });
 
-      this.notifyNode(parentId);
+      this.notifyNode(`root`);
     };
 
     // --- 5. Execute the operation and add to history ---

@@ -584,6 +584,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/stores/nodesHistory.ts'),
       dest: 'src/stores/nodesHistory.ts',
     },
+    {
+      src: resolve('../templates/src/stores/selection.ts'),
+      dest: 'src/stores/selection.ts',
+    },
 
     // AAI utils
     {

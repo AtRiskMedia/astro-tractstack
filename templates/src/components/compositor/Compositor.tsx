@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import {
+  useEffect,
+  useState,
+  useRef,
+  type MouseEvent as ReactMouseEvent, // Alias React's MouseEvent
+} from 'react';
 import { useStore } from '@nanostores/react';
 import {
   viewportKeyStore,
@@ -10,17 +15,27 @@ import {
   codehookMapStore,
   brandColourStore,
   hasArtpacksStore,
+  settingsPanelStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
 import Node from './Node';
 import { ARTPACKS } from '@/constants/brandThemes';
+import { selectionStore, resetSelectionStore } from '@/stores/selection';
 import type { LoadData } from '@/types/compositorTypes';
 import type {
   Theme,
   BrandConfig,
   FullContentMapItem,
 } from '@/types/tractstack';
+import type { SelectionOrigin } from '@/types/nodeProps';
+
+type SelectionRect = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
 
 export type CompositorProps = {
   nodes: LoadData | null;
@@ -33,10 +48,253 @@ export type CompositorProps = {
   fullCanonicalURL: string;
 };
 
+const VERBOSE = false;
+const LOG_PREFIX = '[Compositor] ';
+
 export const Compositor = (props: CompositorProps) => {
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(
+    null
+  );
+  const isDragging = useRef(false);
+  const selectionOrigin = useRef<SelectionOrigin | null>(null);
+  const dragStartCoords = useRef<{ x: number; y: number } | null>(null);
+
+  const $viewportKey = useStore(viewportKeyStore);
+  const viewportMaxWidth =
+    $viewportKey.value === `mobile`
+      ? 600
+      : $viewportKey.value === `tablet`
+        ? 1000
+        : 1500;
+  const viewportMinWidth =
+    $viewportKey.value === `mobile`
+      ? null
+      : $viewportKey.value === `tablet`
+        ? 801
+        : 1368;
+
+  const handleDragStart = (
+    origin: SelectionOrigin,
+    e: ReactMouseEvent<HTMLElement> // Use aliased React MouseEvent
+  ) => {
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'handleDragStart FIRED', { origin, event: e });
+    if (isDragging.current) {
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'handleDragStart aborted: already dragging.');
+      return;
+    }
+    isDragging.current = true;
+    selectionOrigin.current = origin;
+    dragStartCoords.current = { x: e.clientX, y: e.clientY };
+
+    resetSelectionStore();
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Selection store reset.');
+    selectionStore.setKey('isDragging', true);
+    selectionStore.setKey('blockNodeId', origin.blockNodeId);
+    selectionStore.setKey('lcaNodeId', origin.lcaNodeId);
+    selectionStore.setKey('startNodeId', origin.startNodeId);
+    selectionStore.setKey('startCharOffset', origin.startCharOffset);
+    selectionStore.setKey('endNodeId', origin.endNodeId);
+    selectionStore.setKey('endCharOffset', origin.endCharOffset);
+    if (VERBOSE)
+      console.log(
+        LOG_PREFIX + 'Selection store updated with origin:',
+        selectionStore.get()
+      );
+
+    const initialRect = {
+      left: e.clientX,
+      top: e.clientY,
+      width: 0,
+      height: 0,
+    };
+    setSelectionRect(initialRect);
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Initial selectionRect set:', initialRect);
+
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Adding window event listeners...');
+    try {
+      window.addEventListener('mousemove', handleDragMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'Window event listeners successfully added.');
+    } catch (error) {
+      console.error(LOG_PREFIX + 'Error adding window event listeners:', error);
+    }
+  };
+
+  const handleDragMove = (e: globalThis.MouseEvent) => {
+    if (
+      !isDragging.current ||
+      !selectionOrigin.current ||
+      !dragStartCoords.current
+    ) {
+      return;
+    }
+
+    const startX = dragStartCoords.current.x;
+    const startY = dragStartCoords.current.y;
+    const currentX = e.clientX;
+    const currentY = e.clientY;
+
+    const newRect = {
+      left: Math.min(startX, currentX),
+      top: Math.min(startY, currentY),
+      width: Math.abs(currentX - startX),
+      height: Math.abs(currentY - startY),
+    };
+    setSelectionRect(newRect);
+
+    const elementAtPoint = document.elementFromPoint(currentX, currentY);
+    if (!elementAtPoint) return;
+
+    const textNodeElement = elementAtPoint.closest('[data-parent-text-node-id]');
+
+    if (textNodeElement) {
+      const parentBlockNodeId =
+        textNodeElement
+          .closest('[data-node-id]')
+          ?.getAttribute('data-node-id') || null;
+
+      if (parentBlockNodeId !== selectionOrigin.current.blockNodeId) {
+        return;
+      }
+
+      const endNodeId = textNodeElement.getAttribute(
+        'data-parent-text-node-id'
+      );
+      const endCharOffset = parseInt(
+        textNodeElement.getAttribute('data-end-char-offset') || '0',
+        10
+      );
+
+      if (endNodeId) {
+        selectionStore.setKey('endNodeId', endNodeId);
+        selectionStore.setKey('endCharOffset', endCharOffset);
+      }
+    }
+  };
+
+  const handleMouseUp = async (e: globalThis.MouseEvent) => {
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'handleMouseUp FIRED', { event: e });
+    if (!isDragging.current) {
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'handleMouseUp aborted: was not dragging.');
+      return;
+    }
+
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Removing window event listeners...');
+    try {
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'Window event listeners successfully removed.');
+    } catch (error) {
+      console.error(
+        LOG_PREFIX + 'Error removing window event listeners:',
+        error
+      );
+    }
+
+    isDragging.current = false;
+    dragStartCoords.current = null;
+    setSelectionRect(null);
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Drag state reset, selectionRect cleared.');
+
+    const selectionRange = selectionStore.get();
+    if (VERBOSE)
+      console.log(
+        LOG_PREFIX + 'Final selection range from store:',
+        selectionRange
+      );
+    const ctx = getCtx(props);
+
+    if (
+      !selectionRange.startNodeId ||
+      !selectionRange.endNodeId ||
+      (selectionRange.startNodeId === selectionRange.endNodeId &&
+        selectionRange.startCharOffset === selectionRange.endCharOffset)
+    ) {
+      if (VERBOSE)
+        console.log(
+          LOG_PREFIX + 'handleMouseUp aborted: invalid or zero-length selection.'
+        );
+      resetSelectionStore();
+      selectionOrigin.current = null;
+      return;
+    }
+
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Calling wrapRangeInSpan...');
+    const newSpanId = await ctx.wrapRangeInSpan(
+      {
+        blockNodeId: selectionRange.blockNodeId,
+        lcaNodeId: selectionRange.lcaNodeId,
+        startNodeId: selectionRange.startNodeId,
+        startCharOffset: selectionRange.startCharOffset,
+        endNodeId: selectionRange.endNodeId,
+        endCharOffset: selectionRange.endCharOffset,
+      },
+      'span'
+    );
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'wrapRangeInSpan returned:', newSpanId);
+
+    if (newSpanId) {
+      if (VERBOSE)
+        console.log(
+          LOG_PREFIX + 'Opening settings panel for new span:',
+          newSpanId
+        );
+      settingsPanelStore.set({
+        action: 'style-element',
+        nodeId: newSpanId,
+        expanded: true,
+      });
+    } else {
+      if (VERBOSE)
+        console.log(
+          LOG_PREFIX +
+          'wrapRangeInSpan did not return a valid ID, panel not opened.'
+        );
+    }
+
+    resetSelectionStore();
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Selection store reset.');
+    selectionOrigin.current = null;
+  };
+
+  useEffect(() => {
+    const seeTheTruth = (e: MouseEvent) => {
+      if (VERBOSE)
+        console.log(
+          '%c[CAPTURE PHASE] Mouse Down Event Fired. Target:',
+          'color: orange; font-size: 16px;',
+          e.target
+        );
+    };
+
+    if (VERBOSE)
+      console.log('Attaching CAPTURE PHASE listener to window.');
+    window.addEventListener('mousedown', seeTheTruth, true);
+
+    return () => {
+      if (VERBOSE)
+        console.log('Removing CAPTURE PHASE listener from window.');
+      window.removeEventListener('mousedown', seeTheTruth, true);
+    };
+  }, []);
 
   useEffect(() => {
     fullContentMapStore.set(props.fullContentMap);
@@ -56,35 +314,29 @@ export const Compositor = (props: CompositorProps) => {
     props.availableCodeHooks,
   ]);
 
-  const $viewportKey = useStore(viewportKeyStore);
-  const viewportMaxWidth =
-    $viewportKey.value === `mobile`
-      ? 600
-      : $viewportKey.value === `tablet`
-        ? 1000
-        : 1500;
-  const viewportMinWidth =
-    $viewportKey.value === `mobile`
-      ? null
-      : $viewportKey.value === `tablet`
-        ? 801
-        : 1368;
-
   // Initialize nodes tree and set up subscriptions
   useEffect(() => {
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Compositor initializing...');
     getCtx(props).buildNodesTreeFromRowDataMadeNodes(props.nodes);
     hasArtpacksStore.set(ARTPACKS);
     setInitialized(true);
+    if (VERBOSE)
+      console.log(LOG_PREFIX + 'Nodes tree built, initialized set to true.');
 
     // Stop initial loading after initialization
     setTimeout(() => {
       setIsLoading(false);
       stopLoadingAnimation();
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'Initial loading animation stopped.');
     }, 300);
 
     const unsubscribe = getCtx(props).notifications.subscribe(
       ROOT_NODE_NAME,
       () => {
+        if (VERBOSE)
+          console.log(LOG_PREFIX + 'Received root notification, updating...');
         // Start loading state
         setIsLoading(true);
 
@@ -95,22 +347,59 @@ export const Compositor = (props: CompositorProps) => {
         setTimeout(() => {
           setIsLoading(false);
           stopLoadingAnimation();
+          if (VERBOSE)
+            console.log(LOG_PREFIX + 'Update loading animation stopped.');
         }, 300);
       }
     );
 
+    const unsubscribeToolMode = getCtx(props).toolModeValStore.subscribe(
+      (mode) => {
+        if (VERBOSE)
+          console.log(LOG_PREFIX + 'Tool mode changed:', mode.value);
+        if (mode.value !== 'styles') {
+          if (VERBOSE)
+            console.log(
+              LOG_PREFIX + 'Exited styles mode, resetting selection store.'
+            );
+          resetSelectionStore();
+          // Ensure drag state is also reset if mode changes mid-drag
+          if (isDragging.current) {
+            if (VERBOSE)
+              console.log(
+                LOG_PREFIX + 'Mode changed mid-drag, cleaning up listeners.'
+              );
+            window.removeEventListener('mousemove', handleDragMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            isDragging.current = false;
+            dragStartCoords.current = null;
+            setSelectionRect(null);
+            selectionOrigin.current = null;
+          }
+        }
+      }
+    );
+
+    // Cleanup function
     return () => {
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'Compositor unmounting, cleaning up...');
       unsubscribe();
+      unsubscribeToolMode();
       stopLoadingAnimation();
+      // Ensure listeners are removed on unmount
+      window.removeEventListener('mousemove', handleDragMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      if (VERBOSE)
+        console.log(LOG_PREFIX + 'Cleanup complete.');
     };
   }, []);
 
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${
-        isLoading ? 'opacity-60' : 'opacity-100'
-      }`}
+      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
+        }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),
@@ -130,6 +419,20 @@ export const Compositor = (props: CompositorProps) => {
         </div>
       )}
 
+      {/* Selection drag box */}
+      {selectionRect && (
+        <div
+          className="bg-mygreen/20 fixed z-50 border border-blue-600"
+          style={{
+            left: `${selectionRect.left}px`,
+            top: `${selectionRect.top}px`,
+            width: `${selectionRect.width}px`,
+            height: `${selectionRect.height}px`,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       {/* Main content */}
       {initialized && (
         <Node
@@ -137,6 +440,7 @@ export const Compositor = (props: CompositorProps) => {
           key={`${props.id}-${updateCounter}`}
           ctx={props.ctx}
           config={props.config}
+          onDragStart={handleDragStart}
         />
       )}
     </div>

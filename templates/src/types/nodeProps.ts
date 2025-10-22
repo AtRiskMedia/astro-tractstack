@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { NodesContext } from '@/stores/nodes';
 import type { BrandConfig } from './tractstack';
 import type { Tag } from './compositorTypes';
@@ -11,11 +12,21 @@ export interface WidgetProps {
   value3: string;
 }
 
+export type SelectionOrigin = {
+  blockNodeId: string;
+  lcaNodeId: string;
+  startNodeId: string;
+  startCharOffset: number;
+  endNodeId: string;
+  endCharOffset: number;
+};
+
 export type NodeProps = {
   nodeId: string;
   config?: BrandConfig;
   ctx?: NodesContext;
   first?: boolean;
+  onDragStart?: (origin: SelectionOrigin, e: MouseEvent<HTMLElement>) => void;
 };
 
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };

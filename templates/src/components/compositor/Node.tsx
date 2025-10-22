@@ -1,7 +1,14 @@
-import { memo, type ReactElement, useEffect, useState } from 'react';
+import {
+  memo,
+  type ReactElement,
+  useEffect,
+  useState,
+  createElement,
+  type MouseEvent,
+} from 'react';
 import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
-import { styleElementInfoStore } from '@/stores/storykeep';
+import { styleElementInfoStore, viewportKeyStore } from '@/stores/storykeep';
 import { getType } from '@/utils/compositor/typeGuards';
 import { NodeWithGuid } from './NodeWithGuid';
 import PanelVisibilityWrapper from './PanelVisibilityWrapper';
@@ -31,13 +38,16 @@ import StoryFragmentTitlePanel from '@/components/edit/storyfragment/StoryFragme
 import ContextPanePanel from '@/components/edit/context/ContextPaneConfig';
 import ContextPaneTitlePanel from '@/components/edit/context/ContextPaneConfig_title';
 import { regexpHook } from '@/constants';
+import { RenderChildren } from './nodes/RenderChildren';
 import type {
   StoryFragmentNode,
   PaneNode,
   BaseNode,
   FlatNode,
 } from '@/types/compositorTypes';
-import type { NodeProps } from '@/types/nodeProps';
+import type { NodeProps, SelectionOrigin } from '@/types/nodeProps';
+
+const VERBOSE = false;
 
 function parseCodeHook(node: BaseNode | FlatNode) {
   if ('codeHookParams' in node && Array.isArray(node.codeHookParams)) {
@@ -84,7 +94,7 @@ const getElement = (
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
   const hasPanes = useStore(getCtx(props).hasPanes);
   const isTemplate = useStore(getCtx(props).isTemplate);
-  const sharedProps = { nodeId: node.id, ctx: props.ctx, config: props.config };
+  const sharedProps = { ...props, nodeId: node.id };
   const type = getType(node);
 
   switch (type) {
@@ -274,6 +284,67 @@ const getElement = (
     case 'aside':
     case 'p': {
       const toolModeVal = getCtx(props).toolModeValStore.get().value;
+
+      if (toolModeVal === 'styles') {
+        const className = getCtx(props).getNodeClasses(
+          node.id,
+          viewportKeyStore.get().value
+        );
+
+        const handleMouseDown = (e: MouseEvent<HTMLElement>) => {
+          if (VERBOSE)
+            console.log('[Node.tsx] handleMouseDown FIRED', { event: e });
+          if (!props.onDragStart) {
+            if (VERBOSE)
+              console.log('[Node.tsx] handleMouseDown ABORTED: no onDragStart prop');
+            return;
+          }
+          e.preventDefault();
+          if (VERBOSE)
+            console.log('[Node.tsx] preventDefault called');
+
+          const target = e.target as HTMLElement;
+          if (VERBOSE)
+            console.log('[Node.tsx] mousedown target:', target);
+          const textNodeElement = target.closest('[data-parent-text-node-id]');
+
+          if (textNodeElement) {
+            const parentTextNodeId = textNodeElement.getAttribute(
+              'data-parent-text-node-id'
+            );
+            const startCharOffset = parseInt(
+              textNodeElement.getAttribute('data-start-char-offset') || '0',
+              10
+            );
+
+            if (parentTextNodeId) {
+              const origin: SelectionOrigin = {
+                blockNodeId: node.id,
+                lcaNodeId: node.id,
+                startNodeId: parentTextNodeId,
+                startCharOffset: startCharOffset,
+                endNodeId: parentTextNodeId,
+                endCharOffset: startCharOffset,
+              };
+              props.onDragStart(origin, e);
+            }
+          }
+        };
+
+        const children = getCtx(props).getChildNodeIDs(node.id);
+
+        return createElement(
+          type,
+          {
+            className: className,
+            onMouseDown: handleMouseDown,
+            'data-node-id': node.id,
+            style: { userSelect: 'none' },
+          },
+          <RenderChildren children={children} nodeProps={props} />
+        );
+      }
+
       if (toolModeVal === `insert`)
         return <NodeBasicTagInsert {...sharedProps} tagName={type} />;
       else if (toolModeVal === `eraser`)
@@ -283,6 +354,7 @@ const getElement = (
       return <NodeBasicTag {...sharedProps} tagName={type} />;
     }
 
+    case 'span':
     case 'strong':
     case 'em':
       return <NodeBasicTag {...sharedProps} tagName={type} />;
@@ -346,7 +418,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => {}
+        () => { }
       );
       return () => unsubscribe();
     }
@@ -383,10 +455,10 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-        outline: isOverride
-          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-          : '2.5px dashed rgba(0, 0, 0, 0.3)',
-      }
+      outline: isOverride
+        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+        : '2.5px dashed rgba(0, 0, 0, 0.3)',
+    }
     : {};
   const hoverClasses = isStylesMode
     ? 'hover:outline hover:outline-2 hover:outline-black'
