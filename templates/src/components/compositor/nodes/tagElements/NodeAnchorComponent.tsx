@@ -2,7 +2,6 @@ import { useEffect, useRef, type RefObject, type MouseEvent } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from '../RenderChildren';
-import { PlayButton } from '@/components/compositor/elements/PlayButton';
 import type { FlatNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
@@ -205,12 +204,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
             children={ctx.getChildNodeIDs(nodeId)}
             nodeProps={props}
           />
-          {isVideo && (
-            <>
-              {` `}
-              <PlayButton />
-            </>
-          )}
         </a>
         {needsTrailingSpace && ' '}
       </>
@@ -234,12 +227,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
             children={ctx.getChildNodeIDs(nodeId)}
             nodeProps={props}
           />
-          {isVideo && (
-            <>
-              {` `}
-              <PlayButton />
-            </>
-          )}
         </button>
         {needsTrailingSpace && ' '}
       </>

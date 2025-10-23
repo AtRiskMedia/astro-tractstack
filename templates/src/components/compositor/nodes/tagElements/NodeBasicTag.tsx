@@ -44,11 +44,15 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     const children = ctx.parentNodes.get().get(props.nodeId);
 
     if (VERBOSE)
-      console.log('%c[NodeBasicTag] RENDERING SPAN', 'color: purple; font-weight: bold;', {
-        nodeId: props.nodeId,
-        node: node ? cloneDeep(node) : 'NODE NOT FOUND',
-        childrenIds: children ? cloneDeep(children) : 'CHILDREN NOT FOUND',
-      });
+      console.log(
+        '%c[NodeBasicTag] RENDERING SPAN',
+        'color: purple; font-weight: bold;',
+        {
+          nodeId: props.nodeId,
+          node: node ? cloneDeep(node) : 'NODE NOT FOUND',
+          childrenIds: children ? cloneDeep(children) : 'CHILDREN NOT FOUND',
+        }
+      );
   }
 
   const [editState, setEditState] = useState<EditState>('viewing');
@@ -297,6 +301,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           <span
             key="chip"
             className="absolute z-10 flex select-none gap-x-1"
+            data-attr="exclude"
             style={{ top: '-.85rem', right: '0' }}
           >
             {props.tagName === 'span' && (
@@ -305,8 +310,9 @@ export const NodeBasicTag = (props: NodeTagProps) => {
                 onClick={handleStyleClick}
                 className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
                 aria-label="Style selection"
+                data-attr="exclude"
               >
-                <PaintBrushIcon className="h-3 w-3" />
+                <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
               </button>
             )}
             <button
@@ -314,8 +320,9 @@ export const NodeBasicTag = (props: NodeTagProps) => {
               onClick={handleUnwrapClick}
               className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
               aria-label="Remove formatting"
+              data-attr="exclude"
             >
-              <XMarkIcon className="h-3.5 w-3.5" />
+              <XMarkIcon className="h-3.5 w-3.5" data-attr="exclude" />
             </button>
           </span>
         ),
@@ -362,7 +369,13 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const saveAndExit = () => {
     if (editState !== 'editing') return;
 
-    const currentContent = elementRef.current?.innerHTML || '';
+    // Use an in-memory element to safely parse and strip UI chrome from the content.
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = elementRef.current?.innerHTML || '';
+    tempDiv
+      .querySelectorAll('[data-attr="exclude"]')
+      .forEach((el) => el.remove());
+    const currentContent = tempDiv.innerHTML;
 
     if (currentContent !== originalContentRef.current) {
       try {

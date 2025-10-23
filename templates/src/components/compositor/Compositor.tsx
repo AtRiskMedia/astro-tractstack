@@ -5,6 +5,7 @@ import {
   type MouseEvent as ReactMouseEvent, // Alias React's MouseEvent
 } from 'react';
 import { useStore } from '@nanostores/react';
+import { PaintBrushIcon, LinkIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import {
   viewportKeyStore,
   fullContentMapStore,
@@ -21,7 +22,11 @@ import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
 import Node from './Node';
 import { ARTPACKS } from '@/constants/brandThemes';
-import { selectionStore, resetSelectionStore } from '@/stores/selection';
+import {
+  selectionStore,
+  resetSelectionStore,
+  type SelectionStoreState,
+} from '@/stores/selection';
 import type { LoadData } from '@/types/compositorTypes';
 import type {
   Theme,
@@ -64,6 +69,7 @@ export const Compositor = (props: CompositorProps) => {
   const dragStartCoords = useRef<{ x: number; y: number } | null>(null);
 
   const $viewportKey = useStore(viewportKeyStore);
+  const $selection = useStore(selectionStore);
   const viewportMaxWidth =
     $viewportKey.value === `mobile`
       ? 600
@@ -76,6 +82,44 @@ export const Compositor = (props: CompositorProps) => {
       : $viewportKey.value === `tablet`
         ? 801
         : 1368;
+
+  const handleStyleClick = async (e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const range = selectionStore.get();
+    if (!range.isActive) return;
+    const ctx = getCtx(props);
+
+    await ctx.wrapRangeInSpan(range as SelectionStoreState, 'span');
+    resetSelectionStore();
+  };
+
+  const handleLinkClick = async (e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const range = selectionStore.get();
+    if (!range.isActive) return;
+    const ctx = getCtx(props);
+
+    const newAnchorNodeId = await ctx.wrapRangeInAnchor(
+      range as SelectionStoreState
+    );
+
+    if (newAnchorNodeId) {
+      settingsPanelStore.set({
+        action: 'style-element',
+        nodeId: newAnchorNodeId,
+        expanded: true,
+      });
+    }
+    resetSelectionStore();
+  };
+
+  const handleCancelClick = (e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resetSelectionStore();
+  };
 
   const handleDragStart = (
     origin: SelectionOrigin,
@@ -93,8 +137,7 @@ export const Compositor = (props: CompositorProps) => {
     dragStartCoords.current = { x: e.clientX, y: e.clientY };
 
     resetSelectionStore();
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'Selection store reset.');
+    if (VERBOSE) console.log(LOG_PREFIX + 'Selection store reset.');
     selectionStore.setKey('isDragging', true);
     selectionStore.setKey('blockNodeId', origin.blockNodeId);
     selectionStore.setKey('lcaNodeId', origin.lcaNodeId);
@@ -118,8 +161,7 @@ export const Compositor = (props: CompositorProps) => {
     if (VERBOSE)
       console.log(LOG_PREFIX + 'Initial selectionRect set:', initialRect);
 
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'Adding window event listeners...');
+    if (VERBOSE) console.log(LOG_PREFIX + 'Adding window event listeners...');
     try {
       window.addEventListener('mousemove', handleDragMove);
       window.addEventListener('mouseup', handleMouseUp);
@@ -155,7 +197,9 @@ export const Compositor = (props: CompositorProps) => {
     const elementAtPoint = document.elementFromPoint(currentX, currentY);
     if (!elementAtPoint) return;
 
-    const textNodeElement = elementAtPoint.closest('[data-parent-text-node-id]');
+    const textNodeElement = elementAtPoint.closest(
+      '[data-parent-text-node-id]'
+    );
 
     if (textNodeElement) {
       const parentBlockNodeId =
@@ -183,21 +227,21 @@ export const Compositor = (props: CompositorProps) => {
   };
 
   const handleMouseUp = async (e: globalThis.MouseEvent) => {
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'handleMouseUp FIRED', { event: e });
+    if (VERBOSE) console.log(LOG_PREFIX + 'handleMouseUp FIRED', { event: e });
     if (!isDragging.current) {
       if (VERBOSE)
         console.log(LOG_PREFIX + 'handleMouseUp aborted: was not dragging.');
       return;
     }
 
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'Removing window event listeners...');
+    if (VERBOSE) console.log(LOG_PREFIX + 'Removing window event listeners...');
     try {
       window.removeEventListener('mousemove', handleDragMove);
       window.removeEventListener('mouseup', handleMouseUp);
       if (VERBOSE)
-        console.log(LOG_PREFIX + 'Window event listeners successfully removed.');
+        console.log(
+          LOG_PREFIX + 'Window event listeners successfully removed.'
+        );
     } catch (error) {
       console.error(
         LOG_PREFIX + 'Error removing window event listeners:',
@@ -227,7 +271,8 @@ export const Compositor = (props: CompositorProps) => {
     ) {
       if (VERBOSE)
         console.log(
-          LOG_PREFIX + 'handleMouseUp aborted: invalid or zero-length selection.'
+          LOG_PREFIX +
+            'handleMouseUp aborted: invalid or zero-length selection.'
         );
       resetSelectionStore();
       selectionOrigin.current = null;
@@ -235,43 +280,45 @@ export const Compositor = (props: CompositorProps) => {
     }
 
     if (VERBOSE)
-      console.log(LOG_PREFIX + 'Calling wrapRangeInSpan...');
-    const newSpanId = await ctx.wrapRangeInSpan(
-      {
-        blockNodeId: selectionRange.blockNodeId,
-        lcaNodeId: selectionRange.lcaNodeId,
-        startNodeId: selectionRange.startNodeId,
-        startCharOffset: selectionRange.startCharOffset,
-        endNodeId: selectionRange.endNodeId,
-        endCharOffset: selectionRange.endCharOffset,
-      },
-      'span'
-    );
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'wrapRangeInSpan returned:', newSpanId);
+      console.log(LOG_PREFIX + 'Calculating selection bounding box.');
 
-    if (newSpanId) {
+    const startElement = document.querySelector(
+      `[data-parent-text-node-id="${selectionRange.startNodeId}"][data-start-char-offset="${selectionRange.startCharOffset}"]`
+    );
+    const endElement = document.querySelector(
+      `[data-parent-text-node-id="${selectionRange.endNodeId}"]`
+    );
+
+    let selectionBox = null;
+    if (startElement && endElement) {
+      const startRect = startElement.getBoundingClientRect();
+      const endRect = endElement.getBoundingClientRect();
+      const contentRect = document
+        .getElementById('content')
+        ?.getBoundingClientRect();
+
+      if (contentRect) {
+        selectionBox = {
+          top: Math.min(startRect.top, endRect.top) - contentRect.top,
+          left: Math.min(startRect.left, endRect.left) - contentRect.left,
+        };
+      }
+    }
+
+    if (selectionBox) {
       if (VERBOSE)
-        console.log(
-          LOG_PREFIX + 'Opening settings panel for new span:',
-          newSpanId
-        );
-      settingsPanelStore.set({
-        action: 'style-element',
-        nodeId: newSpanId,
-        expanded: true,
-      });
+        console.log(LOG_PREFIX + 'Selection complete, setting isActive: true.');
+      selectionStore.setKey('selectionBox', selectionBox);
+      selectionStore.setKey('isActive', true);
     } else {
       if (VERBOSE)
         console.log(
-          LOG_PREFIX +
-          'wrapRangeInSpan did not return a valid ID, panel not opened.'
+          LOG_PREFIX + 'Could not calculate bounding box, resetting selection.'
         );
+      resetSelectionStore();
     }
 
-    resetSelectionStore();
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'Selection store reset.');
+    selectionStore.setKey('isDragging', false);
     selectionOrigin.current = null;
   };
 
@@ -285,13 +332,11 @@ export const Compositor = (props: CompositorProps) => {
         );
     };
 
-    if (VERBOSE)
-      console.log('Attaching CAPTURE PHASE listener to window.');
+    if (VERBOSE) console.log('Attaching CAPTURE PHASE listener to window.');
     window.addEventListener('mousedown', seeTheTruth, true);
 
     return () => {
-      if (VERBOSE)
-        console.log('Removing CAPTURE PHASE listener from window.');
+      if (VERBOSE) console.log('Removing CAPTURE PHASE listener from window.');
       window.removeEventListener('mousedown', seeTheTruth, true);
     };
   }, []);
@@ -316,8 +361,7 @@ export const Compositor = (props: CompositorProps) => {
 
   // Initialize nodes tree and set up subscriptions
   useEffect(() => {
-    if (VERBOSE)
-      console.log(LOG_PREFIX + 'Compositor initializing...');
+    if (VERBOSE) console.log(LOG_PREFIX + 'Compositor initializing...');
     getCtx(props).buildNodesTreeFromRowDataMadeNodes(props.nodes);
     hasArtpacksStore.set(ARTPACKS);
     setInitialized(true);
@@ -355,8 +399,7 @@ export const Compositor = (props: CompositorProps) => {
 
     const unsubscribeToolMode = getCtx(props).toolModeValStore.subscribe(
       (mode) => {
-        if (VERBOSE)
-          console.log(LOG_PREFIX + 'Tool mode changed:', mode.value);
+        if (VERBOSE) console.log(LOG_PREFIX + 'Tool mode changed:', mode.value);
         if (mode.value !== 'styles') {
           if (VERBOSE)
             console.log(
@@ -390,16 +433,16 @@ export const Compositor = (props: CompositorProps) => {
       // Ensure listeners are removed on unmount
       window.removeEventListener('mousemove', handleDragMove);
       window.removeEventListener('mouseup', handleMouseUp);
-      if (VERBOSE)
-        console.log(LOG_PREFIX + 'Cleanup complete.');
+      if (VERBOSE) console.log(LOG_PREFIX + 'Cleanup complete.');
     };
   }, []);
 
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
-      className={`transition-all duration-300 ${isLoading ? 'opacity-60' : 'opacity-100'
-        }`}
+      className={`transition-all duration-300 ${
+        isLoading ? 'opacity-60' : 'opacity-100'
+      }`}
       style={{
         position: 'relative',
         ...(viewportMinWidth ? { minWidth: `${viewportMinWidth}px` } : {}),
@@ -431,6 +474,44 @@ export const Compositor = (props: CompositorProps) => {
             pointerEvents: 'none',
           }}
         />
+      )}
+
+      {/* Selection Action Toolbar */}
+      {$selection.isActive && $selection.selectionBox && (
+        <span
+          className="absolute z-50 flex select-none gap-x-1"
+          style={{
+            top: $selection.selectionBox.top,
+            left: $selection.selectionBox.left,
+            transform: 'translateY(-100%)',
+            marginTop: '-0.5rem',
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleStyleClick}
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
+            aria-label="Style selection"
+          >
+            <PaintBrushIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleLinkClick}
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
+            aria-label="Create link"
+          >
+            <LinkIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={handleCancelClick}
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
+            aria-label="Cancel selection"
+          >
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </span>
       )}
 
       {/* Main content */}

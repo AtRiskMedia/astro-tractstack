@@ -32,9 +32,7 @@ const DEFAULT_SELECTION_STATE: SelectionStoreState = {
   selectionBox: null,
 };
 
-export const selectionStore = map<SelectionStoreState>(
-  DEFAULT_SELECTION_STATE
-);
+export const selectionStore = map<SelectionStoreState>(DEFAULT_SELECTION_STATE);
 
 export function resetSelectionStore() {
   selectionStore.set(DEFAULT_SELECTION_STATE);

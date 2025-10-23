@@ -23,18 +23,15 @@ export const NodeText = (props: NodeProps) => {
         : null;
     let selectionRange = null;
 
-    if (
-      parentChildren &&
-      selection.startNodeId &&
-      selection.endNodeId
-    ) {
+    if (parentChildren && selection.startNodeId && selection.endNodeId) {
       const idx1 = parentChildren.indexOf(selection.startNodeId);
       const idx2 = parentChildren.indexOf(selection.endNodeId);
 
       if (idx1 !== -1 && idx2 !== -1) {
         if (
           idx1 < idx2 ||
-          (idx1 === idx2 && selection.startCharOffset <= selection.endCharOffset)
+          (idx1 === idx2 &&
+            selection.startCharOffset <= selection.endCharOffset)
         ) {
           selectionRange = {
             startNodeIndex: idx1,
@@ -77,11 +74,7 @@ export const NodeText = (props: NodeProps) => {
         ? parentChildren.indexOf(props.nodeId)
         : -1;
 
-      if (
-        selection.isDragging &&
-        selectionRange &&
-        currentNodeIndex !== -1
-      ) {
+      if (selection.isDragging && selectionRange && currentNodeIndex !== -1) {
         const { startNodeIndex, startChar, endNodeIndex, endChar } =
           selectionRange;
 

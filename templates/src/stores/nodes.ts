@@ -51,7 +51,7 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps, WidgetProps } from '@/types/nodeProps';
 import type { CSSProperties } from 'react';
-import type { SelectionRange } from '@/stores/selection';
+import type { SelectionRange, SelectionStoreState } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
 const blockedClickNodes = new Set<string>(['em', 'strong']);
@@ -72,7 +72,7 @@ function addHoverPrefix(str: string): string {
 }
 
 export class NodesContext {
-  constructor() { }
+  constructor() {}
 
   notifications = new NotificationSystem<BaseNode>();
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
@@ -379,21 +379,200 @@ export class NodesContext {
     this.setClickedParentLayer(null);
   }
 
+  public async wrapRangeInAnchor(
+    range: SelectionStoreState
+  ): Promise<string | null> {
+    if (
+      !range.startNodeId ||
+      !range.endNodeId ||
+      !range.lcaNodeId ||
+      !range.blockNodeId
+    ) {
+      return Promise.resolve(null);
+    }
+
+    const originalAllNodes = new Map(this.allNodes.get());
+    const originalParentNodes = new Map(this.parentNodes.get());
+    const paneNodeId = this.getClosestNodeTypeFromId(range.blockNodeId, 'Pane');
+    const originalPaneNode = this.allNodes.get().get(paneNodeId)
+      ? (cloneDeep(this.allNodes.get().get(paneNodeId)) as PaneNode)
+      : null;
+    const wrapperNodeId = `a-${ulid()}`;
+
+    const redoLogic = (): string | null => {
+      if (!range.startNodeId || !range.endNodeId || !range.lcaNodeId)
+        return null;
+
+      let startNodeToFind: string | null = null;
+      let endNodeToFind: string | null = null;
+
+      if (range.startNodeId === range.endNodeId) {
+        const { left: nodeSplitAtEnd } = this._splitTextNode(
+          range.endNodeId,
+          range.endCharOffset
+        );
+
+        const { right: middleNode } = this._splitTextNode(
+          nodeSplitAtEnd.id,
+          range.startCharOffset
+        );
+
+        if (!middleNode) {
+          console.error(
+            'wrapRangeInAnchor: Single-node split failed to create a middle node.'
+          );
+          return null;
+        }
+        startNodeToFind = middleNode.id;
+        endNodeToFind = middleNode.id;
+      } else {
+        const { left: endNodeAfterSplit } = this._splitTextNode(
+          range.endNodeId,
+          range.endCharOffset
+        );
+        endNodeToFind = endNodeAfterSplit.id;
+
+        const { right: startNodeAfterSplit } = this._splitTextNode(
+          range.startNodeId,
+          range.startCharOffset
+        );
+
+        if (!startNodeAfterSplit) {
+          console.error(
+            'wrapRangeInAnchor: Multi-node split failed to create a start node.'
+          );
+          return null;
+        }
+        startNodeToFind = startNodeAfterSplit.id;
+      }
+
+      const newAllNodes = new Map(this.allNodes.get());
+      const newParentNodes = new Map(this.parentNodes.get());
+      const parentChildren = newParentNodes.get(range.lcaNodeId!);
+
+      if (!parentChildren) {
+        console.error('wrapRangeInAnchor: Could not find parent children');
+        return null;
+      }
+
+      const startIndex = parentChildren.indexOf(startNodeToFind!);
+      const endIndex = parentChildren.indexOf(endNodeToFind!);
+
+      if (startIndex === -1 || endIndex === -1) {
+        console.error(
+          'wrapRangeInAnchor: Could not find split nodes in parent',
+          {
+            startIndex,
+            endIndex,
+            startNodeToFind,
+            endNodeToFind,
+          }
+        );
+        return null;
+      }
+
+      const actualStartIndex = Math.min(startIndex, endIndex);
+      const actualEndIndex = Math.max(startIndex, endIndex);
+
+      const newParentChildren = [...parentChildren];
+      const nodesToWrapIds = newParentChildren.slice(
+        actualStartIndex,
+        actualEndIndex + 1
+      );
+
+      if (nodesToWrapIds.length === 0) {
+        console.error('wrapRangeInAnchor: No nodes to wrap.');
+        return null;
+      }
+
+      const nodesToWrap = nodesToWrapIds
+        .map((id) => newAllNodes.get(id))
+        .filter((n): n is BaseNode => !!n);
+
+      const wrapperNode: FlatNode = {
+        id: wrapperNodeId,
+        nodeType: 'TagElement',
+        parentId: range.lcaNodeId,
+        tagName: 'a',
+        href: '#',
+        overrideClasses: {},
+      };
+      newAllNodes.set(wrapperNode.id, wrapperNode);
+      newParentNodes.set(wrapperNode.id, []);
+
+      for (const node of nodesToWrap) {
+        const nodeToUpdate = newAllNodes.get(node.id);
+        if (nodeToUpdate) {
+          nodeToUpdate.parentId = wrapperNode.id;
+        }
+        newParentNodes.get(wrapperNode.id)!.push(node.id);
+      }
+
+      newParentChildren.splice(
+        actualStartIndex,
+        nodesToWrapIds.length,
+        wrapperNode.id
+      );
+      newParentNodes.set(range.lcaNodeId!, newParentChildren);
+
+      this.allNodes.set(newAllNodes);
+      this.parentNodes.set(newParentNodes);
+
+      if (originalPaneNode) {
+        this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+          notify: false,
+          recordHistory: false,
+        });
+      }
+
+      this.notifyNode(range.blockNodeId!);
+      return wrapperNode.id;
+    };
+
+    const undoLogic = () => {
+      this.allNodes.set(originalAllNodes);
+      this.parentNodes.set(originalParentNodes);
+
+      if (originalPaneNode) {
+        this.modifyNodes([originalPaneNode], {
+          notify: false,
+          recordHistory: false,
+        });
+      }
+      this.notifyNode(range.blockNodeId!);
+    };
+
+    const newAnchorId = redoLogic();
+
+    this.history.addPatch({
+      op: PatchOp.REPLACE,
+      undo: undoLogic,
+      redo: redoLogic,
+    });
+
+    return new Promise((resolve) =>
+      setTimeout(() => resolve(newAnchorId), 310)
+    );
+  }
+
   /**
-     * Splits a text node at a given character offset.
-     * This is a robust function that correctly handles splits at offset 0
-     * by creating an empty left node, and splits at the end by returning
-     * the original node as 'left' and null as 'right'.
-     *
-     * @param nodeId - The ID of the 'text' node to split.
-     * @param offset - The character offset at which to split.
-     * @returns An object containing the left and (optional) right node.
-     */
+   * Splits a text node at a given character offset.
+   * This is a robust function that correctly handles splits at offset 0
+   * by creating an empty left node, and splits at the end by returning
+   * the original node as 'left' and null as 'right'.
+   *
+   * @param nodeId - The ID of the 'text' node to split.
+   * @param offset - The character offset at which to split.
+   * @returns An object containing the left and (optional) right node.
+   */
   private _splitTextNode(
     nodeId: string,
     offset: number
   ): { left: FlatNode; right: FlatNode | null } {
-    console.log(`%c[_splitTextNode] CALLED`, 'color: #f59e0b;', { nodeId, offset });
+    console.log(`%c[_splitTextNode] CALLED`, 'color: #f59e0b;', {
+      nodeId,
+      offset,
+    });
 
     const allNodes = new Map(this.allNodes.get());
     const parentNodes = new Map(this.parentNodes.get());
@@ -404,22 +583,33 @@ export class NodesContext {
       originalNode.tagName !== 'text' ||
       typeof originalNode.copy !== 'string' // Check for copy existence
     ) {
-      console.warn('_splitTextNode: Invalid node or type.', { nodeId, offset, originalNode });
+      console.warn('_splitTextNode: Invalid node or type.', {
+        nodeId,
+        offset,
+        originalNode,
+      });
       return { left: originalNode, right: null };
     }
 
     const text = originalNode.copy;
 
     // Handle split at the end of the string (no-op)
-    // This is correct: we just return the original node as 'left'
     if (offset >= text.length) {
-      console.warn(`%c[_splitTextNode] OFFSET >= LENGTH DETECTED. Returning right: null`, 'color: #f59e0b;', { nodeId, text, offset });
+      console.warn(
+        `%c[_splitTextNode] OFFSET >= LENGTH DETECTED. Returning right: null`,
+        'color: #f59e0b;',
+        { nodeId, text, offset }
+      );
       return { left: originalNode, right: null };
     }
 
     // Handle split at the beginning of the string (THE FIX)
     if (offset === 0) {
-      console.log(`%c[_splitTextNode] OFFSET 0 DETECTED. Creating empty left node.`, 'color: #f59e0b; font-weight: bold;', { nodeId, text });
+      console.log(
+        `%c[_splitTextNode] OFFSET 0 DETECTED. Creating empty left node.`,
+        'color: #f59e0b; font-weight: bold;',
+        { nodeId, text }
+      );
 
       // Create a new empty node for the "left" half
       const leftNode: FlatNode = {
@@ -437,9 +627,12 @@ export class NodesContext {
       // Insert the new empty node *before* the original node
       const parentChildren = parentNodes.get(leftNode.parentId!)!;
       if (!parentChildren) {
-        console.error('_splitTextNode (offset 0): Could not find parent children list for', {
-          parentId: leftNode.parentId,
-        });
+        console.error(
+          '_splitTextNode (offset 0): Could not find parent children list for',
+          {
+            parentId: leftNode.parentId,
+          }
+        );
         // We still return the nodes so the operation MIGHT succeed
         return { left: leftNode, right: rightNode };
       }
@@ -450,10 +643,13 @@ export class NodesContext {
       if (nodeIndex > -1) {
         newParentChildren.splice(nodeIndex, 0, leftNode.id);
       } else {
-        console.warn('_splitTextNode (offset 0): Could not find node in parent, prepending.', {
-          nodeId: rightNode.id,
-          parentId: leftNode.parentId,
-        });
+        console.warn(
+          '_splitTextNode (offset 0): Could not find node in parent, prepending.',
+          {
+            nodeId: rightNode.id,
+            parentId: leftNode.parentId,
+          }
+        );
         newParentChildren.unshift(leftNode.id);
       }
 
@@ -467,7 +663,11 @@ export class NodesContext {
     }
 
     // Standard split (offset > 0 and < text.length)
-    console.log(`%c[_splitTextNode] Performing standard split...`, 'color: green;', { text, offset });
+    console.log(
+      `%c[_splitTextNode] Performing standard split...`,
+      'color: green;',
+      { text, offset }
+    );
 
     const leftText = text.substring(0, offset);
     const rightText = text.substring(offset);
@@ -489,9 +689,12 @@ export class NodesContext {
 
     const parentChildren = parentNodes.get(leftNode.parentId!)!;
     if (!parentChildren) {
-      console.error('_splitTextNode (standard): Could not find parent children list for', {
-        parentId: leftNode.parentId,
-      });
+      console.error(
+        '_splitTextNode (standard): Could not find parent children list for',
+        {
+          parentId: leftNode.parentId,
+        }
+      );
       return { left: leftNode, right: null };
     }
 
@@ -502,10 +705,13 @@ export class NodesContext {
       // Insert the new 'right' node immediately after the 'left' node
       newParentChildren.splice(nodeIndex + 1, 0, rightNode.id);
     } else {
-      console.warn('_splitTextNode (standard): Could not find node in parent, appending.', {
-        nodeId: leftNode.id,
-        parentId: leftNode.parentId,
-      });
+      console.warn(
+        '_splitTextNode (standard): Could not find node in parent, appending.',
+        {
+          nodeId: leftNode.id,
+          parentId: leftNode.parentId,
+        }
+      );
       newParentChildren.push(rightNode.id);
     }
 
@@ -544,18 +750,22 @@ export class NodesContext {
     const originalParentNodes = new Map(this.parentNodes.get());
     const paneNodeId = this.getClosestNodeTypeFromId(range.blockNodeId, 'Pane');
     const originalPaneNode = this.allNodes.get().get(paneNodeId)
-      ? (cloneDeep(
-        this.allNodes.get().get(paneNodeId)
-      ) as PaneNode)
+      ? (cloneDeep(this.allNodes.get().get(paneNodeId)) as PaneNode)
       : null;
     const wrapperNodeId = ulid();
 
     const redoLogic = (): string | null => {
       if (VERBOSE)
-        console.log('%c[wrapRangeInSpan] START', 'color: blue; font-weight: bold;', {
-          range: cloneDeep(range),
-          lcaChildren_BEFORE: cloneDeep(this.parentNodes.get().get(range.lcaNodeId!)),
-        });
+        console.log(
+          '%c[wrapRangeInSpan] START',
+          'color: blue; font-weight: bold;',
+          {
+            range: cloneDeep(range),
+            lcaChildren_BEFORE: cloneDeep(
+              this.parentNodes.get().get(range.lcaNodeId!)
+            ),
+          }
+        );
       if (!range.startNodeId || !range.endNodeId || !range.lcaNodeId)
         return null;
 
@@ -625,10 +835,12 @@ export class NodesContext {
       const endIndex = parentChildren.indexOf(endNodeToFind!);
 
       if (startIndex === -1 || endIndex === -1) {
-        console.error(
-          'wrapRangeInSpan: Could not find split nodes in parent',
-          { startIndex, endIndex, startNodeToFind, endNodeToFind }
-        );
+        console.error('wrapRangeInSpan: Could not find split nodes in parent', {
+          startIndex,
+          endIndex,
+          startNodeToFind,
+          endNodeToFind,
+        });
         return null;
       }
 
@@ -736,9 +948,7 @@ export class NodesContext {
       redo: redoLogic,
     });
 
-    return new Promise(
-      (resolve) => setTimeout(() => resolve(newSpanId), 310)
-    );
+    return new Promise((resolve) => setTimeout(() => resolve(newSpanId), 310));
   }
 
   private clickTimer: number | null = null;
@@ -909,11 +1119,11 @@ export class NodesContext {
     const allowInsertBefore =
       offset > -1
         ? allowInsert(
-          node,
-          node.tagName as Tag,
-          tagName,
-          offset ? tagNames[offset - 1] : undefined
-        )
+            node,
+            node.tagName as Tag,
+            tagName,
+            offset ? tagNames[offset - 1] : undefined
+          )
         : allowInsert(node, node.tagName as Tag, tagName);
 
     const allowInsertAfter =
@@ -1148,10 +1358,10 @@ export class NodesContext {
     }
 
     const beliefs: { heldBeliefs: BeliefDatum; withheldBeliefs: BeliefDatum } =
-    {
-      heldBeliefs: {},
-      withheldBeliefs: {},
-    };
+      {
+        heldBeliefs: {},
+        withheldBeliefs: {},
+      };
     let anyBeliefs = false;
     if ('heldBeliefs' in paneNode) {
       beliefs.heldBeliefs = paneNode.heldBeliefs as BeliefDatum;
@@ -1235,10 +1445,11 @@ export class NodesContext {
               {},
               1
             );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${classesHoverPayload?.length
-              ? addHoverPrefix(classesHoverPayload[0])
-              : ``
-              }`;
+            return `${classesPayload?.length ? classesPayload[0] : ``} ${
+              classesHoverPayload?.length
+                ? addHoverPrefix(classesHoverPayload[0])
+                : ``
+            }`;
           }
 
           if ('tagName' in node && node.tagName === 'span') {
@@ -1248,11 +1459,13 @@ export class NodesContext {
               spanNode.overrideClasses || {},
               1
             );
-            const outlineClass = this.toolModeValStore.get().value === 'styles'
-              ? ' outline outline-1 outline-dotted outline-gray-400/60'
-              : '';
+            const outlineClass =
+              this.toolModeValStore.get().value === 'styles'
+                ? ' outline outline-1 outline-dotted outline-gray-400/60'
+                : '';
 
-            const getClassString = (classes: string[]): string => (classes && classes.length > 0 ? classes[0] : '');
+            const getClassString = (classes: string[]): string =>
+              classes && classes.length > 0 ? classes[0] : '';
 
             if (isPreview) return getClassString(desktop) + outlineClass;
             switch (viewport) {

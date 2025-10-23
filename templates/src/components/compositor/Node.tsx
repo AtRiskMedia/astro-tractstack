@@ -296,16 +296,16 @@ const getElement = (
             console.log('[Node.tsx] handleMouseDown FIRED', { event: e });
           if (!props.onDragStart) {
             if (VERBOSE)
-              console.log('[Node.tsx] handleMouseDown ABORTED: no onDragStart prop');
+              console.log(
+                '[Node.tsx] handleMouseDown ABORTED: no onDragStart prop'
+              );
             return;
           }
           e.preventDefault();
-          if (VERBOSE)
-            console.log('[Node.tsx] preventDefault called');
+          if (VERBOSE) console.log('[Node.tsx] preventDefault called');
 
           const target = e.target as HTMLElement;
-          if (VERBOSE)
-            console.log('[Node.tsx] mousedown target:', target);
+          if (VERBOSE) console.log('[Node.tsx] mousedown target:', target);
           const textNodeElement = target.closest('[data-parent-text-node-id]');
 
           if (textNodeElement) {
@@ -426,7 +426,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => { }
+        () => {}
       );
       return () => unsubscribe();
     }
@@ -463,10 +463,10 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-      outline: isOverride
-        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-        : '2.5px dashed rgba(0, 0, 0, 0.3)',
-    }
+        outline: isOverride
+          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+          : '2.5px dashed rgba(0, 0, 0, 0.3)',
+      }
     : {};
   const hoverClasses = isStylesMode
     ? 'hover:outline hover:outline-2 hover:outline-black'

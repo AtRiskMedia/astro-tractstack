@@ -382,12 +382,6 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/components/compositor/elements/Svg.tsx'),
       dest: 'src/components/compositor/elements/Svg.tsx',
     },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/elements/PlayButton.tsx'
-      ),
-      dest: 'src/components/compositor/elements/PlayButton.tsx',
-    },
     // Compositor panels
     {
       src: resolve(
