@@ -27,6 +27,7 @@ export type NodeProps = {
   ctx?: NodesContext;
   first?: boolean;
   onDragStart?: (origin: SelectionOrigin, e: MouseEvent<HTMLElement>) => void;
+  isSelectableText?: boolean;
 };
 
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };

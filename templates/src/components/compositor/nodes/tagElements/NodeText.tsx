@@ -7,11 +7,6 @@ import { selectionStore } from '@/stores/selection';
 export const NodeText = (props: NodeProps) => {
   const ctx = getCtx(props);
   const node = ctx.allNodes.get().get(props.nodeId) as FlatNode;
-  const parentNode = node.parentId
-    ? (ctx.allNodes.get().get(node.parentId) as FlatNode)
-    : null;
-  const isLink = parentNode && [`a`, `button`].includes(parentNode.tagName);
-
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const selection = useStore(selectionStore);
 
@@ -19,7 +14,9 @@ export const NodeText = (props: NodeProps) => {
 
   const text = node.copy || '';
 
-  if (toolModeVal === 'styles') {
+  // Only render word-spans if in 'styles' mode AND
+  // this text node is within a selectable context.
+  if (toolModeVal === 'styles' && props.isSelectableText) {
     const parentChildren =
       selection.isDragging && selection.lcaNodeId
         ? ctx.parentNodes.get().get(selection.lcaNodeId)
@@ -130,5 +127,8 @@ export const NodeText = (props: NodeProps) => {
     return <>{wordSpans}</>;
   }
 
+  // Default, pure text rendering.
+  // We render a non-breaking space if the text is truly empty
+  // to ensure the element occupies space and is clickable.
   return <>{text === '' ? '\u00A0' : text}</>;
 };

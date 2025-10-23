@@ -333,6 +333,14 @@ const getElement = (
 
         const children = getCtx(props).getChildNodeIDs(node.id);
 
+        // Propagate props to children, but explicitly enable text selection
+        // and remove the onDragStart handler to prevent it from firing on child elements.
+        const childProps: NodeProps = {
+          ...props,
+          onDragStart: undefined,
+          isSelectableText: true,
+        };
+
         return createElement(
           type,
           {
@@ -341,7 +349,7 @@ const getElement = (
             'data-node-id': node.id,
             style: { userSelect: 'none' },
           },
-          <RenderChildren children={children} nodeProps={props} />
+          <RenderChildren children={children} nodeProps={childProps} />
         );
       }
 
@@ -365,12 +373,12 @@ const getElement = (
       const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === `eraser`)
         return <NodeButtonEraser {...sharedProps} />;
-      return <NodeButton {...sharedProps} />;
+      return <NodeButton {...sharedProps} isSelectableText={false} />;
     }
     case 'a': {
       const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === `eraser`) return <NodeAEraser {...sharedProps} />;
-      return <NodeA {...sharedProps} />;
+      return <NodeA {...sharedProps} isSelectableText={false} />;
     }
     case 'img':
       return <NodeImg {...sharedProps} />;

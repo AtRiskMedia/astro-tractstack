@@ -773,7 +773,14 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,
         },
-        <RenderChildren children={children} nodeProps={props} />
+        <RenderChildren
+          children={children}
+          nodeProps={{
+            ...props,
+            nodeId: nodeId,
+            isSelectableText: props.isSelectableText,
+          }}
+        />
       )}
       {showTabIndicator && editState === 'editing' && (
         <TabIndicator onTab={createNextParagraph} parentNodeId={nodeId} />

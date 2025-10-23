@@ -380,19 +380,21 @@ export class NodesContext {
   }
 
   /**
-   * Splits a text node at a given character offset.
-   * If the split is at the beginning or end, it returns the original node.
-   * Otherwise, it creates a new text node for the second half and returns
-   * the original (now-truncated) node and the new node.
-   *
-   * @param nodeId - The ID of the 'text' node to split.
-   * @param offset - The character offset at which to split.
-   * @returns An object containing the left and (optional) right node.
-   */
+     * Splits a text node at a given character offset.
+     * This is a robust function that correctly handles splits at offset 0
+     * by creating an empty left node, and splits at the end by returning
+     * the original node as 'left' and null as 'right'.
+     *
+     * @param nodeId - The ID of the 'text' node to split.
+     * @param offset - The character offset at which to split.
+     * @returns An object containing the left and (optional) right node.
+     */
   private _splitTextNode(
     nodeId: string,
     offset: number
   ): { left: FlatNode; right: FlatNode | null } {
+    console.log(`%c[_splitTextNode] CALLED`, 'color: #f59e0b;', { nodeId, offset });
+
     const allNodes = new Map(this.allNodes.get());
     const parentNodes = new Map(this.parentNodes.get());
     const originalNode = allNodes.get(nodeId) as FlatNode;
@@ -400,28 +402,82 @@ export class NodesContext {
     if (
       !originalNode ||
       originalNode.tagName !== 'text' ||
-      !originalNode.copy
+      typeof originalNode.copy !== 'string' // Check for copy existence
     ) {
-      console.warn('_splitTextNode: Invalid node or type.', { nodeId, offset });
+      console.warn('_splitTextNode: Invalid node or type.', { nodeId, offset, originalNode });
       return { left: originalNode, right: null };
     }
 
     const text = originalNode.copy;
 
-    if (offset === 0) {
-      return { left: originalNode, right: null };
-    }
+    // Handle split at the end of the string (no-op)
+    // This is correct: we just return the original node as 'left'
     if (offset >= text.length) {
+      console.warn(`%c[_splitTextNode] OFFSET >= LENGTH DETECTED. Returning right: null`, 'color: #f59e0b;', { nodeId, text, offset });
       return { left: originalNode, right: null };
     }
+
+    // Handle split at the beginning of the string (THE FIX)
+    if (offset === 0) {
+      console.log(`%c[_splitTextNode] OFFSET 0 DETECTED. Creating empty left node.`, 'color: #f59e0b; font-weight: bold;', { nodeId, text });
+
+      // Create a new empty node for the "left" half
+      const leftNode: FlatNode = {
+        id: ulid(),
+        nodeType: 'TagElement',
+        parentId: originalNode.parentId,
+        tagName: 'text',
+        copy: '', // Empty text
+      };
+      allNodes.set(leftNode.id, leftNode);
+
+      // The original node becomes the "right" half
+      const rightNode = originalNode;
+
+      // Insert the new empty node *before* the original node
+      const parentChildren = parentNodes.get(leftNode.parentId!)!;
+      if (!parentChildren) {
+        console.error('_splitTextNode (offset 0): Could not find parent children list for', {
+          parentId: leftNode.parentId,
+        });
+        // We still return the nodes so the operation MIGHT succeed
+        return { left: leftNode, right: rightNode };
+      }
+
+      const nodeIndex = parentChildren.indexOf(rightNode.id);
+      const newParentChildren = [...parentChildren];
+
+      if (nodeIndex > -1) {
+        newParentChildren.splice(nodeIndex, 0, leftNode.id);
+      } else {
+        console.warn('_splitTextNode (offset 0): Could not find node in parent, prepending.', {
+          nodeId: rightNode.id,
+          parentId: leftNode.parentId,
+        });
+        newParentChildren.unshift(leftNode.id);
+      }
+
+      parentNodes.set(leftNode.parentId!, newParentChildren);
+      this.allNodes.set(allNodes);
+      this.parentNodes.set(parentNodes);
+
+      // Return the new empty node as 'left' and the original node as 'right'
+      // This allows wrapRangeInSpan to find the original node as 'middleNode'
+      return { left: leftNode, right: rightNode };
+    }
+
+    // Standard split (offset > 0 and < text.length)
+    console.log(`%c[_splitTextNode] Performing standard split...`, 'color: green;', { text, offset });
 
     const leftText = text.substring(0, offset);
     const rightText = text.substring(offset);
 
+    // Modify the original node to become the 'left' node
     const leftNode = cloneDeep(originalNode);
     leftNode.copy = leftText;
     allNodes.set(leftNode.id, leftNode);
 
+    // Create a new node for the 'right' half
     const rightNode: FlatNode = {
       id: ulid(),
       nodeType: 'TagElement',
@@ -433,7 +489,7 @@ export class NodesContext {
 
     const parentChildren = parentNodes.get(leftNode.parentId!)!;
     if (!parentChildren) {
-      console.error('_splitTextNode: Could not find parent children list for', {
+      console.error('_splitTextNode (standard): Could not find parent children list for', {
         parentId: leftNode.parentId,
       });
       return { left: leftNode, right: null };
@@ -443,9 +499,10 @@ export class NodesContext {
     const newParentChildren = [...parentChildren];
 
     if (nodeIndex > -1) {
+      // Insert the new 'right' node immediately after the 'left' node
       newParentChildren.splice(nodeIndex + 1, 0, rightNode.id);
     } else {
-      console.warn('_splitTextNode: Could not find node in parent, appending.', {
+      console.warn('_splitTextNode (standard): Could not find node in parent, appending.', {
         nodeId: leftNode.id,
         parentId: leftNode.parentId,
       });
