@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
-import { ChevronUpDownIcon } from '@heroicons/react/20/solid';
+import ChevronUpDownIcon from '@heroicons/react/20/solid/ChevronUpDownIcon';
 import { fullContentMapStore } from '@/stores/storykeep';
 import { NodesContext, getCtx } from '@/stores/nodes';
 import {

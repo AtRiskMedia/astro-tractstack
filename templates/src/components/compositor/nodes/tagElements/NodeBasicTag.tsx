@@ -32,7 +32,7 @@ import type { NodeProps } from '@/types/nodeProps';
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
 type EditState = 'viewing' | 'editing';
-const VERBOSE = false;
+const VERBOSE = true;
 
 export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;

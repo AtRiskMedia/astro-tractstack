@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import { epinetCustomFilters } from '@/stores/analytics';
 import { classNames } from '@/utils/helpers';
-import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import DashboardActivity from './Dashboard_Activity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';

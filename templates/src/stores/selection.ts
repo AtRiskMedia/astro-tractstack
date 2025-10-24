@@ -18,6 +18,7 @@ export interface SelectionStoreState extends SelectionRange {
   isDragging: boolean;
   isActive: boolean;
   selectionBox: SelectionBox | null;
+  pendingAction: 'style' | 'link' | null;
 }
 
 const DEFAULT_SELECTION_STATE: SelectionStoreState = {
@@ -30,6 +31,7 @@ const DEFAULT_SELECTION_STATE: SelectionStoreState = {
   endNodeId: null,
   endCharOffset: 0,
   selectionBox: null,
+  pendingAction: null,
 };
 
 export const selectionStore = map<SelectionStoreState>(DEFAULT_SELECTION_STATE);

@@ -51,6 +51,7 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps, WidgetProps } from '@/types/nodeProps';
 import type { CSSProperties } from 'react';
+import { selectionStore } from '@/stores/selection';
 import type { SelectionRange, SelectionStoreState } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
@@ -339,7 +340,13 @@ export class NodesContext {
     // click handler based on toolModeVal
     switch (toolModeVal) {
       case `styles`:
-        handleClickEventDefault(node, dblClick, this.clickedParentLayer.get());
+        const selection = selectionStore.get();
+        if (!selection.isActive)
+          handleClickEventDefault(
+            node,
+            dblClick,
+            this.clickedParentLayer.get()
+          );
         break;
       case `text`:
         if (

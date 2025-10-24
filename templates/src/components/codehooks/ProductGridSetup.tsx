@@ -190,7 +190,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
         <div className="space-y-2 rounded-md border p-3">
           <label
             htmlFor="productType"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-bold text-gray-700"
           >
             Product Type
           </label>
@@ -209,7 +209,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
         <div className="rounded-md border bg-gray-50 p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">
+              <p className="text-sm font-bold text-gray-600">
                 Selected Products
               </p>
               <p className="font-bold text-gray-900">
@@ -219,7 +219,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
             <button
               type="button"
               onClick={() => setShowSelector(!showSelector)}
-              className="rounded bg-white px-3 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="rounded bg-white px-3 py-1 text-sm font-bold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             >
               {showSelector ? 'Close' : 'Change Selection'}
             </button>
@@ -235,7 +235,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
                 lazyMount
                 unmountOnExit
               >
-                <Combobox.Label className="text-sm font-medium text-gray-700">
+                <Combobox.Label className="text-sm font-bold text-gray-700">
                   Find products to include
                 </Combobox.Label>
                 <Combobox.Control>

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
+import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import LockClosedIcon from '@heroicons/react/24/outline/LockClosedIcon';
 import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
@@ -18,11 +21,6 @@ import {
 import StringInput from '@/components/form/StringInput';
 import EnumSelect from '@/components/form/EnumSelect';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
-import {
-  PlusIcon,
-  XMarkIcon,
-  LockClosedIcon,
-} from '@heroicons/react/24/outline';
 import type { BeliefNode, BeliefNodeState } from '@/types/tractstack';
 
 interface BeliefFormProps {

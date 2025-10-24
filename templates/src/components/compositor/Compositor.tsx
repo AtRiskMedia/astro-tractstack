@@ -5,7 +5,6 @@ import {
   type MouseEvent as ReactMouseEvent, // Alias React's MouseEvent
 } from 'react';
 import { useStore } from '@nanostores/react';
-import { PaintBrushIcon, LinkIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import {
   viewportKeyStore,
   fullContentMapStore,
@@ -82,44 +81,6 @@ export const Compositor = (props: CompositorProps) => {
       : $viewportKey.value === `tablet`
         ? 801
         : 1368;
-
-  const handleStyleClick = async (e: ReactMouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const range = selectionStore.get();
-    if (!range.isActive) return;
-    const ctx = getCtx(props);
-
-    await ctx.wrapRangeInSpan(range as SelectionStoreState, 'span');
-    resetSelectionStore();
-  };
-
-  const handleLinkClick = async (e: ReactMouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const range = selectionStore.get();
-    if (!range.isActive) return;
-    const ctx = getCtx(props);
-
-    const newAnchorNodeId = await ctx.wrapRangeInAnchor(
-      range as SelectionStoreState
-    );
-
-    if (newAnchorNodeId) {
-      settingsPanelStore.set({
-        action: 'style-element',
-        nodeId: newAnchorNodeId,
-        expanded: true,
-      });
-    }
-    resetSelectionStore();
-  };
-
-  const handleCancelClick = (e: ReactMouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    resetSelectionStore();
-  };
 
   const handleDragStart = (
     origin: SelectionOrigin,
@@ -261,7 +222,6 @@ export const Compositor = (props: CompositorProps) => {
         LOG_PREFIX + 'Final selection range from store:',
         selectionRange
       );
-    const ctx = getCtx(props);
 
     if (
       !selectionRange.startNodeId ||
@@ -437,6 +397,40 @@ export const Compositor = (props: CompositorProps) => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleAction = async () => {
+      if (!$selection.isActive || !$selection.pendingAction) {
+        return;
+      }
+
+      const ctx = getCtx(props);
+      const range = $selection;
+
+      if ($selection.pendingAction === 'style') {
+        if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: style');
+        await ctx.wrapRangeInSpan(range as SelectionStoreState, 'span');
+        resetSelectionStore();
+      }
+
+      if ($selection.pendingAction === 'link') {
+        if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: link');
+        const newAnchorNodeId = await ctx.wrapRangeInAnchor(
+          range as SelectionStoreState
+        );
+        if (newAnchorNodeId) {
+          settingsPanelStore.set({
+            action: 'style-element',
+            nodeId: newAnchorNodeId,
+            expanded: true,
+          });
+        }
+        resetSelectionStore();
+      }
+    };
+
+    handleAction();
+  }, [$selection.pendingAction, $selection.isActive]);
+
   return (
     <div
       id="content" // This ID is used by startLoadingAnimation
@@ -474,44 +468,6 @@ export const Compositor = (props: CompositorProps) => {
             pointerEvents: 'none',
           }}
         />
-      )}
-
-      {/* Selection Action Toolbar */}
-      {$selection.isActive && $selection.selectionBox && (
-        <span
-          className="absolute z-50 flex select-none gap-x-1"
-          style={{
-            top: $selection.selectionBox.top,
-            left: $selection.selectionBox.left,
-            transform: 'translateY(-100%)',
-            marginTop: '-0.5rem',
-          }}
-        >
-          <button
-            type="button"
-            onClick={handleStyleClick}
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
-            aria-label="Style selection"
-          >
-            <PaintBrushIcon className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleLinkClick}
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
-            aria-label="Create link"
-          >
-            <LinkIcon className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={handleCancelClick}
-            className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
-            aria-label="Cancel selection"
-          >
-            <XMarkIcon className="h-4 w-4" />
-          </button>
-        </span>
       )}
 
       {/* Main content */}

@@ -14,42 +14,7 @@ export const NodeText = (props: NodeProps) => {
 
   const text = node.copy || '';
 
-  // Only render word-spans if in 'styles' mode AND
-  // this text node is within a selectable context.
   if (toolModeVal === 'styles' && props.isSelectableText) {
-    const parentChildren =
-      selection.isDragging && selection.lcaNodeId
-        ? ctx.parentNodes.get().get(selection.lcaNodeId)
-        : null;
-    let selectionRange = null;
-
-    if (parentChildren && selection.startNodeId && selection.endNodeId) {
-      const idx1 = parentChildren.indexOf(selection.startNodeId);
-      const idx2 = parentChildren.indexOf(selection.endNodeId);
-
-      if (idx1 !== -1 && idx2 !== -1) {
-        if (
-          idx1 < idx2 ||
-          (idx1 === idx2 &&
-            selection.startCharOffset <= selection.endCharOffset)
-        ) {
-          selectionRange = {
-            startNodeIndex: idx1,
-            startChar: selection.startCharOffset,
-            endNodeIndex: idx2,
-            endChar: selection.endCharOffset,
-          };
-        } else {
-          selectionRange = {
-            startNodeIndex: idx2,
-            startChar: selection.endCharOffset,
-            endNodeIndex: idx1,
-            endChar: selection.startCharOffset,
-          };
-        }
-      }
-    }
-
     let charOffset = 0;
     const wordSpans = text.split(/(\s+)/).map((segment, index) => {
       const startOffset = charOffset;
@@ -70,33 +35,30 @@ export const NodeText = (props: NodeProps) => {
       }
 
       let isInSelection = false;
-      const currentNodeIndex = parentChildren
-        ? parentChildren.indexOf(props.nodeId)
-        : -1;
+      const currentNodeId = props.nodeId;
 
-      if (selection.isDragging && selectionRange && currentNodeIndex !== -1) {
-        const { startNodeIndex, startChar, endNodeIndex, endChar } =
-          selectionRange;
+      // Show outline if EITHER dragging OR selection is finalized and active
+      // AND the selection is within this current text node.
+      if (
+        (selection.isDragging || selection.isActive) &&
+        selection.startNodeId &&
+        selection.endNodeId &&
+        selection.startNodeId === currentNodeId && // Selection must start in this node
+        selection.endNodeId === currentNodeId // Selection must end in this node
+      ) {
+        const { startCharOffset, endCharOffset } = selection;
 
-        if (
-          startNodeIndex === endNodeIndex &&
-          currentNodeIndex === startNodeIndex
-        ) {
-          if (endOffset > startChar && startOffset < endChar) {
-            isInSelection = true;
-          }
-        } else if (currentNodeIndex === startNodeIndex) {
-          if (endOffset > startChar) {
-            isInSelection = true;
-          }
-        } else if (currentNodeIndex === endNodeIndex) {
-          if (startOffset < endChar) {
-            isInSelection = true;
-          }
-        } else if (
-          currentNodeIndex > startNodeIndex &&
-          currentNodeIndex < endNodeIndex
-        ) {
+        let selStartChar = startCharOffset;
+        let selEndChar = endCharOffset;
+
+        // Handle backward selection within this single node
+        if (startCharOffset > endCharOffset) {
+          selStartChar = endCharOffset;
+          selEndChar = startCharOffset;
+        }
+
+        // Check if current span falls within the character range
+        if (endOffset > selStartChar && startOffset < selEndChar) {
           isInSelection = true;
         }
       }
@@ -120,8 +82,5 @@ export const NodeText = (props: NodeProps) => {
     return <>{wordSpans}</>;
   }
 
-  // Default, pure text rendering.
-  // We render a non-breaking space if the text is truly empty
-  // to ensure the element occupies space and is clickable.
   return <>{text === '' ? '\u00A0' : text}</>;
 };
