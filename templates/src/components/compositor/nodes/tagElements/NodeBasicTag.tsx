@@ -299,7 +299,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             key="chip"
             className="absolute z-10 flex select-none gap-x-1"
             data-attr="exclude"
-            style={{ top: '-.85rem', right: '0' }}
+            style={{ top: '-0.9rem', left: '0' }}
           >
             {props.tagName === 'span' && (
               <button
@@ -369,9 +369,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     // Use an in-memory element to safely parse and strip UI chrome from the content.
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = elementRef.current?.innerHTML || '';
-    tempDiv
-      .querySelectorAll('[data-attr="exclude"]')
-      .forEach((el) => el.remove());
+    tempDiv.querySelectorAll('[data-attr="exclude"]');
     const currentContent = tempDiv.innerHTML;
 
     if (currentContent !== originalContentRef.current) {

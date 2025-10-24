@@ -12,8 +12,12 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const childNodeIDs = ctx.getChildNodeIDs(node?.parentId ?? '');
   const linkRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
 
-  // Get previous and next siblings for spacing logic
+  // Get current position and next sibling for spacing logic
   const currentIndex = childNodeIDs.indexOf(nodeId);
+
+  // Determine if a leading zero-width space is needed when this is the first child.
+  const needsLeadingSpace = currentIndex === 0;
+
   const nextNode =
     currentIndex < childNodeIDs.length - 1
       ? (ctx.allNodes.get().get(childNodeIDs[currentIndex + 1]) as FlatNode)
@@ -189,6 +193,7 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   if (tagName === 'a') {
     return (
       <>
+        {needsLeadingSpace && '\u200B'}
         <a
           ref={linkRef as RefObject<HTMLAnchorElement>}
           className={baseClasses}
@@ -210,6 +215,7 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   } else {
     return (
       <>
+        {needsLeadingSpace && '\u200B'}
         <button
           ref={linkRef as RefObject<HTMLButtonElement>}
           className={baseClasses}

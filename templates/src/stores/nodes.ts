@@ -350,6 +350,7 @@ export class NodesContext {
         break;
       case `text`:
         if (
+          dblClick &&
           node.nodeType === 'TagElement' &&
           'tagName' in node &&
           (node.tagName === 'a' || node.tagName === 'button')
@@ -363,12 +364,6 @@ export class NodesContext {
         }
         if (dblClick && ![`Markdown`].includes(node.nodeType)) {
           this.toolModeValStore.set({ value: 'styles' });
-          handleClickEventDefault(
-            node,
-            dblClick,
-            this.clickedParentLayer.get()
-          );
-        } else {
           handleClickEventDefault(
             node,
             dblClick,
@@ -1972,7 +1967,8 @@ export class NodesContext {
         });
         break;
     }
-    this.toolModeValStore.set({ value: 'text' });
+    this.toolModeValStore.set({ value: 'styles' });
+    this.notifyNode('root');
   }
 
   addTemplateImpressionNode(targetId: string, node: ImpressionNode) {

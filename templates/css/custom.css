@@ -43,26 +43,3 @@ body {
 @media (prefers-reduced-motion) {
   scroll-behavior: auto;
 }
-
-[contenteditable]:empty:before {
-  content: attr(data-placeholder);
-  color: #888;
-  font-style: italic;
-}
-
-/*
- * When an element is being edited,
- * add an invisible zero-width space *before* a link
- * if it's the very first child of its parent.
-*/
-[contenteditable="true"] > a[href]:first-child::before {
-  content: '\u200B';
-}
-
-/*
- * Add an invisible zero-width space *after* a link
- * if it's the very last child of its parent.
-*/
-[contenteditable="true"] > a[href]:last-child::after {
-  content: '\u200B';
-}
