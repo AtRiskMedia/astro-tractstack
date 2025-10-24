@@ -8,7 +8,6 @@ import {
   transformStoryFragmentForSave,
 } from '@/utils/etl/index';
 import {
-  fullContentMapStore,
   getPendingImageOperation,
   clearPendingImageOperation,
   pendingHomePageSlugStore,
@@ -55,6 +54,13 @@ const PROGRESS_PHASES = {
   FINALIZATION: 10,
 };
 
+const INDETERMINATE_STAGES: SaveStage[] = [
+  'SAVING_PANES',
+  'LINKING_FILES',
+  'PROCESSING_STYLES',
+  'UPDATING_HOME_PAGE',
+];
+
 export default function SaveModal({
   show,
   slug,
@@ -72,6 +78,8 @@ export default function SaveModal({
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const isSaving = useRef(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isIndeterminateStage, setIsIndeterminateStage] = useState(false);
+  const [ellipsis, setEllipsis] = useState('...');
   const isCreateMode = slug === 'create';
   const pendingHomePageSlug = pendingHomePageSlugStore.get();
   const goBackend =
@@ -84,12 +92,22 @@ export default function SaveModal({
   };
 
   useEffect(() => {
+    if (isIndeterminateStage) {
+      const interval = setInterval(() => {
+        setEllipsis((prev) => (prev.length < 3 ? prev + '.' : '.'));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [isIndeterminateStage]);
+
+  useEffect(() => {
     if (!show) {
       setStage('PREPARING');
       setProgress(0);
       setDebugMessages([]);
       setShowDebug(false);
       isSaving.current = false;
+      setIsIndeterminateStage(false);
       return;
     }
 
@@ -104,8 +122,7 @@ export default function SaveModal({
         setStage('PREPARING');
         setProgress(PROGRESS_PHASES.PREPARATION);
         addDebugMessage(
-          `Starting save process... (${
-            isContext ? 'Context' : 'StoryFragment'
+          `Starting save process... (${isContext ? 'Context' : 'StoryFragment'
           } mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
         );
 
@@ -186,8 +203,7 @@ export default function SaveModal({
               isUploading: true,
             });
             addDebugMessage(
-              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${
-                fileNode.id
+              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${fileNode.id
               } -> POST ${endpoint}`
             );
 
@@ -241,7 +257,7 @@ export default function SaveModal({
             const uploadProgress =
               totalUploadBytes > 0
                 ? (completedUploadBytes / totalUploadBytes) *
-                  PROGRESS_PHASES.UPLOADS
+                PROGRESS_PHASES.UPLOADS
                 : 0;
             setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
             setStageProgress((prev) => ({ ...prev, isUploading: false }));
@@ -258,8 +274,7 @@ export default function SaveModal({
             if (pendingOp && pendingOp.type === 'upload' && pendingOp.data) {
               const ogUploadEndpoint = `${goBackend}/api/v1/nodes/images/og`;
               addDebugMessage(
-                `Processing OG image ${i + 1}/${
-                  storyFragmentsWithPendingImages.length
+                `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length
                 }: ${fragment.id} -> POST ${ogUploadEndpoint}`
               );
 
@@ -311,7 +326,7 @@ export default function SaveModal({
               const uploadProgress =
                 totalUploadBytes > 0
                   ? (completedUploadBytes / totalUploadBytes) *
-                    PROGRESS_PHASES.UPLOADS
+                  PROGRESS_PHASES.UPLOADS
                   : 0;
               setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
               setStageProgress((prev) => ({ ...prev, isUploading: false }));
@@ -329,6 +344,7 @@ export default function SaveModal({
 
         if (dirtyPanes.length > 0) {
           setStage('SAVING_PANES');
+          setIsIndeterminateStage(true);
           setStageProgress({
             currentStep: 0,
             totalSteps: dirtyPanes.length,
@@ -420,6 +436,8 @@ export default function SaveModal({
                 : 'Unknown bulk save error';
             addDebugMessage(`Bulk pane save failed: ${errorMsg}`);
             throw new Error(`Failed to save panes in bulk: ${errorMsg}`);
+          } finally {
+            setIsIndeterminateStage(false);
           }
 
           setStageProgress({
@@ -432,8 +450,8 @@ export default function SaveModal({
             PROGRESS_PHASES.PROCESSING;
           setProgress(
             PROGRESS_PHASES.PREPARATION +
-              PROGRESS_PHASES.UPLOADS +
-              processingProgress
+            PROGRESS_PHASES.UPLOADS +
+            processingProgress
           );
         }
 
@@ -463,8 +481,7 @@ export default function SaveModal({
               const method = isCreateMode ? 'POST' : 'PUT';
 
               addDebugMessage(
-                `Processing story fragment ${i + 1}/${
-                  dirtyStoryFragments.length
+                `Processing story fragment ${i + 1}/${dirtyStoryFragments.length
                 }: ${fragment.id} -> ${method} ${endpoint}`
               );
 
@@ -511,8 +528,8 @@ export default function SaveModal({
               PROGRESS_PHASES.PROCESSING;
             setProgress(
               PROGRESS_PHASES.PREPARATION +
-                PROGRESS_PHASES.UPLOADS +
-                processingProgress
+              PROGRESS_PHASES.UPLOADS +
+              processingProgress
             );
           }
         }
@@ -524,6 +541,7 @@ export default function SaveModal({
 
         if (dirtyPanes.length > 0) {
           setStage('LINKING_FILES');
+          setIsIndeterminateStage(true);
           setProgress(baseFinalizationProgress);
           addDebugMessage('Starting file-pane relationship linking...');
 
@@ -574,9 +592,11 @@ export default function SaveModal({
           } else {
             addDebugMessage('No file relationships to link');
           }
+          setIsIndeterminateStage(false);
         }
 
         setStage('PROCESSING_STYLES');
+        setIsIndeterminateStage(true);
         setProgress(
           baseFinalizationProgress + PROGRESS_PHASES.FINALIZATION / 2
         );
@@ -639,10 +659,13 @@ export default function SaveModal({
             error instanceof Error ? error.message : 'Unknown error';
           addDebugMessage(`Styles processing failed: ${errorMsg}`);
           throw new Error(`Failed to process styles: ${errorMsg}`);
+        } finally {
+          setIsIndeterminateStage(false);
         }
 
         if (pendingHomePageSlug) {
           setStage('UPDATING_HOME_PAGE');
+          setIsIndeterminateStage(true);
           setProgress(
             baseFinalizationProgress + (PROGRESS_PHASES.FINALIZATION - 2)
           );
@@ -697,6 +720,8 @@ export default function SaveModal({
               error instanceof Error ? error.message : 'Unknown error';
             addDebugMessage(`Home page update failed: ${errorMsg}`);
             throw new Error(`Failed to update home page: ${errorMsg}`);
+          } finally {
+            setIsIndeterminateStage(false);
           }
         }
 
@@ -711,6 +736,7 @@ export default function SaveModal({
             : 'Unknown error occurred';
         setError(errorMessage);
         addDebugMessage(`Save process failed: ${errorMessage}`);
+        setIsIndeterminateStage(false);
       } finally {
         isSaving.current = false;
       }
@@ -736,30 +762,48 @@ export default function SaveModal({
     const modeText = isContext ? 'Context Pane' : 'Story Fragment';
     const actionText = isCreateMode ? 'Creating' : 'Updating';
 
+    let description = '';
     switch (stage) {
       case 'PREPARING':
-        return `Preparing ${actionText.toLowerCase()} ${modeText.toLowerCase()}...`;
+        description = `Preparing ${actionText.toLowerCase()} ${modeText.toLowerCase()}...`;
+        break;
       case 'SAVING_PENDING_FILES':
-        return `Uploading files${getProgressText()}`;
+        description = `Uploading files${getProgressText()}`;
+        break;
       case 'PROCESSING_OG_IMAGES':
-        return `Processing social images${getProgressText()}`;
+        description = `Processing social images${getProgressText()}`;
+        break;
       case 'SAVING_PANES':
-        return `${actionText} pane content...${getProgressText()}`;
+        description = `${actionText} pane content...`;
+        break;
       case 'SAVING_STORY_FRAGMENTS':
-        return `${actionText} story fragments...${getProgressText()}`;
+        description = `${actionText} story fragments...${getProgressText()}`;
+        break;
       case 'LINKING_FILES':
-        return 'Linking file relationships...';
+        description = 'Linking file relationships...';
+        break;
       case 'PROCESSING_STYLES':
-        return 'Processing styles...';
+        description = 'Processing styles...';
+        break;
       case 'UPDATING_HOME_PAGE':
-        return 'Updating home page...';
+        description = 'Updating home page...';
+        break;
       case 'COMPLETED':
-        return `${actionText} ${modeText.toLowerCase()} completed successfully!`;
+        description = `${actionText} ${modeText.toLowerCase()} completed successfully!`;
+        break;
       case 'ERROR':
-        return `Error: ${error}`;
+        description = `Error: ${error}`;
+        break;
       default:
-        return '';
+        description = '';
     }
+
+    // MODIFIED: Append animated ellipsis for indeterminate stages
+    if (isIndeterminateStage && INDETERMINATE_STAGES.includes(stage)) {
+      return description.replace(/\.\.\.$/, '') + ellipsis;
+    }
+
+    return description;
   };
 
   const handleOpenChange = (details: { open: boolean }) => {
@@ -832,6 +876,28 @@ export default function SaveModal({
       preventScroll={true}
     >
       <Portal>
+        <style>
+          {`
+            @keyframes stripes-move {
+              from { background-position: 40px 0; }
+              to { background-position: 0 0; }
+            }
+            .animate-stripes {
+              background-image: linear-gradient(
+                45deg,
+                rgba(255, 255, 255, 0.15) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.15) 50%,
+                rgba(255, 255, 255, 0.15) 75%,
+                transparent 75%,
+                transparent
+              );
+              background-size: 40px 40px;
+              animation: stripes-move 2s linear infinite;
+            }
+          `}
+        </style>
         <Dialog.Backdrop
           className="fixed inset-0 bg-black bg-opacity-75"
           style={{ zIndex: 9005 }}
@@ -863,9 +929,8 @@ export default function SaveModal({
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span
-                    className={`text-sm text-gray-700 ${
-                      stageProgress.isUploading ? 'animate-pulse' : ''
-                    }`}
+                    className={`text-sm text-gray-700 ${stageProgress.isUploading ? 'animate-pulse' : ''
+                      }`}
                   >
                     {getStageDescription()}
                   </span>
@@ -875,11 +940,11 @@ export default function SaveModal({
                     </span>
                   )}
                 </div>
-                <div className="h-2 w-full rounded-full bg-gray-200">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200"> {/* MODIFIED: Added overflow-hidden */}
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-2 rounded-full transition-all duration-300 ${ // MODIFIED: Added conditional class
                       stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
-                    }`}
+                      } ${isIndeterminateStage ? 'animate-stripes' : ''}`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -923,11 +988,10 @@ export default function SaveModal({
                       <button
                         onClick={handleSuccessClose}
                         disabled={isNavigating}
-                        className={`rounded px-4 py-2 text-white transition-colors ${
-                          isNavigating
+                        className={`rounded px-4 py-2 text-white transition-colors ${isNavigating
                             ? 'cursor-not-allowed bg-gray-400'
                             : 'bg-gray-600 hover:bg-gray-700'
-                        }`}
+                          }`}
                       >
                         Keep Editing
                       </button>

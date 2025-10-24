@@ -10,6 +10,7 @@ import LinkIcon from '@heroicons/react/24/solid/LinkIcon';
 import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
+import { classNames } from '@/utils/helpers'
 import type { ToolModeVal } from '@/types/compositorTypes';
 import { selectionStore, resetSelectionStore } from '@/stores/selection';
 
@@ -123,7 +124,7 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
       <nav
         id="mainNav"
         ref={navRef}
-        className="z-102 bg-mywhite md:bg-mywhite/70 fixed bottom-0 left-0 right-0 p-1.5 md:bottom-2 md:right-auto md:h-auto md:w-auto md:rounded-r-xl md:border md:border-black/5 md:p-2 md:shadow-lg md:backdrop-blur-sm"
+        className={classNames("z-102 bg-mywhite md:bg-mywhite/70 fixed bottom-0 left-0 right-0 p-1.5 md:bottom-2 md:right-auto md:h-auto md:w-auto md:rounded-r-xl md:border md:border-black/5 md:p-2 md:shadow-lg md:backdrop-blur-sm", isSelectionActive ? `outline-4 outline-red-600 outline-dashed` : ``)}
       >
         {!isSelectionActive && (
           <div className="flex flex-wrap justify-around gap-4 py-0.5 md:flex-nowrap md:justify-start md:gap-4 md:p-0">
