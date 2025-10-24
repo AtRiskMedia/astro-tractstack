@@ -32,7 +32,7 @@ import type { NodeProps } from '@/types/nodeProps';
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
 type EditState = 'viewing' | 'editing';
-const VERBOSE = true;
+const VERBOSE = false;
 
 export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
@@ -254,7 +254,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
   // For formatting nodes <em> and <strong> and <span>
   if (['em', 'strong', 'span'].includes(props.tagName)) {
-    const isEditorActive = toolModeVal === 'text' || toolModeVal === 'styles';
+    const isEditorActive = toolModeVal === 'styles';
     const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -271,10 +271,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     };
 
     let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
-
-    if (isEditorActive) {
-      baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
-    }
+    baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
 
     return createElement(
       Tag,

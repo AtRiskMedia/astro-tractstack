@@ -72,7 +72,6 @@ export const NodeText = (props: NodeProps) => {
           data-parent-text-node-id={props.nodeId}
           data-start-char-offset={startOffset}
           data-end-char-offset={endOffset}
-          style={{ userSelect: 'none' }}
         >
           {segment}
         </span>
@@ -82,5 +81,8 @@ export const NodeText = (props: NodeProps) => {
     return <>{wordSpans}</>;
   }
 
-  return <>{text === '' ? '\u00A0' : text}</>;
+  if (text.trim() === '') {
+    return <>{'\u00A0'}</>;
+  }
+  return <>{text}</>;
 };

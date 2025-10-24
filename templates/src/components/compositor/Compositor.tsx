@@ -283,25 +283,6 @@ export const Compositor = (props: CompositorProps) => {
   };
 
   useEffect(() => {
-    const seeTheTruth = (e: MouseEvent) => {
-      if (VERBOSE)
-        console.log(
-          '%c[CAPTURE PHASE] Mouse Down Event Fired. Target:',
-          'color: orange; font-size: 16px;',
-          e.target
-        );
-    };
-
-    if (VERBOSE) console.log('Attaching CAPTURE PHASE listener to window.');
-    window.addEventListener('mousedown', seeTheTruth, true);
-
-    return () => {
-      if (VERBOSE) console.log('Removing CAPTURE PHASE listener from window.');
-      window.removeEventListener('mousedown', seeTheTruth, true);
-    };
-  }, []);
-
-  useEffect(() => {
     fullContentMapStore.set(props.fullContentMap);
     hasAssemblyAIStore.set(props.config.HAS_AAI);
     urlParamsStore.set(props.urlParams);
@@ -418,14 +399,11 @@ export const Compositor = (props: CompositorProps) => {
           range as SelectionStoreState
         );
         if (newAnchorNodeId) {
-          settingsPanelStore.set({
-            action: 'style-element',
-            nodeId: newAnchorNodeId,
-            expanded: true,
-          });
+          ctx.handleInsertSignal('a', newAnchorNodeId);
         }
         resetSelectionStore();
       }
+      ctx.notifyNode('root');
     };
 
     handleAction();

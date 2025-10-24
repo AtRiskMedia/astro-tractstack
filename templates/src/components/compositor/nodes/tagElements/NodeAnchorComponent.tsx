@@ -12,9 +12,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const childNodeIDs = ctx.getChildNodeIDs(node?.parentId ?? '');
   const linkRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
 
-  // Check if this is a video link
-  const isVideo = !!node.buttonPayload?.bunnyPayload;
-
   // Get previous and next siblings for spacing logic
   const currentIndex = childNodeIDs.indexOf(nodeId);
   const nextNode =
@@ -187,12 +184,14 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const isEditMode = [`text`].includes(ctx.toolModeValStore.get().value);
 
   // Create appropriate element based on tagName
+  let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
+  baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
   if (tagName === 'a') {
     return (
       <>
         <a
           ref={linkRef as RefObject<HTMLAnchorElement>}
-          className={ctx.getNodeClasses(nodeId, viewportKeyStore.get().value)}
+          className={baseClasses}
           href={node.href}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
@@ -213,7 +212,7 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
       <>
         <button
           ref={linkRef as RefObject<HTMLButtonElement>}
-          className={ctx.getNodeClasses(nodeId, viewportKeyStore.get().value)}
+          className={baseClasses}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
           data-editable-button="true"

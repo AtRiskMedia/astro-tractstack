@@ -139,8 +139,8 @@ function extractNodesFromDOM(
 
       // Only skip if null or undefined, but keep empty strings and whitespace
       if (text !== null && text !== undefined) {
-        // Remove zero-width spaces from beginning and end
-        text = text.replace(/^\u200B+|\u200B+$/g, '');
+        // Remove zero-width spaces
+        text = text.replace(/\u200B/g, '');
 
         result.push({
           id: ulid(),
