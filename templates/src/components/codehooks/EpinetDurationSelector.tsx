@@ -512,7 +512,7 @@ const EpinetDurationSelector = ({
                             onBeliefFilterChange(filter.beliefSlug, value)
                           }
                           type="button"
-                          className={`flex items-center gap-x-1.5 rounded-full px-3 py-1 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
+                          className={`flex items-center gap-x-1.5 rounded-full px-3 py-1 text-sm font-bold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 ${
                             selectedValue === value
                               ? 'bg-cyan-600 text-white shadow-sm'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

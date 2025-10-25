@@ -2,7 +2,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
-import { ChevronUpDownIcon, CheckIcon } from '@heroicons/react/20/solid';
+import ChevronUpDownIcon from '@heroicons/react/20/solid/ChevronUpDownIcon';
+import CheckIcon from '@heroicons/react/20/solid/CheckIcon';
 import { NodesContext } from '@/stores/nodes';
 import {
   PanesPreviewGenerator,

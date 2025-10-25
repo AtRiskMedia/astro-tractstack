@@ -1,3 +1,5 @@
+// templates/src/components/compositor/nodes/RenderChildren.tsx
+
 import Node from '../Node';
 import type { NodeProps } from '@/types/nodeProps';
 import type { CompositorProps } from '../Compositor';
@@ -12,12 +14,7 @@ export const RenderChildren = (props: RenderChildrenProps) => {
   return (
     <>
       {children.map((id: string) => (
-        <Node
-          nodeId={id}
-          key={id}
-          ctx={nodeProps.ctx}
-          config={nodeProps.config}
-        />
+        <Node {...nodeProps} nodeId={id} key={id} />
       ))}
     </>
   );

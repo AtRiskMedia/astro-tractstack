@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Pagination } from '@ark-ui/react/pagination';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
+import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import type { CategorizedResults, FTSResult } from '@/types/tractstack';
 import type { FullContentMapItem } from '@/types/tractstack';
 import {

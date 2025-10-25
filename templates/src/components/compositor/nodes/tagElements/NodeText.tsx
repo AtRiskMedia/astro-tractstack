@@ -1,18 +1,88 @@
 import { getCtx } from '@/stores/nodes';
 import type { FlatNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
+import { useStore } from '@nanostores/react';
+import { selectionStore } from '@/stores/selection';
 
 export const NodeText = (props: NodeProps) => {
-  const node = getCtx(props).allNodes.get().get(props.nodeId) as FlatNode;
-  const parentNode = node.parentId
-    ? (getCtx(props).allNodes.get().get(node.parentId) as FlatNode)
-    : null;
-  const isLink = parentNode && [`a`, `button`].includes(parentNode.tagName);
+  const ctx = getCtx(props);
+  const node = ctx.allNodes.get().get(props.nodeId) as FlatNode;
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
+  const selection = useStore(selectionStore);
+
   if (!node) return <>ERROR MISSING NODE</>;
 
-  // Only add a space if we're not empty and don't end with a space
   const text = node.copy || '';
-  const needsSpace = text && !text.endsWith(' ') && !isLink;
 
-  return <>{text.trim() === '' ? '\u00A0' : text + (needsSpace ? ' ' : '')}</>;
+  if (toolModeVal === 'styles' && props.isSelectableText) {
+    let charOffset = 0;
+    const wordSpans = text.split(/(\s+)/).map((segment, index) => {
+      const startOffset = charOffset;
+      const endOffset = charOffset + segment.length;
+      charOffset = endOffset;
+
+      if (segment.trim() === '') {
+        return (
+          <span
+            key={index}
+            data-parent-text-node-id={props.nodeId}
+            data-start-char-offset={startOffset}
+            data-end-char-offset={endOffset}
+          >
+            {segment}
+          </span>
+        );
+      }
+
+      let isInSelection = false;
+      const currentNodeId = props.nodeId;
+
+      // Show outline if EITHER dragging OR selection is finalized and active
+      // AND the selection is within this current text node.
+      if (
+        (selection.isDragging || selection.isActive) &&
+        selection.startNodeId &&
+        selection.endNodeId &&
+        selection.startNodeId === currentNodeId && // Selection must start in this node
+        selection.endNodeId === currentNodeId // Selection must end in this node
+      ) {
+        const { startCharOffset, endCharOffset } = selection;
+
+        let selStartChar = startCharOffset;
+        let selEndChar = endCharOffset;
+
+        // Handle backward selection within this single node
+        if (startCharOffset > endCharOffset) {
+          selStartChar = endCharOffset;
+          selEndChar = startCharOffset;
+        }
+
+        // Check if current span falls within the character range
+        if (endOffset > selStartChar && startOffset < selEndChar) {
+          isInSelection = true;
+        }
+      }
+
+      return (
+        <span
+          key={index}
+          className={
+            isInSelection ? 'outline-dotted outline-2 outline-blue-600' : ''
+          }
+          data-parent-text-node-id={props.nodeId}
+          data-start-char-offset={startOffset}
+          data-end-char-offset={endOffset}
+        >
+          {segment}
+        </span>
+      );
+    });
+
+    return <>{wordSpans}</>;
+  }
+
+  if (text.trim() === '') {
+    return <>{'\u00A0'}</>;
+  }
+  return <>{text}</>;
 };

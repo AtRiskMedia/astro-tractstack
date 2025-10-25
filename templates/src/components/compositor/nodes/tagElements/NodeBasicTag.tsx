@@ -9,8 +9,15 @@ import {
   useState,
   createElement,
 } from 'react';
+import { useStore } from '@nanostores/react';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import { getCtx } from '@/stores/nodes';
-import { viewportKeyStore, isEditingStore } from '@/stores/storykeep';
+import {
+  viewportKeyStore,
+  isEditingStore,
+  settingsPanelStore,
+} from '@/stores/storykeep';
 import TabIndicator from './TabIndicator';
 import { RenderChildren } from '../RenderChildren';
 import {
@@ -21,8 +28,6 @@ import { cloneDeep } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
-import { useStore } from '@nanostores/react';
-import { XMarkIcon } from '@heroicons/react/20/solid';
 
 export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
 
@@ -34,7 +39,22 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const ctx = getCtx(props);
   const Tag = ctx.showGuids.get() ? `div` : props.tagName;
 
-  // Core state
+  if (props.tagName === 'span') {
+    const node = ctx.allNodes.get().get(props.nodeId);
+    const children = ctx.parentNodes.get().get(props.nodeId);
+
+    if (VERBOSE)
+      console.log(
+        '%c[NodeBasicTag] RENDERING SPAN',
+        'color: purple; font-weight: bold;',
+        {
+          nodeId: props.nodeId,
+          node: node ? cloneDeep(node) : 'NODE NOT FOUND',
+          childrenIds: children ? cloneDeep(children) : 'CHILDREN NOT FOUND',
+        }
+      );
+  }
+
   const [editState, setEditState] = useState<EditState>('viewing');
   const [showTabIndicator, setShowTabIndicator] = useState(false);
   const elementRef = useRef<HTMLElement | null>(null);
@@ -232,10 +252,18 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     }
   }, [editState]);
 
-  // For formatting nodes <em> and <strong>
-  if (['em', 'strong'].includes(props.tagName)) {
-    const isEditorActive = toolModeVal === 'text' || toolModeVal === 'styles';
-
+  // For formatting nodes <em> and <strong> and <span>
+  if (['em', 'strong', 'span'].includes(props.tagName)) {
+    const isEditorActive = toolModeVal === 'styles';
+    const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      settingsPanelStore.set({
+        action: 'style-element',
+        nodeId: nodeId,
+        expanded: true,
+      });
+    };
     const handleUnwrapClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -243,10 +271,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     };
 
     let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
-
-    if (isEditorActive) {
-      baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
-    }
+    baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
 
     return createElement(
       Tag,
@@ -272,16 +297,29 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         isEditorActive && (
           <span
             key="chip"
-            className="absolute z-10 select-none"
-            style={{ top: '-.85rem', right: '0' }}
+            className="absolute z-10 flex select-none gap-x-1"
+            data-attr="exclude"
+            style={{ top: '-0.9rem', left: '0' }}
           >
+            {props.tagName === 'span' && (
+              <button
+                type="button"
+                onClick={handleStyleClick}
+                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
+                aria-label="Style selection"
+                data-attr="exclude"
+              >
+                <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleUnwrapClick}
               className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
               aria-label="Remove formatting"
+              data-attr="exclude"
             >
-              <XMarkIcon className="h-3.5 w-3.5" />
+              <XMarkIcon className="h-3.5 w-3.5" data-attr="exclude" />
             </button>
           </span>
         ),
@@ -328,7 +366,11 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const saveAndExit = () => {
     if (editState !== 'editing') return;
 
-    const currentContent = elementRef.current?.innerHTML || '';
+    // Use an in-memory element to safely parse and strip UI chrome from the content.
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = elementRef.current?.innerHTML || '';
+    tempDiv.querySelectorAll('[data-attr="exclude"]');
+    const currentContent = tempDiv.innerHTML;
 
     if (currentContent !== originalContentRef.current) {
       try {
@@ -614,6 +656,10 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClick = (e: MouseEvent) => {
+    if (toolModeVal === 'styles') {
+      console.log(`skipping handleClick on purpose`);
+      return;
+    }
     if (
       isEditableMode &&
       (e.target instanceof HTMLAnchorElement ||
@@ -735,7 +781,14 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,
         },
-        <RenderChildren children={children} nodeProps={props} />
+        <RenderChildren
+          children={children}
+          nodeProps={{
+            ...props,
+            nodeId: nodeId,
+            isSelectableText: props.isSelectableText,
+          }}
+        />
       )}
       {showTabIndicator && editState === 'editing' && (
         <TabIndicator onTab={createNextParagraph} parentNodeId={nodeId} />

@@ -56,7 +56,8 @@ const StyleElementUpdatePanel = ({
   // Initialize values from current node state
   useEffect(() => {
     const hasOverride = node.overrideClasses?.mobile?.[className] !== undefined;
-    setIsOverridden(hasOverride);
+    const isSpan = node.tagName === 'span';
+    setIsOverridden(isSpan || hasOverride);
 
     styleElementInfoStore.set({
       markdownParentId: parentNode.id,
@@ -278,12 +279,15 @@ const StyleElementUpdatePanel = ({
           type="checkbox"
           checked={isOverridden}
           onChange={(e) => handleToggleOverride(e.target.checked)}
-          className="border-mydarkgrey text-myorange focus:ring-myorange h-4 w-4 rounded"
+          disabled={node.tagName === 'span'}
+          className="border-mydarkgrey text-myorange focus:ring-myorange h-4 w-4 rounded disabled:opacity-50"
         />
         <span className="text-mydarkgrey text-sm">
-          {isOverridden
-            ? 'Override mode. Styling this element only.'
-            : 'You are in quick styles mode. Click to override this element.'}
+          {node.tagName === 'span'
+            ? 'Styling this selection (Override mode).'
+            : isOverridden
+              ? 'Override mode. Styling this element only.'
+              : 'You are in quick styles mode. Click to override this element.'}
         </span>
       </div>
 

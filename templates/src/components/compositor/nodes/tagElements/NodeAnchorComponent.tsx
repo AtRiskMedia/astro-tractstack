@@ -2,7 +2,6 @@ import { useEffect, useRef, type RefObject, type MouseEvent } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from '../RenderChildren';
-import { PlayButton } from '@/components/compositor/elements/PlayButton';
 import type { FlatNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
@@ -13,11 +12,12 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const childNodeIDs = ctx.getChildNodeIDs(node?.parentId ?? '');
   const linkRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
 
-  // Check if this is a video link
-  const isVideo = !!node.buttonPayload?.bunnyPayload;
-
-  // Get previous and next siblings for spacing logic
+  // Get current position and next sibling for spacing logic
   const currentIndex = childNodeIDs.indexOf(nodeId);
+
+  // Determine if a leading zero-width space is needed when this is the first child.
+  const needsLeadingSpace = currentIndex === 0;
+
   const nextNode =
     currentIndex < childNodeIDs.length - 1
       ? (ctx.allNodes.get().get(childNodeIDs[currentIndex + 1]) as FlatNode)
@@ -188,12 +188,15 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const isEditMode = [`text`].includes(ctx.toolModeValStore.get().value);
 
   // Create appropriate element based on tagName
+  let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
+  baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
   if (tagName === 'a') {
     return (
       <>
+        {needsLeadingSpace && '\u200B'}
         <a
           ref={linkRef as RefObject<HTMLAnchorElement>}
-          className={ctx.getNodeClasses(nodeId, viewportKeyStore.get().value)}
+          className={baseClasses}
           href={node.href}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
@@ -205,12 +208,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
             children={ctx.getChildNodeIDs(nodeId)}
             nodeProps={props}
           />
-          {isVideo && (
-            <>
-              {` `}
-              <PlayButton />
-            </>
-          )}
         </a>
         {needsTrailingSpace && ' '}
       </>
@@ -218,9 +215,10 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   } else {
     return (
       <>
+        {needsLeadingSpace && '\u200B'}
         <button
           ref={linkRef as RefObject<HTMLButtonElement>}
-          className={ctx.getNodeClasses(nodeId, viewportKeyStore.get().value)}
+          className={baseClasses}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
           data-editable-button="true"
@@ -234,12 +232,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
             children={ctx.getChildNodeIDs(nodeId)}
             nodeProps={props}
           />
-          {isVideo && (
-            <>
-              {` `}
-              <PlayButton />
-            </>
-          )}
         </button>
         {needsTrailingSpace && ' '}
       </>

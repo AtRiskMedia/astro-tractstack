@@ -8,7 +8,8 @@ import {
 } from 'react';
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { useSearch } from '@/hooks/useSearch';
 import SearchResults from './SearchResults';
 import type {

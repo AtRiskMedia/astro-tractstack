@@ -517,7 +517,7 @@ export default function InteractiveDisclosureWidget({
           <button
             type="button"
             onClick={() => handleModeChange('belief')}
-            className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${
+            className={`relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-bold ring-1 ring-inset ring-gray-300 focus:z-10 ${
               mode === 'belief'
                 ? 'bg-cyan-600 text-white'
                 : 'bg-white text-gray-900 hover:bg-gray-50'
@@ -528,7 +528,7 @@ export default function InteractiveDisclosureWidget({
           <button
             type="button"
             onClick={() => handleModeChange('open')}
-            className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-10 ${
+            className={`relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-bold ring-1 ring-inset ring-gray-300 focus:z-10 ${
               mode === 'open'
                 ? 'bg-cyan-600 text-white'
                 : 'bg-white text-gray-900 hover:bg-gray-50'

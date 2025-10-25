@@ -43,9 +43,3 @@ body {
 @media (prefers-reduced-motion) {
   scroll-behavior: auto;
 }
-
-[contenteditable]:empty:before {
-  content: attr(data-placeholder);
-  color: #888;
-  font-style: italic;
-}

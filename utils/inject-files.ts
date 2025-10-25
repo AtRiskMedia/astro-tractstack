@@ -382,12 +382,6 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/components/compositor/elements/Svg.tsx'),
       dest: 'src/components/compositor/elements/Svg.tsx',
     },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/elements/PlayButton.tsx'
-      ),
-      dest: 'src/components/compositor/elements/PlayButton.tsx',
-    },
     // Compositor panels
     {
       src: resolve(
@@ -583,6 +577,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/stores/nodesHistory.ts'),
       dest: 'src/stores/nodesHistory.ts',
+    },
+    {
+      src: resolve('../templates/src/stores/selection.ts'),
+      dest: 'src/stores/selection.ts',
     },
 
     // AAI utils
