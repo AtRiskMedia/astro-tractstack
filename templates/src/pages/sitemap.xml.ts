@@ -2,12 +2,26 @@ import type { APIRoute } from '@/types/astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 
 // Helper functions for date formatting
-function dateToUnixTimestamp(dateString: string): number {
-  return new Date(dateString).getTime();
+function dateToUnixTimestamp(dateString: string | undefined | null): number {
+  if (!dateString) {
+    return 0;
+  }
+  const timestamp = new Date(dateString).getTime();
+  // Return 0 if the date string is invalid
+  return isNaN(timestamp) ? 0 : timestamp;
 }
 
-function formatDateToYYYYMMDD(dateString: string): string {
+function formatDateToYYYYMMDD(
+  dateString: string | undefined | null
+): string | null {
+  if (!dateString) {
+    return null;
+  }
   const date = new Date(dateString);
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    return null;
+  }
   return date.toISOString().split('T')[0];
 }
 
@@ -54,16 +68,26 @@ export const GET: APIRoute = async ({ request }) => {
 
   const entries = contentMap
     .map((c: any) => {
+      // Use a single date, fallback to created, check for validity
+      const formatted = formatDateToYYYYMMDD(c.changed || c.created);
+
+      // If we have no valid date or no slug, skip this entry.
+      if (!formatted || !c.slug) {
+        return null;
+      }
+
       if (c.type === 'StoryFragment') {
         const thisPriority = c.slug === homeSlug ? '1.0' : '0.8';
         const thisUrl =
           c.slug === homeSlug
             ? new URL('/', siteUrl).href
             : new URL(c.slug, siteUrl).href;
-        const thisChanged = (c?.changed && dateToUnixTimestamp(c.changed)) || 0;
+
+        const thisChanged = dateToUnixTimestamp(c.changed);
         const thisCreated = dateToUnixTimestamp(c.created);
+
         const daysDelta = (thisChanged - thisCreated) / (1000 * 60 * 60 * 24);
-        const formatted = formatDateToYYYYMMDD(c.changed || c.created);
+
         const thisFreq =
           daysDelta < 3
             ? 'daily'
@@ -74,12 +98,15 @@ export const GET: APIRoute = async ({ request }) => {
                 : 'yearly';
         return `<url><loc>${thisUrl}</loc><lastmod>${formatted}</lastmod><changefreq>${thisFreq}</changefreq><priority>${thisPriority}</priority></url>`;
       }
+
       if (c.type === 'Pane' && c.isContext) {
         const thisUrl = new URL(`context/${c.slug}`, siteUrl).href;
-        const thisChanged = (c?.changed && dateToUnixTimestamp(c.changed)) || 0;
+
+        const thisChanged = dateToUnixTimestamp(c.changed);
         const thisCreated = dateToUnixTimestamp(c.created);
+
         const daysDelta = (thisChanged - thisCreated) / (1000 * 60 * 60 * 24);
-        const formatted = formatDateToYYYYMMDD(c.changed || c.created);
+
         const thisFreq =
           daysDelta < 3
             ? 'daily'
@@ -90,8 +117,11 @@ export const GET: APIRoute = async ({ request }) => {
                 : 'yearly';
         return `<url><loc>${thisUrl}</loc><lastmod>${formatted}</lastmod><changefreq>${thisFreq}</changefreq><priority>0.4</priority></url>`;
       }
+
+      // Return null for any other types we don't care about
+      return null;
     })
-    .filter((n) => n);
+    .filter((n) => n); // This filter removes all the null entries
 
   const xmlBody = entries.join('');
   const xml = `${xmlTop}${xmlBody}${xmlBottom}`;
