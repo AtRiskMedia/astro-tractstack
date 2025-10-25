@@ -37,12 +37,12 @@ export interface FormStateReturn<T> {
   updateField: (field: keyof T, value: any) => void;
   save: () => Promise<void>;
   cancel: () => void;
-  resetToState: (newState: T) => void; // NEW: Reset form to new baseline state
+  resetToState: (newState: T) => void;
   isDirty: boolean;
   isValid: boolean;
   errors: FieldErrors;
-  saveState: SaveState; // NEW: Track save operation state
-  errorMessage: string | null; // NEW: Save error message
+  saveState: SaveState;
+  errorMessage: string | null;
 }
 
 /**
@@ -179,7 +179,6 @@ export function useFormState<T>(
     setErrorMessage(null);
   }, [originalState]);
 
-  // NEW: Reset to new state (for external state updates)
   const resetToState = useCallback((newState: T) => {
     setOriginalState(newState);
     setState(newState);

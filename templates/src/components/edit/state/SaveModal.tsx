@@ -122,7 +122,8 @@ export default function SaveModal({
         setStage('PREPARING');
         setProgress(PROGRESS_PHASES.PREPARATION);
         addDebugMessage(
-          `Starting save process... (${isContext ? 'Context' : 'StoryFragment'
+          `Starting save process... (${
+            isContext ? 'Context' : 'StoryFragment'
           } mode, ${isCreateMode ? 'CREATE' : 'UPDATE'})`
         );
 
@@ -203,7 +204,8 @@ export default function SaveModal({
               isUploading: true,
             });
             addDebugMessage(
-              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${fileNode.id
+              `Processing file ${i + 1}/${nodesWithPendingFiles.length}: ${
+                fileNode.id
               } -> POST ${endpoint}`
             );
 
@@ -257,7 +259,7 @@ export default function SaveModal({
             const uploadProgress =
               totalUploadBytes > 0
                 ? (completedUploadBytes / totalUploadBytes) *
-                PROGRESS_PHASES.UPLOADS
+                  PROGRESS_PHASES.UPLOADS
                 : 0;
             setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
             setStageProgress((prev) => ({ ...prev, isUploading: false }));
@@ -274,7 +276,8 @@ export default function SaveModal({
             if (pendingOp && pendingOp.type === 'upload' && pendingOp.data) {
               const ogUploadEndpoint = `${goBackend}/api/v1/nodes/images/og`;
               addDebugMessage(
-                `Processing OG image ${i + 1}/${storyFragmentsWithPendingImages.length
+                `Processing OG image ${i + 1}/${
+                  storyFragmentsWithPendingImages.length
                 }: ${fragment.id} -> POST ${ogUploadEndpoint}`
               );
 
@@ -326,7 +329,7 @@ export default function SaveModal({
               const uploadProgress =
                 totalUploadBytes > 0
                   ? (completedUploadBytes / totalUploadBytes) *
-                  PROGRESS_PHASES.UPLOADS
+                    PROGRESS_PHASES.UPLOADS
                   : 0;
               setProgress(PROGRESS_PHASES.PREPARATION + uploadProgress);
               setStageProgress((prev) => ({ ...prev, isUploading: false }));
@@ -450,8 +453,8 @@ export default function SaveModal({
             PROGRESS_PHASES.PROCESSING;
           setProgress(
             PROGRESS_PHASES.PREPARATION +
-            PROGRESS_PHASES.UPLOADS +
-            processingProgress
+              PROGRESS_PHASES.UPLOADS +
+              processingProgress
           );
         }
 
@@ -481,7 +484,8 @@ export default function SaveModal({
               const method = isCreateMode ? 'POST' : 'PUT';
 
               addDebugMessage(
-                `Processing story fragment ${i + 1}/${dirtyStoryFragments.length
+                `Processing story fragment ${i + 1}/${
+                  dirtyStoryFragments.length
                 }: ${fragment.id} -> ${method} ${endpoint}`
               );
 
@@ -528,8 +532,8 @@ export default function SaveModal({
               PROGRESS_PHASES.PROCESSING;
             setProgress(
               PROGRESS_PHASES.PREPARATION +
-              PROGRESS_PHASES.UPLOADS +
-              processingProgress
+                PROGRESS_PHASES.UPLOADS +
+                processingProgress
             );
           }
         }
@@ -798,7 +802,6 @@ export default function SaveModal({
         description = '';
     }
 
-    // MODIFIED: Append animated ellipsis for indeterminate stages
     if (isIndeterminateStage && INDETERMINATE_STAGES.includes(stage)) {
       return description.replace(/\.\.\.$/, '') + ellipsis;
     }
@@ -929,8 +932,9 @@ export default function SaveModal({
               <div className="mb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span
-                    className={`text-sm text-gray-700 ${stageProgress.isUploading ? 'animate-pulse' : ''
-                      }`}
+                    className={`text-sm text-gray-700 ${
+                      stageProgress.isUploading ? 'animate-pulse' : ''
+                    }`}
                   >
                     {getStageDescription()}
                   </span>
@@ -940,11 +944,12 @@ export default function SaveModal({
                     </span>
                   )}
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200"> {/* MODIFIED: Added overflow-hidden */}
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  {' '}
                   <div
-                    className={`h-2 rounded-full transition-all duration-300 ${ // MODIFIED: Added conditional class
+                    className={`h-2 rounded-full transition-all duration-300 ${
                       stage === 'ERROR' ? 'bg-red-500' : 'bg-green-500'
-                      } ${isIndeterminateStage ? 'animate-stripes' : ''}`}
+                    } ${isIndeterminateStage ? 'animate-stripes' : ''}`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -988,10 +993,11 @@ export default function SaveModal({
                       <button
                         onClick={handleSuccessClose}
                         disabled={isNavigating}
-                        className={`rounded px-4 py-2 text-white transition-colors ${isNavigating
+                        className={`rounded px-4 py-2 text-white transition-colors ${
+                          isNavigating
                             ? 'cursor-not-allowed bg-gray-400'
                             : 'bg-gray-600 hover:bg-gray-700'
-                          }`}
+                        }`}
                       >
                         Keep Editing
                       </button>
