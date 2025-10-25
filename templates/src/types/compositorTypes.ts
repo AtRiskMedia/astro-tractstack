@@ -329,6 +329,7 @@ export interface ResourceNode extends BaseNode {
   oneliner: string;
   optionsPayload: any;
   category?: string;
+  categorySlug?: string;
   actionLisp?: string;
 }
 
