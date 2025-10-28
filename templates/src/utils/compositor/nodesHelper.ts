@@ -352,14 +352,18 @@ export function processRichTextToNodes(
 
   // Process each node to restore interactive element properties
   parsedNodes.forEach((node) => {
-    if (['a', 'button'].includes(node.tagName)) {
+    if (['a', 'button', 'span'].includes(node.tagName)) {
       const matchingOriginalNode = findMatchingNode(node, originalNodes);
-
       if (matchingOriginalNode) {
-        // Preserve properties from the original node
-        node.buttonPayload = matchingOriginalNode.buttonPayload;
-        if (node.tagName === 'a' && matchingOriginalNode.href) {
-          node.href = matchingOriginalNode.href;
+        if (node.tagName === 'a') {
+          if (matchingOriginalNode.href) {
+            node.href = matchingOriginalNode.href;
+          }
+        } else if (node.tagName === 'button') {
+          node.buttonPayload = matchingOriginalNode.buttonPayload;
+        } else if (node.tagName === 'span') {
+          node.elementCss = matchingOriginalNode.elementCss;
+          node.overrideClasses = matchingOriginalNode.overrideClasses;
         }
       } else if (onInsertSignal) {
         // New interactive element detected, trigger insert signal
@@ -381,49 +385,64 @@ export function findMatchingNode(
   newNode: FlatNode,
   originalNodes: FlatNode[]
 ): FlatNode | undefined {
-  if (newNode.tagName === 'a' && newNode.href) {
-    // Exact href match for links
-    const hrefMatch = originalNodes.find(
-      (node) => node.tagName === 'a' && node.href === newNode.href
-    );
-    if (hrefMatch) return hrefMatch;
-
-    // Domain-based partial match
-    const partialMatch = originalNodes.find((node) => {
-      if (node.tagName !== 'a' || !node.href || !newNode.href) return false;
-      try {
-        const origDomain = new URL(node.href).hostname;
-        const newDomain = new URL(newNode.href).hostname;
-        return origDomain === newDomain;
-      } catch {
-        return false;
+  switch (newNode.tagName) {
+    case 'a': {
+      if (!newNode.href) {
+        break;
       }
-    });
-    if (partialMatch) return partialMatch;
-  }
 
-  if (newNode.tagName === 'button') {
-    const newText = getNodeText(newNode);
-    const buttonMatches = originalNodes.filter(
-      (node) => node.tagName === 'button'
-    );
-
-    for (const button of buttonMatches) {
-      const buttonText = getNodeText(button);
-      if (
-        buttonText.includes(newText) ||
-        newText.includes(buttonText) ||
-        calculateSimilarity(buttonText, newText) > 0.7
-      ) {
-        return button;
+      const hrefMatch = originalNodes.find(
+        (node) => node.tagName === 'a' && node.href === newNode.href
+      );
+      if (hrefMatch) {
+        return hrefMatch;
       }
+
+      const partialMatch = originalNodes.find((node) => {
+        if (node.tagName !== 'a' || !node.href || !newNode.href) {
+          return false;
+        }
+        try {
+          const origDomain = new URL(node.href).hostname;
+          const newDomain = new URL(newNode.href).hostname;
+          return origDomain === newDomain;
+        } catch {
+          return false;
+        }
+      });
+      if (partialMatch) {
+        return partialMatch;
+      }
+
+      break;
     }
 
-    if (
-      buttonMatches.length === 1 &&
-      originalNodes.filter((n) => n.tagName === 'button').length === 1
-    ) {
-      return buttonMatches[0];
+    case 'button':
+    case 'span': {
+      const newText = getNodeText(newNode);
+      const matches = originalNodes.filter(
+        (node) => node.tagName === newNode.tagName
+      );
+
+      for (const match of matches) {
+        const matchText = getNodeText(match);
+        if (
+          matchText.includes(newText) ||
+          newText.includes(matchText) ||
+          calculateSimilarity(matchText, newText) > 0.7
+        ) {
+          return match;
+        }
+      }
+
+      if (
+        matches.length === 1 &&
+        originalNodes.filter((n) => n.tagName === newNode.tagName).length === 1
+      ) {
+        return matches[0];
+      }
+
+      break;
     }
   }
 

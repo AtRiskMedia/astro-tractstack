@@ -2,14 +2,15 @@ import { useState, useMemo } from 'react';
 import { useStore } from '@nanostores/react';
 import { RadioGroup } from '@ark-ui/react/radio-group';
 import CheckCircleIcon from '@heroicons/react/20/solid/CheckCircleIcon';
-import CubeTransparentIcon from '@heroicons/react/24/outline/CubeTransparentIcon';
+//import CubeTransparentIcon from '@heroicons/react/24/outline/CubeTransparentIcon';
 import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
-//import NewspaperIcon from '@heroicons/react/24/outline/NewspaperIcon';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import AddPanePanel from './AddPanePanel';
 import PageCreationGen from './PageGen';
 import PageCreationSpecial from './PageGenSpecial';
-import { hasAssemblyAIStore, fullContentMapStore } from '@/stores/storykeep';
+import {
+  /* hasAssemblyAIStore,*/ fullContentMapStore,
+} from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
 
 interface PageCreationSelectorProps {
@@ -61,6 +62,7 @@ export const PageCreationSelector = ({
         icon: DocumentIcon,
         active: true,
       },
+      /*
       ...(hasAssemblyAIStore.get()
         ? [
             {
@@ -73,6 +75,7 @@ export const PageCreationSelector = ({
             },
           ]
         : []),
+      */
     ];
 
     //const featuredMode = {

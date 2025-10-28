@@ -379,8 +379,9 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           .filter(
             (childNode): childNode is FlatNode =>
               'tagName' in childNode &&
-              ['a', 'button'].includes(childNode.tagName as string)
+              ['a', 'button', 'span'].includes(childNode.tagName as string)
           ) as FlatNode[];
+        if (VERBOSE) console.log('originalNodes to save:', originalNodes);
 
         const parsedNodes = processRichTextToNodes(
           currentContent,

@@ -430,22 +430,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/edit/pane/AddPanePanel_codehook.tsx',
     },
     {
-      src: resolve(
-        '../templates/src/components/edit/pane/AddPanePanel_newAICopy_modal.tsx'
-      ),
-      dest: 'src/components/edit/pane/AddPanePanel_newAICopy_modal.tsx',
+      src: resolve('../templates/src/components/edit/pane/AiPaneGenerator.tsx'),
+      dest: 'src/components/edit/pane/AiPaneGenerator.tsx',
     },
     {
-      src: resolve(
-        '../templates/src/components/edit/pane/AddPanePanel_newAICopy.tsx'
-      ),
-      dest: 'src/components/edit/pane/AddPanePanel_newAICopy.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/edit/pane/AddPanePanel_newCopyMode.tsx'
-      ),
-      dest: 'src/components/edit/pane/AddPanePanel_newCopyMode.tsx',
+      src: resolve('../templates/src/components/edit/pane/AiPanePreview.tsx'),
+      dest: 'src/components/edit/pane/AiPanePreview.tsx',
     },
     {
       src: resolve(
@@ -607,6 +597,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/etl/loader.ts',
     },
     // Compositor utils
+    {
+      src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),
+      dest: 'src/utils/compositor/aiPaneParser.ts',
+    },
     {
       src: resolve('../templates/src/utils/compositor/processMarkdown.ts'),
       dest: 'src/utils/compositor/processMarkdown.ts',

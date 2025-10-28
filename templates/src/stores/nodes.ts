@@ -55,7 +55,7 @@ import { selectionStore } from '@/stores/selection';
 import type { SelectionRange, SelectionStoreState } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
-const blockedClickNodes = new Set<string>(['em', 'strong']);
+const blockedClickNodes = new Set<string>(['em', 'strong', 'span']);
 export const ROOT_NODE_NAME = 'root';
 export const UNDO_REDO_HISTORY_CAPACITY = 500;
 const VERBOSE = false;
@@ -571,10 +571,11 @@ export class NodesContext {
     nodeId: string,
     offset: number
   ): { left: FlatNode; right: FlatNode | null } {
-    console.log(`%c[_splitTextNode] CALLED`, 'color: #f59e0b;', {
-      nodeId,
-      offset,
-    });
+    if (VERBOSE)
+      console.log(`%c[_splitTextNode] CALLED`, 'color: #f59e0b;', {
+        nodeId,
+        offset,
+      });
 
     const allNodes = new Map(this.allNodes.get());
     const parentNodes = new Map(this.parentNodes.get());
@@ -607,11 +608,12 @@ export class NodesContext {
 
     // Handle split at the beginning of the string (THE FIX)
     if (offset === 0) {
-      console.log(
-        `%c[_splitTextNode] OFFSET 0 DETECTED. Creating empty left node.`,
-        'color: #f59e0b; font-weight: bold;',
-        { nodeId, text }
-      );
+      if (VERBOSE)
+        console.log(
+          `%c[_splitTextNode] OFFSET 0 DETECTED. Creating empty left node.`,
+          'color: #f59e0b; font-weight: bold;',
+          { nodeId, text }
+        );
 
       // Create a new empty node for the "left" half
       const leftNode: FlatNode = {
@@ -665,11 +667,12 @@ export class NodesContext {
     }
 
     // Standard split (offset > 0 and < text.length)
-    console.log(
-      `%c[_splitTextNode] Performing standard split...`,
-      'color: green;',
-      { text, offset }
-    );
+    if (VERBOSE)
+      console.log(
+        `%c[_splitTextNode] Performing standard split...`,
+        'color: green;',
+        { text, offset }
+      );
 
     const leftText = text.substring(0, offset);
     const rightText = text.substring(offset);

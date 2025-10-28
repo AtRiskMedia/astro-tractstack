@@ -24,13 +24,11 @@ import {
   hasAssemblyAIStore,
 } from '@/stores/storykeep';
 import { templateCategories } from '@/utils/compositor/templateMarkdownStyles';
-import { AddPanePanel_newAICopy } from './AddPanePanel_newAICopy';
-import { AddPaneNewCopyMode, type CopyMode } from './AddPanePanel_newCopyMode';
+import { AiPaneGenerator } from './AiPaneGenerator';
 import { AddPaneNewCustomCopy } from './AddPanePanel_newCustomCopy';
-import { getTitleSlug } from '@/utils/aai/getTitleSlug';
-import { fullContentMapStore } from '@/stores/storykeep';
 import { themes, type Theme } from '@/types/tractstack';
-import { PaneAddMode } from '@/types/compositorTypes';
+import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
+import { useStore } from '@nanostores/react';
 
 interface AddPaneNewPanelProps {
   nodeId: string;
@@ -58,47 +56,46 @@ interface TemplateCategory {
 
 const ITEMS_PER_PAGE = 8;
 
+type Mode = 'template' | 'custom' | 'ai';
+
 const AddPaneNewPanel = ({
   nodeId,
   first,
-  setMode,
+  setMode: setParentMode, // Renamed prop to avoid conflict with local state
   ctx,
   isStoryFragment = false,
   isContextPane = false,
 }: AddPaneNewPanelProps) => {
-  const brand = brandColourStore.get();
-  const hasAssemblyAI = hasAssemblyAIStore.get();
-  const [copyMode, setCopyMode] = useState<CopyMode>('design');
+  const brand = useStore(brandColourStore);
+  const hasAssemblyAI = useStore(hasAssemblyAIStore);
+  const [mode, setMode] = useState<Mode>('template'); // Local mode state
   const [customMarkdown, setCustomMarkdown] = useState<string>(`...`);
   const [previews, setPreviews] = useState<PreviewPane[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
   const [selectedTheme, setSelectedTheme] = useState<Theme>(
-    preferredThemeStore.get()
+    useStore(preferredThemeStore)
   );
   const [useOddVariant, setUseOddVariant] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<TemplateCategory>(
     templateCategories[isContextPane ? 1 : first ? 4 : 0]
   );
   const [isInserting, setIsInserting] = useState(false);
-  const [aiContentGenerated, setAiContentGenerated] = useState(false);
   const [fragmentsToGenerate, setFragmentsToGenerate] = useState<
     PanePreviewRequest[]
   >([]);
-  const shouldShowDesigns = copyMode !== 'ai' || aiContentGenerated;
 
   const categoryCollection = useMemo(() => {
-    const categories =
-      copyMode === `ai` || isContextPane
-        ? [templateCategories[1]]
-        : templateCategories;
+    const categories = isContextPane
+      ? [templateCategories[1]]
+      : templateCategories;
 
     return createListCollection({
       items: categories,
       itemToValue: (item) => item.id,
       itemToString: (item) => item.title,
     });
-  }, [copyMode, isContextPane]);
+  }, [isContextPane]);
 
   const themesCollection = useMemo(() => {
     return createListCollection({
@@ -109,38 +106,25 @@ const AddPaneNewPanel = ({
   }, []);
 
   const filteredTemplates = useMemo(() => {
-    if (copyMode === `ai` || isContextPane)
-      return templateCategories[1].getTemplates(
-        selectedTheme,
-        brand,
-        useOddVariant
-      );
-    if (isContextPane)
-      return templateCategories[1].getTemplates(
-        selectedTheme,
-        brand,
-        useOddVariant
-      );
     return selectedCategory.getTemplates(selectedTheme, brand, useOddVariant);
-  }, [selectedTheme, useOddVariant, selectedCategory, copyMode, isContextPane]);
+  }, [selectedTheme, useOddVariant, selectedCategory, brand]);
 
   useEffect(() => {
-    if (copyMode !== 'ai') setAiContentGenerated(false);
-    if (copyMode !== 'ai' || isContextPane)
-      setSelectedCategory(templateCategories[first ? 4 : 0]);
-  }, [copyMode, first, isContextPane]);
-
-  const handleAiContentGenerated = (content: string) => {
-    setCustomMarkdown(content);
-    setAiContentGenerated(true);
-  };
+    if (isContextPane) {
+      setSelectedCategory(templateCategories[1]);
+    } else if (first) {
+      setSelectedCategory(templateCategories[4]);
+    } else {
+      setSelectedCategory(templateCategories[0]);
+    }
+  }, [isContextPane, first]);
 
   useEffect(() => {
     const newPreviews = filteredTemplates.map((template, index: number) => {
-      const ctx = new NodesContext();
-      ctx.addNode(createEmptyStorykeep('tmp'));
+      const previewCtx = new NodesContext();
+      previewCtx.addNode(createEmptyStorykeep('tmp'));
       const thisTemplate =
-        copyMode === 'custom' || (copyMode === 'ai' && aiContentGenerated)
+        mode === 'custom'
           ? {
               ...template,
               markdown: template.markdown && {
@@ -149,13 +133,13 @@ const AddPaneNewPanel = ({
               },
             }
           : template;
-      ctx.addTemplatePane('tmp', thisTemplate);
-      return { ctx, template: thisTemplate, index };
+      previewCtx.addTemplatePane('tmp', thisTemplate);
+      return { ctx: previewCtx, template: thisTemplate, index };
     });
     setPreviews(newPreviews);
     setCurrentPage(0);
     setRenderedPages(new Set());
-  }, [filteredTemplates, customMarkdown, copyMode, aiContentGenerated]);
+  }, [filteredTemplates, customMarkdown, mode]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
 
@@ -223,83 +207,82 @@ const AddPaneNewPanel = ({
     });
   };
 
-  const handleTemplateInsert = async (
-    template: any,
-    nodeId: string,
-    first: boolean
-  ) => {
-    if (isInserting) return;
+  const handleApplyTemplate = async (template: any) => {
+    if (isInserting || !ctx) return;
     setIsInserting(true);
 
     try {
-      if (ctx) {
-        const hasMarkdownContent =
-          template?.markdown?.markdownBody &&
-          template.markdown.markdownBody.trim() !== '...' &&
-          template.markdown.markdownBody.trim().length > 0;
-
-        const insertTemplate = [`blank`, `custom`].includes(copyMode)
+      const insertTemplate =
+        mode === 'custom'
           ? {
               ...cloneDeep(template),
               markdown: template.markdown && {
                 ...template.markdown,
-                markdownBody: copyMode === `blank` ? `...` : customMarkdown,
+                markdownBody: customMarkdown,
               },
             }
           : cloneDeep(template);
 
-        const markdownContent = [`blank`].includes(copyMode)
-          ? null
-          : copyMode === `custom`
-            ? customMarkdown
-            : insertTemplate?.markdown?.markdownBody;
+      insertTemplate.title = '';
+      insertTemplate.slug = '';
 
-        insertTemplate.title = '';
-        insertTemplate.slug = '';
+      const ownerId =
+        isStoryFragment || isContextPane
+          ? nodeId
+          : ctx.getClosestNodeTypeFromId(nodeId, 'StoryFragment');
 
-        if (
-          copyMode === `ai` &&
-          hasAssemblyAI &&
-          markdownContent &&
-          hasMarkdownContent
-        ) {
-          const existingSlugs = fullContentMapStore
-            .get()
-            .filter((item) => ['Pane', 'StoryFragment'].includes(item.type))
-            .map((item) => item.slug);
-
-          const titleSlugResult = await getTitleSlug(
-            markdownContent,
-            existingSlugs
-          );
-
-          if (titleSlugResult) {
-            insertTemplate.title = titleSlugResult.title;
-            insertTemplate.slug = titleSlugResult.slug;
-          }
-        }
-
-        const ownerId =
-          isStoryFragment || isContextPane
-            ? nodeId
-            : ctx.getClosestNodeTypeFromId(nodeId, 'StoryFragment');
-
-        if (isContextPane) {
-          insertTemplate.isContextPane = true;
-          ctx.addContextTemplatePane(ownerId, insertTemplate);
-        } else {
-          const newPaneId = ctx.addTemplatePane(
+      if (isContextPane) {
+        insertTemplate.isContextPane = true;
+        await ctx.applyAtomicUpdate(async (tmpCtx) => {
+          tmpCtx.addContextTemplatePane(ownerId, insertTemplate);
+        });
+      } else {
+        await ctx.applyAtomicUpdate(async (tmpCtx) => {
+          tmpCtx.addTemplatePane(
             ownerId,
             insertTemplate,
             nodeId,
             first ? 'before' : 'after'
           );
-          if (newPaneId) ctx.notifyNode(`root`);
-        }
-        setMode(PaneAddMode.DEFAULT, false);
+        });
+        ctx.notifyNode(`root`);
       }
+      setParentMode(PaneAddMode.DEFAULT, false);
     } catch (error) {
       console.error('Error inserting template:', error);
+    } finally {
+      setIsInserting(false);
+    }
+  };
+
+  const handleApplyGeneratedPane = async (pane: TemplatePane) => {
+    if (isInserting || !ctx) return;
+    setIsInserting(true);
+    try {
+      const ownerId =
+        isStoryFragment || isContextPane
+          ? nodeId
+          : ctx.getClosestNodeTypeFromId(nodeId, 'StoryFragment');
+
+      if (isContextPane) {
+        pane.isContextPane = true;
+        await ctx.applyAtomicUpdate(async (tmpCtx) => {
+          tmpCtx.addContextTemplatePane(ownerId, pane);
+        });
+      } else {
+        await ctx.applyAtomicUpdate(async (tmpCtx) => {
+          tmpCtx.addTemplatePane(
+            ownerId,
+            pane,
+            nodeId,
+            first ? 'before' : 'after'
+          );
+        });
+        ctx.notifyNode(`root`);
+      }
+      setParentMode(PaneAddMode.DEFAULT, false);
+    } catch (error) {
+      console.error('Error applying generated pane:', error);
     } finally {
       setIsInserting(false);
     }
@@ -338,8 +321,9 @@ const AddPaneNewPanel = ({
       <style>{customStyles}</style>
       <div className="group flex w-full gap-1 rounded-md bg-white p-1.5">
         <button
-          onClick={() => setMode(PaneAddMode.DEFAULT, first)}
+          onClick={() => setParentMode(PaneAddMode.DEFAULT, first)}
           className="w-fit rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 focus:bg-gray-200"
+          type="button"
         >
           ← Go Back
         </button>
@@ -348,11 +332,45 @@ const AddPaneNewPanel = ({
           <div className="font-action flex-none rounded px-2 py-2.5 text-sm font-bold text-cyan-700 shadow-sm">
             + Design New Pane
           </div>
+          <div className="flex items-center space-x-2 rounded-lg bg-gray-100 p-1">
+            <button
+              onClick={() => setMode('template')}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                mode === 'template'
+                  ? 'bg-white text-cyan-700 shadow'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+              type="button"
+            >
+              Use Template
+            </button>
+            <button
+              onClick={() => setMode('custom')}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                mode === 'custom'
+                  ? 'bg-white text-cyan-700 shadow'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+              type="button"
+            >
+              Paste Markdown
+            </button>
+            {hasAssemblyAI && (
+              <button
+                onClick={() => setMode('ai')}
+                className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  mode === 'ai'
+                    ? 'rounded-md border border-transparent bg-cyan-600 px-3 py-1.5 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                type="button"
+              >
+                ✨ Generate with AI
+              </button>
+            )}
+          </div>
 
-          {!(copyMode === 'ai' && aiContentGenerated) && (
-            <AddPaneNewCopyMode selected={copyMode} onChange={setCopyMode} />
-          )}
-          {copyMode === 'custom' && (
+          {mode === 'custom' && (
             <div className="mt-4 w-full">
               <AddPaneNewCustomCopy
                 value={customMarkdown}
@@ -360,18 +378,19 @@ const AddPaneNewPanel = ({
               />
             </div>
           )}
-          {copyMode === 'ai' && !aiContentGenerated && (
+          {mode === 'ai' && (
             <div className="mt-4 w-full">
-              <AddPanePanel_newAICopy
-                onChange={handleAiContentGenerated}
-                isContextPane={isContextPane}
+              <AiPaneGenerator
+                ownerId={nodeId}
+                onComplete={handleApplyGeneratedPane}
+                onCancel={() => setMode('template')}
               />
             </div>
           )}
         </div>
       </div>
 
-      {shouldShowDesigns && (
+      {mode !== 'ai' && (
         <>
           <h3 className="font-action px-3.5 pb-1.5 pt-4 text-xl font-bold text-black">
             1. Template design settings
@@ -521,8 +540,7 @@ const AddPaneNewPanel = ({
                   onClick={
                     isInserting
                       ? undefined
-                      : () =>
-                          handleTemplateInsert(preview.template, nodeId, first)
+                      : () => handleApplyTemplate(preview.template)
                   }
                   className={`bg-mywhite group relative w-full rounded-sm shadow-inner ${
                     isInserting
@@ -588,6 +606,7 @@ const AddPaneNewPanel = ({
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 0}
               className="rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 focus:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
             >
               Previous
             </button>
@@ -601,6 +620,7 @@ const AddPaneNewPanel = ({
                       ? 'bg-cyan-700 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
+                  type="button"
                 >
                   {index + 1}
                 </button>
@@ -610,6 +630,7 @@ const AddPaneNewPanel = ({
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages - 1}
               className="rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 focus:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+              type="button"
             >
               Next
             </button>

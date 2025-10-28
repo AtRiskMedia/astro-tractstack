@@ -387,12 +387,6 @@ export const Compositor = (props: CompositorProps) => {
       const ctx = getCtx(props);
       const range = $selection;
 
-      if ($selection.pendingAction === 'style') {
-        if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: style');
-        await ctx.wrapRangeInSpan(range as SelectionStoreState, 'span');
-        resetSelectionStore();
-      }
-
       if ($selection.pendingAction === 'link') {
         if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: link');
         const newAnchorNodeId = await ctx.wrapRangeInAnchor(
@@ -400,6 +394,20 @@ export const Compositor = (props: CompositorProps) => {
         );
         if (newAnchorNodeId) {
           ctx.handleInsertSignal('a', newAnchorNodeId);
+        }
+        resetSelectionStore();
+      } else if ($selection.pendingAction === 'style') {
+        if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: style');
+        const newSpanNodeId = await ctx.wrapRangeInSpan(
+          range as SelectionStoreState,
+          'span'
+        );
+        if (newSpanNodeId) {
+          settingsPanelStore.set({
+            action: 'style-element',
+            nodeId: newSpanNodeId,
+            expanded: true,
+          });
         }
         resetSelectionStore();
       }

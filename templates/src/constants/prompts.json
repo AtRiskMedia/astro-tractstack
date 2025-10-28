@@ -1,55 +1,50 @@
 {
-  "formatPrompt": "Create a markdown summary following this structure: Start with a ## Heading 2 containing a catchy, concise title that encapsulates the main theme. Follow with a single paragraph that provides an overall short description, setting the context for the entire piece. Create 3-5 ### Heading 3 sections, each focusing on a key aspect or subtopic of the main theme. Each heading should be followed by any appropriate number of paragraphs expanding on that subtopic. Optionally, include a #### Heading 4 subsection under one or more of the ### Heading 3 sections if there's a need to dive deeper into a specific point. This should also be followed by one or two paragraphs. Ensure all content is in pure markdown format, without any HTML tags or special formatting.",
-  "paneFormatPrompt": "Create a markdown artifact following this structure: If appropriate start with a ## Heading 2 containing a catchy, concise title that encapsulates the main theme. Follow with a single paragraph that provides an overall short description, setting the context for the entire piece. Create a ### Heading 3 section focusing on the main theme. This heading should be followed by any appropriate number of paragraphs expanding on the topic. Optionally, include a #### Heading 4 subsection if there's a need to dive deeper into a specific point. This should also be followed by one or two paragraphs. Ensure all content is in pure markdown format, without any HTML tags or special formatting.",
-  "contextPanePrompts": {
-    "shortformcontext": "You are writing a focused, contextual page that needs to quickly orient and inform readers about a specific topic or concept in 500 words or less. Prioritize clarity and immediate relevance over comprehensive coverage. Use a direct, efficient writing style that frontloads key information. Keep sections brief but substantive, focusing on what readers need to know in this specific context. Maintain a helpful, straightforward tone that respects the reader's time while ensuring they grasp essential points."
-  },
-  "panePrompts": {
-    "shortformcontext": "You are writing focused, contextual paragraph(s) that quickly orient and inform readers about a specific topic or concept in 50-150 words. Do not include *everything* from the raw notes. Summarize selectively to meet word length target while prioritizing clarity and immediate relevance over comprehensive coverage. Use a direct, efficient writing style that frontloads key information. Keep sections brief but substantive, focusing on what readers need to know in this specific context. Maintain a helpful, straightforward tone that respects the reader's time while ensuring they grasp essential points."
-  },
+  "formatPrompt": "Format the response as markdown suitable for a single web page section. Use headings (##, ###, ####), paragraphs, bold (**text**), italics (*text*), and simple links ([text](url)). Do NOT include images, lists, blockquotes, code blocks, horizontal rules, or any complex markdown.",
   "pagePrompts": {
-    "landing": "You are writing copy for a high-traffic internet website landing page. Write for an audience who is reading this website copy and is very interested in what it has to offer. Focus on compelling value propositions, clear benefits, and strong calls-to-action. Maintain a direct, engaging tone that builds trust and encourages conversion. Each section should naturally lead visitors toward taking action. Keep paragraphs concise and impactful.",
-    "longform": "You are writing an in-depth, long-form blog article or content piece of up to two thousand words. Take a comprehensive, authoritative approach that demonstrates deep expertise while remaining accessible. Build your argument methodically, using a clear narrative structure that guides readers through complex ideas. Focus on delivering valuable insights and thorough analysis. Use a professional yet conversational tone that maintains reader engagement throughout the extended length. Each section should build upon previous points while introducing new dimensions of the topic.",
-    "shortformcontext": "You are writing a focused, contextual page that needs to quickly orient and inform readers about a specific topic or concept in 500 words or less. Prioritize clarity and immediate relevance over comprehensive coverage. Use a direct, efficient writing style that frontloads key information. Keep sections brief but substantive, focusing on what readers need to know in this specific context. Maintain a helpful, straightforward tone that respects the reader's time while ensuring they grasp essential points.",
-    "product": "You are detailing a product page for an e-commerce site. Focus on highlighting unique selling points, specifications, and benefits of the product. Use persuasive language to showcase how the product solves problems or enhances the user's life. Include clear calls-to-action towards purchasing or adding to cart. Ensure the tone is enthusiastic yet informative, with concise sections for easy scanning.",
-    "aboutus": "You're crafting the 'About Us' page for a company website. Narrate the company's history, mission, vision, and values in a storytelling manner that resonates with visitors. Highlight key milestones, team culture, and what sets the company apart. Use a warm, approachable tone that builds trust and connection with the visitor. Include subtle calls-to-action encouraging contact or further exploration of the site.",
-    "contact": "You are writing for a contact page that must be approachable and reassuring. Outline all available contact methods clearly - phone, email, social media, etc. Provide concise instructions or forms for inquiries, emphasizing quick responses and customer satisfaction. Use a friendly, service-oriented tone to make potential clients feel welcome and valued.",
-    "service": "You are detailing a service page where clarity and benefit-focused content are key. Describe each service with emphasis on how it benefits the client, using case studies or testimonials if possible. Structure the content to guide the visitor from understanding the service to seeing its value, culminating in a strong call-to-action to get in touch or book a service. Keep the tone professional yet engaging.",
-    "faq": "You're compiling an FAQ page intended to preemptively answer common questions. Write in a straightforward, informative style, addressing questions succinctly but thoroughly. Organize questions by relevance or category for ease of use. Use a tone that reassures and educates, making users feel their queries are anticipated and valued."
+    "landing": "Write compelling copy for a landing page section. Focus on a strong headline, clear value proposition, and a call to action. Keep paragraphs concise.",
+    "feature": "Describe a key feature or benefit. Use a clear heading, explain the feature, highlight its advantages, and optionally include a brief user testimonial.",
+    "about": "Write an 'About Us' section. Include a brief company history or mission, introduce key team members (optional), and convey company values.",
+    "contact": "Create a contact section. Provide essential contact information (address, phone, email), potentially include a simple contact form description (no actual form code), and mention business hours.",
+    "faq": "Generate a Frequently Asked Questions (FAQ) section. List common questions as headings (###) and provide clear, concise answers below each.",
+    "testimonial": "Write a customer testimonial section. Include a quote highlighting a positive experience, attribute it to a customer (name/company), and potentially add a brief context.",
+    "cta": "Craft a strong Call to Action (CTA) section. Use an urgent headline, clearly state the desired action, and provide a compelling reason to act now."
   },
   "pagePromptsDetails": {
     "landing": {
-      "title": "High-Traffic Landing Page",
-      "description": "Engage visitors with compelling offers and clear calls-to-action"
+      "title": "Landing Page",
+      "description": "Headline, value prop, CTA"
     },
-    "longform": {
-      "title": "In-depth long-form Post",
-      "description": "Comprehensive, expert-driven analysis on complex topics"
+    "feature": {
+      "title": "Feature Section",
+      "description": "Describe a product feature"
     },
-    "shortformcontext": {
-      "title": "Quick Context Piece",
-      "description": "Focused content delivering immediate clarity on specific concepts"
-    },
-    "product": {
-      "title": "Product Detail Page",
-      "description": "Highlighting unique features, benefits, and purchase options"
-    },
-    "aboutus": {
+    "about": {
       "title": "About Us",
-      "description": "Our story, mission, and what makes us unique"
+      "description": "Company mission/values"
     },
     "contact": {
-      "title": "Contact Us",
-      "description": "Get in touch with us easily and confidently"
-    },
-    "service": {
-      "title": "Services Overview",
-      "description": "Explore how our services can benefit you"
+      "title": "Contact Info",
+      "description": "How to get in touch"
     },
     "faq": {
-      "title": "Frequently Asked Questions Page",
-      "description": "Answers to commonly asked questions"
+      "title": "FAQ",
+      "description": "Common questions & answers"
+    },
+    "testimonial": {
+      "title": "Testimonial",
+      "description": "Customer quote/story"
+    },
+    "cta": {
+      "title": "Call to Action",
+      "description": "Encourage user action"
     }
   },
-  "contextPrompt": "Using the following contextual information - both the broad topic/purpose you want to write about and any supporting details, documentation, or reference material - I will help craft appropriate content structured for your specific page type. Please provide both your high-level goal/topic and any relevant reference material you'd like incorporated:"
+  "aiPaneShellPrompt": {
+    "system": "You are an expert web designer. Your task is to generate the structural design for a component as a single JSON object. Respond *only* with the JSON.",
+    "user_template": "Generate the design JSON for a component with the following characteristics:\n\nDesign Style: \"{{DESIGN_INPUT}}\"\nLayout Type: \"{{LAYOUT_TYPE}}\"\n\nCRITICAL RULES:\n1. You must respond with a JSON object with keys: `bgColour`, `parentClasses`, `defaultClasses`.\n2. The `parentClasses` value *must* be structured with our internal responsive object schema (e.g., `[ { \"mobile\": { \"px\": \"4\", \"py\": \"12\" } } ]`).\n3. The `defaultClasses` value *must* be structured with responsive keys containing **Tailwind class strings** (e.g., `{ \"h2\": { \"mobile\": \"text-4xl font-bold text-white mt-6\" } }`).\n4. For responsive classes, you *must* only use `md:` and `xl:` prefixes.\n\nEXAMPLE:\n{\n  \"bgColour\": \"#050710\",\n  \"parentClasses\": [\n    { \"mobile\": { \"px\": \"6\", \"py\": \"24\" }, \"tablet\": { \"px\": \"8\", \"py\": \"32\" } },\n    { \"mobile\": { \"mx\": \"auto\", \"maxW\": \"2xl\", \"textALIGN\": \"center\" }, \"tablet\": { \"maxW\": \"4xl\" } }\n  ],\n  \"defaultClasses\": {\n    \"h2\": { \"mobile\": \"text-4xl font-bold tracking-tight text-white mt-4\", \"tablet\": \"md:text-6xl\", \"desktop\": \"xl:text-7xl\" },\n    \"p\": { \"mobile\": \"text-lg leading-8 text-gray-300 mt-6\", \"tablet\": \"md:text-xl\", \"desktop\": \"\" }\n  }\n}"
+  },
+  "aiPaneCopyPrompt": {
+    "system": "You are an expert **web designer and copywriter**. Your task is to generate a single, visually compelling block of HTML content. You must ensure the content is well-written, engaging, and **beautifully spaced**.",
+    "user_template": "Here is the design 'shell' and 'theme' (bgColour, parentClasses, and defaultClasses) you must write your HTML for. Your HTML will be placed *inside* this shell. Use the `defaultClasses` as your base theme for styling:\n{{SHELL_JSON}}\n\nNow, generate the HTML content based on these inputs:\n\nContent Prompt: \"{{COPY_INPUT}}\"\nDesign Style: **strictly for visual reference** when choosing element styles **DO NOT** include any words or concepts from the `Design Style` input in the written copy text itself.\"{{DESIGN_INPUT}}\"\nLayout Type: \"{{LAYOUT_TYPE}}\"\n\nCRITICAL RULES:\n1. You are responsible for the **inner layout and visual rhythm**. You MUST add appropriate vertical margins (e.g., `mt-4`, `mt-6`, `mt-8`) directly to any HTML block elements that *deviate* from the default spacing. **Elements must not touch.**\n2. You **MUST NOT** use `<h1>` tags. You must use `<h2>`, `<h3>`, and `<p>` tags for all text content.\n3. For responsive styles, you *must* only use `md:` and `xl:` prefixes.\n4. To make headlines pop, you MUST wrap key words in `<span>` tags with creative classes (e.g., gradient text, different colors).\n5. **All text**, even short links or phrases (like 'Learn more →'), **must** be wrapped in a block element like `<p>` or `<button>`.\n6. You MUST include at least one `<button>` tag for the primary call-to-action.\n7. Respond *only* with the raw HTML.\n\nEXAMPLE of a good, well-spaced response:\n<h2 class=\"text-4xl font-bold tracking-tight text-white md:text-6xl\"><span class=\"bg-gradient-to-r from-purple-500 to-indigo-400 bg-clip-text text-transparent\">Own the Art.</span> Possess the Reality.</h2>\n<p class=\"mt-6 text-lg leading-8 text-gray-300 md:text-xl\">Every Sneaky Productions NFT is your key. This is where digital rarity meets tangible legacy.</p>\n<button class=\"mt-8 rounded-md bg-indigo-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500\">Secure Your Drop</button>\n<p class=\"mt-4 text-sm text-gray-400\">Learn more <span>→</span></p>"
+  }
 }

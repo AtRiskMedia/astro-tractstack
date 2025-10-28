@@ -92,9 +92,7 @@ const allowInsert = (
     }
 
     default:
-      console.log(
-        `miss on allowInsert: tagName:${tagName} tagNameNew:${tagNameNew} tagNameAdjacent:${tagNameAdjacent}`
-      );
+      return false;
   }
   return false;
 };

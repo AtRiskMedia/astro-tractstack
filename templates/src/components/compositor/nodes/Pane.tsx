@@ -294,11 +294,6 @@ const Pane = memo(
   (prevProps: NodeProps, nextProps: NodeProps) => {
     const isEqual =
       prevProps.nodeId === nextProps.nodeId && prevProps.ctx === nextProps.ctx;
-    if (!isEqual) {
-      console.log(
-        ` !! Pane rerender triggered by props change: ${prevProps.nodeId} -> ${nextProps.nodeId}`
-      );
-    }
     return isEqual;
   }
 );

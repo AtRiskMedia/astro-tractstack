@@ -340,6 +340,20 @@ export interface BeliefNode extends BaseNode {
   customValues?: string[];
 }
 
+export type DefaultClassValue = {
+  mobile: Record<string, string>;
+  tablet: Record<string, string>;
+  desktop: Record<string, string>;
+};
+
+export type DefaultClasses = Record<string, DefaultClassValue>;
+
+export type ResponsiveClasses = {
+  mobile?: Record<string, string>;
+  tablet?: Record<string, string>;
+  desktop?: Record<string, string>;
+};
+
 export interface FlatNode extends BaseNode {
   tagName: string;
   tagNameCustom?: string;
@@ -359,19 +373,20 @@ export interface FlatNode extends BaseNode {
     desktop?: Record<string, string>;
   };
   elementCss?: string;
-  buttonPayload?: {
-    buttonClasses: Record<string, string[]>;
-    buttonHoverClasses: Record<string, string[]>;
-    callbackPayload: string;
-    isExternalUrl?: boolean;
-    bunnyPayload?: {
-      t: string;
-      videoId: string | null;
-      slug?: string;
-      isContext?: boolean;
-    };
-  };
+  buttonPayload?: ButtonPayload;
 }
+export type ButtonPayload = {
+  buttonClasses: Record<string, string[]>;
+  buttonHoverClasses: Record<string, string[]>;
+  callbackPayload: string;
+  isExternalUrl?: boolean;
+  bunnyPayload?: {
+    t: string;
+    videoId: string | null;
+    slug?: string;
+    isContext?: boolean;
+  };
+};
 
 export type TemplateNode = FlatNode & {
   id?: string;
@@ -423,7 +438,6 @@ export type LoadData = {
 };
 
 export type PageDesign = {
-  // TODO: fix TemplatePane to allow required fn
   id: string;
   title: string;
   introDesign: any; // Will be TemplatePane

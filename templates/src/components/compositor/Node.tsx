@@ -45,6 +45,8 @@ import type {
   BaseNode,
   FlatNode,
 } from '@/types/compositorTypes';
+import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
+import { selectionStore } from '@/stores/selection';
 import type { NodeProps, SelectionOrigin } from '@/types/nodeProps';
 
 const VERBOSE = false;
@@ -291,6 +293,31 @@ const getElement = (
           viewportKeyStore.get().value
         );
 
+        const handleElementClick = (e: MouseEvent<HTMLElement>) => {
+          // 1. ALWAYS stop the event from bubbling up to the Pane.
+          e.stopPropagation();
+
+          // 2. Check the selection store. The handleMouseUp in Compositor.tsx
+          // has already run by the time this 'click' event fires.
+          //
+          // - If it was a drag, Compositor.tsx set 'isActive: true' (line 267).
+          // - If it was a click, Compositor.tsx called 'resetSelectionStore'
+          //   (line 242), so 'isActive: false'.
+          //
+          const { isActive } = selectionStore.get();
+
+          if (isActive) {
+            // A drag just finished. The user's intent was to select text.
+            // Do NOT open the panel.
+            return;
+          }
+
+          // 3. 'isActive' was false. This was a genuine click.
+          // We can safely open the settings panel.
+          // 'node' is already in scope from the getElement function.
+          handleClickEventDefault(node as FlatNode, true);
+        };
+
         const handleMouseDown = (e: MouseEvent<HTMLElement>) => {
           if (VERBOSE)
             console.log('[Node.tsx] handleMouseDown FIRED', { event: e });
@@ -346,6 +373,7 @@ const getElement = (
           {
             className: className,
             onMouseDown: handleMouseDown,
+            onClick: handleElementClick,
             'data-node-id': node.id,
             style: { userSelect: 'none' },
           },
