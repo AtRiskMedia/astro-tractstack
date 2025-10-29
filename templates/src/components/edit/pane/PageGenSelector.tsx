@@ -12,11 +12,13 @@ import {
   /* hasAssemblyAIStore,*/ fullContentMapStore,
 } from '@/stores/storykeep';
 import type { NodesContext } from '@/stores/nodes';
+import type { BrandConfig } from '@/types/tractstack';
 
 interface PageCreationSelectorProps {
   nodeId: string;
   ctx: NodesContext;
   isTemplate?: boolean;
+  config?: BrandConfig;
 }
 
 type CreationMode = {
@@ -33,6 +35,7 @@ export const PageCreationSelector = ({
   nodeId,
   ctx,
   isTemplate = false,
+  config,
 }: PageCreationSelectorProps) => {
   const [selectedMode, setSelectedMode] =
     useState<CreationMode['id']>('design');
@@ -137,6 +140,7 @@ export const PageCreationSelector = ({
         first={true}
         ctx={ctx}
         isStoryFragment={true}
+        config={config!}
       />
     );
   else if (showGen) return <PageCreationGen nodeId={nodeId} ctx={ctx} />;

@@ -250,7 +250,12 @@ function sanitizeButtonClasses(
   return buttonPayload;
 }
 
-function walkDom(domNode: Node, parentId: string, parsedNodes: ParsedNode[]) {
+function walkDom(
+  domNode: Node,
+  parentId: string,
+  parsedNodes: ParsedNode[],
+  markdownId: string
+) {
   if (domNode.nodeType === Node.TEXT_NODE) {
     const copy = domNode.textContent || '';
     // Preserve leading/trailing spaces unless the *entire* content is just whitespace.
@@ -305,17 +310,37 @@ function walkDom(domNode: Node, parentId: string, parsedNodes: ParsedNode[]) {
   const tagName = el.tagName.toLowerCase();
 
   if (!ALLOWED_TAGS.has(tagName)) {
-    el.childNodes.forEach((child) => walkDom(child, parentId, parsedNodes));
+    el.childNodes.forEach((child) =>
+      walkDom(child, parentId, parsedNodes, markdownId)
+    );
     return;
   }
 
   if (tagName === 'button') {
+    let finalParentId = parentId;
+
+    if (parentId === markdownId) {
+      const pNodeId = ulid();
+      const pNode: TemplateNode = {
+        id: pNodeId,
+        nodeType: 'TagElement',
+        parentId: parentId,
+        tagName: 'p',
+        overrideClasses: {},
+      };
+      parsedNodes.push({
+        flatNode: pNode,
+        responsiveClasses: {},
+      });
+      finalParentId = pNodeId;
+    }
+
     const buttonPayload = sanitizeButtonClasses(el.getAttribute('class'));
 
     const flatNode: TemplateNode = {
       id: ulid(),
       nodeType: 'TagElement',
-      parentId: parentId,
+      parentId: finalParentId,
       tagName: 'a',
       overrideClasses: {},
       href: '#',
@@ -330,7 +355,9 @@ function walkDom(domNode: Node, parentId: string, parsedNodes: ParsedNode[]) {
       responsiveClasses: {},
     });
 
-    el.childNodes.forEach((child) => walkDom(child, flatNode.id, parsedNodes));
+    el.childNodes.forEach((child) =>
+      walkDom(child, flatNode.id, parsedNodes, markdownId)
+    );
     return;
   }
 
@@ -353,7 +380,9 @@ function walkDom(domNode: Node, parentId: string, parsedNodes: ParsedNode[]) {
     responsiveClasses: responsive,
   });
 
-  el.childNodes.forEach((child) => walkDom(child, flatNode.id, parsedNodes));
+  el.childNodes.forEach((child) =>
+    walkDom(child, flatNode.id, parsedNodes, markdownId)
+  );
 }
 
 function findMostCommonClasses(nodes: ParsedNode[]): ResponsiveClasses {
@@ -476,18 +505,15 @@ export const parseAiPane = (
   const paneId = ulid();
   const markdownId = ulid();
 
-  // --- MODIFICATION START ---
-  // Normalize the keys within parentClasses using the new helper
   const transformedParentClasses: ParentClassesPayload = (
     shell.parentClasses || []
   ).map(
     (layer): ParentClassLayer => ({
-      mobile: normalizeKeys(layer.mobile), // Use normalizeKeys helper
-      tablet: normalizeKeys(layer.tablet), // Use normalizeKeys helper
-      desktop: normalizeKeys(layer.desktop), // Use normalizeKeys helper
+      mobile: normalizeKeys(layer.mobile),
+      tablet: normalizeKeys(layer.tablet),
+      desktop: normalizeKeys(layer.desktop),
     })
   );
-  // --- MODIFICATION END ---
 
   const shellDefaults = parseDefaultClassesFromShell(shell.defaultClasses);
 
@@ -497,12 +523,12 @@ export const parseAiPane = (
     parentId: paneId,
     type: 'markdown',
     markdownId: ulid(),
-    parentClasses: transformedParentClasses, // Use the transformed version
+    parentClasses: transformedParentClasses,
     defaultClasses: shellDefaults,
   };
 
   const allParsedNodes: ParsedNode[] = [];
-  walkDom(doc.body, markdownId, allParsedNodes);
+  walkDom(doc.body, markdownId, allParsedNodes, markdownId);
 
   const templateNodes: TemplateNode[] = [];
   const nodesByTag = new Map<string, ParsedNode[]>();

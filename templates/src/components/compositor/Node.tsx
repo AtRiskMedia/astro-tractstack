@@ -155,6 +155,7 @@ const getElement = (
               nodeId={props.nodeId}
               ctx={getCtx(props)}
               isTemplate={isTemplate}
+              config={props.config!}
             />
           ) : (
             <>
@@ -215,6 +216,7 @@ const getElement = (
                       nodeId={node.id}
                       first={true}
                       ctx={getCtx(props)}
+                      config={props.config!}
                       isContextPane={true}
                     />
                   </PanelVisibilityWrapper>
@@ -242,7 +244,12 @@ const getElement = (
               panelType="add"
               ctx={getCtx(props)}
             >
-              <AddPanePanel nodeId={node.id} first={true} ctx={getCtx(props)} />
+              <AddPanePanel
+                nodeId={node.id}
+                first={true}
+                ctx={getCtx(props)}
+                config={props.config!}
+              />
             </PanelVisibilityWrapper>
           )}
           <div className="py-0.5">
@@ -266,7 +273,12 @@ const getElement = (
             panelType="add"
             ctx={getCtx(props)}
           >
-            <AddPanePanel nodeId={node.id} first={false} ctx={getCtx(props)} />
+            <AddPanePanel
+              nodeId={node.id}
+              first={false}
+              ctx={getCtx(props)}
+              config={props.config!}
+            />
           </PanelVisibilityWrapper>
         </>
       );

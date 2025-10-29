@@ -26,7 +26,7 @@ import {
 import { templateCategories } from '@/utils/compositor/templateMarkdownStyles';
 import { AiPaneGenerator } from './AiPaneGenerator';
 import { AddPaneNewCustomCopy } from './AddPanePanel_newCustomCopy';
-import { themes, type Theme } from '@/types/tractstack';
+import { themes, type Theme, type BrandConfig } from '@/types/tractstack';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
 import { useStore } from '@nanostores/react';
 
@@ -37,6 +37,7 @@ interface AddPaneNewPanelProps {
   ctx?: NodesContext;
   isStoryFragment?: boolean;
   isContextPane?: boolean;
+  config?: BrandConfig;
 }
 
 interface PreviewPane {
@@ -65,6 +66,7 @@ const AddPaneNewPanel = ({
   ctx,
   isStoryFragment = false,
   isContextPane = false,
+  config,
 }: AddPaneNewPanelProps) => {
   const brand = useStore(brandColourStore);
   const hasAssemblyAI = useStore(hasAssemblyAIStore);
@@ -384,6 +386,7 @@ const AddPaneNewPanel = ({
                 ownerId={nodeId}
                 onComplete={handleApplyGeneratedPane}
                 onCancel={() => setMode('template')}
+                config={config!}
               />
             </div>
           )}

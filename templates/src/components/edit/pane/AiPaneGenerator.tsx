@@ -2,15 +2,19 @@ import { useState, useCallback } from 'react';
 import { AiPanePreview } from './AiPanePreview';
 import type { TemplatePane } from '@/types/compositorTypes';
 import prompts from '@/constants/prompts.json';
-import StringInput from '@/components/form/StringInput';
+import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
+import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import { classNames } from '@/utils/helpers';
+import type { BrandConfig } from '@/types/tractstack';
 
 interface AiPaneGeneratorProps {
   ownerId: string;
   onComplete: (pane: TemplatePane) => void;
   onCancel: () => void;
+  config?: BrandConfig;
 }
 
-type GenerationStep = 'layout' | 'input' | 'preview' | 'loading';
+type GenerationStep = 'input' | 'preview' | 'loading';
 type CopyMode = 'prompt' | 'raw';
 
 interface GenerationResponse {
@@ -21,24 +25,40 @@ interface GenerationResponse {
   error?: string;
 }
 
-const layoutOptions = ['Text Only', 'Text + Image Left', 'Text + Image Right'];
+const harmonyOptions = [
+  'Analogous',
+  'Monochromatic',
+  'Complementary',
+  'Triadic',
+];
+const themeOptions = ['Light', 'Dark', 'Bright', 'Muted', 'Pastel', 'Earthy'];
 
 export function AiPaneGenerator({
   ownerId,
   onComplete,
   onCancel,
+  config,
 }: AiPaneGeneratorProps) {
-  const [currentStep, setCurrentStep] = useState<GenerationStep>('layout');
-  const [selectedLayout, setSelectedLayout] = useState<string>(
-    layoutOptions[0]
-  );
+  const [currentStep, setCurrentStep] = useState<GenerationStep>('input');
+  const [selectedLayout] = useState<string>('Text Only');
   const [copyMode, setCopyMode] = useState<CopyMode>('prompt');
   const [copyPrompt, setCopyPrompt] = useState('');
   const [rawCopy, setRawCopy] = useState('');
-  const [designPrompt, setDesignPrompt] = useState('');
   const [generatedShell, setGeneratedShell] = useState<string | null>(null);
   const [generatedCopy, setGeneratedCopy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedHarmony, setSelectedHarmony] = useState<string>(
+    harmonyOptions[0]
+  );
+  const [baseColor, setBaseColor] = useState<string>('');
+  const [accentColor, setAccentColor] = useState<string>('');
+  const [selectedTheme, setSelectedTheme] = useState<string>(themeOptions[0]);
+  const [additionalNotes, setAdditionalNotes] = useState<string>('');
+
+  const [isInjectMode, setIsInjectMode] = useState(false);
+  const [injectShell, setInjectShell] = useState('');
+  const [injectCopy, setInjectCopy] = useState('');
 
   const callAskLemurAPI = useCallback(
     async (
@@ -93,12 +113,10 @@ export function AiPaneGenerator({
 
       let rawResponseData = result.data.response;
 
-      // Handle case where API returns JSON object for shell
       if (expectJson && typeof rawResponseData === 'object') {
-        return JSON.stringify(rawResponseData); // Return as string
+        return JSON.stringify(rawResponseData);
       }
 
-      // Handle case where API returns string (potentially wrapped)
       if (typeof rawResponseData === 'string') {
         let responseString = rawResponseData;
         try {
@@ -116,10 +134,9 @@ export function AiPaneGenerator({
         } catch (e) {
           /* Ignore stripping errors */
         }
-        return responseString; // Return string directly
+        return responseString;
       }
 
-      // Fallback if response is neither expected string nor object
       throw new Error('Unexpected response format received from API.');
     },
     []
@@ -130,6 +147,17 @@ export function AiPaneGenerator({
     setCurrentStep('loading');
     setGeneratedShell(null);
     setGeneratedCopy(null);
+
+    let designInput = `Generate a design using a **${selectedHarmony.toLowerCase()}** color scheme with a **${selectedTheme.toLowerCase()}** theme.`;
+    if (baseColor) {
+      designInput += ` Base the colors around **${baseColor}**.`;
+    }
+    if (accentColor) {
+      designInput += ` Use **${accentColor}** as an accent color.`;
+    }
+    if (additionalNotes) {
+      designInput += ` Refine the design with these additional notes: "${additionalNotes}"`;
+    }
 
     try {
       const shellPromptDetails = prompts.aiPaneShellPrompt;
@@ -142,11 +170,8 @@ export function AiPaneGenerator({
         throw new Error('AI prompts not found or incomplete in prompts.json');
       }
 
-      // --- This is the updated (sequential) logic ---
-
-      // 1. Prepare and call the Shell API first
       const formattedShellPrompt = shellPromptDetails.user_template
-        .replace('{{DESIGN_INPUT}}', designPrompt)
+        .replace('{{DESIGN_INPUT}}', designInput)
         .replace('{{LAYOUT_TYPE}}', selectedLayout);
 
       const shellResult = await callAskLemurAPI(
@@ -154,35 +179,34 @@ export function AiPaneGenerator({
         shellPromptDetails.system || '',
         true
       );
-      setGeneratedShell(shellResult); // Set this for the previewer
+      setGeneratedShell(shellResult);
 
-      // 2. NOW, create the copy prompt, injecting the shellResult
       const copyInputContent = copyMode === 'prompt' ? copyPrompt : rawCopy;
-      // Note: Assumes prompts.json's aiPaneCopyPrompt.user_template now includes {{SHELL_JSON}}
       const formattedCopyPrompt = copyPromptDetails.user_template
         .replace('{{COPY_INPUT}}', copyInputContent)
-        .replace('{{DESIGN_INPUT}}', designPrompt)
+        .replace('{{DESIGN_INPUT}}', designInput)
         .replace('{{LAYOUT_TYPE}}', selectedLayout)
-        .replace('{{SHELL_JSON}}', shellResult); // <-- This is the new, critical part
+        .replace('{{SHELL_JSON}}', shellResult);
 
-      // 3. Call Copy API second, using the fully-formed prompt
       const copyResult = await callAskLemurAPI(
         formattedCopyPrompt,
         copyPromptDetails.system || '',
         false
       );
-      setGeneratedCopy(copyResult); // Should be an HTML string
+      setGeneratedCopy(copyResult);
 
       setCurrentStep('preview');
-
-      // --- End of updated logic ---
     } catch (err: any) {
       console.error('AI Pane Generation Error:', err);
       setError(err.message || 'Failed to generate AI pane.');
       setCurrentStep('input');
     }
   }, [
-    designPrompt,
+    selectedHarmony,
+    baseColor,
+    accentColor,
+    selectedTheme,
+    additionalNotes,
     selectedLayout,
     copyMode,
     copyPrompt,
@@ -190,12 +214,51 @@ export function AiPaneGenerator({
     callAskLemurAPI,
   ]);
 
+  const handleInject = useCallback(() => {
+    setError(null);
+    if (!injectShell || !injectCopy) {
+      setError('Both Shell JSON and Copy HTML must be provided.');
+      return;
+    }
+    try {
+      const shellResponse = JSON.parse(injectShell);
+      const copyResponse = JSON.parse(injectCopy);
+
+      const shellPayloadString = JSON.stringify(shellResponse?.data?.response);
+      const copyPayloadString = copyResponse?.data?.response;
+
+      if (
+        !shellPayloadString ||
+        shellPayloadString === 'null' ||
+        typeof copyPayloadString !== 'string'
+      ) {
+        throw new Error(
+          'Payloads are in an unexpected format. Could not find "data.response".'
+        );
+      }
+
+      const pane = parseAiPane(
+        shellPayloadString,
+        copyPayloadString,
+        selectedLayout
+      );
+      onComplete(pane);
+    } catch (err: any) {
+      console.error('Payload Injection Error:', err);
+      setError(err.message || 'Failed to parse payloads. Check JSON format.');
+    }
+  }, [injectShell, injectCopy, selectedLayout, onComplete]);
+
   const handleBack = () => {
     setError(null);
     if (currentStep === 'preview') {
       setCurrentStep('input');
     } else if (currentStep === 'input') {
-      setCurrentStep('layout');
+      if (isInjectMode) {
+        setIsInjectMode(false);
+      } else {
+        onCancel();
+      }
     } else if (currentStep === 'loading') {
       setCurrentStep('input');
     }
@@ -230,72 +293,166 @@ export function AiPaneGenerator({
     );
   }
 
-  if (currentStep === 'layout') {
-    return (
-      <div className="space-y-4 p-4">
-        <label className="mb-2 block text-lg font-semibold text-gray-800">
-          Choose a Layout
-        </label>
-        <div className="space-y-2">
-          {layoutOptions.map((layout) => (
-            <div key={layout} className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id={`layout-${layout}`}
-                name="layoutOptions"
-                value={layout}
-                checked={selectedLayout === layout}
-                onChange={(e) => setSelectedLayout(e.target.value)}
-                className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              <label
-                htmlFor={`layout-${layout}`}
-                className="text-sm font-medium text-gray-700"
-              >
-                {layout}
-              </label>
-            </div>
-          ))}
-        </div>
-        <div className="flex justify-end space-x-2 pt-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentStep('input')}
-            className="rounded-md border border-transparent bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (currentStep === 'input') {
+    if (isInjectMode) {
+      return (
+        <div className="space-y-6 p-4">
+          <div>
+            <label
+              htmlFor="shell-json"
+              className="block text-lg font-semibold text-gray-800"
+            >
+              Shell JSON Payload
+            </label>
+            <textarea
+              id="shell-json"
+              value={injectShell}
+              onChange={(e) => setInjectShell(e.target.value)}
+              placeholder="Paste raw API response for ShellJson here..."
+              rows={8}
+              className="mt-2 block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="copy-html"
+              className="block text-lg font-semibold text-gray-800"
+            >
+              Copy HTML Payload
+            </label>
+            <textarea
+              id="copy-html"
+              value={injectCopy}
+              onChange={(e) => setInjectCopy(e.target.value)}
+              placeholder="Paste raw API response for copyHtml here..."
+              rows={8}
+              className="mt-2 block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <div className="flex justify-between pt-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+            >
+              Back to Generator
+            </button>
+            <button
+              type="button"
+              onClick={handleInject}
+              disabled={!injectShell || !injectCopy}
+              className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm ${
+                !injectShell || !injectCopy
+                  ? 'cursor-not-allowed bg-gray-400'
+                  : 'bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2'
+              }`}
+            >
+              Create from Payloads
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6 p-4">
         <div>
+          <label className="block text-lg font-semibold text-gray-800">
+            Color Harmony
+          </label>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+            {harmonyOptions.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`harmony-${option}`}
+                  name="harmonyOptions"
+                  value={option}
+                  checked={selectedHarmony === option}
+                  onChange={(e) => setSelectedHarmony(e.target.value)}
+                  className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                <label
+                  htmlFor={`harmony-${option}`}
+                  className="text-sm font-medium text-gray-700"
+                >
+                  {option}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <ColorPickerCombo
+              title="Base Color (Optional)"
+              config={config!}
+              defaultColor={baseColor}
+              onColorChange={setBaseColor}
+              allowNull={true}
+            />
+          </div>
+          <div>
+            <ColorPickerCombo
+              title="Accent Color (Optional)"
+              config={config!}
+              defaultColor={accentColor}
+              onColorChange={setAccentColor}
+              allowNull={true}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-lg font-semibold text-gray-800">
+            Theme / Mood
+          </label>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+            {themeOptions.map((option) => (
+              <div key={option} className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id={`theme-${option}`}
+                  name="themeOptions"
+                  value={option}
+                  checked={selectedTheme === option}
+                  onChange={(e) => setSelectedTheme(e.target.value)}
+                  className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                <label
+                  htmlFor={`theme-${option}`}
+                  className="text-sm font-medium text-gray-700"
+                >
+                  {option}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
           <label
-            htmlFor="design-prompt"
+            htmlFor="additional-notes"
             className="block text-lg font-semibold text-gray-800"
           >
-            Describe the Design
+            Additional Design Notes (Optional)
           </label>
           <p className="mb-2 mt-1 text-sm text-gray-500">
-            Example: "dark, minimalist hero", "bright, playful feature box"
+            Add specific requests like "use rounded corners", "add subtle
+            texture".
           </p>
-          <StringInput
-            id="design-prompt"
-            value={designPrompt}
-            onChange={setDesignPrompt}
-            placeholder="Enter design prompt..."
-            className="block w-full rounded-md border border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+          <textarea
+            id="additional-notes"
+            value={additionalNotes}
+            onChange={(e) => setAdditionalNotes(e.target.value)}
+            placeholder="Enter additional notes..."
+            rows={3}
+            className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
           />
         </div>
 
@@ -380,21 +537,34 @@ export function AiPaneGenerator({
             onClick={handleBack}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
           >
-            Back
+            Cancel
           </button>
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={
-              !designPrompt || (copyMode === 'prompt' ? !copyPrompt : !rawCopy)
-            }
-            className={`rounded-md border border-transparent px-4 py-2 text-sm font-bold text-white shadow-sm ${
-              !designPrompt || (copyMode === 'prompt' ? !copyPrompt : !rawCopy)
-                ? 'cursor-not-allowed bg-gray-400'
-                : 'bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2'
-            }`}
+            disabled={copyMode === 'prompt' ? !copyPrompt : !rawCopy}
+            className={classNames(
+              `rounded-md border border-transparent px-4 py-2 text-sm font-bold shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2`,
+              (copyMode === 'prompt' && !copyPrompt) ||
+                (copyMode === `raw` && !rawCopy)
+                ? 'cursor-not-allowed bg-gray-300 text-gray-500'
+                : 'bg-cyan-600 text-white hover:bg-cyan-700'
+            )}
           >
-            Generate Preview
+            Generate Pane
+          </button>
+        </div>
+
+        <div className="border-t border-gray-200 pt-4 text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setIsInjectMode(true);
+            }}
+            className="text-sm text-cyan-600 hover:text-cyan-800 hover:underline"
+          >
+            Direct Inject Payload
           </button>
         </div>
       </div>
