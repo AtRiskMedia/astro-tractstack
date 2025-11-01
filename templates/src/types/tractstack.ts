@@ -1,16 +1,19 @@
-// Base component props that all TractStack components should support
+import type { StoragePane } from './compositorTypes';
+
+export type DesignLibraryEntry = {
+  category: string;
+  title: string;
+  template: StoragePane;
+};
+
+export type DesignLibraryConfig = DesignLibraryEntry[];
+
 export interface BaseComponentProps {
-  /** Additional CSS classes */
   class?: string;
-
-  /** Inline styles */
   style?: React.CSSProperties | string;
-
-  /** Component ID */
   id?: string;
 }
 
-// HTMX-specific attributes for components
 export interface HTMXAttributes {
   'hx-get'?: string;
   'hx-post'?: string;
@@ -148,39 +151,40 @@ export interface FullContentMapItem {
 }
 
 export interface BrandConfig {
-  // Core site configuration
-  SITE_INIT: boolean;
-  WORDMARK_MODE: string;
-  OPEN_DEMO: boolean;
-  STYLES_VER: number;
-  HOME_SLUG: string;
-  TRACTSTACK_HOME_SLUG: string;
-  THEME: string; // e.g., "light-bold"
-  BRAND_COLOURS: string; // e.g., "10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3"
-  SOCIALS: string; // e.g., "github|https://github.com/user,twitter|https://twitter.com/user"
-  LOGO: string;
-  WORDMARK: string;
-  FAVICON: string;
-  SITE_URL: string;
-  SLOGAN: string;
-  FOOTER: string;
-  OG: string;
-  OGLOGO: string;
-  OGTITLE: string;
-  OGAUTHOR: string;
-  OGDESC: string;
+  TENANT_ID: string;
+  SITE_INIT?: boolean;
+  WORDMARK_MODE?: string;
+  OPEN_DEMO?: boolean;
+  STYLES_VER?: number;
+  HOME_SLUG?: string;
+  TRACTSTACK_HOME_SLUG?: string;
+  THEME?: string; // e.g., "light-bold"
+  BRAND_COLOURS?: string; // e.g., "10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3"
+  SOCIALS?: string; // e.g., "github|https://github.com/user,twitter|https://twitter.com/user"
+  LOGO?: string;
+  WORDMARK?: string;
+  FAVICON?: string;
+  SITE_URL?: string;
+  SLOGAN?: string;
+  FOOTER?: string;
+  OG?: string;
+  OGLOGO?: string;
+  OGTITLE?: string;
+  OGAUTHOR?: string;
+  OGDESC?: string;
   LOGO_BASE64?: string;
   WORDMARK_BASE64?: string;
   OG_BASE64?: string;
   OGLOGO_BASE64?: string;
   FAVICON_BASE64?: string;
-  GTAG: string;
+  GTAG?: string;
   KNOWN_RESOURCES?: KnownResourcesConfig;
-  HAS_AAI: boolean;
+  DESIGN_LIBRARY?: DesignLibraryConfig;
+  HAS_AAI?: boolean;
 }
 
 export interface BrandConfigState {
-  // Core site configuration
+  tenantId: string;
   siteInit: boolean;
   wordmarkMode: string;
   openDemo: boolean;
@@ -208,6 +212,7 @@ export interface BrandConfigState {
   faviconBase64?: string;
   gtag: string;
   knownResources: KnownResourcesConfig;
+  designLibrary?: DesignLibraryConfig;
   hasAAI: boolean;
 }
 

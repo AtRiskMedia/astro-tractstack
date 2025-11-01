@@ -98,7 +98,7 @@ ${additionalInstructions}`;
         body: JSON.stringify({
           prompt: finalPrompt,
           input_text: referenceContext,
-          final_model: 'anthropic/claude-3-5-sonnet',
+          final_model: '',
           temperature: 0.7,
           max_tokens: 4000,
         }),

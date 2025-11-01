@@ -284,11 +284,12 @@ export const Compositor = (props: CompositorProps) => {
 
   useEffect(() => {
     fullContentMapStore.set(props.fullContentMap);
-    hasAssemblyAIStore.set(props.config.HAS_AAI);
+    hasAssemblyAIStore.set(props.config?.HAS_AAI || false);
     urlParamsStore.set(props.urlParams);
     canonicalURLStore.set(props.fullCanonicalURL);
     preferredThemeStore.set(props.config.THEME as Theme);
-    brandColourStore.set(props.config.BRAND_COLOURS);
+    if (props.config.BRAND_COLOURS)
+      brandColourStore.set(props.config.BRAND_COLOURS);
     codehookMapStore.set(props.availableCodeHooks);
   }, [
     props.fullContentMap,

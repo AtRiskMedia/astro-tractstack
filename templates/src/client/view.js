@@ -42,6 +42,11 @@ async function sendStateUpdate(data) {
     return;
   }
   const config = window.TractStackApp.getConfig();
+
+  if (!config.sessionId || !config.storyfragmentId) {
+    return;
+  }
+
   const url = `${config.backendUrl}/api/v1/state`;
   const body = { paneId: '', duration: 0, ...data };
   log('Sending state update to backend.', { url, body });

@@ -19,6 +19,8 @@ export interface SelectionStoreState extends SelectionRange {
   isActive: boolean;
   selectionBox: SelectionBox | null;
   pendingAction: 'style' | 'link' | null;
+  isRestyleModalOpen: boolean;
+  paneToRestyleId: string | null;
 }
 
 const DEFAULT_SELECTION_STATE: SelectionStoreState = {
@@ -32,6 +34,8 @@ const DEFAULT_SELECTION_STATE: SelectionStoreState = {
   endCharOffset: 0,
   selectionBox: null,
   pendingAction: null,
+  isRestyleModalOpen: false,
+  paneToRestyleId: null,
 };
 
 export const selectionStore = map<SelectionStoreState>(DEFAULT_SELECTION_STATE);

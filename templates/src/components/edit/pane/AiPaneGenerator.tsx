@@ -73,7 +73,7 @@ export function AiPaneGenerator({
       const requestBody = {
         prompt: prompt,
         input_text: context,
-        final_model: 'anthropic/claude-3-5-sonnet',
+        final_model: '',
         temperature: 0.5,
         max_tokens: 2000,
       };

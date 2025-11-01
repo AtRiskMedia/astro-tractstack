@@ -63,7 +63,7 @@ Example response format:
   "slug": "short-descriptive-title"
 }`,
         input_text: markdownContent,
-        final_model: 'anthropic/claude-3-5-sonnet',
+        final_model: '',
         temperature: 0.3,
         max_tokens: 200,
       }),

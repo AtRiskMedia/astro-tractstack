@@ -11,6 +11,7 @@ export type ToolModeVal =
   | 'eraser'
   | 'move'
   | 'layout'
+  | 'designLibrary'
   | 'debug';
 
 export const toolAddModes = [
@@ -404,7 +405,56 @@ export type TemplatePane = PaneNode & {
   id?: string;
   parentId?: string;
   markdown?: TemplateMarkdown;
-  bgPane?: VisualBreakNode | ArtpackImageNode;
+  bgPane?: VisualBreakNode | ArtpackImageNode | BgImageNode;
+};
+
+export type StorageArtpackImageNode = Omit<
+  ArtpackImageNode,
+  'id' | 'parentId' | 'isChanged'
+>;
+export type StorageBgImageNode = Omit<
+  BgImageNode,
+  'id' | 'parentId' | 'isChanged' | 'base64Data'
+>;
+export type StorageVisualBreakNode = Omit<
+  VisualBreakNode,
+  'id' | 'parentId' | 'isChanged'
+>;
+
+export type StorageBgPane =
+  | StorageArtpackImageNode
+  | StorageBgImageNode
+  | StorageVisualBreakNode;
+
+export type StorageNode = Omit<
+  FlatNode,
+  'id' | 'parentId' | 'isChanged' | 'base64Data' | 'isPlaceholder'
+> & {
+  nodes?: StorageNode[];
+};
+
+export type StorageMarkdown = Omit<
+  MarkdownPaneFragmentNode,
+  'id' | 'parentId' | 'isChanged' | 'markdownId' | 'parentCss' | 'nodes'
+> & {
+  nodes?: StorageNode[];
+};
+
+export type StoragePane = Omit<
+  PaneNode,
+  | 'id'
+  | 'parentId'
+  | 'isChanged'
+  | 'created'
+  | 'changed'
+  | 'heldBeliefs'
+  | 'withheldBeliefs'
+  | 'codeHookTarget'
+  | 'codeHookPayload'
+  | 'markdown'
+> & {
+  markdown?: StorageMarkdown;
+  bgPane?: StorageBgPane;
 };
 
 export interface LinkNode extends FlatNode {

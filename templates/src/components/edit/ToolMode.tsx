@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
@@ -44,6 +45,12 @@ const storykeepToolModes = [
     Icon: ArrowsUpDownIcon,
     title: 'Move',
     description: 'Keyboard accessible re-order',
+  },
+  {
+    key: 'designLibrary' as const,
+    Icon: ArrowPathRoundedSquareIcon,
+    title: 'Design Library',
+    description: 'Save pane to design library',
   },
 ] as const;
 

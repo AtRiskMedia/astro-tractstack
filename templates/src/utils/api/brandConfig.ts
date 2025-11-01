@@ -7,9 +7,11 @@ export async function saveBrandConfig(
   brandConfig: BrandConfig
 ): Promise<BrandConfig> {
   const api = new TractStackAPI(tenantId);
+  const config: any = brandConfig;
+  delete config.TENANT_ID;
   try {
     const response = await api.put('/api/v1/config/brand', {
-      ...brandConfig,
+      ...config,
       SITE_INIT: true,
     });
     if (!response.success) {
@@ -39,6 +41,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
       ) {
         // Return empty/default config when backend is down
         return {
+          TENANT_ID: tenantId,
           SITE_INIT: false,
           WORDMARK_MODE: '',
           BRAND_COLOURS: '',
@@ -61,16 +64,18 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
           GTAG: '',
           STYLES_VER: 1,
           KNOWN_RESOURCES: {},
+          DESIGN_LIBRARY: [],
           HAS_AAI: false,
         } as BrandConfig;
       }
       throw new Error(response.error || 'Failed to get brand configuration');
     }
-    return response.data;
+    return { ...response.data, TENANT_ID: tenantId };
   } catch (error) {
     // If it's a network error (backend down), return default config
     if (error instanceof TypeError && error.message.includes('fetch failed')) {
       return {
+        TENANT_ID: tenantId,
         SITE_INIT: false,
         WORDMARK_MODE: '',
         BRAND_COLOURS: '',
@@ -93,6 +98,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
         GTAG: '',
         STYLES_VER: 1,
         KNOWN_RESOURCES: {},
+        DESIGN_LIBRARY: [],
         HAS_AAI: false,
       } as BrandConfig;
     }

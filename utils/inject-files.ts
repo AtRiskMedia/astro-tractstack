@@ -129,6 +129,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/compositor/nodes/Pane_DesignLibrary.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/Pane_DesignLibrary.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/compositor/nodes/Pane_layout.tsx'
       ),
       dest: 'src/components/compositor/nodes/Pane_layout.tsx',
@@ -430,6 +436,12 @@ export async function injectTemplateFiles(
       dest: 'src/components/edit/pane/AddPanePanel_codehook.tsx',
     },
     {
+      src: resolve(
+        '../templates/src/components/edit/pane/RestylePaneModal.tsx'
+      ),
+      dest: 'src/components/edit/pane/RestylePaneModal.tsx',
+    },
+    {
       src: resolve('../templates/src/components/edit/pane/AiPaneGenerator.tsx'),
       dest: 'src/components/edit/pane/AiPaneGenerator.tsx',
     },
@@ -628,6 +640,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/compositor/typeGuards.ts'),
       dest: 'src/utils/compositor/typeGuards.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/compositor/designLibraryHelper.ts'),
+      dest: 'src/utils/compositor/designLibraryHelper.ts',
     },
     {
       src: resolve('../templates/src/utils/compositor/domHelpers.ts'),
@@ -1371,6 +1387,12 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/edit/state/SaveModal.tsx'),
       dest: 'src/components/edit/state/SaveModal.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/state/SaveToLibraryModal.tsx'
+      ),
+      dest: 'src/components/edit/state/SaveToLibraryModal.tsx',
     },
     {
       src: resolve('../templates/src/components/edit/state/StylesMemory.tsx'),

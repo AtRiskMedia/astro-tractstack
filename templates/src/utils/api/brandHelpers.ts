@@ -11,6 +11,7 @@ export function convertToLocalState(
   brandConfig: BrandConfig
 ): BrandConfigState {
   return {
+    tenantId: brandConfig.TENANT_ID || `default`,
     siteInit: brandConfig.SITE_INIT ?? false,
     wordmarkMode: brandConfig.WORDMARK_MODE ?? '',
     brandColours: brandConfig.BRAND_COLOURS
@@ -37,6 +38,7 @@ export function convertToLocalState(
     gtag: brandConfig.GTAG ?? '',
     stylesVer: brandConfig.STYLES_VER ?? 1,
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
+    designLibrary: brandConfig.DESIGN_LIBRARY ?? undefined,
     hasAAI: brandConfig.HAS_AAI ?? false,
   };
 }
@@ -49,6 +51,7 @@ export function convertToBackendFormat(
   localState: BrandConfigState
 ): BrandConfig {
   return {
+    TENANT_ID: localState.tenantId,
     SITE_INIT: localState.siteInit,
     WORDMARK_MODE: localState.wordmarkMode,
     BRAND_COLOURS: localState.brandColours.join(','),
@@ -66,6 +69,7 @@ export function convertToBackendFormat(
     OGDESC: localState.ogdesc,
     GTAG: localState.gtag,
     KNOWN_RESOURCES: localState.knownResources,
+    DESIGN_LIBRARY: localState.designLibrary,
     HAS_AAI: localState.hasAAI,
 
     // ALWAYS send asset paths (current state)

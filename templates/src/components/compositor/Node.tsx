@@ -30,6 +30,7 @@ import { NodeBasicTag } from './nodes/tagElements/NodeBasicTag';
 import { NodeBasicTagInsert } from './nodes/tagElements/NodeBasicTag_insert';
 import { NodeBasicTagEraser } from './nodes/tagElements/NodeBasicTag_eraser';
 import { NodeBasicTagSettings } from './nodes/tagElements/NodeBasicTag_settings';
+import { Pane_DesignLibrary } from './nodes/Pane_DesignLibrary';
 import AddPanePanel from '@/components/edit/pane/AddPanePanel';
 import PageCreationSelector from '@/components/edit/pane/PageGenSelector';
 import ConfigPanePanel from '@/components/edit/pane/ConfigPanePanel';
@@ -180,6 +181,9 @@ const getElement = (
       const toolModeVal = getCtx(props).toolModeValStore.get().value;
       const paneNodes = getCtx(props).getChildNodeIDs(node.id);
       const paneNode = node as PaneNode;
+      if (toolModeVal === 'designLibrary') {
+        return <Pane_DesignLibrary {...sharedProps} />;
+      }
       if (paneNode.isContextPane) {
         if (!isPreview)
           getCtx(props).hasTitle.set(!(!paneNode.slug || !paneNode.title));
