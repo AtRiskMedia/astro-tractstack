@@ -13,8 +13,6 @@ import {
   type VisualBreakNode,
   type TemplatePane,
   type TemplateNode,
-  type BaseNode,
-  type TemplateMarkdown,
 } from '@/types/compositorTypes';
 import type {
   BrandConfig,
@@ -328,4 +326,24 @@ export function convertStorageToLiveTemplate(
   };
 
   return liveTemplatePane;
+}
+
+/**
+ * @placeholder Milestone 2
+ * Translates a TemplatePane from the design library into an AI-compatible JSON shell
+ * for the hybrid AI copy generation path.
+ * @param template The TemplatePane object selected by the user.
+ * @returns A JSON string compatible with the AI's second-stage prompt.
+ */
+export function convertTemplateToAIShell(template: TemplatePane): string {
+  console.log(
+    '[STUB] convertTemplateToAIShell called with template:',
+    template
+  );
+  console.error(
+    '[STUB] Hybrid AI path not yet implemented. Cannot generate AI copy for this design library item.'
+  );
+  // In Milestone 2, this will return a complex JSON string.
+  // For now, it fails gracefully.
+  return '';
 }

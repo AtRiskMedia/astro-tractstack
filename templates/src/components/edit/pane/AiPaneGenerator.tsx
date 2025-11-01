@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
-import { AiPanePreview } from './AiPanePreview';
-import type { TemplatePane } from '@/types/compositorTypes';
 import prompts from '@/constants/prompts.json';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
+import { AiPanePreview } from './AiPanePreview';
+import { CopyInputStep } from './steps/CopyInputStep';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
 import { classNames } from '@/utils/helpers';
+import type { TemplatePane } from '@/types/compositorTypes';
 import type { BrandConfig } from '@/types/tractstack';
 
 interface AiPaneGeneratorProps {
@@ -300,7 +301,7 @@ export function AiPaneGenerator({
           <div>
             <label
               htmlFor="shell-json"
-              className="block text-lg font-semibold text-gray-800"
+              className="block text-lg font-bold text-gray-800"
             >
               Shell JSON Payload
             </label>
@@ -317,7 +318,7 @@ export function AiPaneGenerator({
           <div>
             <label
               htmlFor="copy-html"
-              className="block text-lg font-semibold text-gray-800"
+              className="block text-lg font-bold text-gray-800"
             >
               Copy HTML Payload
             </label>
@@ -361,7 +362,7 @@ export function AiPaneGenerator({
     return (
       <div className="space-y-6 p-4">
         <div>
-          <label className="block text-lg font-semibold text-gray-800">
+          <label className="block text-lg font-bold text-gray-800">
             Color Harmony
           </label>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -378,7 +379,7 @@ export function AiPaneGenerator({
                 />
                 <label
                   htmlFor={`harmony-${option}`}
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-bold text-gray-700"
                 >
                   {option}
                 </label>
@@ -409,7 +410,7 @@ export function AiPaneGenerator({
         </div>
 
         <div>
-          <label className="block text-lg font-semibold text-gray-800">
+          <label className="block text-lg font-bold text-gray-800">
             Theme / Mood
           </label>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -426,7 +427,7 @@ export function AiPaneGenerator({
                 />
                 <label
                   htmlFor={`theme-${option}`}
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-bold text-gray-700"
                 >
                   {option}
                 </label>
@@ -438,7 +439,7 @@ export function AiPaneGenerator({
         <div>
           <label
             htmlFor="additional-notes"
-            className="block text-lg font-semibold text-gray-800"
+            className="block text-lg font-bold text-gray-800"
           >
             Additional Design Notes (Optional)
           </label>
@@ -456,78 +457,14 @@ export function AiPaneGenerator({
           />
         </div>
 
-        <div>
-          <label className="block text-lg font-semibold text-gray-800">
-            Provide Content
-          </label>
-          <div className="my-2 flex space-x-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="copy-prompt-mode"
-                name="copyModeOptions"
-                value="prompt"
-                checked={copyMode === 'prompt'}
-                onChange={(e) => setCopyMode(e.target.value as CopyMode)}
-                className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              <label
-                htmlFor="copy-prompt-mode"
-                className="text-sm font-medium text-gray-700"
-              >
-                Write a prompt
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="copy-raw-mode"
-                name="copyModeOptions"
-                value="raw"
-                checked={copyMode === 'raw'}
-                onChange={(e) => setCopyMode(e.target.value as CopyMode)}
-                className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              <label
-                htmlFor="copy-raw-mode"
-                className="text-sm font-medium text-gray-700"
-              >
-                Provide Copy
-              </label>
-            </div>
-          </div>
-
-          {copyMode === 'prompt' ? (
-            <>
-              <p className="mb-2 text-sm text-gray-500">
-                Let the AI write the copy based on your prompt.
-              </p>
-              <textarea
-                id="copy-prompt"
-                value={copyPrompt}
-                onChange={(e) => setCopyPrompt(e.target.value)}
-                placeholder="Enter copy prompt..."
-                rows={4}
-                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-              />
-            </>
-          ) : (
-            <>
-              <p className="mb-2 text-sm text-gray-500">
-                Provide your raw copy text here. The AI will structure and style
-                it.
-              </p>
-              <textarea
-                id="raw-copy"
-                value={rawCopy}
-                onChange={(e) => setRawCopy(e.target.value)}
-                placeholder="Paste or type your copy text..."
-                rows={6}
-                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-              />
-            </>
-          )}
-        </div>
+        <CopyInputStep
+          copyMode={copyMode}
+          onCopyModeChange={setCopyMode}
+          promptValue={copyPrompt}
+          onPromptValueChange={setCopyPrompt}
+          copyValue={rawCopy}
+          onCopyValueChange={setRawCopy}
+        />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

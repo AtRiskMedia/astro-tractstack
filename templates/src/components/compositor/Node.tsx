@@ -32,7 +32,6 @@ import { NodeBasicTagEraser } from './nodes/tagElements/NodeBasicTag_eraser';
 import { NodeBasicTagSettings } from './nodes/tagElements/NodeBasicTag_settings';
 import { Pane_DesignLibrary } from './nodes/Pane_DesignLibrary';
 import AddPanePanel from '@/components/edit/pane/AddPanePanel';
-import PageCreationSelector from '@/components/edit/pane/PageGenSelector';
 import ConfigPanePanel from '@/components/edit/pane/ConfigPanePanel';
 import StoryFragmentConfigPanel from '@/components/edit/storyfragment/StoryFragmentConfigPanel';
 import StoryFragmentTitlePanel from '@/components/edit/storyfragment/StoryFragmentPanel_title';
@@ -46,6 +45,7 @@ import type {
   BaseNode,
   FlatNode,
 } from '@/types/compositorTypes';
+import { PaneAddMode } from '@/types/compositorTypes';
 import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
 import { selectionStore } from '@/stores/selection';
 import type { NodeProps, SelectionOrigin } from '@/types/nodeProps';
@@ -89,6 +89,25 @@ function parseCodeHook(node: BaseNode | FlatNode) {
   return null;
 }
 
+// Helper component to safely set the panel mode for an empty page
+const EmptyPageHandler = (props: NodeProps) => {
+  const ctx = getCtx(props);
+  useEffect(() => {
+    ctx.setPaneAddMode(props.nodeId, PaneAddMode.NEW);
+  }, []);
+
+  // Now that the mode is set, render the panel which will read it.
+  return (
+    <AddPanePanel
+      nodeId={props.nodeId}
+      first={true}
+      ctx={ctx}
+      isStoryFragment={true}
+      config={props.config!}
+    />
+  );
+};
+
 const getElement = (
   node: BaseNode | FlatNode,
   props: NodeProps
@@ -96,7 +115,6 @@ const getElement = (
   if (node === undefined) return <></>;
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
   const hasPanes = useStore(getCtx(props).hasPanes);
-  const isTemplate = useStore(getCtx(props).isTemplate);
   const sharedProps = { ...props, nodeId: node.id };
   const type = getType(node);
 
@@ -152,12 +170,7 @@ const getElement = (
               </div>
             </div>
           ) : !hasPanes && sf.slug && sf.title && !isPreview ? (
-            <PageCreationSelector
-              nodeId={props.nodeId}
-              ctx={getCtx(props)}
-              isTemplate={isTemplate}
-              config={props.config!}
-            />
+            <EmptyPageHandler {...sharedProps} />
           ) : (
             <>
               <PanelVisibilityWrapper
@@ -470,7 +483,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => {}
+        () => { }
       );
       return () => unsubscribe();
     }
@@ -507,10 +520,10 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-        outline: isOverride
-          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-          : '2.5px dashed rgba(0, 0, 0, 0.3)',
-      }
+      outline: isOverride
+        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+        : '2.5px dashed rgba(0, 0, 0, 0.3)',
+    }
     : {};
   const hoverClasses = isStylesMode
     ? 'hover:outline hover:outline-2 hover:outline-black'
