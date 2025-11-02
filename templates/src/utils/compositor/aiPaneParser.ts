@@ -78,7 +78,6 @@ function buildKeyNormalizationLookup(): Map<string, string> {
 
   const keyMap = new Map<string, string>();
   for (const key in tailwindClasses) {
-    // Store lowercase key -> correctly cased key
     keyMap.set(key.toLowerCase(), key);
   }
   KEY_NORMALIZATION_LOOKUP = keyMap;
@@ -97,7 +96,6 @@ function normalizeKeys(
     if (Object.prototype.hasOwnProperty.call(styleObj, key)) {
       const lowerKey = key.toLowerCase();
       const correctKey = keyMap.get(lowerKey);
-      // Use the correctly cased key if found, otherwise keep original (handles potential non-Tailwind keys)
       normalized[correctKey || key] = styleObj[key];
     }
   }
@@ -258,22 +256,16 @@ function walkDom(
 ) {
   if (domNode.nodeType === Node.TEXT_NODE) {
     const copy = domNode.textContent || '';
-    // Preserve leading/trailing spaces unless the *entire* content is just whitespace.
-    // Trim internal excessive whitespace as a basic sanitation step.
     const trimmedCopy = copy.replace(/\s+/g, ' ').trim();
 
     if (trimmedCopy.length > 0) {
-      // Use the original copy to preserve meaningful spaces, but cleaned up.
       let finalCopy = copy.replace(/\s+/g, ' ');
-      // Preserve single leading space if original had one AND previous sibling exists
       if (copy.startsWith(' ') && domNode.previousSibling) {
         finalCopy = ' ' + finalCopy.trimStart();
       }
-      // Preserve single trailing space if original had one AND next sibling exists
       if (copy.endsWith(' ') && domNode.nextSibling) {
         finalCopy = finalCopy.trimEnd() + ' ';
       }
-      // Special case: if it was ONLY space, respect if it was intended between elements
       if (
         trimmedCopy.length === 0 &&
         copy.length > 0 &&
@@ -283,15 +275,13 @@ function walkDom(
         finalCopy = ' ';
       }
 
-      // Only create node if there's actual content or a meaningful space
       if (finalCopy.trim().length > 0 || finalCopy === ' ') {
         const textNode: TemplateNode = {
           id: ulid(),
           nodeType: 'TagElement',
           parentId: parentId,
           tagName: 'text',
-          copy: finalCopy, // Use the carefully preserved copy
-          overrideClasses: {},
+          copy: finalCopy,
         };
         parsedNodes.push({
           flatNode: textNode,
@@ -326,7 +316,6 @@ function walkDom(
         nodeType: 'TagElement',
         parentId: parentId,
         tagName: 'p',
-        overrideClasses: {},
       };
       parsedNodes.push({
         flatNode: pNode,
@@ -341,8 +330,7 @@ function walkDom(
       id: ulid(),
       nodeType: 'TagElement',
       parentId: finalParentId,
-      tagName: 'a',
-      overrideClasses: {},
+      tagName: 'a', // Buttons are converted to anchor tags for our system
       href: '#',
       buttonPayload: {
         ...buttonPayload,
@@ -368,7 +356,6 @@ function walkDom(
     nodeType: 'TagElement',
     parentId: parentId,
     tagName: tagName,
-    overrideClasses: {},
   };
 
   if (tagName === 'span') {
@@ -493,14 +480,41 @@ function parseDefaultClassesFromShell(
   return sanitizedDefaults;
 }
 
+/**
+ * Parses a raw HTML string from the AI into a structured array of TemplateNodes.
+ * @param copyHtml The raw HTML string.
+ * @param markdownId The parent ID for the top-level nodes.
+ * @returns An array of TemplateNodes representing the structured content.
+ */
+export function parseAiCopyHtml(
+  copyHtml: string,
+  markdownId: string
+): TemplateNode[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(copyHtml, 'text/html');
+
+  const allParsedNodes: ParsedNode[] = [];
+  walkDom(doc.body, markdownId, allParsedNodes, markdownId);
+
+  // When parsing copy in isolation, all classes are treated as potential overrides.
+  // The consumer is responsible for merging these with a set of defaults if needed.
+  return allParsedNodes.map((pNode) => {
+    if (
+      Object.keys(pNode.responsiveClasses).length > 0 &&
+      pNode.flatNode.tagName !== 'span'
+    ) {
+      pNode.flatNode.overrideClasses = pNode.responsiveClasses;
+    }
+    return pNode.flatNode;
+  });
+}
+
 export const parseAiPane = (
   shellJson: string,
   copyHtml: string,
   layout: string
 ): TemplatePane => {
   const shell: ShellJson = JSON.parse(shellJson);
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(copyHtml, 'text/html');
 
   const paneId = ulid();
   const markdownId = ulid();
@@ -527,73 +541,7 @@ export const parseAiPane = (
     defaultClasses: shellDefaults,
   };
 
-  const allParsedNodes: ParsedNode[] = [];
-  walkDom(doc.body, markdownId, allParsedNodes, markdownId);
-
-  const templateNodes: TemplateNode[] = [];
-  const nodesByTag = new Map<string, ParsedNode[]>();
-
-  allParsedNodes.forEach((parsedNode) => {
-    templateNodes.push(parsedNode.flatNode);
-    const tagName = parsedNode.flatNode.tagName;
-
-    if (
-      tagName &&
-      tagName !== 'span' &&
-      tagName !== 'text' &&
-      tagName !== 'em' &&
-      tagName !== 'strong' &&
-      tagName !== 'a'
-    ) {
-      if (!nodesByTag.has(tagName)) {
-        nodesByTag.set(tagName, []);
-      }
-      nodesByTag.get(tagName)!.push(parsedNode);
-    }
-  });
-
-  nodesByTag.forEach((nodes, tagName) => {
-    const commonResponsiveFromCopy = findMostCommonClasses(nodes);
-    const requiredCommonFromCopy = ensureRequiredViewports(
-      commonResponsiveFromCopy
-    );
-
-    const existingShellDefault = markdownNode.defaultClasses![tagName];
-    const mergedDefault = ensureRequiredViewports(
-      mergeResponsive(existingShellDefault, commonResponsiveFromCopy)
-    );
-
-    markdownNode.defaultClasses![tagName] = mergedDefault;
-
-    nodes.forEach((parsedNode) => {
-      const requiredNodeResponsive = ensureRequiredViewports(
-        parsedNode.responsiveClasses
-      );
-
-      if (!isDeepEqual(requiredNodeResponsive, requiredCommonFromCopy)) {
-        if (!parsedNode.flatNode.overrideClasses) {
-          parsedNode.flatNode.overrideClasses = {};
-        }
-        parsedNode.flatNode.overrideClasses = parsedNode.responsiveClasses;
-      }
-    });
-  });
-
-  if (layout.includes('Image')) {
-    const imgNode: TemplateNode = {
-      id: ulid(),
-      nodeType: 'TagElement',
-      parentId: markdownId,
-      tagName: 'img',
-      src: '/static.jpg',
-      overrideClasses: {},
-    };
-    if (layout === 'Text + Image Left') {
-      templateNodes.unshift(imgNode);
-    } else {
-      templateNodes.push(imgNode);
-    }
-  }
+  const templateNodes = parseAiCopyHtml(copyHtml, markdownId);
 
   const templatePane: TemplatePane = {
     id: paneId,

@@ -14,7 +14,7 @@ import { useStore } from '@nanostores/react';
 import { CopyInputStep } from './steps/CopyInputStep';
 import { DesignLibraryStep } from './steps/DesignLibraryStep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
-import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import { parseAiPane, parseAiCopyHtml } from '@/utils/compositor/aiPaneParser';
 import {
   convertStorageToLiveTemplate,
   mergeCopyIntoTemplate,
@@ -194,7 +194,7 @@ const AddPaneNewPanel = ({
     handleApplyTemplate(blankTemplate);
   };
 
-  const handleDesignLibrarySelect = (entry: DesignLibraryEntry) => {
+  const handleDesignLibrarySelect = async (entry: DesignLibraryEntry) => {
     // This flow is for "Design Library + Provide Copy"
     if (copyMode === 'raw') {
       const liveTemplate = convertStorageToLiveTemplate(
@@ -204,20 +204,63 @@ const AddPaneNewPanel = ({
         liveTemplate.markdown.markdownBody = copyValue;
       }
       handleApplyTemplate(liveTemplate);
+      return;
     }
-    // This flow is for "Design Library + Write a Prompt" (Hybrid AI)
-    else if (copyMode === 'prompt') {
-      const liveTemplate = convertStorageToLiveTemplate(entry.template);
-      const shellJson = convertTemplateToAIShell(liveTemplate);
 
-      if (!shellJson) {
-        setError(
-          'Hybrid AI path is not yet implemented. Cannot generate AI copy for this design.'
+    // This flow is for "Design Library + Write a Prompt" (Hybrid AI)
+    if (copyMode === 'prompt') {
+      setError(null);
+      setStep('loading');
+      try {
+        // 1. Get the full, rich template from the library
+        const liveTemplate = convertStorageToLiveTemplate(entry.template);
+        if (!liveTemplate.markdown) {
+          throw new Error(
+            'The selected design library item is not compatible with this workflow as it has no markdown section.'
+          );
+        }
+
+        // 2. Create the simplified shell for the AI
+        const shellJson = convertTemplateToAIShell(liveTemplate);
+        if (!shellJson || shellJson === '{}') {
+          throw new Error(
+            'Could not generate a valid AI shell from this design.'
+          );
+        }
+
+        // 3. Get the AI to write copy based on the shell and prompt
+        const copyPromptDetails = prompts.aiPaneCopyPrompt;
+        const layout = 'Text Only';
+        const formattedCopyPrompt = copyPromptDetails.user_template
+          .replace('{{COPY_INPUT}}', promptValue)
+          .replace(
+            '{{DESIGN_INPUT}}',
+            "N/A - Use the provided Shell JSON's design."
+          )
+          .replace('{{LAYOUT_TYPE}}', layout)
+          .replace('{{SHELL_JSON}}', shellJson);
+
+        const copyResult = await callAskLemurAPI(
+          formattedCopyPrompt,
+          copyPromptDetails.system || '',
+          false
         );
+
+        // 4. Parse ONLY the AI-generated HTML into content nodes
+        const newNodes = parseAiCopyHtml(copyResult, liveTemplate.markdown.id);
+
+        // 5. Create the final pane by cloning the original rich template
+        const finalPane = cloneDeep(liveTemplate);
+
+        // 6. Inject the new AI content, preserving the original rich design
+        finalPane.markdown!.nodes = newNodes;
+
+        // 7. Apply the complete, correctly merged pane
+        handleApplyTemplate(finalPane);
+      } catch (err: any) {
+        setError(err.message || 'Failed to generate AI copy for this design.');
         setStep('error');
-        return;
       }
-      // TODO MILESTONE 2: Call single AI endpoint with shell + prompt
     }
   };
 

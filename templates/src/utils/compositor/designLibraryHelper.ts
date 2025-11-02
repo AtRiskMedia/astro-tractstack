@@ -1,5 +1,6 @@
 import { ulid } from 'ulid';
 import { getCtx, type NodesContext } from '@/stores/nodes';
+import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import {
   type PaneNode,
   type FlatNode,
@@ -328,22 +329,88 @@ export function convertStorageToLiveTemplate(
   return liveTemplatePane;
 }
 
+// Helper to convert a style object { "px": "4", "fontBOLD": "bold" } to "px-4 font-bold"
+function classObjectToString(
+  classObj: Record<string, string> | undefined
+): string {
+  if (!classObj) return '';
+
+  return Object.entries(classObj)
+    .map(([key, value]) => {
+      const definition = tailwindClasses[key];
+      if (!definition) return ''; // Ignore keys not in our definitions
+
+      if (definition.useKeyAsClass) {
+        return value; // e.g., for 'fontBOLD', value is 'font-bold'
+      }
+
+      // Handle negative values
+      if (typeof value === 'string' && value.startsWith('-')) {
+        return `-${definition.prefix}${value.substring(1)}`;
+      }
+
+      return `${definition.prefix}${value}`;
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
 /**
- * @placeholder Milestone 2
  * Translates a TemplatePane from the design library into an AI-compatible JSON shell
  * for the hybrid AI copy generation path.
  * @param template The TemplatePane object selected by the user.
  * @returns A JSON string compatible with the AI's second-stage prompt.
  */
 export function convertTemplateToAIShell(template: TemplatePane): string {
-  console.log(
-    '[STUB] convertTemplateToAIShell called with template:',
-    template
-  );
-  console.error(
-    '[STUB] Hybrid AI path not yet implemented. Cannot generate AI copy for this design library item.'
-  );
-  // In Milestone 2, this will return a complex JSON string.
-  // For now, it fails gracefully.
-  return '';
+  const shell: any = {
+    bgColour: template.bgColour || '#ffffff',
+    parentClasses: [],
+    defaultClasses: {},
+  };
+
+  // 1. Process parentClasses (layout)
+  if (template.markdown?.parentClasses) {
+    shell.parentClasses = template.markdown.parentClasses.map((layer) => {
+      const newLayer: { mobile?: string; tablet?: string; desktop?: string } =
+        {};
+      if (layer.mobile && Object.keys(layer.mobile).length > 0) {
+        newLayer.mobile = classObjectToString(layer.mobile);
+      }
+      if (layer.tablet && Object.keys(layer.tablet).length > 0) {
+        newLayer.tablet = classObjectToString(layer.tablet);
+      }
+      if (layer.desktop && Object.keys(layer.desktop).length > 0) {
+        newLayer.desktop = classObjectToString(layer.desktop);
+      }
+      return newLayer;
+    });
+  }
+
+  // 2. Process defaultClasses (typography, etc.)
+  if (template.markdown?.defaultClasses) {
+    for (const tag in template.markdown.defaultClasses) {
+      const styles = template.markdown.defaultClasses[tag];
+      const newTagStyles: {
+        mobile?: string;
+        tablet?: string;
+        desktop?: string;
+      } = {};
+
+      if (styles.mobile && Object.keys(styles.mobile).length > 0) {
+        newTagStyles.mobile = classObjectToString(styles.mobile);
+      }
+      if (styles.tablet && Object.keys(styles.tablet).length > 0) {
+        newTagStyles.tablet = classObjectToString(styles.tablet);
+      }
+      if (styles.desktop && Object.keys(styles.desktop).length > 0) {
+        newTagStyles.desktop = classObjectToString(styles.desktop);
+      }
+
+      if (Object.keys(newTagStyles).length > 0) {
+        shell.defaultClasses[tag] = newTagStyles;
+      }
+    }
+  }
+
+  return JSON.stringify(shell, null, 2);
 }
