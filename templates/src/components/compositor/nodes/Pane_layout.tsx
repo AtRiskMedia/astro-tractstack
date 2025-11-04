@@ -51,20 +51,22 @@ export const PaneLayout = (props: NodeProps) => {
             e.stopPropagation();
           }}
         >
-          <button
-            title="Apply New Layout"
-            onClick={(e) => {
-              getCtx(props).setClickedNodeId(props.nodeId);
-              e.stopPropagation();
-            }}
-            onDoubleClick={(e) => {
-              getCtx(props).setClickedNodeId(props.nodeId, true);
-              e.stopPropagation();
-            }}
-            className="absolute right-2 top-2 z-10 rounded-full bg-cyan-700 p-1.5 hover:bg-black"
-          >
-            <PuzzlePieceIcon className="h-10 w-10 text-white" />
-          </button>
+          {!props.isSandboxMode && (
+            <button
+              title="Apply New Layout"
+              onClick={(e) => {
+                getCtx(props).setClickedNodeId(props.nodeId);
+                e.stopPropagation();
+              }}
+              onDoubleClick={(e) => {
+                getCtx(props).setClickedNodeId(props.nodeId, true);
+                e.stopPropagation();
+              }}
+              className="absolute right-2 top-2 z-10 rounded-full bg-cyan-700 p-1.5 hover:bg-black"
+            >
+              <PuzzlePieceIcon className="h-10 w-10 text-white" />
+            </button>
+          )}
           {codeHookPayload ? (
             <CodeHookContainer payload={codeHookPayload} />
           ) : (

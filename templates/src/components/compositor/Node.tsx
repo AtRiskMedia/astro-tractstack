@@ -104,6 +104,7 @@ const EmptyPageHandler = (props: NodeProps) => {
       ctx={ctx}
       isStoryFragment={true}
       config={props.config!}
+      isSandboxMode={props.isSandboxMode}
     />
   );
 };
@@ -115,7 +116,11 @@ const getElement = (
   if (node === undefined) return <></>;
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
   const hasPanes = useStore(getCtx(props).hasPanes);
-  const sharedProps = { ...props, nodeId: node.id };
+  const sharedProps = {
+    ...props,
+    nodeId: node.id,
+    isSandboxMode: props.isSandboxMode,
+  };
   const type = getType(node);
 
   switch (type) {

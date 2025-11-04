@@ -45,6 +45,7 @@ interface SaveModalProps {
   slug: string;
   isContext: boolean;
   onClose: () => void;
+  isSandboxMode?: boolean;
 }
 
 const PROGRESS_PHASES = {
@@ -61,11 +62,47 @@ const INDETERMINATE_STAGES: SaveStage[] = [
   'UPDATING_HOME_PAGE',
 ];
 
+const SandboxUpgradeNotice = ({ onClose }: { onClose: () => void }) => (
+  <Dialog.Root open={true} onOpenChange={() => onClose()} modal={true}>
+    <Portal>
+      <Dialog.Backdrop className="fixed inset-0 z-[9005] bg-black bg-opacity-75" />
+      <Dialog.Positioner className="fixed inset-0 z-[9005] flex items-center justify-center p-4">
+        <Dialog.Content className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+          <div className="p-6 text-center">
+            <Dialog.Title className="text-xl font-bold text-gray-900">
+              Save Your Work
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-gray-600">
+              To save your changes and get a shareable link, please sign up for
+              a full account.
+            </Dialog.Description>
+            <div className="mt-6 flex justify-center gap-3">
+              <a
+                href="/sandbox/register"
+                className="bg-myblue hover:bg-myorange rounded-md px-4 py-2 font-bold text-white"
+              >
+                Sign Up Now
+              </a>
+              <button
+                onClick={onClose}
+                className="rounded-md bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+              >
+                Keep Editing
+              </button>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Portal>
+  </Dialog.Root>
+);
+
 export default function SaveModal({
   show,
   slug,
   isContext,
   onClose,
+  isSandboxMode = false,
 }: SaveModalProps) {
   const [stage, setStage] = useState<SaveStage>('PREPARING');
   const [progress, setProgress] = useState(0);
@@ -870,6 +907,10 @@ export default function SaveModal({
       return `/${currentSlug}`;
     }
   })();
+
+  if (isSandboxMode) {
+    return show ? <SandboxUpgradeNotice onClose={onClose} /> : null;
+  }
 
   return (
     <Dialog.Root

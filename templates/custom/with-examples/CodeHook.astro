@@ -7,6 +7,7 @@ import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
 import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
 import ProductCardWrapper from './ProductCardWrapper.astro';
 import ProductGrid from './ProductGrid.astro';
+import SandboxLauncher from './SandboxLauncher';
 import type { FullContentMapItem } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -30,6 +31,7 @@ export const components = {
   'search-widget': true,
   'product-card': true,
   'product-grid': true,
+  'get-crafting': true,
   'bunny-video': import.meta.env.PUBLIC_ENABLE_BUNNY === 'true',
   epinet: true,
 };
@@ -48,6 +50,8 @@ export const components = {
     <SearchWidget fullContentMap={fullContentMap} client:load />
   ) : target === 'bunny-video' && import.meta.env.PUBLIC_ENABLE_BUNNY ? (
     <BunnyVideoWrapper options={options} />
+  ) : target === 'get-crafting' ? (
+    <SandboxLauncher client:only="react" />
   ) : target === 'custom-hero' ? (
     <CustomHero />
   ) : target === 'epinet' ? (

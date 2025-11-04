@@ -1,0 +1,137 @@
+---
+import { ulid } from 'ulid';
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { components as codeHookComponents } from '@/custom/CodeHook.astro';
+import StoryKeepHeader from '@/components/edit/Header';
+import StoryKeepToolBar from '@/components/edit/ToolBar';
+import StoryKeepToolMode from '@/components/edit/ToolMode';
+import SettingsPanel from '@/components/edit/SettingsPanel';
+import { Compositor } from '@/components/compositor/Compositor';
+import SandboxAuthWrapper from '@/components/codehooks/SandboxAuthWrapper.tsx';
+import { preHealthCheck } from '@/utils/backend';
+
+if (!import.meta.env.PRIVATE_SANDBOX_SECRET) {
+  return Astro.redirect('/');
+}
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const brandConfig = await getBrandConfig(tenantId);
+
+const emptyStoryFragment = {
+  id: ulid(),
+  nodeType: 'StoryFragment' as const,
+  parentId: null,
+  title: 'Sandbox Page',
+  slug: 'sandbox-page',
+  paneIds: [],
+  isChanged: false,
+  created: new Date(),
+  changed: new Date(),
+};
+const loadData = {
+  storyfragmentNodes: [emptyStoryFragment],
+};
+const title = 'Sandbox - TractStack Editor';
+const storyFragmentID = emptyStoryFragment.id;
+
+const fullContentMap = await getFullContentMap(tenantId);
+const urlParams: Record<string, string | boolean> = {};
+for (const [key, value] of Astro.url.searchParams) {
+  urlParams[key] = value === '' ? true : value;
+}
+---
+
+<Layout
+  title={title}
+  slug="sandbox"
+  brandConfig={brandConfig}
+  storyfragmentId={storyFragmentID}
+  isStoryKeep={true}
+  isEditor={true}
+>
+  <SandboxAuthWrapper client:load />
+  <Header
+    title={title}
+    slug="sandbox"
+    brandConfig={brandConfig}
+    isContext={false}
+    isStoryKeep={true}
+    isEditable={false}
+    menu={null}
+  />
+
+  <section
+    id="storykeepHeader"
+    role="banner"
+    class="z-101 bg-mywhite left-0 right-0 drop-shadow transition-all duration-200"
+  >
+    <StoryKeepHeader
+      slug="sandbox"
+      isContext={false}
+      isSandboxMode={true}
+      client:only="react"
+    />
+  </section>
+
+  <div class="flex min-h-screen">
+    <StoryKeepToolMode isContext={false} client:only="react" />
+
+    <main id="mainContent" class="relative flex-1 overflow-x-auto">
+      <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
+        <div
+          class="h-fit min-h-screen pb-96"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
+          }}
+        >
+          <Compositor
+            id={storyFragmentID}
+            nodes={loadData}
+            config={brandConfig}
+            fullContentMap={fullContentMap}
+            fullCanonicalURL="/sandbox"
+            urlParams={urlParams}
+            availableCodeHooks={Object.keys(codeHookComponents)}
+            isSandboxMode={true}
+            client:only="react"
+          />
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <aside
+    id="settingsControls"
+    class="z-101 pointer-events-none fixed bottom-16 right-2 flex flex-col items-end gap-2 md:bottom-2"
+  >
+    <div class="pointer-events-none flex-grow"></div>
+
+    <div class="pointer-events-auto flex-shrink-0">
+      <StoryKeepToolBar client:only="react" />
+    </div>
+
+    <div class="pointer-events-auto max-h-full">
+      <SettingsPanel
+        config={brandConfig}
+        availableCodeHooks={Object.keys(codeHookComponents)}
+        client:only="react"
+      />
+    </div>
+  </aside>
+</Layout>
+
+<script>
+  import { setupLayoutObservers } from '@/utils/layout';
+  document.addEventListener('astro:page-load', setupLayoutObservers);
+</script>

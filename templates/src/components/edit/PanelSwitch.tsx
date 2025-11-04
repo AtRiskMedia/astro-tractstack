@@ -52,16 +52,16 @@ const PanelSwitch = ({
 }: SettingsPanelProps) => {
   const signal = useStore(settingsPanelStore);
 
-  if (!signal) {
-    return null;
-  }
-
   useEffect(() => {
     if (signal?.action && onTitleChange) {
       const title = getSettingsPanelTitle(signal.action);
       if (title) onTitleChange(title);
     }
   }, [signal?.action, onTitleChange]);
+
+  if (!signal) {
+    return null;
+  }
 
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();

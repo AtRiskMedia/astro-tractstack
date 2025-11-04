@@ -10,7 +10,6 @@ import prompts from '@/constants/prompts.json';
 import type { BrandConfig, DesignLibraryEntry } from '@/types/tractstack';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
 import { useStore } from '@nanostores/react';
-
 import { CopyInputStep } from './steps/CopyInputStep';
 import { DesignLibraryStep } from './steps/DesignLibraryStep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
@@ -21,7 +20,6 @@ import {
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
 
-// --- Types for Workflow State ---
 type Step =
   | 'initial'
   | 'copyInput'
@@ -33,7 +31,6 @@ type Step =
 type InitialChoice = 'library' | 'ai' | 'blank';
 type CopyMode = 'prompt' | 'raw';
 
-// --- API Call Helper ---
 interface GenerationResponse {
   success: boolean;
   data?: { response: string | object };
@@ -43,7 +40,8 @@ interface GenerationResponse {
 const callAskLemurAPI = async (
   prompt: string,
   context: string,
-  expectJson: boolean
+  expectJson: boolean,
+  isSandboxMode: boolean
 ): Promise<string> => {
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
@@ -56,12 +54,22 @@ const callAskLemurAPI = async (
     max_tokens: 2000,
   };
 
-  const response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
-    credentials: 'include',
-    body: JSON.stringify(requestBody),
-  });
+  let response: Response;
+  if (isSandboxMode) {
+    response = await fetch(`/api/sandbox`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
+      credentials: 'include',
+      body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
+    });
+  } else {
+    response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
+      credentials: 'include',
+      body: JSON.stringify(requestBody),
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -98,7 +106,6 @@ const callAskLemurAPI = async (
   throw new Error('Unexpected response format received from API.');
 };
 
-// --- Main Component ---
 interface AddPaneNewPanelProps {
   nodeId: string;
   first: boolean;
@@ -107,6 +114,7 @@ interface AddPaneNewPanelProps {
   isStoryFragment?: boolean;
   isContextPane?: boolean;
   config?: BrandConfig;
+  isSandboxMode?: boolean;
 }
 
 const AddPaneNewPanel = ({
@@ -117,23 +125,18 @@ const AddPaneNewPanel = ({
   isStoryFragment = false,
   isContextPane = false,
   config,
+  isSandboxMode = false,
 }: AddPaneNewPanelProps) => {
   const ctx = providedCtx || getCtx();
   const hasAssemblyAI = useStore(hasAssemblyAIStore);
-
-  // --- State Machine and Data Stores ---
   const [step, setStep] = useState<Step>('initial');
   const [initialChoice, setInitialChoice] = useState<InitialChoice | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
-
-  // State for CopyInputStep
-  const [copyMode, setCopyMode] = useState<CopyMode>('raw');
+  const [copyMode, setCopyMode] = useState<CopyMode>('prompt');
   const [promptValue, setPromptValue] = useState('');
   const [copyValue, setCopyValue] = useState('');
-
-  // State for AiDesignStep
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
     baseColor: '',
@@ -141,8 +144,6 @@ const AddPaneNewPanel = ({
     theme: 'Light',
     additionalNotes: '',
   });
-
-  // --- Handlers & Logic ---
 
   const handleInitialChoice = (choice: InitialChoice) => {
     setInitialChoice(choice);
@@ -243,7 +244,8 @@ const AddPaneNewPanel = ({
         const copyResult = await callAskLemurAPI(
           formattedCopyPrompt,
           copyPromptDetails.system || '',
-          false
+          false,
+          isSandboxMode
         );
 
         // 4. Parse ONLY the AI-generated HTML into content nodes
@@ -288,7 +290,8 @@ const AddPaneNewPanel = ({
       const shellResult = await callAskLemurAPI(
         formattedShellPrompt,
         shellPromptDetails.system || '',
-        true
+        true,
+        isSandboxMode
       );
 
       const copyInputContent = copyMode === 'prompt' ? promptValue : copyValue;
@@ -301,7 +304,8 @@ const AddPaneNewPanel = ({
       const copyResult = await callAskLemurAPI(
         formattedCopyPrompt,
         copyPromptDetails.system || '',
-        false
+        false,
+        isSandboxMode
       );
 
       const finalPane = parseAiPane(shellResult, copyResult, layout);
@@ -310,7 +314,7 @@ const AddPaneNewPanel = ({
       setError(err.message || 'Failed to generate AI pane.');
       setStep('error');
     }
-  }, [aiDesignConfig, copyMode, promptValue, copyValue]);
+  }, [aiDesignConfig, copyMode, promptValue, copyValue, isSandboxMode]);
 
   const handleApplyTemplate = async (template: TemplatePane) => {
     if (!ctx) return;

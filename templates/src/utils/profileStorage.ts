@@ -148,6 +148,13 @@ export class ProfileStorage {
     StorageManager.set(this.STORAGE_KEYS.profileToken, token);
     StorageManager.set(this.STORAGE_KEYS.hasProfile, '1');
     StorageManager.set(this.STORAGE_KEYS.unlockedProfile, '1');
+
+    try {
+      const maxAge = 60 * 60 * 24;
+      document.cookie = `tractstack_profile=true; path=/; SameSite=Lax; max-age=${maxAge}`;
+    } catch {
+      // Silently fail if cookies are blocked
+    }
   }
 
   /**
@@ -157,6 +164,12 @@ export class ProfileStorage {
     StorageManager.remove(this.STORAGE_KEYS.profileToken);
     StorageManager.remove(this.STORAGE_KEYS.hasProfile);
     StorageManager.remove(this.STORAGE_KEYS.unlockedProfile);
+    try {
+      document.cookie =
+        'tractstack_profile=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    } catch {
+      // Silently fail
+    }
   }
 
   /**

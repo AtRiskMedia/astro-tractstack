@@ -21,9 +21,14 @@ import SaveModal from '@/components/edit/state/SaveModal';
 interface StoryKeepHeaderProps {
   slug: string;
   isContext: boolean;
+  isSandboxMode?: boolean;
 }
 
-const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
+const StoryKeepHeader = ({
+  slug,
+  isContext = false,
+  isSandboxMode = false,
+}: StoryKeepHeaderProps) => {
   const viewport = useStore(viewportModeStore);
   const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
   const ctx = getCtx();
@@ -162,7 +167,7 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
           </div>
         )}
 
-        {shouldShowSave && (
+        {shouldShowSave && !isSandboxMode && (
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             <button
               onClick={handleSave}
@@ -179,6 +184,7 @@ const StoryKeepHeader = ({ slug, isContext = false }: StoryKeepHeaderProps) => {
         isContext={isContext}
         show={showSaveModal}
         onClose={handleCloseSaveModal}
+        isSandboxMode={isSandboxMode}
       />
     </>
   );

@@ -14,10 +14,6 @@ import { selectionStore } from '@/stores/selection';
 export const Pane_DesignLibrary = (props: NodeProps) => {
   const ctx = getCtx(props);
 
-  if (!props.config || !props.config.TENANT_ID) {
-    return <></>;
-  }
-
   const { isRestyleModalOpen } = useStore(selectionStore, {
     keys: ['isRestyleModalOpen'],
   });
@@ -56,6 +52,10 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     setIsSaveModalOpen(true);
   };
 
+  if (!props.config || !props.config.TENANT_ID) {
+    return <></>;
+  }
+
   return (
     <div id={getPaneId()} className="pane min-h-16">
       <div id={ctx.getNodeSlug(props.nodeId)} className={wrapperClasses}>
@@ -68,13 +68,15 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
           }}
         >
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-y-2">
-            <button
-              title="Save Pane to Design Library"
-              onClick={handleSaveClick}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-600 p-1.5 shadow-lg hover:bg-cyan-700"
-            >
-              <ArchiveBoxArrowDownIcon className="h-7 w-7 text-white" />
-            </button>
+            {props.isSandboxMode && (
+              <button
+                title="Save Pane to Design Library"
+                onClick={handleSaveClick}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-600 p-1.5 shadow-lg hover:bg-cyan-700"
+              >
+                <ArchiveBoxArrowDownIcon className="h-7 w-7 text-white" />
+              </button>
+            )}
             <button
               title="Restyle Pane from Design Library"
               onClick={handleRestyleClick}

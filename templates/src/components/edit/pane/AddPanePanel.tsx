@@ -16,6 +16,7 @@ interface AddPanePanelProps {
   isStoryFragment?: boolean;
   isContextPane?: boolean;
   config?: BrandConfig;
+  isSandboxMode?: boolean;
 }
 
 const AddPanePanel = ({
@@ -25,6 +26,7 @@ const AddPanePanel = ({
   isStoryFragment = false,
   isContextPane = false,
   config,
+  isSandboxMode = false,
 }: AddPanePanelProps) => {
   const [reset, setReset] = useState(false);
   const lookup = first ? `${nodeId}-0` : nodeId;
@@ -66,6 +68,7 @@ const AddPanePanel = ({
           isStoryFragment={isStoryFragment}
           isContextPane={isContextPane}
           config={config!}
+          isSandboxMode={isSandboxMode}
         />
       ) : mode === PaneAddMode.BREAK && !isContextPane ? (
         <AddPaneBreakPanel

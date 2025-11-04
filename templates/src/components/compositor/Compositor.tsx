@@ -50,6 +50,7 @@ export type CompositorProps = {
   availableCodeHooks: string[];
   urlParams: Record<string, string | boolean>;
   fullCanonicalURL: string;
+  isSandboxMode?: boolean;
 };
 
 const VERBOSE = false;
@@ -464,6 +465,7 @@ export const Compositor = (props: CompositorProps) => {
           key={`${props.id}-${updateCounter}`}
           ctx={props.ctx}
           config={props.config}
+          isSandboxMode={props.isSandboxMode}
           onDragStart={handleDragStart}
         />
       )}

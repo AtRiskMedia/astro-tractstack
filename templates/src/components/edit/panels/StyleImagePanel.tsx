@@ -25,14 +25,7 @@ const StyleImagePanel = ({
   parentNode,
 }: StyleImagePanelProps) => {
   const [altDescription, setAltDescription] = useState(node.alt || '');
-  if (
-    !node?.tagName ||
-    !containerNode?.tagName ||
-    !outerContainerNode?.tagName ||
-    !isMarkdownPaneFragmentNode(parentNode)
-  ) {
-    return null;
-  }
+
   const imgDefaultClasses = parentNode.defaultClasses?.[node.tagName];
   const imgOverrideClasses = node.overrideClasses;
   const containerDefaultClasses =
@@ -302,6 +295,15 @@ const StyleImagePanel = ({
     imgNode.alt = `This is a placeholder for an image that hasn't yet been uploaded`;
     ctx.modifyNodes([{ ...imgNode, isChanged: true }]);
   };
+
+  if (
+    !node?.tagName ||
+    !containerNode?.tagName ||
+    !outerContainerNode?.tagName ||
+    !isMarkdownPaneFragmentNode(parentNode)
+  ) {
+    return null;
+  }
 
   return (
     <div className="space-y-8">

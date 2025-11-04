@@ -140,6 +140,18 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/nodes/Pane_layout.tsx',
     },
     {
+      src: resolve(
+        '../templates/src/components/codehooks/SandboxAuthWrapper.tsx'
+      ),
+      dest: 'src/components/codehooks/SandboxAuthWrapper.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/codehooks/SandboxRegisterForm.tsx'
+      ),
+      dest: 'src/components/codehooks/SandboxRegisterForm.tsx',
+    },
+    {
       src: resolve('../templates/src/components/compositor/nodes/Markdown.tsx'),
       dest: 'src/components/compositor/nodes/Markdown.tsx',
     },
@@ -442,14 +454,6 @@ export async function injectTemplateFiles(
       dest: 'src/components/edit/pane/RestylePaneModal.tsx',
     },
     {
-      src: resolve('../templates/src/components/edit/pane/AiPaneGenerator.tsx'),
-      dest: 'src/components/edit/pane/AiPaneGenerator.tsx',
-    },
-    {
-      src: resolve('../templates/src/components/edit/pane/AiPanePreview.tsx'),
-      dest: 'src/components/edit/pane/AiPanePreview.tsx',
-    },
-    {
       src: resolve(
         '../templates/src/components/edit/pane/steps/CopyInputStep.tsx'
       ),
@@ -601,12 +605,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/stores/selection.ts'),
       dest: 'src/stores/selection.ts',
-    },
-
-    // AAI utils
-    {
-      src: resolve('../templates/src/utils/aai/getTitleSlug.ts'),
-      dest: 'src/utils/aai/getTitleSlug.ts',
     },
 
     // Compositor utils - etl
@@ -845,6 +843,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/context/[...contextSlug]/edit.astro',
     },
     {
+      src: resolve('../templates/src/pages/sandbox.astro'),
+      dest: 'src/pages/sandbox.astro',
+    },
+    {
       src: resolve('../templates/src/pages/storykeep.astro'),
       dest: 'src/pages/storykeep.astro',
     },
@@ -887,6 +889,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/tailwind.ts'),
       dest: 'src/pages/api/tailwind.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/sandbox.ts'),
+      dest: 'src/pages/api/sandbox.ts',
     },
 
     // Authentication Pages
@@ -2156,6 +2162,13 @@ export async function injectTemplateFiles(
     // Example Components (Conditional)
     ...(config?.includeExamples
       ? [
+          {
+            src: resolve(
+              '../templates/custom/with-examples/SandboxLauncher.tsx'
+            ),
+            dest: 'src/custom/SandboxLauncher.tsx',
+            protected: true,
+          },
           {
             src: resolve('../templates/custom/with-examples/CustomHero.astro'),
             dest: 'src/custom/CustomHero.astro',
