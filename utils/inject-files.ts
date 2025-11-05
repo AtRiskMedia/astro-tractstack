@@ -473,6 +473,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/steps/DirectInjectStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/DirectInjectStep.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/AddPanePanel_newCustomCopy.tsx'
       ),
       dest: 'src/components/edit/pane/AddPanePanel_newCustomCopy.tsx',

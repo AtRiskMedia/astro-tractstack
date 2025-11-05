@@ -68,7 +68,7 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
           }}
         >
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-y-2">
-            {props.isSandboxMode && (
+            {!props.isSandboxMode && (
               <button
                 title="Save Pane to Design Library"
                 onClick={handleSaveClick}

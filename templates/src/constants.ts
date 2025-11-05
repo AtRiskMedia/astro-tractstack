@@ -18,6 +18,7 @@ export const reservedSlugs = [
   `404`,
   `transcribe`,
   `sitemap`,
+  `sandbox`,
   `robots`,
   `llm`,
 ];

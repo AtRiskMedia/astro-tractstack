@@ -60,6 +60,8 @@ let BUTTON_CLASS_LOOKUP: Map<string, { key: string; value: string }> | null =
   null;
 
 const ALLOWED_TAGS = new Set([
+  'ul',
+  'li',
   'h2',
   'h3',
   'h4',
@@ -69,6 +71,7 @@ const ALLOWED_TAGS = new Set([
   'em',
   'strong',
   'button',
+  'a',
 ]);
 
 function buildKeyNormalizationLookup(): Map<string, string> {
@@ -309,7 +312,10 @@ function walkDom(
   if (tagName === 'button') {
     let finalParentId = parentId;
 
-    if (parentId === markdownId) {
+    const parentDomEl = el.parentNode as Element;
+    const parentTagName = parentDomEl?.tagName?.toLowerCase();
+
+    if (parentId === markdownId || parentTagName === 'li') {
       const pNodeId = ulid();
       const pNode: TemplateNode = {
         id: pNodeId,
@@ -330,7 +336,7 @@ function walkDom(
       id: ulid(),
       nodeType: 'TagElement',
       parentId: finalParentId,
-      tagName: 'a', // Buttons are converted to anchor tags for our system
+      tagName: 'a',
       href: '#',
       buttonPayload: {
         ...buttonPayload,

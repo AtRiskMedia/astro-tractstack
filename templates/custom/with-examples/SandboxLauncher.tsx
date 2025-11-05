@@ -31,15 +31,17 @@ export default function SandboxLauncher() {
           <p className="mt-4 text-lg text-gray-600">
             Create an interactive webpage in a sandbox! No credit card required.
           </p>
-          <p className="mt-8 text-sm text-gray-500">
-            Already connected?{' '}
-            <a
-              href="/storykeep/profile"
-              className="font-bold text-blue-600 underline hover:text-blue-500"
-            >
-              Unlock your profile
-            </a>
-          </p>
+          {!profileExists && (
+            <p className="mt-8 text-sm text-gray-500">
+              Already connected?{' '}
+              <a
+                href="/storykeep/profile"
+                className="font-bold text-blue-600 underline hover:text-blue-500"
+              >
+                Unlock your profile
+              </a>
+            </p>
+          )}
         </div>
 
         {/* Column 2: The Action (Switches between Form and Button) */}

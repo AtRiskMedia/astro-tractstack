@@ -19,6 +19,7 @@ import {
   mergeCopyIntoTemplate,
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
+import { DirectInjectStep } from './steps/DirectInjectStep';
 
 type Step =
   | 'initial'
@@ -26,7 +27,8 @@ type Step =
   | 'designLibrary'
   | 'aiDesign'
   | 'loading'
-  | 'error';
+  | 'error'
+  | 'directInject';
 
 type InitialChoice = 'library' | 'ai' | 'blank';
 type CopyMode = 'prompt' | 'raw';
@@ -160,6 +162,8 @@ const AddPaneNewPanel = ({
     setError(null);
     if (step === 'copyInput') {
       setStep('initial');
+    } else if (step === 'directInject') {
+      setStep('aiDesign');
     } else if (step === 'designLibrary' || step === 'aiDesign' || 'error') {
       setStep('copyInput');
     }
@@ -175,18 +179,18 @@ const AddPaneNewPanel = ({
 
   const handleBlankSlate = () => {
     const blankTemplate: TemplatePane = {
-      id: '', // ctx will assign
+      id: '',
       nodeType: 'Pane',
-      parentId: '', // ctx will assign
+      parentId: '',
       title: 'New Pane',
       slug: '',
       isDecorative: false,
       markdown: {
-        id: '', // ctx will assign
+        id: '',
         nodeType: 'Markdown',
-        parentId: '', // ctx will assign
+        parentId: '',
         type: 'markdown',
-        markdownId: '', // ctx will assign
+        markdownId: '',
         defaultClasses: {},
         parentClasses: [],
         nodes: [],
@@ -196,10 +200,9 @@ const AddPaneNewPanel = ({
   };
 
   const handleDesignLibrarySelect = async (entry: DesignLibraryEntry) => {
-    // This flow is for "Design Library + Provide Copy"
     if (copyMode === 'raw') {
       const liveTemplate = convertStorageToLiveTemplate(
-        mergeCopyIntoTemplate(entry.template, []) // Start with blank copy
+        mergeCopyIntoTemplate(entry.template, [])
       );
       if (liveTemplate.markdown) {
         liveTemplate.markdown.markdownBody = copyValue;
@@ -208,12 +211,10 @@ const AddPaneNewPanel = ({
       return;
     }
 
-    // This flow is for "Design Library + Write a Prompt" (Hybrid AI)
     if (copyMode === 'prompt') {
       setError(null);
       setStep('loading');
       try {
-        // 1. Get the full, rich template from the library
         const liveTemplate = convertStorageToLiveTemplate(entry.template);
         if (!liveTemplate.markdown) {
           throw new Error(
@@ -221,7 +222,6 @@ const AddPaneNewPanel = ({
           );
         }
 
-        // 2. Create the simplified shell for the AI
         const shellJson = convertTemplateToAIShell(liveTemplate);
         if (!shellJson || shellJson === '{}') {
           throw new Error(
@@ -229,7 +229,6 @@ const AddPaneNewPanel = ({
           );
         }
 
-        // 3. Get the AI to write copy based on the shell and prompt
         const copyPromptDetails = prompts.aiPaneCopyPrompt;
         const layout = 'Text Only';
         const formattedCopyPrompt = copyPromptDetails.user_template
@@ -248,16 +247,12 @@ const AddPaneNewPanel = ({
           isSandboxMode
         );
 
-        // 4. Parse ONLY the AI-generated HTML into content nodes
         const newNodes = parseAiCopyHtml(copyResult, liveTemplate.markdown.id);
 
-        // 5. Create the final pane by cloning the original rich template
         const finalPane = cloneDeep(liveTemplate);
 
-        // 6. Inject the new AI content, preserving the original rich design
         finalPane.markdown!.nodes = newNodes;
 
-        // 7. Apply the complete, correctly merged pane
         handleApplyTemplate(finalPane);
       } catch (err: any) {
         setError(err.message || 'Failed to generate AI copy for this design.');
@@ -281,7 +276,7 @@ const AddPaneNewPanel = ({
     try {
       const shellPromptDetails = prompts.aiPaneShellPrompt;
       const copyPromptDetails = prompts.aiPaneCopyPrompt;
-      const layout = 'Text Only'; // Hardcoded for this simplified AI path
+      const layout = 'Text Only';
 
       const formattedShellPrompt = shellPromptDetails.user_template
         .replace('{{DESIGN_INPUT}}', designInput)
@@ -317,6 +312,7 @@ const AddPaneNewPanel = ({
   }, [aiDesignConfig, copyMode, promptValue, copyValue, isSandboxMode]);
 
   const handleApplyTemplate = async (template: TemplatePane) => {
+    console.log(template);
     if (!ctx) return;
     try {
       const insertTemplate = cloneDeep(template);
@@ -356,8 +352,6 @@ const AddPaneNewPanel = ({
     }
   };
 
-  // --- Render Logic ---
-
   const renderInitialStep = () => (
     <div className="p-4">
       <h3 className="font-action mb-4 text-center text-xl font-bold text-gray-800">
@@ -369,7 +363,7 @@ const AddPaneNewPanel = ({
           className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
         >
           <SwatchIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-          <h4 className="font-semibold text-gray-800">Use Design Library</h4>
+          <h4 className="font-bold text-gray-800">Use Design Library</h4>
           <p className="text-sm text-gray-600">
             Start with a pre-made design and add your own content.
           </p>
@@ -380,7 +374,7 @@ const AddPaneNewPanel = ({
             className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
           >
             <SparklesIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-            <h4 className="font-semibold text-gray-800">Design with AI</h4>
+            <h4 className="font-bold text-gray-800">Design with AI</h4>
             <p className="text-sm text-gray-600">
               Let AI generate a complete design and copy from your prompt.
             </p>
@@ -391,7 +385,7 @@ const AddPaneNewPanel = ({
           className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
         >
           <DocumentPlusIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-          <h4 className="font-semibold text-gray-800">Blank Slate</h4>
+          <h4 className="font-bold text-gray-800">Blank Slate</h4>
           <p className="text-sm text-gray-600">
             Add a simple, empty pane to build from scratch.
           </p>
@@ -432,6 +426,17 @@ const AddPaneNewPanel = ({
           Continue →
         </button>
       </div>
+      {initialChoice === `ai` && !isSandboxMode && (
+        <div className="mt-6 text-center text-sm text-gray-600">
+          ADVANCED:{' '}
+          <button
+            onClick={() => setStep('directInject')}
+            className="font-bold text-cyan-700 underline hover:text-cyan-900 focus:outline-none"
+          >
+            Direct Inject
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -476,6 +481,10 @@ const AddPaneNewPanel = ({
     </div>
   );
 
+  const renderDirectInjectStep = () => (
+    <DirectInjectStep onBack={handleBack} onCreatePane={handleApplyTemplate} />
+  );
+
   const renderLoading = () => (
     <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 p-6">
       <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
@@ -509,6 +518,8 @@ const AddPaneNewPanel = ({
         return renderAiDesignStep();
       case 'loading':
         return renderLoading();
+      case 'directInject':
+        return renderDirectInjectStep();
       case 'error':
         return renderError();
       default:
