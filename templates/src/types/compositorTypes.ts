@@ -463,6 +463,18 @@ export type StorageMarkdown = Omit<
   nodes?: StorageNode[];
 };
 
+export type StorageGridLayoutNode = {
+  nodeType: string;
+  type: string;
+  defaultClasses?: Record<string, any>;
+  parentClasses?: Record<string, any>[];
+  gridColumns: {
+    mobile: number;
+    tablet: number;
+    desktop: number;
+  };
+};
+
 export type StoragePane = Omit<
   PaneNode,
   | 'id'
@@ -476,7 +488,8 @@ export type StoragePane = Omit<
   | 'codeHookPayload'
   | 'markdown'
 > & {
-  markdown?: StorageMarkdown;
+  markdowns?: StorageMarkdown[];
+  gridLayout?: StorageGridLayoutNode;
   bgPane?: StorageBgPane;
 };
 

@@ -406,7 +406,7 @@ export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
         <Dialog.Positioner className="z-104 fixed inset-0 flex items-center justify-center">
           <Dialog.Content
             className="flex flex-col rounded-lg bg-white shadow-2xl"
-            style={{ height: '90vw', width: '90vw' }}
+            style={{ maxHeight: '90vw', width: '90vw' }}
           >
             <header className="flex items-center justify-between border-b p-4">
               <Dialog.Title className="text-xl font-bold">

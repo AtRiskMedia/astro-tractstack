@@ -172,13 +172,14 @@ export async function savePaneToLibrary(
     heightRatioDesktop: paneNode.heightRatioDesktop,
     heightRatioMobile: paneNode.heightRatioMobile,
     heightRatioTablet: paneNode.heightRatioTablet,
-    markdown: newStorageMarkdown,
-    bgPane: newStorageBgPane,
+    ...(newStorageMarkdown ? { markdowns: [newStorageMarkdown] } : {}),
+    ...(newStorageBgPane ? { bgPane: newStorageBgPane } : {}),
   };
 
   const newLibraryEntry: DesignLibraryEntry = {
     category: category,
     title: title,
+    markdownCount: 1,
     template: newStoragePane,
   };
 
@@ -244,10 +245,11 @@ export function mergeCopyIntoTemplate(
   copy: ExtractedCopy
 ): StoragePane {
   const newTemplate = { ...template };
-  if (newTemplate.markdown) {
-    newTemplate.markdown.nodes = copy;
+  if (newTemplate.markdowns) {
+    newTemplate.markdowns[0].nodes = copy;
   } else if (copy.length > 0) {
-    newTemplate.markdown = {
+    if (!newTemplate.markdowns) newTemplate.markdowns = [];
+    newTemplate.markdowns[0] = {
       nodeType: 'Markdown',
       type: 'markdown',
       defaultClasses: {},
@@ -289,8 +291,8 @@ export function convertStorageToLiveTemplate(
   const markdownId = ulid();
   const flatNodeList: TemplateNode[] = [];
 
-  if (storagePane.markdown && storagePane.markdown.nodes) {
-    for (const storageNode of storagePane.markdown.nodes) {
+  if (storagePane.markdowns && storagePane.markdowns[0].nodes) {
+    for (const storageNode of storagePane.markdowns[0].nodes) {
       const processedNodes = processStorageNode(storageNode, markdownId);
       flatNodeList.push(...processedNodes);
     }
@@ -312,7 +314,7 @@ export function convertStorageToLiveTemplate(
     id: paneId,
     parentId: '',
     markdown: {
-      ...(storagePane.markdown || {
+      ...((storagePane.markdowns && storagePane.markdowns[0]) || {
         nodeType: 'Markdown',
         type: 'markdown',
         defaultClasses: {},

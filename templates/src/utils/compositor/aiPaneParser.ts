@@ -9,12 +9,19 @@ import type {
   ButtonPayload,
 } from '@/types/compositorTypes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isDeepEqual } from '@/utils/helpers';
 
 type LLMShellLayer = {
-  mobile?: Record<string, string>;
-  tablet?: Record<string, string>;
-  desktop?: Record<string, string>;
+  mobile?: string;
+  tablet?: string;
+  desktop?: string;
+};
+
+type LLMColumnLayer = {
+  gridClasses: {
+    mobile?: string;
+    tablet?: string;
+    desktop?: string;
+  };
 };
 
 type LLMDefaultClasses = {
@@ -29,6 +36,7 @@ type ShellJson = {
   bgColour: string;
   parentClasses: LLMShellLayer[];
   defaultClasses: LLMDefaultClasses;
+  columns?: LLMColumnLayer[];
 };
 
 type ParsedNode = {
@@ -74,35 +82,39 @@ const ALLOWED_TAGS = new Set([
   'a',
 ]);
 
-function buildKeyNormalizationLookup(): Map<string, string> {
-  if (KEY_NORMALIZATION_LOOKUP) {
-    return KEY_NORMALIZATION_LOOKUP;
-  }
+// To be added inside aiPaneParser.ts
 
-  const keyMap = new Map<string, string>();
-  for (const key in tailwindClasses) {
-    keyMap.set(key.toLowerCase(), key);
-  }
-  KEY_NORMALIZATION_LOOKUP = keyMap;
-  return keyMap;
-}
+function transformParentClassesFromShell(
+  llmParentClasses: LLMShellLayer[]
+): ParentClassesPayload {
+  return llmParentClasses.map((layer) => {
+    // Helper to merge responsive classes from a single string source
+    const mergeIntoLayer = (
+      targetLayer: ParentClassLayer,
+      classString: string | undefined
+    ) => {
+      if (!classString) return;
+      const parsed = sanitizeResponsiveClasses(classString);
+      if (parsed.mobile)
+        targetLayer.mobile = { ...targetLayer.mobile, ...parsed.mobile };
+      if (parsed.tablet)
+        targetLayer.tablet = { ...targetLayer.tablet, ...parsed.tablet };
+      if (parsed.desktop)
+        targetLayer.desktop = { ...targetLayer.desktop, ...parsed.desktop };
+    };
 
-function normalizeKeys(
-  styleObj: Record<string, string> | undefined
-): Record<string, string> {
-  if (!styleObj) return {};
+    const finalLayer: ParentClassLayer = {
+      mobile: {},
+      tablet: {},
+      desktop: {},
+    };
 
-  const keyMap = buildKeyNormalizationLookup();
-  const normalized: Record<string, string> = {};
+    mergeIntoLayer(finalLayer, layer.mobile);
+    mergeIntoLayer(finalLayer, layer.tablet);
+    mergeIntoLayer(finalLayer, layer.desktop);
 
-  for (const key in styleObj) {
-    if (Object.prototype.hasOwnProperty.call(styleObj, key)) {
-      const lowerKey = key.toLowerCase();
-      const correctKey = keyMap.get(lowerKey);
-      normalized[correctKey || key] = styleObj[key];
-    }
-  }
-  return normalized;
+    return finalLayer;
+  });
 }
 
 function buildResponsiveClassLookup(): Map<string, ClassLookupValue> {
@@ -525,17 +537,11 @@ export const parseAiPane = (
   const paneId = ulid();
   const markdownId = ulid();
 
-  const transformedParentClasses: ParentClassesPayload = (
-    shell.parentClasses || []
-  ).map(
-    (layer): ParentClassLayer => ({
-      mobile: normalizeKeys(layer.mobile),
-      tablet: normalizeKeys(layer.tablet),
-      desktop: normalizeKeys(layer.desktop),
-    })
-  );
-
   const shellDefaults = parseDefaultClassesFromShell(shell.defaultClasses);
+
+  const transformedParentClasses = transformParentClassesFromShell(
+    shell.parentClasses || []
+  );
 
   const markdownNode: TemplateMarkdown = {
     id: markdownId,

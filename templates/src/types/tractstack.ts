@@ -3,6 +3,7 @@ import type { StoragePane } from './compositorTypes';
 export type DesignLibraryEntry = {
   category: string;
   title: string;
+  markdownCount: number;
   template: StoragePane;
 };
 
