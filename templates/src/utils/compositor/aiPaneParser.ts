@@ -7,7 +7,9 @@ import type {
   DefaultClasses,
   ResponsiveClasses,
   ButtonPayload,
+  GridLayoutNode
 } from '@/types/compositorTypes';
+import { isDeepEqual } from '@/utils/helpers';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 
 type LLMShellLayer = {
@@ -62,7 +64,6 @@ type ClassLookupValue = {
   viewport: 'mobile' | 'tablet' | 'desktop';
 };
 
-let KEY_NORMALIZATION_LOOKUP: Map<string, string> | null = null;
 let RESPONSIVE_CLASS_LOOKUP: Map<string, ClassLookupValue> | null = null;
 let BUTTON_CLASS_LOOKUP: Map<string, { key: string; value: string }> | null =
   null;
@@ -82,41 +83,6 @@ const ALLOWED_TAGS = new Set([
   'a',
 ]);
 
-// To be added inside aiPaneParser.ts
-
-function transformParentClassesFromShell(
-  llmParentClasses: LLMShellLayer[]
-): ParentClassesPayload {
-  return llmParentClasses.map((layer) => {
-    // Helper to merge responsive classes from a single string source
-    const mergeIntoLayer = (
-      targetLayer: ParentClassLayer,
-      classString: string | undefined
-    ) => {
-      if (!classString) return;
-      const parsed = sanitizeResponsiveClasses(classString);
-      if (parsed.mobile)
-        targetLayer.mobile = { ...targetLayer.mobile, ...parsed.mobile };
-      if (parsed.tablet)
-        targetLayer.tablet = { ...targetLayer.tablet, ...parsed.tablet };
-      if (parsed.desktop)
-        targetLayer.desktop = { ...targetLayer.desktop, ...parsed.desktop };
-    };
-
-    const finalLayer: ParentClassLayer = {
-      mobile: {},
-      tablet: {},
-      desktop: {},
-    };
-
-    mergeIntoLayer(finalLayer, layer.mobile);
-    mergeIntoLayer(finalLayer, layer.tablet);
-    mergeIntoLayer(finalLayer, layer.desktop);
-
-    return finalLayer;
-  });
-}
-
 function buildResponsiveClassLookup(): Map<string, ClassLookupValue> {
   if (RESPONSIVE_CLASS_LOOKUP) {
     return RESPONSIVE_CLASS_LOOKUP;
@@ -127,10 +93,10 @@ function buildResponsiveClassLookup(): Map<string, ClassLookupValue> {
     prefix: string;
     key: 'mobile' | 'tablet' | 'desktop';
   }> = [
-    { prefix: '', key: 'mobile' },
-    { prefix: 'md:', key: 'tablet' },
-    { prefix: 'xl:', key: 'desktop' },
-  ];
+      { prefix: '', key: 'mobile' },
+      { prefix: 'md:', key: 'tablet' },
+      { prefix: 'xl:', key: 'desktop' },
+    ];
 
   for (const tailwindKey in tailwindClasses) {
     const def = tailwindClasses[tailwindKey];
@@ -418,6 +384,111 @@ function findMostCommonClasses(nodes: ParsedNode[]): ResponsiveClasses {
   return classMap.get(mostCommonKey) || {};
 }
 
+/**
+ * Calculates the difference between a node's full style and the default theme for its tag.
+ * @returns An object with only the override styles, or undefined if there are no overrides.
+ */
+function calculateOverrides(
+  fullStyle: ResponsiveClasses,
+  defaultStyle: DefaultClassValue
+): ResponsiveClasses | undefined {
+  const overrides: ResponsiveClasses = {};
+  const viewports: Array<keyof ResponsiveClasses> = ['mobile', 'tablet', 'desktop'];
+
+  for (const viewport of viewports) {
+    const fullVPStyle = fullStyle[viewport];
+    const defaultVPStyle = defaultStyle[viewport];
+
+    if (!fullVPStyle) {
+      continue;
+    }
+
+    for (const key in fullVPStyle) {
+      if (
+        Object.prototype.hasOwnProperty.call(fullVPStyle, key) &&
+        fullVPStyle[key] !== defaultVPStyle?.[key]
+      ) {
+        if (!overrides[viewport]) {
+          overrides[viewport] = {};
+        }
+        overrides[viewport]![key] = fullVPStyle[key];
+      }
+    }
+  }
+
+  if (Object.keys(overrides).length > 0 && !isDeepEqual(overrides, {})) {
+    return overrides;
+  }
+
+  return undefined;
+}
+
+/**
+ * Reconciles classes for a set of final TemplateNodes against a base theme.
+ * It discovers the true theme from the content, merges it into the base theme,
+ * and then mutates the nodes to only contain true override classes.
+ * @param nodes The array of TemplateNode objects to mutate.
+ * @param baseDefaults The base theme object to mutate.
+ */
+function reconcileClasses(
+  nodes: TemplateNode[],
+  baseDefaults: DefaultClasses
+): void {
+  const nodesByTag: Record<string, TemplateNode[]> = {};
+  const tempParsedNodes: ParsedNode[] = [];
+
+  nodes.forEach(node => {
+    // Create a temporary ParsedNode structure for analysis
+    const tempParsedNode: ParsedNode = {
+      flatNode: node,
+      responsiveClasses: node.overrideClasses || {},
+    };
+    tempParsedNodes.push(tempParsedNode);
+
+    const tagName = node.tagName;
+    if (!['p', 'h2', 'h3', 'h4', 'h5'].includes(tagName)) {
+      return;
+    }
+    if (!nodesByTag[tagName]) {
+      nodesByTag[tagName] = [];
+    }
+    nodesByTag[tagName].push(node);
+  });
+
+  const finalDefaults = JSON.parse(JSON.stringify(baseDefaults));
+
+  for (const tagName in nodesByTag) {
+    const nodesForTag = nodesByTag[tagName];
+    const tempParsedForTag = nodesForTag.map(n => ({ flatNode: n, responsiveClasses: n.overrideClasses || {} }));
+
+    const commonStyleForTag = findMostCommonClasses(tempParsedForTag);
+    const mergedDefault = mergeResponsive(finalDefaults[tagName], commonStyleForTag);
+    finalDefaults[tagName] = ensureRequiredViewports(mergedDefault);
+  }
+
+  nodes.forEach(node => {
+    const tagName = node.tagName;
+    const defaultStyleForTag = finalDefaults[tagName];
+    const fullStyle = node.overrideClasses || {};
+
+    if (defaultStyleForTag) {
+      const overrides = calculateOverrides(fullStyle, defaultStyleForTag);
+      node.overrideClasses = overrides;
+    } else if (Object.keys(fullStyle).length > 0 && node.tagName !== 'span') {
+      if (!isDeepEqual(fullStyle, {})) {
+        node.overrideClasses = fullStyle;
+      } else {
+        node.overrideClasses = undefined;
+      }
+    } else if (node.tagName !== 'span') {
+      node.overrideClasses = undefined;
+    }
+  });
+
+  Object.keys(baseDefaults).forEach(key => delete baseDefaults[key]);
+  Object.assign(baseDefaults, finalDefaults);
+}
+
 function ensureRequiredViewports(
   responsive: ResponsiveClasses | undefined
 ): DefaultClassValue {
@@ -514,8 +585,6 @@ export function parseAiCopyHtml(
   const allParsedNodes: ParsedNode[] = [];
   walkDom(doc.body, markdownId, allParsedNodes, markdownId);
 
-  // When parsing copy in isolation, all classes are treated as potential overrides.
-  // The consumer is responsible for merging these with a set of defaults if needed.
   return allParsedNodes.map((pNode) => {
     if (
       Object.keys(pNode.responsiveClasses).length > 0 &&
@@ -527,47 +596,138 @@ export function parseAiCopyHtml(
   });
 }
 
+function transformClassesFromShellLayer(
+  layer: LLMShellLayer | LLMColumnLayer['gridClasses']
+): DefaultClassValue {
+  const mergeIntoLayer = (
+    targetLayer: DefaultClassValue,
+    classString: string | undefined
+  ) => {
+    if (!classString) return;
+    const parsed = sanitizeResponsiveClasses(classString);
+    if (parsed.mobile)
+      targetLayer.mobile = { ...targetLayer.mobile, ...parsed.mobile };
+    if (parsed.tablet)
+      targetLayer.tablet = { ...targetLayer.tablet, ...parsed.tablet };
+    if (parsed.desktop)
+      targetLayer.desktop = { ...targetLayer.desktop, ...parsed.desktop };
+  };
+
+  const finalLayer: DefaultClassValue = {
+    mobile: {},
+    tablet: {},
+    desktop: {},
+  };
+
+  mergeIntoLayer(finalLayer, layer.mobile);
+  mergeIntoLayer(finalLayer, layer.tablet);
+  mergeIntoLayer(finalLayer, layer.desktop);
+
+  return finalLayer;
+}
+
+function transformParentClassesFromShell(
+  llmParentClasses: LLMShellLayer[]
+): ParentClassesPayload {
+  return llmParentClasses.map((layer) => transformClassesFromShellLayer(layer));
+}
+
 export const parseAiPane = (
   shellJson: string,
-  copyHtml: string,
+  copyHtml: string | string[],
   layout: string
-): TemplatePane => {
+): Omit<TemplatePane, 'nodes'> & { nodes?: (TemplateMarkdown | GridLayoutNode)[] } => {
   const shell: ShellJson = JSON.parse(shellJson);
-
   const paneId = ulid();
-  const markdownId = ulid();
 
-  const shellDefaults = parseDefaultClassesFromShell(shell.defaultClasses);
+  // --- GRID LAYOUT PATH ---
+  if (shell.columns && Array.isArray(copyHtml)) {
+    const gridLayoutId = ulid();
+    const shellDefaults = parseDefaultClassesFromShell(shell.defaultClasses);
+    const transformedParentClasses = transformParentClassesFromShell(
+      shell.parentClasses || []
+    );
 
-  const transformedParentClasses = transformParentClassesFromShell(
-    shell.parentClasses || []
-  );
+    const childMarkdownNodes = shell.columns.map((column, index) => {
+      const markdownId = ulid();
+      const gridClasses = transformClassesFromShellLayer(column.gridClasses);
+      const templateNodes = parseAiCopyHtml(copyHtml[index] || '', markdownId);
 
-  const markdownNode: TemplateMarkdown = {
-    id: markdownId,
-    nodeType: 'Markdown',
-    parentId: paneId,
-    type: 'markdown',
-    markdownId: ulid(),
-    parentClasses: transformedParentClasses,
-    defaultClasses: shellDefaults,
-  };
+      const markdownNode: TemplateMarkdown = {
+        id: markdownId,
+        nodeType: 'Markdown',
+        parentId: gridLayoutId,
+        type: 'markdown',
+        markdownId: ulid(),
+        gridClasses,
+        nodes: templateNodes,
+      };
+      return markdownNode;
+    });
 
-  const templateNodes = parseAiCopyHtml(copyHtml, markdownId);
+    const gridLayoutNode: GridLayoutNode & { nodes: TemplateMarkdown[] } = {
+      id: gridLayoutId,
+      nodeType: 'GridLayoutNode',
+      parentId: paneId,
+      type: 'grid-layout',
+      parentClasses: transformedParentClasses,
+      defaultClasses: shellDefaults,
+      gridColumns: {
+        mobile: 1,
+        tablet: 2,
+        desktop: 2,
+      },
+      nodes: childMarkdownNodes,
+    };
 
-  const templatePane: TemplatePane = {
-    id: paneId,
-    nodeType: 'Pane',
-    parentId: '',
-    title: 'AI Pane',
-    slug: `ai-${paneId.slice(-4)}`,
-    bgColour: shell.bgColour,
-    isDecorative: false,
-    markdown: {
-      ...markdownNode,
+    const templatePane = {
+      id: paneId,
+      nodeType: 'Pane' as const,
+      parentId: '',
+      title: 'AI Pane',
+      slug: `ai-${paneId.slice(-4)}`,
+      bgColour: shell.bgColour,
+      isDecorative: false,
+      nodes: [gridLayoutNode],
+    };
+    return templatePane;
+  }
+
+  // --- SINGLE-COLUMN LAYOUT PATH ---
+  if (typeof copyHtml === 'string') {
+    const markdownId = ulid();
+    const shellDefaults = parseDefaultClassesFromShell(shell.defaultClasses);
+    const transformedParentClasses = transformParentClassesFromShell(
+      shell.parentClasses || []
+    );
+    const templateNodes = parseAiCopyHtml(copyHtml, markdownId);
+
+    reconcileClasses(templateNodes, shellDefaults);
+
+    const markdownNode: TemplateMarkdown = {
+      id: markdownId,
+      nodeType: 'Markdown',
+      parentId: paneId,
+      type: 'markdown',
+      markdownId: ulid(),
+      parentClasses: transformedParentClasses,
+      defaultClasses: shellDefaults,
       nodes: templateNodes,
-    },
-  };
+    };
 
-  return templatePane;
+    const templatePane = {
+      id: paneId,
+      nodeType: 'Pane' as const,
+      parentId: '',
+      title: 'AI Pane',
+      slug: `ai-${paneId.slice(-4)}`,
+      bgColour: shell.bgColour,
+      isDecorative: false,
+      markdown: markdownNode,
+    };
+    return templatePane;
+  }
+
+  // Fallback for invalid input
+  throw new Error('Invalid input for parseAiPane');
 };
