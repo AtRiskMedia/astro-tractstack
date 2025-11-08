@@ -14,13 +14,19 @@ import {
   TemplateYoutubeNode,
 } from './TemplateNodes';
 import { getCtx, NodesContext } from '@/stores/nodes';
+import { settingsPanelStore } from '@/stores/storykeep';
+import { PatchOp } from '@/stores/nodesHistory';
 import { cloneDeep } from '@/utils/helpers';
+import { isPaneNode } from './typeGuards';
 import type {
   BaseNode,
   FlatNode,
   StoryFragmentNode,
   TemplateNode,
   ToolAddMode,
+  MarkdownPaneFragmentNode,
+  GridLayoutNode,
+  PaneNode,
 } from '@/types/compositorTypes';
 import type { NodeTagProps } from '@/types/nodeProps';
 
@@ -511,4 +517,227 @@ export function extractClassesFromNodes(dirtyNodes: BaseNode[]): string[] {
   });
 
   return Array.from(uniqueClasses);
+}
+
+export function revertFromGrid(gridLayoutId: string) {
+  const ctx = getCtx();
+  const originalAllNodes = new Map(ctx.allNodes.get());
+  const originalParentNodes = new Map(ctx.parentNodes.get());
+
+  const gridLayoutNode = originalAllNodes.get(gridLayoutId) as GridLayoutNode;
+  if (!gridLayoutNode || !gridLayoutNode.parentId) return;
+
+  const paneNode = originalAllNodes.get(gridLayoutNode.parentId) as PaneNode;
+  if (!paneNode || !isPaneNode(paneNode)) return;
+
+  const childIds = originalParentNodes.get(gridLayoutId) || [];
+
+  const redoLogic = () => {
+    const newAllNodes = new Map(originalAllNodes);
+    const newParentNodes = new Map(originalParentNodes);
+
+    if (childIds.length === 0) {
+      const paneChildren = [...(newParentNodes.get(paneNode.id) || [])];
+      const gridIndex = paneChildren.indexOf(gridLayoutId);
+      if (gridIndex > -1) {
+        paneChildren.splice(gridIndex, 1);
+      }
+      newParentNodes.set(paneNode.id, paneChildren);
+      newAllNodes.delete(gridLayoutId);
+      newParentNodes.delete(gridLayoutId);
+    } else {
+      const markdownNodeToKeepId = childIds[0];
+      const markdownNodeToKeep = cloneDeep(
+        newAllNodes.get(markdownNodeToKeepId)
+      ) as MarkdownPaneFragmentNode;
+
+      markdownNodeToKeep.parentId = paneNode.id;
+      markdownNodeToKeep.parentClasses = gridLayoutNode.parentClasses || [];
+      markdownNodeToKeep.defaultClasses = gridLayoutNode.defaultClasses || {};
+      markdownNodeToKeep.isChanged = true;
+      newAllNodes.set(markdownNodeToKeepId, markdownNodeToKeep);
+
+      const paneChildren = [...(newParentNodes.get(paneNode.id) || [])];
+      const gridIndex = paneChildren.indexOf(gridLayoutId);
+      if (gridIndex > -1) {
+        paneChildren.splice(gridIndex, 1, markdownNodeToKeepId);
+      }
+      newParentNodes.set(paneNode.id, paneChildren);
+
+      const nodesToDeleteIds = [gridLayoutId, ...childIds.slice(1)];
+      nodesToDeleteIds.forEach((id) => {
+        newAllNodes.delete(id);
+        newParentNodes.delete(id);
+      });
+    }
+
+    const updatedPaneNode = cloneDeep(paneNode);
+    updatedPaneNode.isChanged = true;
+    newAllNodes.set(paneNode.id, updatedPaneNode);
+
+    ctx.allNodes.set(newAllNodes);
+    ctx.parentNodes.set(newParentNodes);
+    ctx.notifyNode('root');
+    settingsPanelStore.set(null);
+  };
+
+  const undoLogic = () => {
+    ctx.allNodes.set(originalAllNodes);
+    ctx.parentNodes.set(originalParentNodes);
+    ctx.notifyNode('root');
+  };
+
+  ctx.history.addPatch({
+    op: PatchOp.REPLACE,
+    undo: undoLogic,
+    redo: redoLogic,
+  });
+
+  redoLogic();
+}
+
+export function convertToGrid(markdownNodeId: string) {
+  const ctx = getCtx();
+
+  const originalAllNodes = new Map(ctx.allNodes.get());
+  const originalParentNodes = new Map(ctx.parentNodes.get());
+
+  const markdownNode = originalAllNodes.get(
+    markdownNodeId
+  ) as MarkdownPaneFragmentNode;
+  if (!markdownNode || !markdownNode.parentId) return;
+
+  const paneNode = originalAllNodes.get(markdownNode.parentId) as PaneNode & {
+    markdownId?: string;
+    markdownBody?: string;
+  };
+  if (!paneNode || !isPaneNode(paneNode)) return;
+
+  const gridLayoutId = ulid();
+
+  const redoLogic = () => {
+    const newAllNodes = new Map(originalAllNodes);
+    const newParentNodes = new Map(originalParentNodes);
+
+    const newGridLayoutNode: GridLayoutNode = {
+      id: gridLayoutId,
+      parentId: paneNode.id,
+      nodeType: 'GridLayoutNode',
+      type: 'grid-layout',
+      parentClasses: markdownNode.parentClasses || [],
+      defaultClasses: markdownNode.defaultClasses || {},
+      gridColumns: { mobile: 1, tablet: 2, desktop: 2 },
+      isChanged: true,
+    };
+
+    const updatedMarkdownNode = cloneDeep(markdownNode);
+    updatedMarkdownNode.parentId = gridLayoutId;
+    updatedMarkdownNode.parentClasses = [];
+    updatedMarkdownNode.parentCss = [];
+    updatedMarkdownNode.defaultClasses = {};
+    updatedMarkdownNode.isChanged = true;
+
+    // Create a new, truly empty MarkdownNode for the second column.
+    const newColumnNodeId = ulid();
+    const newColumnNode: MarkdownPaneFragmentNode = {
+      id: newColumnNodeId,
+      parentId: gridLayoutId,
+      nodeType: 'Markdown',
+      type: 'markdown',
+      markdownId: ulid(),
+      defaultClasses: {},
+      parentClasses: [],
+      isChanged: true,
+    };
+
+    newAllNodes.set(gridLayoutId, newGridLayoutNode);
+    newAllNodes.set(markdownNodeId, updatedMarkdownNode);
+    newAllNodes.set(paneNode.id, { ...cloneDeep(paneNode), isChanged: true });
+    newAllNodes.set(newColumnNodeId, newColumnNode);
+
+    const paneChildren = [...(newParentNodes.get(paneNode.id) || [])];
+    const mdIndex = paneChildren.indexOf(markdownNodeId);
+    if (mdIndex > -1) {
+      paneChildren.splice(mdIndex, 1, gridLayoutId);
+    }
+    newParentNodes.set(paneNode.id, paneChildren);
+    newParentNodes.set(gridLayoutId, [markdownNodeId, newColumnNodeId]);
+    newParentNodes.set(newColumnNodeId, []); // Set children to an empty array
+
+    ctx.allNodes.set(newAllNodes);
+    ctx.parentNodes.set(newParentNodes);
+    ctx.notifyNode('root');
+    settingsPanelStore.set(null);
+  };
+
+  const undoLogic = () => {
+    ctx.allNodes.set(originalAllNodes);
+    ctx.parentNodes.set(originalParentNodes);
+    ctx.notifyNode('root');
+  };
+
+  ctx.history.addPatch({
+    op: PatchOp.REPLACE,
+    undo: undoLogic,
+    redo: redoLogic,
+  });
+
+  redoLogic();
+}
+
+export function addColumn(gridLayoutId: string) {
+  const ctx = getCtx();
+  const originalAllNodes = new Map(ctx.allNodes.get());
+  const originalParentNodes = new Map(ctx.parentNodes.get());
+
+  const gridLayoutNode = originalAllNodes.get(gridLayoutId);
+  if (!gridLayoutNode) return;
+
+  const newMarkdownNodeId = ulid();
+
+  const redoLogic = () => {
+    const newAllNodes = new Map(originalAllNodes);
+    const newParentNodes = new Map(originalParentNodes);
+
+    const newColumnNode: MarkdownPaneFragmentNode = {
+      id: newMarkdownNodeId,
+      parentId: gridLayoutId,
+      nodeType: 'Markdown',
+      type: 'markdown',
+      markdownId: ulid(),
+      defaultClasses: {},
+      parentClasses: [],
+      gridClasses: { mobile: {}, tablet: {}, desktop: {} },
+      isChanged: true,
+    };
+
+    newAllNodes.set(newMarkdownNodeId, newColumnNode);
+
+    const gridChildren = [...(newParentNodes.get(gridLayoutId) || [])];
+    gridChildren.push(newMarkdownNodeId);
+    newParentNodes.set(gridLayoutId, gridChildren);
+    newParentNodes.set(newMarkdownNodeId, []); // Set children to an empty array
+
+    const updatedGridLayoutNode = cloneDeep(gridLayoutNode);
+    updatedGridLayoutNode.isChanged = true;
+    newAllNodes.set(gridLayoutId, updatedGridLayoutNode);
+
+    ctx.allNodes.set(newAllNodes);
+    ctx.parentNodes.set(newParentNodes);
+    ctx.notifyNode('root');
+  };
+
+  const undoLogic = () => {
+    ctx.allNodes.set(originalAllNodes);
+    ctx.parentNodes.set(originalParentNodes);
+    ctx.notifyNode('root');
+  };
+
+  ctx.history.addPatch({
+    op: PatchOp.ADD,
+    undo: undoLogic,
+    redo: redoLogic,
+  });
+
+  redoLogic();
 }

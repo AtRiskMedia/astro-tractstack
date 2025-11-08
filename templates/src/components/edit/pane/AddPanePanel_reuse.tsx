@@ -310,7 +310,7 @@ const AddPaneReUsePanel = ({
       <style>{comboboxItemStyles}</style>
       <div className="w-full rounded-md bg-white p-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex min-w-[200px] flex-wrap items-center gap-2">
+          <div className="flex min-w-48 flex-wrap items-center gap-2">
             <button
               onClick={() => setMode(PaneAddMode.DEFAULT)}
               className="w-fit flex-none rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200 focus:bg-gray-200"
@@ -323,7 +323,7 @@ const AddPaneReUsePanel = ({
             </div>
           </div>
 
-          <div className="min-w-[300px] flex-1">
+          <div className="min-w-72 flex-1">
             <Combobox.Root
               collection={collection}
               value={[]}

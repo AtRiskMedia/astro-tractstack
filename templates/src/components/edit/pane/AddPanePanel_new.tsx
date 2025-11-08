@@ -139,6 +139,8 @@ const AddPaneNewPanel = ({
   const [copyMode, setCopyMode] = useState<CopyMode>('prompt');
   const [promptValue, setPromptValue] = useState('');
   const [copyValue, setCopyValue] = useState('');
+  const [selectedLibraryEntry, setSelectedLibraryEntry] =
+    useState<DesignLibraryEntry | null>(null);
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
     baseColor: '',
@@ -153,27 +155,31 @@ const AddPaneNewPanel = ({
 
     if (choice === 'blank') {
       handleBlankSlate();
-    } else {
-      setStep('copyInput');
+    } else if (choice === 'library') {
+      setStep('designLibrary');
+    } else if (choice === 'ai') {
+      setStep('aiDesign');
     }
   };
 
   const handleBack = () => {
     setError(null);
     if (step === 'copyInput') {
-      setStep('initial');
+      if (initialChoice === 'library') {
+        setStep('designLibrary');
+      } else if (initialChoice === 'ai') {
+        setStep('aiDesign');
+      } else {
+        setStep('initial');
+      }
     } else if (step === 'directInject') {
       setStep('aiDesign');
-    } else if (step === 'designLibrary' || step === 'aiDesign' || 'error') {
-      setStep('copyInput');
-    }
-  };
-
-  const handleCopyContinue = () => {
-    if (initialChoice === 'library') {
-      setStep('designLibrary');
-    } else if (initialChoice === 'ai') {
-      setStep('aiDesign');
+    } else if (
+      step === 'designLibrary' ||
+      step === 'aiDesign' ||
+      step === 'error'
+    ) {
+      setStep('initial');
     }
   };
 
@@ -182,7 +188,7 @@ const AddPaneNewPanel = ({
       id: '',
       nodeType: 'Pane',
       parentId: '',
-      title: 'New Pane',
+      title: '',
       slug: '',
       isDecorative: false,
       markdown: {
@@ -199,130 +205,25 @@ const AddPaneNewPanel = ({
     handleApplyTemplate(blankTemplate);
   };
 
-  const handleDesignLibrarySelect = async (entry: DesignLibraryEntry) => {
-    if (copyMode === 'raw') {
-      const liveTemplate = convertStorageToLiveTemplate(
-        mergeCopyIntoTemplate(entry.template, [])
-      );
-      if (liveTemplate.markdown) {
-        liveTemplate.markdown.markdownBody = copyValue;
-      }
-      handleApplyTemplate(liveTemplate);
-      return;
-    }
-
-    if (copyMode === 'prompt') {
-      setError(null);
-      setStep('loading');
-      try {
-        const liveTemplate = convertStorageToLiveTemplate(entry.template);
-        if (!liveTemplate.markdown) {
-          throw new Error(
-            'The selected design library item is not compatible with this workflow as it has no markdown section.'
-          );
-        }
-
-        const shellJson = convertTemplateToAIShell(liveTemplate);
-        if (!shellJson || shellJson === '{}') {
-          throw new Error(
-            'Could not generate a valid AI shell from this design.'
-          );
-        }
-
-        const copyPromptDetails = prompts.aiPaneCopyPrompt;
-        const layout = 'Text Only';
-        const formattedCopyPrompt = copyPromptDetails.user_template
-          .replace('{{COPY_INPUT}}', promptValue)
-          .replace(
-            '{{DESIGN_INPUT}}',
-            "N/A - Use the provided Shell JSON's design."
-          )
-          .replace('{{LAYOUT_TYPE}}', layout)
-          .replace('{{SHELL_JSON}}', shellJson);
-
-        const copyResult = await callAskLemurAPI(
-          formattedCopyPrompt,
-          copyPromptDetails.system || '',
-          false,
-          isSandboxMode
-        );
-
-        const newNodes = parseAiCopyHtml(copyResult, liveTemplate.markdown.id);
-
-        const finalPane = cloneDeep(liveTemplate);
-
-        finalPane.markdown!.nodes = newNodes;
-
-        handleApplyTemplate(finalPane);
-      } catch (err: any) {
-        setError(err.message || 'Failed to generate AI copy for this design.');
-        setStep('error');
-      }
-    }
+  const handleDesignLibrarySelect = (entry: DesignLibraryEntry) => {
+    setSelectedLibraryEntry(entry);
+    setStep('copyInput');
   };
 
-  const handleAiDesignGenerate = useCallback(async () => {
-    setError(null);
-    setStep('loading');
-
-    let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
-    if (aiDesignConfig.baseColor)
-      designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
-    if (aiDesignConfig.accentColor)
-      designInput += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
-    if (aiDesignConfig.additionalNotes)
-      designInput += ` Refine with these notes: "${aiDesignConfig.additionalNotes}"`;
-
-    try {
-      const shellPromptDetails = prompts.aiPaneShellPrompt;
-      const copyPromptDetails = prompts.aiPaneCopyPrompt;
-      const layout = 'Text Only';
-
-      const formattedShellPrompt = shellPromptDetails.user_template
-        .replace('{{DESIGN_INPUT}}', designInput)
-        .replace('{{LAYOUT_TYPE}}', layout);
-
-      const shellResult = await callAskLemurAPI(
-        formattedShellPrompt,
-        shellPromptDetails.system || '',
-        true,
-        isSandboxMode
-      );
-
-      const copyInputContent = copyMode === 'prompt' ? promptValue : copyValue;
-      const formattedCopyPrompt = copyPromptDetails.user_template
-        .replace('{{COPY_INPUT}}', copyInputContent)
-        .replace('{{DESIGN_INPUT}}', designInput)
-        .replace('{{LAYOUT_TYPE}}', layout)
-        .replace('{{SHELL_JSON}}', shellResult);
-
-      const copyResult = await callAskLemurAPI(
-        formattedCopyPrompt,
-        copyPromptDetails.system || '',
-        false,
-        isSandboxMode
-      );
-
-      const finalPane = parseAiPane(shellResult, copyResult, layout);
-      handleApplyTemplate(finalPane);
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate AI pane.');
-      setStep('error');
-    }
-  }, [aiDesignConfig, copyMode, promptValue, copyValue, isSandboxMode]);
+  const handleAiDesignContinue = () => {
+    setStep('copyInput');
+  };
 
   const handleApplyTemplate = async (template: TemplatePane) => {
-    console.log(template);
     if (!ctx) return;
     try {
       const insertTemplate = cloneDeep(template);
-      insertTemplate.title = insertTemplate.title || 'New Pane';
-      insertTemplate.slug = insertTemplate.slug || '';
-
       const ownerId =
         isStoryFragment || isContextPane
           ? nodeId
           : ctx.getClosestNodeTypeFromId(nodeId, 'StoryFragment');
+      insertTemplate.title = '';
+      insertTemplate.slug = '';
 
       if (isContextPane) {
         insertTemplate.isContextPane = true;
@@ -351,6 +252,127 @@ const AddPaneNewPanel = ({
       setStep('error');
     }
   };
+
+  const handleFinalGenerate = useCallback(async () => {
+    setError(null);
+    setStep('loading');
+
+    try {
+      if (initialChoice === 'library') {
+        if (!selectedLibraryEntry) {
+          throw new Error('No design library item was selected.');
+        }
+
+        if (copyMode === 'raw') {
+          const liveTemplate = convertStorageToLiveTemplate(
+            mergeCopyIntoTemplate(selectedLibraryEntry.template, [])
+          );
+          if (liveTemplate.markdown) {
+            liveTemplate.markdown.markdownBody = copyValue;
+          }
+          handleApplyTemplate(liveTemplate);
+          return;
+        }
+
+        if (copyMode === 'prompt') {
+          const liveTemplate = convertStorageToLiveTemplate(
+            selectedLibraryEntry.template
+          );
+          if (!liveTemplate.markdown) {
+            throw new Error(
+              'The selected design library item is not compatible with this workflow as it has no markdown section.'
+            );
+          }
+
+          const shellJson = convertTemplateToAIShell(liveTemplate);
+          if (!shellJson || shellJson === '{}') {
+            throw new Error(
+              'Could not generate a valid AI shell from this design.'
+            );
+          }
+
+          const copyPromptDetails = prompts.aiPaneCopyPrompt;
+          const layout = 'Text Only';
+          const formattedCopyPrompt = copyPromptDetails.user_template
+            .replace('{{COPY_INPUT}}', promptValue)
+            .replace(
+              '{{DESIGN_INPUT}}',
+              "N/A - Use the provided Shell JSON's design."
+            )
+            .replace('{{LAYOUT_TYPE}}', layout)
+            .replace('{{SHELL_JSON}}', shellJson);
+
+          const copyResult = await callAskLemurAPI(
+            formattedCopyPrompt,
+            copyPromptDetails.system || '',
+            false,
+            isSandboxMode
+          );
+
+          const newNodes = parseAiCopyHtml(
+            copyResult,
+            liveTemplate.markdown.id
+          );
+          const finalPane = cloneDeep(liveTemplate);
+          finalPane.markdown!.nodes = newNodes;
+          handleApplyTemplate(finalPane);
+        }
+      } else if (initialChoice === 'ai') {
+        let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
+        if (aiDesignConfig.baseColor)
+          designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
+        if (aiDesignConfig.accentColor)
+          designInput += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
+        if (aiDesignConfig.additionalNotes)
+          designInput += ` Refine with these notes: "${aiDesignConfig.additionalNotes}"`;
+
+        const shellPromptDetails = prompts.aiPaneShellPrompt;
+        const copyPromptDetails = prompts.aiPaneCopyPrompt;
+        const layout = 'Text Only';
+
+        const formattedShellPrompt = shellPromptDetails.user_template
+          .replace('{{DESIGN_INPUT}}', designInput)
+          .replace('{{LAYOUT_TYPE}}', layout);
+
+        const shellResult = await callAskLemurAPI(
+          formattedShellPrompt,
+          shellPromptDetails.system || '',
+          true,
+          isSandboxMode
+        );
+
+        const copyInputContent =
+          copyMode === 'prompt' ? promptValue : copyValue;
+        const formattedCopyPrompt = copyPromptDetails.user_template
+          .replace('{{COPY_INPUT}}', copyInputContent)
+          .replace('{{DESIGN_INPUT}}', designInput)
+          .replace('{{LAYOUT_TYPE}}', layout)
+          .replace('{{SHELL_JSON}}', shellResult);
+
+        const copyResult = await callAskLemurAPI(
+          formattedCopyPrompt,
+          copyPromptDetails.system || '',
+          false,
+          isSandboxMode
+        );
+
+        const finalPane = parseAiPane(shellResult, copyResult, layout);
+        handleApplyTemplate(finalPane);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate AI pane.');
+      setStep('error');
+    }
+  }, [
+    aiDesignConfig,
+    copyMode,
+    promptValue,
+    copyValue,
+    isSandboxMode,
+    initialChoice,
+    selectedLibraryEntry,
+    handleApplyTemplate,
+  ]);
 
   const renderInitialStep = () => (
     <div className="p-4">
@@ -417,26 +439,15 @@ const AddPaneNewPanel = ({
           ← Back
         </button>
         <button
-          onClick={handleCopyContinue}
+          onClick={handleFinalGenerate}
           disabled={
             copyMode === 'prompt' ? !promptValue.trim() : !copyValue.trim()
           }
           className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
-          Continue →
+          ✨ Generate Pane
         </button>
       </div>
-      {initialChoice === `ai` && !isSandboxMode && (
-        <div className="mt-6 text-center text-sm text-gray-600">
-          ADVANCED:{' '}
-          <button
-            onClick={() => setStep('directInject')}
-            className="font-bold text-cyan-700 underline hover:text-cyan-900 focus:outline-none"
-          >
-            Direct Inject
-          </button>
-        </div>
-      )}
     </div>
   );
 
@@ -447,7 +458,7 @@ const AddPaneNewPanel = ({
           onClick={handleBack}
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"
         >
-          ← Back to Content
+          ← Back to Choice
         </button>
       </div>
       <DesignLibraryStep
@@ -472,12 +483,23 @@ const AddPaneNewPanel = ({
           ← Back
         </button>
         <button
-          onClick={handleAiDesignGenerate}
+          onClick={handleAiDesignContinue}
           className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700"
         >
-          ✨ Generate with AI
+          Continue →
         </button>
       </div>
+      {initialChoice === `ai` && !isSandboxMode && (
+        <div className="mt-6 text-center text-sm text-gray-600">
+          ADVANCED:{' '}
+          <button
+            onClick={() => setStep('directInject')}
+            className="font-bold text-cyan-700 underline hover:text-cyan-900 focus:outline-none"
+          >
+            Direct Inject
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -486,7 +508,7 @@ const AddPaneNewPanel = ({
   );
 
   const renderLoading = () => (
-    <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 p-6">
+    <div className="flex min-h-80 flex-col items-center justify-center space-y-4 p-6">
       <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
       <p className="text-sm text-gray-600">Generating AI Pane...</p>
       <p className="text-xs text-gray-500">This may take a moment.</p>
@@ -550,7 +572,7 @@ const AddPaneNewPanel = ({
           </>
         )}
       </div>
-      <div className="min-h-[400px] rounded-md border bg-gray-50">
+      <div className="min-h-96 rounded-md border bg-gray-50">
         {renderStep()}
       </div>
     </div>

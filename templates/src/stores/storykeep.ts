@@ -157,7 +157,9 @@ export const resetStoryKeepState = () => {
 };
 
 export const settingsPanelStore = atom<SettingsPanelSignal | null>(null);
-
+export const stylePanelTargetMemoryStore = atom<Map<string, number>>(
+  new Map<string, number>()
+);
 export const styleElementInfoStore = map<{
   markdownParentId: string | null;
   tagName: string | null;

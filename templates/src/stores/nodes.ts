@@ -15,6 +15,7 @@ import {
   hasTagName,
   isDefined,
   isValidTag,
+  isGridLayoutNode,
   toTag,
 } from '@/utils/compositor/typeGuards';
 import { startLoadingAnimation } from '@/utils/helpers';
@@ -29,6 +30,7 @@ import type {
   BaseNode,
   FlatNode,
   ImpressionNode,
+  GridLayoutNode,
   MarkdownPaneFragmentNode,
   MenuNode,
   NodeType,
@@ -1390,6 +1392,30 @@ export class NodesContext {
     if (!node) return '';
 
     switch (node.nodeType) {
+      case 'GridLayoutNode': {
+        const gridNode = node as GridLayoutNode;
+        if (gridNode.parentClasses) {
+          const [all, mobile, tablet, desktop] = processClassesForViewports(
+            gridNode.parentClasses[depth],
+            {}, // No override classes for GridLayout parent case
+            1
+          );
+
+          if (isPreview) return desktop[0];
+          switch (viewport) {
+            case 'desktop':
+              return desktop[0];
+            case 'tablet':
+              return tablet[0];
+            case 'mobile':
+              return mobile[0];
+            default:
+              return all[0];
+          }
+        }
+        break;
+      }
+
       case 'Markdown':
         {
           const markdownFragment = node as MarkdownPaneFragmentNode;
@@ -1485,33 +1511,54 @@ export class NodesContext {
             }
           }
 
-          const closestPaneId = this.getClosestNodeTypeFromId(
+          // Begin Default Class Lookup Logic
+          const markdownParentId = this.getClosestNodeTypeFromId(
             nodeId,
             'Markdown'
           );
-          const paneNode = this.allNodes
+          if (!markdownParentId) break;
+
+          const markdownParentNode = this.allNodes
             .get()
-            .get(closestPaneId) as MarkdownPaneFragmentNode;
-          if (paneNode && 'tagName' in node) {
-            const tagNameStr = node.tagName as string;
-            const styles = paneNode.defaultClasses![tagNameStr];
-            if (styles && styles.mobile) {
-              const [all, mobile, tablet, desktop] = processClassesForViewports(
-                styles,
-                (node as FlatNode)?.overrideClasses || {},
-                1
-              );
-              if (isPreview) return desktop[0];
-              switch (viewport) {
-                case 'desktop':
-                  return desktop[0];
-                case 'tablet':
-                  return tablet[0];
-                case 'mobile':
-                  return mobile[0];
-                default:
-                  return all[0];
-              }
+            .get(markdownParentId) as MarkdownPaneFragmentNode;
+          if (!markdownParentNode) break;
+
+          const tagNameStr = (node as FlatNode).tagName as string;
+
+          // By default, assume the markdown node is the source of styles.
+          let styleSourceNode: MarkdownPaneFragmentNode | GridLayoutNode =
+            markdownParentNode;
+          let styles = styleSourceNode.defaultClasses?.[tagNameStr];
+
+          // If the markdown node has no styles for this tag, check for a GridLayout grandparent.
+          // This handles the case where the MarkdownNode is a column.
+          if (!styles || Object.keys(styles.mobile).length === 0) {
+            const grandparent = markdownParentNode.parentId
+              ? this.allNodes.get().get(markdownParentNode.parentId)
+              : null;
+
+            if (grandparent && isGridLayoutNode(grandparent)) {
+              styleSourceNode = grandparent;
+              styles = styleSourceNode.defaultClasses?.[tagNameStr];
+            }
+          }
+
+          if (styles && styles.mobile) {
+            const [all, mobile, tablet, desktop] = processClassesForViewports(
+              styles,
+              (node as FlatNode)?.overrideClasses || {},
+              1
+            );
+            if (isPreview) return desktop[0];
+            switch (viewport) {
+              case 'desktop':
+                return desktop[0];
+              case 'tablet':
+                return tablet[0];
+              case 'mobile':
+                return mobile[0];
+              default:
+                return all[0];
             }
           }
         }
@@ -1584,19 +1631,44 @@ export class NodesContext {
       }
 
       switch (node.nodeType) {
-        case `TagElement`:
-        case `BgPane`:
-        case `Markdown`: {
+        case 'GridLayoutNode':
+        case 'TagElement':
+        case 'BgPane':
+        case 'Markdown': {
+          const nodesToDirty: BaseNode[] = [];
           const paneNodeId = this.getClosestNodeTypeFromId(node.id, 'Pane');
-          const paneNode = cloneDeep(
-            this.allNodes.get().get(paneNodeId)
-          ) as PaneNode;
-          this.modifyNodes([{ ...paneNode, isChanged: true }], {
-            notify: false,
-          });
+
+          if (paneNodeId) {
+            const paneNode = this.allNodes.get().get(paneNodeId);
+            if (paneNode && !paneNode.isChanged) {
+              nodesToDirty.push({ ...paneNode, isChanged: true });
+            }
+          }
+
+          if (node.parentId) {
+            const parentNode = this.allNodes.get().get(node.parentId);
+            if (
+              parentNode &&
+              parentNode.nodeType === 'GridLayoutNode' &&
+              !parentNode.isChanged
+            ) {
+              if (!nodesToDirty.some((n) => n.id === parentNode.id)) {
+                nodesToDirty.push({ ...parentNode, isChanged: true });
+              }
+            }
+          }
+
+          if (nodesToDirty.length > 0) {
+            this.modifyNodes(nodesToDirty, {
+              notify: false,
+              recordHistory: false,
+            });
+          }
+
           this.notifyNode(ROOT_NODE_NAME);
           break;
         }
+
         case `Menu`:
         case `Pane`:
         case `StoryFragment`:
@@ -1970,7 +2042,9 @@ export class NodesContext {
         });
         break;
     }
-    this.toolModeValStore.set({ value: 'styles' });
+    if ([`p`, `h2`, `h3`, `h4`, `li`].includes(tagName))
+      this.toolModeValStore.set({ value: 'text' });
+    else this.toolModeValStore.set({ value: 'styles' });
     this.notifyNode('root');
   }
 
@@ -2024,6 +2098,7 @@ export class NodesContext {
 
     let autoCreatedMarkdownNode: MarkdownPaneFragmentNode | null = null;
 
+    console.log(`--- [TRAP - TEMPLATE BEFORE] ---`, cloneDeep(node));
     // 3. HANDLE EMPTY PANE BY AUTO-CREATING A MARKDOWN NODE
     if (targetNode.nodeType === 'Pane') {
       // Create a minimal markdown node to act as the container
@@ -2100,6 +2175,8 @@ export class NodesContext {
         parentId
       );
     }
+
+    console.log(`--- [TRAP - FLATTENED AFTER] ---`, cloneDeep(flattenedNodes));
 
     // 5. PERFORM REMAINING STATE MUTATIONS
     if (originalPaneNode) {

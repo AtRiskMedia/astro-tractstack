@@ -7,6 +7,7 @@ export const TemplateH2Node = {
     {
       copy: 'Catchy title',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -18,6 +19,7 @@ export const TemplateH3Node = {
     {
       copy: 'Catchy sub-title',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -29,6 +31,7 @@ export const TemplateH4Node = {
     {
       copy: 'Catchy sub-title',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -40,6 +43,7 @@ export const TemplatePNode = {
     {
       copy: '...',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -51,6 +55,7 @@ export const TemplateOLNode = {
     {
       copy: '...',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -62,6 +67,7 @@ export const TemplateULNode = {
     {
       copy: '...',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -73,6 +79,7 @@ export const TemplateLINode = {
     {
       copy: '...',
       tagName: 'text',
+      nodeType: 'TagElement',
     },
   ],
 } as TemplateNode;
@@ -84,6 +91,7 @@ export const TemplateLINode = {
 //    {
 //      copy: "aside node",
 //      tagName: "text",
+//nodeType: 'TagElement',
 //    },
 //  ],
 //} as TemplateNode;

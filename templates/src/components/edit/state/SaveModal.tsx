@@ -65,8 +65,14 @@ const INDETERMINATE_STAGES: SaveStage[] = [
 const SandboxUpgradeNotice = ({ onClose }: { onClose: () => void }) => (
   <Dialog.Root open={true} onOpenChange={() => onClose()} modal={true}>
     <Portal>
-      <Dialog.Backdrop className="fixed inset-0 z-[9005] bg-black bg-opacity-75" />
-      <Dialog.Positioner className="fixed inset-0 z-[9005] flex items-center justify-center p-4">
+      <Dialog.Backdrop
+        className="fixed inset-0 bg-black bg-opacity-75"
+        style={{ zIndex: 9005 }}
+      />
+      <Dialog.Positioner
+        className="fixed inset-0 flex items-center justify-center p-4"
+        style={{ zIndex: 9005 }}
+      >
         <Dialog.Content className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
           <div className="p-6 text-center">
             <Dialog.Title className="text-xl font-bold text-gray-900">
@@ -446,6 +452,8 @@ export default function SaveModal({
           addDebugMessage(
             `Processing ${dirtyPanes.length} panes via -> POST ${endpoint}`
           );
+
+          //console.log(`bulkPayload`, bulkPayload)
 
           try {
             const response = await fetch(endpoint, {

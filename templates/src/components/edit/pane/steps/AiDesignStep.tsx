@@ -37,11 +37,11 @@ export const AiDesignStep = ({
 
   return (
     <div className="space-y-6 rounded-lg bg-gray-50 p-4 shadow-inner">
-      <label className="block text-lg font-semibold text-gray-800">
+      <label className="block text-lg font-bold text-gray-800">
         2. Configure AI Design
       </label>
       <div>
-        <label className="block text-base font-semibold text-gray-800">
+        <label className="block text-base font-bold text-gray-800">
           Color Harmony
         </label>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -58,7 +58,7 @@ export const AiDesignStep = ({
               />
               <label
                 htmlFor={`harmony-${option}`}
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-bold text-gray-700"
               >
                 {option}
               </label>
@@ -89,7 +89,7 @@ export const AiDesignStep = ({
       </div>
 
       <div>
-        <label className="block text-base font-semibold text-gray-800">
+        <label className="block text-base font-bold text-gray-800">
           Theme / Mood
         </label>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -106,7 +106,7 @@ export const AiDesignStep = ({
               />
               <label
                 htmlFor={`theme-${option}`}
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-bold text-gray-700"
               >
                 {option}
               </label>
@@ -118,7 +118,7 @@ export const AiDesignStep = ({
       <div>
         <label
           htmlFor="additional-notes"
-          className="block text-base font-semibold text-gray-800"
+          className="block text-base font-bold text-gray-800"
         >
           Additional Design Notes (Optional)
         </label>

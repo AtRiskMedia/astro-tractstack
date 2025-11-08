@@ -5,9 +5,17 @@ import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { useDropdownDirection } from '@/utils/helpers';
-import type { BasePanelProps, PaneFragmentNode } from '@/types/compositorTypes';
+import type {
+  ParentBasePanelProps,
+  MarkdownPaneFragmentNode,
+  GridLayoutNode,
+  DefaultClassValue,
+} from '@/types/compositorTypes';
 
 const RECOMMENDED_STYLES = [
   { key: 'bgCOLOR', title: 'Background Color' },
@@ -54,41 +62,66 @@ interface StyleOption {
   values: string[];
 }
 
-const StyleParentPanelAdd = ({ node, layer }: BasePanelProps) => {
+type StyleableNode = MarkdownPaneFragmentNode | GridLayoutNode;
+
+// This custom prop is passed via the settingsPanelStore signal.
+type CustomPanelProps = ParentBasePanelProps & {
+  targetProperty: 'parentClasses' | 'gridClasses';
+};
+
+const StyleParentPanelAdd = ({
+  node,
+  layer,
+  targetProperty,
+}: CustomPanelProps) => {
   const [query, setQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const comboboxRef = useRef<HTMLDivElement>(null);
   const { openAbove } = useDropdownDirection(comboboxRef);
 
-  const paneFragmentNode = node as PaneFragmentNode | null;
+  const styleableNode = node as StyleableNode | null;
 
   if (
-    !paneFragmentNode ||
-    !isMarkdownPaneFragmentNode(paneFragmentNode) ||
-    !layer
+    !styleableNode ||
+    (!isMarkdownPaneFragmentNode(styleableNode) &&
+      !isGridLayoutNode(styleableNode))
   ) {
     return null;
   }
 
-  const currentLayerClasses = new Set<string>();
+  const currentClassesSet = useMemo(() => {
+    const classSet = new Set<string>();
+    if (!styleableNode) return classSet;
 
-  if (paneFragmentNode.parentClasses?.[layer - 1]) {
-    const layerClasses = paneFragmentNode.parentClasses[layer - 1];
-    Object.keys(layerClasses.mobile || {}).forEach((key) =>
-      currentLayerClasses.add(key)
-    );
-    Object.keys(layerClasses.tablet || {}).forEach((key) =>
-      currentLayerClasses.add(key)
-    );
-    Object.keys(layerClasses.desktop || {}).forEach((key) =>
-      currentLayerClasses.add(key)
-    );
-  }
+    let classesSource: DefaultClassValue | undefined;
 
-  const styles = getFilteredStyles(showAdvanced, currentLayerClasses);
+    if (targetProperty === 'parentClasses' && layer) {
+      const layerIndex = layer - 1;
+      classesSource = styleableNode.parentClasses?.[layerIndex];
+    } else if (targetProperty === 'gridClasses') {
+      if (isMarkdownPaneFragmentNode(styleableNode)) {
+        classesSource = styleableNode.gridClasses;
+      }
+    }
 
-  // Create collection for Ark UI Combobox
+    if (classesSource) {
+      Object.keys(classesSource.mobile || {}).forEach((key) =>
+        classSet.add(key)
+      );
+      Object.keys(classesSource.tablet || {}).forEach((key) =>
+        classSet.add(key)
+      );
+      Object.keys(classesSource.desktop || {}).forEach((key) =>
+        classSet.add(key)
+      );
+    }
+
+    return classSet;
+  }, [styleableNode, layer, targetProperty]);
+
+  const styles = getFilteredStyles(showAdvanced, currentClassesSet);
+
   const collection = useMemo(() => {
     const filteredStyles =
       query === ''
@@ -107,24 +140,32 @@ const StyleParentPanelAdd = ({ node, layer }: BasePanelProps) => {
   }, [styles, query]);
 
   const availableRecommendedStyles = RECOMMENDED_STYLES.filter(
-    (style) => !currentLayerClasses.has(style.key)
+    (style) => !currentClassesSet.has(style.key)
+  );
+
+  const dispatchUpdate = useCallback(
+    (styleKey: string) => {
+      if (!styleableNode) return;
+      settingsPanelStore.set({
+        nodeId: styleableNode.id,
+        layer: layer,
+        className: styleKey,
+        action: 'style-parent-update',
+        targetProperty: targetProperty,
+        expanded: true,
+      });
+    },
+    [styleableNode, layer, targetProperty]
   );
 
   const handleValueChange = useCallback(
     (details: { value: string[] }) => {
       const styleKey = details.value[0] || '';
       if (!styleKey) return;
-
       setSelectedStyle(styleKey);
-      settingsPanelStore.set({
-        nodeId: paneFragmentNode.id,
-        layer: layer,
-        className: styleKey,
-        action: 'style-parent-update',
-        expanded: true,
-      });
+      dispatchUpdate(styleKey);
     },
-    [paneFragmentNode.id, layer]
+    [dispatchUpdate]
   );
 
   const handleInputChange = useCallback(
@@ -136,30 +177,24 @@ const StyleParentPanelAdd = ({ node, layer }: BasePanelProps) => {
 
   const handleStyleClick = useCallback(
     (styleKey: string) => {
-      settingsPanelStore.set({
-        nodeId: paneFragmentNode.id,
-        layer: layer,
-        className: styleKey,
-        action: 'style-parent-update',
-        expanded: true,
-      });
+      dispatchUpdate(styleKey);
     },
-    [paneFragmentNode.id, layer]
+    [dispatchUpdate]
   );
 
   const handleCancel = () => {
+    if (!styleableNode) return;
     settingsPanelStore.set({
-      nodeId: paneFragmentNode.id,
+      nodeId: styleableNode.id,
       layer: layer,
       action: 'style-parent',
       expanded: true,
     });
   };
 
-  // CSS to properly style the combobox items with hover and selection
   const comboboxItemStyles = `
     .style-item[data-highlighted] {
-      background-color: #0891b2; /* bg-cyan-600 */
+      background-color: #0891b2;
       color: white;
     }
     .style-item[data-highlighted] .style-indicator {

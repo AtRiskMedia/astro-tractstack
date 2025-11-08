@@ -11,6 +11,7 @@ import type {
   ArtpackImageNode,
   BgImageNode,
   StoryFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 import type {
   OptionsPayload,
@@ -21,7 +22,9 @@ import {
   isBreakNode,
   isArtpackImageNode,
   isBgImageNode,
+  isGridLayoutNode,
 } from '@/utils/compositor/typeGuards';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
 
 const VERBOSE = false;
 
@@ -42,7 +45,6 @@ export function transformToOptionsPayload(
       })),
     });
 
-  // 1. Generate flattened nodes array with computed CSS
   const flattenedNodes = subtree.allChildNodes
     .map((node) => {
       if (VERBOSE)
@@ -58,11 +60,8 @@ export function transformToOptionsPayload(
         parentId: node.parentId,
       };
 
-      // Add type-specific fields based on node type
       if (node.nodeType === 'TagElement') {
         const flatNode = node as FlatNode;
-
-        // Compute CSS using existing NodesContext methods
         let computedCSS: string | undefined;
         try {
           computedCSS = ctx.getNodeClasses(node.id, 'auto', 0);
@@ -91,10 +90,55 @@ export function transformToOptionsPayload(
         return transformedNode;
       }
 
+      if (isGridLayoutNode(node)) {
+        const gridLayoutNode = node as GridLayoutNode;
+        let gridCss = '';
+        if (gridLayoutNode.gridColumns) {
+          const { mobile, tablet, desktop } = gridLayoutNode.gridColumns;
+          gridCss = `grid grid-cols-${mobile}`;
+          if (tablet !== mobile) {
+            gridCss += ` md:grid-cols-${tablet}`;
+          }
+          if (desktop !== tablet) {
+            gridCss += ` xl:grid-cols-${desktop}`;
+          }
+        }
+
+        let parentCss: string[] | undefined;
+        if (gridLayoutNode.parentClasses) {
+          try {
+            parentCss = gridLayoutNode.parentClasses.map((_, index) =>
+              ctx.getNodeClasses(node.id, 'auto', index)
+            );
+          } catch (error) {
+            console.warn(
+              `Failed to compute parent CSS for grid node ${node.id}:`,
+              error
+            );
+          }
+        }
+
+        const transformedNode = {
+          ...baseNode,
+          type: gridLayoutNode.type,
+          gridCss: gridCss,
+          gridColumns: gridLayoutNode.gridColumns,
+          parentClasses: gridLayoutNode.parentClasses,
+          parentCss: parentCss,
+          defaultClasses: gridLayoutNode.defaultClasses,
+          hiddenViewportMobile: gridLayoutNode.hiddenViewportMobile,
+          hiddenViewportTablet: gridLayoutNode.hiddenViewportTablet,
+          hiddenViewportDesktop: gridLayoutNode.hiddenViewportDesktop,
+        };
+
+        if (VERBOSE)
+          console.log('✅ TRANSFORMER - GridLayout result:', transformedNode);
+        return transformedNode;
+      }
+
       if (node.nodeType === 'Markdown') {
         const markdownNode = node as MarkdownPaneFragmentNode;
 
-        // Compute parentCss if parentClasses exist
         let parentCss: string[] | undefined;
         if (markdownNode.parentClasses) {
           try {
@@ -104,6 +148,25 @@ export function transformToOptionsPayload(
           } catch (error) {
             console.warn(
               `Failed to compute parent CSS for markdown node ${node.id}:`,
+              error
+            );
+          }
+        }
+
+        let gridCss: string | undefined;
+        if (markdownNode.gridClasses) {
+          try {
+            const [allClasses] = processClassesForViewports(
+              markdownNode.gridClasses,
+              {},
+              1
+            );
+            if (allClasses && allClasses.length > 0) {
+              gridCss = allClasses[0];
+            }
+          } catch (error) {
+            console.warn(
+              `Failed to compute grid CSS for markdown node ${node.id}:`,
               error
             );
           }
@@ -119,6 +182,8 @@ export function transformToOptionsPayload(
           hiddenViewportMobile: markdownNode.hiddenViewportMobile,
           hiddenViewportTablet: markdownNode.hiddenViewportTablet,
           hiddenViewportDesktop: markdownNode.hiddenViewportDesktop,
+          gridClasses: markdownNode.gridClasses,
+          ...(gridCss && { gridCss: gridCss }),
         };
 
         if (VERBOSE)
@@ -127,7 +192,6 @@ export function transformToOptionsPayload(
       }
 
       if (node.nodeType === 'BgPane') {
-        // Handle different BgPane types
         if (isBreakNode(node as FlatNode)) {
           const breakNode = node as VisualBreakNode;
           const transformedNode = {
@@ -188,20 +252,15 @@ export function transformToOptionsPayload(
             );
           return transformedNode;
         }
-
-        // Fallback for unknown BgPane types
         if (VERBOSE)
           console.warn('⚠️ TRANSFORMER - Unknown BgPane type:', node);
         return baseNode;
       }
-
-      // Unknown node type - return base node
       if (VERBOSE) console.warn('⚠️ TRANSFORMER - Unknown node type:', node);
       return baseNode;
     })
     .filter((node) => node !== null);
 
-  // 2. Build final OptionsPayload
   const optionsPayload: OptionsPayload = {
     bgColour: subtree.paneNode.bgColour,
     isDecorative: subtree.paneNode.isDecorative,
@@ -230,11 +289,9 @@ export async function transformStoryFragmentForSave(
   const node = ctx.allNodes.get().get(fragmentId) as StoryFragmentNode;
   const seoData = storyFragmentTopicsStore.get()[fragmentId];
 
-  // Get brand config from store to find default tractstack
   const brandConfig = await getBrandConfig(tenantId);
   const defaultTractStackSlug =
     brandConfig?.TRACTSTACK_HOME_SLUG || 'tractstack';
-  // Find the default tractstack ID from content map
   const contentMap = fullContentMapStore.get();
   const defaultTractStack = contentMap.find(
     (item) => item.type === 'TractStack' && item.slug === defaultTractStackSlug
@@ -244,12 +301,10 @@ export async function transformStoryFragmentForSave(
 
   const payload = {
     ...node,
-    // Add deferred SEO data if available
     ...(seoData && {
       topics: seoData.topics?.map((t) => t.title) || [],
       description: seoData.description || '',
     }),
-    // Ensure tractStackId is set for new StoryFragments
     tractStackId: finalTractStackId,
   };
 
@@ -261,13 +316,8 @@ export function transformLivePaneForSave(
   paneId: string,
   isContext?: boolean
 ): BackendSavePayload {
-  // 1. Extract distributed state
   const subtree = extractPaneSubtree(ctx, paneId);
-
-  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
   const optionsPayload = transformToOptionsPayload(ctx, subtree);
-
-  // 3. Format for save endpoint
   return formatForSave(subtree.paneNode, optionsPayload, isContext);
 }
 
@@ -275,12 +325,7 @@ export function transformLivePaneForPreview(
   ctx: NodesContext,
   paneId: string
 ): BackendPreviewPayload {
-  // 1. Extract distributed state
   const subtree = extractPaneSubtree(ctx, paneId);
-
-  // 2. Transform to flattened OptionsPayload using existing NodesContext methods
   const optionsPayload = transformToOptionsPayload(ctx, subtree);
-
-  // 3. Format for preview endpoint
   return formatForPreview(subtree.paneNode, optionsPayload);
 }

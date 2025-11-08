@@ -130,7 +130,7 @@ const TemplatePreviewItem = ({
         )}
       </div>
       <div className="p-3">
-        <h3 className="truncate font-semibold" title={template.title}>
+        <h3 className="truncate font-bold" title={template.title}>
           {template.title}
         </h3>
         <p className="text-sm text-gray-600">
@@ -404,9 +404,12 @@ export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
       <Portal>
         <Dialog.Backdrop className="z-103 fixed inset-0 bg-black/70" />
         <Dialog.Positioner className="z-104 fixed inset-0 flex items-center justify-center">
-          <Dialog.Content className="flex h-[90vh] w-[90vw] flex-col rounded-lg bg-white shadow-2xl">
+          <Dialog.Content
+            className="flex flex-col rounded-lg bg-white shadow-2xl"
+            style={{ height: '90vw', width: '90vw' }}
+          >
             <header className="flex items-center justify-between border-b p-4">
-              <Dialog.Title className="text-xl font-semibold">
+              <Dialog.Title className="text-xl font-bold">
                 Restyle Pane from Design Library
               </Dialog.Title>
               <Dialog.CloseTrigger
@@ -427,7 +430,7 @@ export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
                 className="w-48"
                 positioning={{ gutter: 4 }}
               >
-                <Select.Label className="mb-1 text-sm font-medium">
+                <Select.Label className="mb-1 text-sm font-bold">
                   Category
                 </Select.Label>
                 <Select.Control>
@@ -461,7 +464,7 @@ export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
                 className="flex-1"
                 positioning={{ gutter: 4 }}
               >
-                <Combobox.Label className="mb-1 text-sm font-medium">
+                <Combobox.Label className="mb-1 text-sm font-bold">
                   Filter by Title
                 </Combobox.Label>
                 <Combobox.Control>

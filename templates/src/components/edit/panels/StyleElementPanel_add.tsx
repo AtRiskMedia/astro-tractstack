@@ -9,13 +9,13 @@ import {
   settingsPanelStore,
 } from '@/stores/storykeep';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
-import { useDropdownDirection } from '@/utils/helpers';
 import {
-  tagTitles,
-  type Tag,
-  type BasePanelProps,
-} from '@/types/compositorTypes';
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
+import { useDropdownDirection } from '@/utils/helpers';
+import type { StyleElementPanelProps } from './StyleElementPanel';
+import { tagTitles, type Tag } from '@/types/compositorTypes';
 
 const RECOMMENDED_STYLES: {
   [key: string]: Array<{ key: string; title: string }>;
@@ -123,7 +123,7 @@ const StyleElementPanelAdd = ({
   node,
   parentNode,
   onTitleChange,
-}: BasePanelProps) => {
+}: StyleElementPanelProps) => {
   const [query, setQuery] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -134,7 +134,7 @@ const StyleElementPanelAdd = ({
     !node ||
     !node.tagName ||
     !parentNode ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   ) {
     return null;
   }

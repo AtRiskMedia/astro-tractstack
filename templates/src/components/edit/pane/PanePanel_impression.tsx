@@ -200,7 +200,7 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
               onChange={(e) => handleInputChange('body', e.target.value)}
               onBlur={handleBlur}
               placeholder="Enter impression body text"
-              className={`${commonInputClass} min-h-[100px]`}
+              className={`${commonInputClass} min-h-24`}
             />
           </div>
 

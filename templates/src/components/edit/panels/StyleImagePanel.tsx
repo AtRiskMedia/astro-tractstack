@@ -2,20 +2,24 @@ import { useMemo, useState } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import ImageUpload, { type ImageParams } from '@/components/fields/ImageUpload';
 import type {
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 interface StyleImagePanelProps {
   node: FlatNode;
   containerNode: FlatNode;
   outerContainerNode: FlatNode;
-  parentNode: MarkdownPaneFragmentNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
 }
 
 const StyleImagePanel = ({
@@ -24,6 +28,7 @@ const StyleImagePanel = ({
   outerContainerNode,
   parentNode,
 }: StyleImagePanelProps) => {
+  console.log(`StyleImagePanel`, parentNode, node);
   const [altDescription, setAltDescription] = useState(node.alt || '');
 
   const imgDefaultClasses = parentNode.defaultClasses?.[node.tagName];
@@ -300,7 +305,7 @@ const StyleImagePanel = ({
     !node?.tagName ||
     !containerNode?.tagName ||
     !outerContainerNode?.tagName ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   ) {
     return null;
   }

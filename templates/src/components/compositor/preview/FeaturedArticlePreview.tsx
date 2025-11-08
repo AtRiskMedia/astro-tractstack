@@ -120,7 +120,10 @@ const FeaturedArticlePreview = ({ story }: FeaturedArticlePreviewProps) => {
 
       {/* This is the visible UI that reacts to state changes. */}
       {isLoading && (
-        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-lg bg-gray-200">
+        <div
+          style={{ aspectRatio: '4 / 3' }}
+          className="flex w-full items-center justify-center rounded-lg bg-gray-200"
+        >
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-solid border-cyan-600 border-t-transparent"></div>
         </div>
       )}
@@ -142,7 +145,10 @@ const FeaturedArticlePreview = ({ story }: FeaturedArticlePreviewProps) => {
               className="h-auto w-full rounded-lg object-cover shadow-lg"
             />
           ) : (
-            <div className="flex aspect-[4/3] w-full items-center justify-center rounded-lg bg-red-50 p-4 text-center text-sm text-red-700">
+            <div
+              style={{ aspectRatio: '4 / 3' }}
+              className="flex w-full items-center justify-center rounded-lg bg-red-50 p-4 text-center text-sm text-red-700"
+            >
               Could not display preview.
             </div>
           )}

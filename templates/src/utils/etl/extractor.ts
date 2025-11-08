@@ -52,11 +52,8 @@ export function extractPaneSubtree(
       bgColour: paneNode.bgColour,
     });
 
-  // --- START: REPLACEMENT FOR getNodesRecursively ---
-  // Use a safe, non-recursive breadth-first traversal to gather all descendant
-  // nodes, which preserves the correct sibling order.
   const allDescendantNodes: BaseNode[] = [];
-  const queue: string[] = [...ctx.getChildNodeIDs(paneNode.id)]; // Start queue with direct children
+  const queue: string[] = [...ctx.getChildNodeIDs(paneNode.id)];
 
   while (queue.length > 0) {
     const currentId = queue.shift();
@@ -70,7 +67,6 @@ export function extractPaneSubtree(
       queue.push(...childrenIds);
     }
   }
-  // --- END: REPLACEMENT FOR getNodesRecursively ---
 
   if (VERBOSE)
     console.log(

@@ -204,7 +204,7 @@ const FeaturedArticleSetup = ({
 
   if (!isPanelOpen) {
     return (
-      <div className="flex min-h-[200px] w-full flex-col items-center justify-center space-y-6 rounded-lg bg-slate-50 p-6">
+      <div className="flex min-h-48 w-full flex-col items-center justify-center space-y-6 rounded-lg bg-slate-50 p-6">
         <button
           onClick={() => setIsPanelOpen(true)}
           className="rounded-lg bg-cyan-600 px-6 py-3 font-bold text-white shadow-md transition-colors hover:bg-cyan-700"

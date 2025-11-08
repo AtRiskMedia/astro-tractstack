@@ -57,6 +57,7 @@ const VERBOSE = false;
 const LOG_PREFIX = '[Compositor] ';
 
 export const Compositor = (props: CompositorProps) => {
+  //console.log(props.nodes)
   const [initialized, setInitialized] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [isLoading, setIsLoading] = useState(true);

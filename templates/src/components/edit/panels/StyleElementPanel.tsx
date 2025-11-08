@@ -5,18 +5,22 @@ import {
   settingsPanelStore,
 } from '@/stores/storykeep';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import { tagTitles } from '@/types/compositorTypes';
 import type {
   Tag,
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
-interface StyleElementPanelProps {
+export interface StyleElementPanelProps {
   node: FlatNode;
-  parentNode: MarkdownPaneFragmentNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
   onTitleChange?: (title: string) => void;
 }
 
@@ -25,7 +29,10 @@ const StyleElementPanel = ({
   parentNode,
   onTitleChange,
 }: StyleElementPanelProps) => {
-  if (!node?.tagName || !isMarkdownPaneFragmentNode(parentNode)) {
+  if (
+    !node?.tagName ||
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
+  ) {
     return null;
   }
 

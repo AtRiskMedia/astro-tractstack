@@ -76,6 +76,7 @@ export type SettingsPanelSignal = {
   minimized?: boolean;
   expanded?: boolean;
   editLock?: number;
+  targetProperty?: 'parentClasses' | 'gridClasses';
 };
 
 export interface OgImageParams {
@@ -173,6 +174,7 @@ export type NodeType =
   | 'Pane'
   | 'StoryFragment'
   | 'BgPane'
+  | 'GridLayoutNode'
   | 'Markdown'
   | 'TagElement'
   | 'TractStack'
@@ -253,7 +255,12 @@ export interface TractStackNode extends BaseNode {
 }
 
 export interface PaneFragmentNode extends BaseNode {
-  type: 'markdown' | 'visual-break' | 'background-image' | 'artpack-image';
+  type:
+    | 'markdown'
+    | 'visual-break'
+    | 'background-image'
+    | 'artpack-image'
+    | 'grid-layout';
   hiddenViewportMobile?: boolean;
   hiddenViewportTablet?: boolean;
   hiddenViewportDesktop?: boolean;
@@ -272,6 +279,22 @@ export interface MarkdownPaneFragmentNode extends PaneFragmentNode {
   >;
   parentClasses?: ParentClassesPayload;
   parentCss?: string[];
+  gridClasses?: DefaultClassValue;
+}
+
+export interface GridLayoutNode extends PaneFragmentNode {
+  nodeType: 'GridLayoutNode';
+  type: 'grid-layout';
+  parentClasses?: ParentClassesPayload;
+  defaultClasses?: Record<
+    string,
+    {
+      mobile: Record<string, string>;
+      tablet: Record<string, string>;
+      desktop: Record<string, string>;
+    }
+  >;
+  gridColumns: { mobile: number; tablet: number; desktop: number };
 }
 
 export interface ArtpackImageNode extends PaneFragmentNode {
@@ -481,7 +504,7 @@ export type LoadData = {
   paneNodes?: PaneNode[];
   tractstackNodes?: TractStackNode[];
   childNodes?: (BaseNode | FlatNode)[];
-  paneFragmentNodes?: PaneFragmentNode[];
+  paneFragmentNodes?: (PaneFragmentNode | GridLayoutNode)[];
   flatNodes?: FlatNode[];
   impressionNodes?: ImpressionNode[];
   beliefNodes?: BeliefNode[];
@@ -510,6 +533,18 @@ export interface BasePanelProps {
   availableCodeHooks?: string[];
   onTitleChange?: (title: string) => void;
 }
+
+export type ParentBasePanelProps = {
+  node: MarkdownPaneFragmentNode | GridLayoutNode | null;
+  parentNode?: FlatNode | PaneNode;
+  config?: BrandConfig | null;
+  layer?: number;
+  className?: string;
+  childId?: string;
+  availableCodeHooks?: string[];
+  onTitleChange?: (title: string) => void;
+  targetProperty?: 'parentClasses' | 'gridClasses';
+};
 
 interface WidgetParameterDefinition {
   label: string;

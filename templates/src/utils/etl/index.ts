@@ -75,6 +75,7 @@ export interface OptionsPayload {
       | undefined;
     parentClasses?: any | undefined;
     parentCss?: string[] | undefined;
+    gridCss?: string | undefined;
     hiddenViewportMobile?: boolean | undefined;
     hiddenViewportTablet?: boolean | undefined;
     hiddenViewportDesktop?: boolean | undefined;

@@ -9,11 +9,7 @@ import {
   isContextPaneNode,
   hasBeliefPayload,
 } from '@/utils/compositor/typeGuards';
-import {
-  settingsPanelStore,
-  viewportKeyStore,
-  fullContentMapStore,
-} from '@/stores/storykeep';
+import { settingsPanelStore, fullContentMapStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import PaneTitlePanel from './PanePanel_title';
 import PaneMagicPathPanel from './PanePanel_path';
@@ -34,8 +30,6 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
   const isActiveMode =
     activePaneMode.panel === 'settings' && activePaneMode.paneId === nodeId;
   const $contentMap = useStore(fullContentMapStore);
-  const $viewportKey = useStore(viewportKeyStore);
-  const isMobile = $viewportKey.value === `mobile`;
 
   const allNodes = ctx.allNodes.get();
   const paneNode = allNodes.get(nodeId) as PaneNode;

@@ -30,7 +30,7 @@ export const CopyInputStep = ({
 
   return (
     <div className="space-y-4 rounded-lg bg-gray-50 p-4 shadow-inner">
-      <label className="block text-lg font-semibold text-gray-800">
+      <label className="block text-lg font-bold text-gray-800">
         1. Provide Content
       </label>
       <div className="my-2 flex space-x-4">
@@ -46,7 +46,7 @@ export const CopyInputStep = ({
           />
           <label
             htmlFor="copy-prompt-mode"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-bold text-gray-700"
           >
             Write a prompt
           </label>
@@ -63,7 +63,7 @@ export const CopyInputStep = ({
           />
           <label
             htmlFor="copy-raw-mode"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-bold text-gray-700"
           >
             Provide Copy (Markdown)
           </label>

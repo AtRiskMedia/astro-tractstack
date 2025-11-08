@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { settingsPanelStore } from '@/stores/storykeep';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import { tagTitles } from '@/types/compositorTypes';
@@ -8,12 +11,13 @@ import type {
   Tag,
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 interface StyleLiElementPanelProps {
   node: FlatNode;
   outerContainerNode: FlatNode;
-  parentNode: MarkdownPaneFragmentNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
 }
 
 const StyleLiElementPanel = ({
@@ -24,7 +28,7 @@ const StyleLiElementPanel = ({
   if (
     !node?.tagName ||
     !outerContainerNode?.tagName ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   ) {
     return null;
   }

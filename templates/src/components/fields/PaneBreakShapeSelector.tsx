@@ -48,7 +48,7 @@ export default function PaneBreakShapeSelector({
 
     const svgData = SvgBreaks[fullShapeName];
     return (
-      <div className="flex w-[150px] items-center justify-center">
+      <div className="flex w-56 items-center justify-center">
         <svg
           viewBox={`0 0 ${svgData.viewBox[0]} ${svgData.viewBox[1]}`}
           className="h-auto w-full"

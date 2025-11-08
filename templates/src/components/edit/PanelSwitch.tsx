@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isGridLayoutNode,
+  isMarkdownPaneFragmentNode,
+} from '@/utils/compositor/typeGuards';
 import StyleBreakPanel from './panels/StyleBreakPanel';
 import StyleParentPanel from './panels/StyleParentPanel';
 import StyleParentAddPanel from './panels/StyleParentPanel_add';
@@ -36,6 +39,7 @@ import { getSettingsPanelTitle } from '@/utils/helpers';
 import type { BrandConfig } from '@/types/tractstack';
 import type {
   FlatNode,
+  GridLayoutNode,
   MarkdownPaneFragmentNode,
 } from '@/types/compositorTypes';
 
@@ -81,9 +85,18 @@ const PanelSwitch = ({
   const childNodes = childNodeIds
     .map((id) => allNodes.get(id))
     .filter((node): node is FlatNode => !!node);
-  const markdownNode = childNodes.find((node) => node.nodeType === 'Markdown');
+  const markdownNode =
+    clickedNode &&
+    signal.targetProperty &&
+    signal.targetProperty === 'gridClasses' &&
+    isMarkdownPaneFragmentNode(clickedNode)
+      ? clickedNode
+      : childNodes.find(isMarkdownPaneFragmentNode);
+  const gridLayoutNode = childNodes.find(isGridLayoutNode);
 
   if (markdownNode && !isMarkdownPaneFragmentNode(markdownNode)) return null;
+  if (gridLayoutNode && !isGridLayoutNode(gridLayoutNode)) return null;
+  const styleContextNode = markdownNode || gridLayoutNode;
 
   switch (signal.action) {
     case 'style-break':
@@ -107,39 +120,75 @@ const PanelSwitch = ({
             config={config}
           />
         );
-      break;
-
-    case 'style-parent-add':
-      if (markdownNode)
+      else if (gridLayoutNode && paneNode)
         return (
-          <StyleParentAddPanel node={markdownNode} layer={signal.layer || 0} />
-        );
-      break;
-
-    case 'style-parent-remove':
-      if (markdownNode && signal.className)
-        return (
-          <StyleParentRemovePanel
-            node={markdownNode}
+          <StyleParentPanel
+            node={gridLayoutNode}
+            parentNode={paneNode}
             layer={signal.layer || 0}
-            className={signal.className}
-          />
-        );
-      break;
-
-    case 'style-parent-update':
-      if (markdownNode && signal.className)
-        return (
-          <StyleParentUpdatePanel
-            node={markdownNode}
-            layer={signal.layer || 0}
-            className={signal.className}
             config={config}
           />
         );
       break;
 
-    case 'style-parent-delete-layer':
+    case 'style-parent-add': {
+      if (markdownNode)
+        return (
+          <StyleParentAddPanel
+            node={markdownNode}
+            layer={signal.layer || 0}
+            targetProperty={(signal as any).targetProperty}
+          />
+        );
+      else if (gridLayoutNode)
+        return (
+          <StyleParentAddPanel
+            node={gridLayoutNode}
+            layer={signal.layer || 0}
+            targetProperty={(signal as any).targetProperty}
+          />
+        );
+      break;
+    }
+
+    case 'style-parent-remove': {
+      if (
+        clickedNode &&
+        (isMarkdownPaneFragmentNode(clickedNode) ||
+          isGridLayoutNode(clickedNode)) &&
+        signal.className
+      )
+        return (
+          <StyleParentRemovePanel
+            node={clickedNode}
+            layer={signal.layer || 0}
+            className={signal.className}
+            targetProperty={(signal as any).targetProperty}
+          />
+        );
+      break;
+    }
+
+    case 'style-parent-update': {
+      if (
+        clickedNode &&
+        (isMarkdownPaneFragmentNode(clickedNode) ||
+          isGridLayoutNode(clickedNode)) &&
+        signal.className
+      )
+        return (
+          <StyleParentUpdatePanel
+            node={clickedNode}
+            layer={signal.layer || 0}
+            className={signal.className}
+            config={config}
+            targetProperty={(signal as any).targetProperty}
+          />
+        );
+      break;
+    }
+
+    case 'style-parent-delete-layer': {
       if (markdownNode)
         return (
           <StyleParentDeleteLayerPanel
@@ -148,6 +197,7 @@ const PanelSwitch = ({
           />
         );
       break;
+    }
 
     case 'style-link':
       if (clickedNode) return <StyleLinkPanel node={clickedNode} />;
@@ -187,33 +237,35 @@ const PanelSwitch = ({
       break;
 
     case 'style-element':
-      if (clickedNode && markdownNode)
+      if (clickedNode && styleContextNode)
         return (
           <StyleElementPanel
             node={clickedNode}
-            parentNode={markdownNode as MarkdownPaneFragmentNode}
+            parentNode={
+              styleContextNode as MarkdownPaneFragmentNode | GridLayoutNode
+            }
             onTitleChange={onTitleChange}
           />
         );
       break;
 
     case 'style-element-add':
-      if (clickedNode && markdownNode)
+      if (clickedNode && styleContextNode)
         return (
           <StyleElementAddPanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             onTitleChange={onTitleChange}
           />
         );
       break;
 
     case 'style-element-remove':
-      if (clickedNode && markdownNode && signal.className)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleElementRemovePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             className={signal.className}
             onTitleChange={onTitleChange}
           />
@@ -221,11 +273,11 @@ const PanelSwitch = ({
       break;
 
     case 'style-element-update':
-      if (clickedNode && markdownNode && signal.className)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleElementUpdatePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             className={signal.className}
             onTitleChange={onTitleChange}
             config={config}
@@ -234,20 +286,46 @@ const PanelSwitch = ({
       break;
 
     case 'style-image': {
-      if (clickedNode?.parentId) {
-        const containerNode = allNodes.get(clickedNode.parentId);
-        if (containerNode?.parentId) {
-          const outerContainerNode = allNodes.get(containerNode.parentId);
-          if (markdownNode && containerNode && outerContainerNode)
-            return (
-              <StyleImagePanel
-                node={clickedNode}
-                parentNode={markdownNode}
-                containerNode={containerNode as FlatNode}
-                outerContainerNode={outerContainerNode as FlatNode}
-              />
-            );
+      let imageNode: FlatNode | undefined;
+      let containerNode: FlatNode | undefined;
+      let outerContainerNode: FlatNode | undefined;
+
+      if (
+        clickedNode &&
+        (clickedNode.tagName === 'ul' || clickedNode.tagName === 'ol')
+      ) {
+        outerContainerNode = clickedNode;
+        const liNodeIds = ctx.getChildNodeIDs(outerContainerNode.id);
+        if (liNodeIds.length > 0) {
+          containerNode = allNodes.get(liNodeIds[0]) as FlatNode;
+          if (containerNode) {
+            const imgNodeIds = ctx.getChildNodeIDs(containerNode.id);
+            if (imgNodeIds.length > 0) {
+              imageNode = allNodes.get(imgNodeIds[0]) as FlatNode;
+            }
+          }
         }
+      } else if (clickedNode?.parentId) {
+        imageNode = clickedNode;
+        containerNode = allNodes.get(clickedNode.parentId) as FlatNode;
+        if (containerNode?.parentId) {
+          outerContainerNode = allNodes.get(containerNode.parentId) as FlatNode;
+        }
+      }
+      if (
+        styleContextNode &&
+        imageNode &&
+        containerNode &&
+        outerContainerNode
+      ) {
+        return (
+          <StyleImagePanel
+            node={imageNode}
+            parentNode={styleContextNode}
+            containerNode={containerNode}
+            outerContainerNode={outerContainerNode}
+          />
+        );
       }
       break;
     }
@@ -255,11 +333,11 @@ const PanelSwitch = ({
     case 'style-img-add':
     case 'style-img-container-add':
     case 'style-img-outer-add':
-      if (clickedNode && markdownNode && signal.childId)
+      if (clickedNode && styleContextNode && signal.childId)
         return (
           <StyleImageAddPanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             childId={signal.childId}
           />
         );
@@ -268,11 +346,11 @@ const PanelSwitch = ({
     case 'style-img-update':
     case 'style-img-container-update':
     case 'style-img-outer-update':
-      if (clickedNode && markdownNode && signal.className && signal.childId)
+      if (clickedNode && styleContextNode && signal.className && signal.childId)
         return (
           <StyleImageUpdatePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
             config={config}
@@ -281,36 +359,74 @@ const PanelSwitch = ({
       break;
 
     case 'style-img-remove':
-    case 'style-img-container-remove':
-    case 'style-img-outer-remove':
-      if (clickedNode && markdownNode && signal.className && signal.childId)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleImageRemovePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
+            className={signal.className}
+          />
+        );
+      break;
+
+    case 'style-img-container-remove':
+    case 'style-img-outer-remove':
+      if (clickedNode && styleContextNode && signal.className && signal.childId)
+        return (
+          <StyleImageRemovePanel
+            node={clickedNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
           />
         );
       break;
 
-    case 'style-widget':
-      if (clickedNode?.parentId) {
-        const containerNode = allNodes.get(clickedNode.parentId);
+    case 'style-widget': {
+      let widgetNode: FlatNode | undefined;
+      let containerNode: FlatNode | undefined;
+      let outerContainerNode: FlatNode | undefined;
+
+      if (
+        clickedNode &&
+        (clickedNode.tagName === 'ul' || clickedNode.tagName === 'ol')
+      ) {
+        outerContainerNode = clickedNode;
+        const liNodeIds = ctx.getChildNodeIDs(outerContainerNode.id);
+        if (liNodeIds.length > 0) {
+          containerNode = allNodes.get(liNodeIds[0]) as FlatNode;
+          if (containerNode) {
+            const codeNodeIds = ctx.getChildNodeIDs(containerNode.id);
+            if (codeNodeIds.length > 0) {
+              widgetNode = allNodes.get(codeNodeIds[0]) as FlatNode;
+            }
+          }
+        }
+      } else if (clickedNode?.parentId) {
+        widgetNode = clickedNode;
+        containerNode = allNodes.get(clickedNode.parentId) as FlatNode;
         if (containerNode?.parentId) {
-          const outerContainerNode = allNodes.get(containerNode.parentId);
-          if (markdownNode && containerNode && outerContainerNode)
-            return (
-              <StyleWidgetPanel
-                node={clickedNode}
-                parentNode={markdownNode}
-                containerNode={containerNode as FlatNode}
-                outerContainerNode={outerContainerNode as FlatNode}
-              />
-            );
+          outerContainerNode = allNodes.get(containerNode.parentId) as FlatNode;
         }
       }
+
+      if (
+        styleContextNode &&
+        widgetNode &&
+        containerNode &&
+        outerContainerNode
+      ) {
+        return (
+          <StyleWidgetPanel
+            node={widgetNode}
+            parentNode={styleContextNode}
+            containerNode={containerNode}
+            outerContainerNode={outerContainerNode}
+          />
+        );
+      }
       break;
+    }
 
     case 'style-code-config':
       if (clickedNode)
@@ -320,24 +436,35 @@ const PanelSwitch = ({
     case 'style-code-add':
     case 'style-code-container-add':
     case 'style-code-outer-add':
-      if (clickedNode && markdownNode)
+      if (clickedNode && styleContextNode)
         return (
           <StyleWidgetAddPanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
             childId={signal?.childId}
           />
         );
       break;
 
     case 'style-code-update':
-    case 'style-code-container-update':
-    case 'style-code-outer-update':
-      if (clickedNode && markdownNode && signal.childId && signal.className)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleWidgetUpdatePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
+            className={signal.className}
+            config={config}
+          />
+        );
+      break;
+
+    case 'style-code-container-update':
+    case 'style-code-outer-update':
+      if (clickedNode && styleContextNode && signal.childId && signal.className)
+        return (
+          <StyleWidgetUpdatePanel
+            node={clickedNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
             config={config}
@@ -346,13 +473,23 @@ const PanelSwitch = ({
       break;
 
     case 'style-code-remove':
-    case 'style-code-container-remove':
-    case 'style-code-outer-remove':
-      if (clickedNode && markdownNode && signal.childId && signal.className)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleWidgetRemovePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
+            className={signal.className}
+          />
+        );
+      break;
+
+    case 'style-code-container-remove':
+    case 'style-code-outer-remove':
+      if (clickedNode && styleContextNode && signal.childId && signal.className)
+        return (
+          <StyleWidgetRemovePanel
+            node={clickedNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
           />
@@ -363,14 +500,14 @@ const PanelSwitch = ({
       if (clickedNode?.parentId) {
         const outerContainerNode = allNodes.get(clickedNode.parentId);
         if (
-          markdownNode &&
+          styleContextNode &&
           outerContainerNode &&
           signal.action === 'style-li-element'
         )
           return (
             <StyleLiElementPanel
               node={clickedNode}
-              parentNode={markdownNode}
+              parentNode={styleContextNode}
               outerContainerNode={outerContainerNode as FlatNode}
             />
           );
@@ -378,24 +515,43 @@ const PanelSwitch = ({
       break;
 
     case 'style-li-element-add':
-    case 'style-li-container-add':
-      if (clickedNode && markdownNode && signal.childId)
+      if (clickedNode && styleContextNode)
         return (
           <StyleLiElementAddPanel
             node={clickedNode}
-            parentNode={markdownNode}
-            childId={signal.childId}
+            parentNode={styleContextNode}
+          />
+        );
+      break;
+
+    case 'style-li-container-add':
+      if (clickedNode && styleContextNode)
+        return (
+          <StyleLiElementAddPanel
+            node={clickedNode}
+            parentNode={styleContextNode}
           />
         );
       break;
 
     case 'style-li-element-update':
-    case 'style-li-container-update':
-      if (clickedNode && markdownNode && signal.className && signal.childId)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleLiElementUpdatePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
+            className={signal.className}
+            config={config}
+          />
+        );
+      break;
+
+    case 'style-li-container-update':
+      if (clickedNode && styleContextNode && signal.className && signal.childId)
+        return (
+          <StyleLiElementUpdatePanel
+            node={clickedNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
             config={config}
@@ -404,12 +560,22 @@ const PanelSwitch = ({
       break;
 
     case 'style-li-element-remove':
-    case 'style-li-container-remove':
-      if (clickedNode && markdownNode && signal.className && signal.childId)
+      if (clickedNode && styleContextNode && signal.className)
         return (
           <StyleLiElementRemovePanel
             node={clickedNode}
-            parentNode={markdownNode}
+            parentNode={styleContextNode}
+            className={signal.className}
+          />
+        );
+      break;
+
+    case 'style-li-container-remove':
+      if (clickedNode && styleContextNode && signal.className && signal.childId)
+        return (
+          <StyleLiElementRemovePanel
+            node={clickedNode}
+            parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
           />
@@ -429,16 +595,7 @@ const PanelSwitch = ({
     default:
       settingsPanelStore.set(null);
   }
-  console.log(
-    `SettingsPanel miss`,
-    signal,
-    clickedNode,
-    paneId,
-    paneNode,
-    childNodeIds,
-    childNodes,
-    availableCodeHooks
-  );
+  console.warn(`SettingsPanel switch miss`, signal, clickedNode);
   return null;
 };
 

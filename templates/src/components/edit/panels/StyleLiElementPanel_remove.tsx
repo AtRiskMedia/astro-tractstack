@@ -1,7 +1,10 @@
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 import type {
   BasePanelProps,
@@ -19,7 +22,7 @@ const StyleLiElementRemovePanel = ({
     !className ||
     !node?.tagName ||
     !parentNode ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   )
     return null;
 

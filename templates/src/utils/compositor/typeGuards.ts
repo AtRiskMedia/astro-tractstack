@@ -10,6 +10,7 @@ import type {
   ArtpackImageNode,
   BgImageNode,
   Tag,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 interface BreakData {
@@ -191,4 +192,10 @@ export function hasPlayerJS(
   window: Window
 ): window is Window & { playerjs: PlayerJS } {
   return 'playerjs' in window;
+}
+
+export function isGridLayoutNode(
+  node: BaseNode | undefined | null
+): node is GridLayoutNode {
+  return node?.nodeType === 'GridLayoutNode';
 }

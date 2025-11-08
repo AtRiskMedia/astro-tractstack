@@ -3,19 +3,23 @@ import Cog6ToothIcon from '@heroicons/react/24/outline/Cog6ToothIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { regexpHook, widgetMeta } from '@/constants';
 import { getCtx } from '@/stores/nodes';
 import type {
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 interface StyleWidgetPanelProps {
   node: FlatNode;
   containerNode: FlatNode;
   outerContainerNode: FlatNode;
-  parentNode: MarkdownPaneFragmentNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
 }
 
 const StyleWidgetPanel = ({
@@ -28,7 +32,7 @@ const StyleWidgetPanel = ({
     !node?.tagName ||
     !containerNode?.tagName ||
     !outerContainerNode?.tagName ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   ) {
     return null;
   }

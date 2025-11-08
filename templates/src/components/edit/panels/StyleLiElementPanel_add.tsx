@@ -6,7 +6,10 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { useDropdownDirection } from '@/utils/helpers';
 import type { BasePanelProps, FlatNode } from '@/types/compositorTypes';
 
@@ -70,7 +73,11 @@ const StyleLiElementAddPanel = ({
   const comboboxRef = useRef<HTMLDivElement>(null);
   const { openAbove } = useDropdownDirection(comboboxRef);
 
-  if (!node?.tagName || !parentNode || !isMarkdownPaneFragmentNode(parentNode))
+  if (
+    !node?.tagName ||
+    !parentNode ||
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
+  )
     return null;
 
   const isContainer = node.tagName === 'ul' || node.tagName === 'ol';

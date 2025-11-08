@@ -3,12 +3,16 @@ import { settingsPanelStore } from '@/stores/storykeep';
 import ViewportComboBox from '@/components/fields/ViewportComboBox';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { getCtx } from '@/stores/nodes';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 import type {
   BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 const StyleWidgetUpdatePanel = ({
@@ -22,7 +26,7 @@ const StyleWidgetUpdatePanel = ({
     !node ||
     !className ||
     !parentNode ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   )
     return null;
 

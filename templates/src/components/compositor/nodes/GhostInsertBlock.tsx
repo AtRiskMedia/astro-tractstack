@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, type MouseEvent } from 'react';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import {
@@ -29,6 +29,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
   const lastChildNode = lastChildId
     ? (getCtx(props).allNodes.get().get(lastChildId) as FlatNode)
     : null;
+  const toolModeVal = getCtx(props).toolModeValStore.get().value;
 
   const allowedModes = useMemo(() => {
     if (isEmpty) {
@@ -50,7 +51,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
     ) as ToolAddMode[];
   }, [isEmpty, lastChildId, parentNode, lastChildNode, $toolAddModes]);
 
-  const handleInsert = (mode: ToolAddMode, e: React.MouseEvent) => {
+  const handleInsert = (mode: ToolAddMode, e: MouseEvent) => {
     e.stopPropagation();
     const templateNode = getTemplateNode(mode);
     let newNodeId: string | null = null;
@@ -144,7 +145,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
   }
 
   return (
-    <div className="my-4">
+    <div className="my-4 p-3.5 md:p-6">
       {showInsertOptions ? (
         <div className="rounded-lg border-2 border-cyan-600 bg-white p-3 text-gray-800 shadow-lg">
           <div className="mb-3 flex items-center justify-between border-b pb-2">
@@ -168,9 +169,11 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
       ) : (
         <button
           onClick={(e) => {
-            e.stopPropagation();
-            settingsPanelStore.set(null);
-            setShowInsertOptions(true);
+            if (toolModeVal !== `eraser`) {
+              e.stopPropagation();
+              settingsPanelStore.set(null);
+              setShowInsertOptions(true);
+            }
           }}
           className="group w-full rounded-lg border-2 border-dashed border-cyan-500 bg-cyan-50 p-6 transition-colors hover:bg-cyan-100 dark:border-cyan-600 dark:bg-cyan-900 dark:hover:bg-cyan-800"
         >

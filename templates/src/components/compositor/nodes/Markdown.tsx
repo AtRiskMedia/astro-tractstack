@@ -3,6 +3,7 @@ import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
 import { GhostInsertBlock } from './GhostInsertBlock';
+import { processGridClassesToString } from '@/utils/compositor/reduceNodesClassNames';
 import type { NodeProps } from '@/types/nodeProps';
 import type {
   MarkdownPaneFragmentNode,
@@ -13,40 +14,64 @@ import type {
 
 export const Markdown = (props: NodeProps) => {
   const id = props.nodeId;
-  const toolModeVal = getCtx(props).toolModeValStore.get().value;
-  const node = getCtx(props)
-    .allNodes.get()
-    .get(props.nodeId) as MarkdownPaneFragmentNode;
-  const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
-  const children = getCtx(props).getChildNodeIDs(props.nodeId);
+  const ctx = getCtx(props);
+  const node = ctx.allNodes.get().get(id) as MarkdownPaneFragmentNode;
+  const isPreview = ctx.rootNodeId.get() === `tmp`;
+  const children = ctx.getChildNodeIDs(id);
   const isEmpty = children.length === 0;
   const lastChildId =
     children.length > 0 ? children[children.length - 1] : null;
 
-  // Track the viewport value in state so we can react to changes
   const [currentViewport, setCurrentViewport] = useState(
     viewportKeyStore.get().value
   );
 
-  // Subscribe to viewportKeyStore changes
   useEffect(() => {
     const unsubscribeViewport = viewportKeyStore.subscribe((newViewport) => {
       setCurrentViewport(newViewport.value);
     });
-
-    return () => {
-      unsubscribeViewport();
-    };
+    return () => unsubscribeViewport();
   }, []);
 
-  // Check for positioned background image
-  const allNodes = getCtx(props).allNodes.get();
-  const parentPaneId = node.parentId;
+  if (!node) return null;
+
+  let isHidden = false;
+  switch (currentViewport) {
+    case 'mobile':
+      isHidden = !!node.hiddenViewportMobile;
+      break;
+    case 'tablet':
+      isHidden = !!node.hiddenViewportTablet;
+      break;
+    case 'desktop':
+      isHidden = !!node.hiddenViewportDesktop;
+      break;
+  }
+
+  if (isHidden) {
+    return (
+      <div
+        onClick={(e) => {
+          ctx.setClickedNodeId(props.nodeId, true);
+          e.stopPropagation();
+        }}
+        className="group my-4 w-full cursor-pointer rounded-lg border-2 border-dashed border-gray-400 bg-gray-100 p-6 transition-colors hover:bg-gray-200"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
+        <div className="text-center font-bold text-gray-800">
+          Hidden on this Viewport
+        </div>
+      </div>
+    );
+  }
+
+  const allNodes = ctx.allNodes.get();
+  const parentPaneId = ctx.getClosestNodeTypeFromId(id, 'Pane');
   const bgNode = parentPaneId
     ? (() => {
-        const childNodeIds = getCtx(props).getChildNodeIDs(parentPaneId);
+        const childNodeIds = ctx.getChildNodeIDs(parentPaneId);
         return childNodeIds
-          .map((id) => allNodes.get(id))
+          .map((childId) => allNodes.get(childId))
           .find(
             (n) =>
               n?.nodeType === 'BgPane' &&
@@ -58,18 +83,14 @@ export const Markdown = (props: NodeProps) => {
       })()
     : undefined;
 
-  // Helper function for size styles - NO MODIFIERS needed since React rerenders on viewport change
   function getSizeClasses(
     size: string,
     side: 'image' | 'content',
     viewport: string
   ): string {
-    // Mobile always gets full width (stacked layout)
     if (viewport === 'mobile') {
       return 'w-full';
     }
-
-    // Desktop/tablet get fractional widths
     switch (size) {
       case 'narrow':
         return side === 'image' ? 'w-1/3' : 'w-2/3';
@@ -83,7 +104,6 @@ export const Markdown = (props: NodeProps) => {
   const useFlexLayout =
     bgNode && (bgNode.position === 'left' || bgNode.position === 'right');
 
-  // Set flex direction based on currentViewport
   const flexDirection =
     currentViewport === 'mobile'
       ? 'flex-col'
@@ -91,20 +111,24 @@ export const Markdown = (props: NodeProps) => {
         ? 'flex-row-reverse'
         : 'flex-row';
 
+  const gridClassName = processGridClassesToString(node.gridClasses);
+
   let nodesToRender = (
     <>
       {useFlexLayout ? (
         <div
           className={`flex flex-nowrap items-center justify-center gap-6 md:gap-10 xl:gap-12 ${flexDirection}`}
         >
-          {/* Image Side - NO MODIFIERS because React rerenders on viewport change */}
           <div
-            className={`relative overflow-hidden ${getSizeClasses(bgNode.size || 'equal', 'image', currentViewport)}`}
+            className={`relative overflow-hidden ${getSizeClasses(
+              bgNode.size || 'equal',
+              'image',
+              currentViewport
+            )}`}
           >
             <RenderChildren children={[bgNode.id]} nodeProps={props} />
           </div>
 
-          {/* Content Side - NO MODIFIERS because React rerenders on viewport change */}
           <div
             className={getSizeClasses(
               bgNode.size || 'equal',
@@ -113,7 +137,7 @@ export const Markdown = (props: NodeProps) => {
             )}
           >
             <RenderChildren children={children} nodeProps={props} />
-            {!isPreview && [`text`, `insert`].includes(toolModeVal) && (
+            {!isPreview && (
               <GhostInsertBlock
                 nodeId={props.nodeId}
                 ctx={props.ctx}
@@ -126,7 +150,7 @@ export const Markdown = (props: NodeProps) => {
       ) : (
         <>
           <RenderChildren children={children} nodeProps={props} />
-          {!isPreview && [`text`, `insert`].includes(toolModeVal) && (
+          {!isPreview && (
             <GhostInsertBlock
               nodeId={props.nodeId}
               ctx={props.ctx}
@@ -149,16 +173,22 @@ export const Markdown = (props: NodeProps) => {
       nodesToRender = (
         <div
           onClick={(e) => {
-            getCtx(props).setClickedParentLayer(i);
-            getCtx(props).setClickedNodeId(props.nodeId);
+            if (e.target !== e.currentTarget) {
+              return;
+            }
+            ctx.setClickedParentLayer(i);
+            ctx.setClickedNodeId(props.nodeId);
             e.stopPropagation();
           }}
           onDoubleClick={(e) => {
-            getCtx(props).setClickedParentLayer(i);
-            getCtx(props).setClickedNodeId(props.nodeId, true);
+            if (e.target !== e.currentTarget) {
+              return;
+            }
+            ctx.setClickedParentLayer(i);
+            ctx.setClickedNodeId(props.nodeId, true);
             e.stopPropagation();
           }}
-          className={getCtx(props).getNodeClasses(id, currentViewport, i - 1)}
+          className={ctx.getNodeClasses(id, currentViewport, i - 1)}
           style={
             i === parentClassesLength
               ? { position: 'relative', zIndex: 10 }
@@ -169,11 +199,11 @@ export const Markdown = (props: NodeProps) => {
         </div>
       );
     }
-  } else {
-    nodesToRender = (
-      <div style={{ position: 'relative', zIndex: 10 }}>{nodesToRender}</div>
-    );
   }
 
-  return <>{nodesToRender}</>;
+  return (
+    <div className={gridClassName} style={{ position: 'relative', zIndex: 10 }}>
+      {nodesToRender}
+    </div>
+  );
 };

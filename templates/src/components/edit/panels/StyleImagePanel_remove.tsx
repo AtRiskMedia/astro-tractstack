@@ -2,7 +2,10 @@ import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import type { FlatNode, BasePanelProps } from '@/types/compositorTypes';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 
 const StyleImageRemovePanel = ({
@@ -15,7 +18,7 @@ const StyleImageRemovePanel = ({
     !className ||
     !node?.tagName ||
     !parentNode ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   ) {
     return null;
   }

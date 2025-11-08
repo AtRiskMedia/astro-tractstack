@@ -6,22 +6,32 @@ import {
 } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 import { tagTitles } from '@/types/compositorTypes';
 import type {
   Tag,
-  BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
+
+export interface StyleElementRemovePanelProps {
+  node: FlatNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
+  className: string;
+  onTitleChange?: (title: string) => void;
+}
 
 const StyleElementRemovePanel = ({
   node,
   parentNode,
   className,
   onTitleChange,
-}: BasePanelProps) => {
+}: StyleElementRemovePanelProps) => {
   if (!className || !node?.tagName) return null;
 
   const friendlyName = tailwindClasses[className]?.title || className;
@@ -40,7 +50,7 @@ const StyleElementRemovePanel = ({
       !node ||
       !className ||
       !parentNode ||
-      !isMarkdownPaneFragmentNode(parentNode)
+      (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
     ) {
       console.error('Missing required properties for class removal');
       return;

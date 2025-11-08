@@ -1,141 +1,209 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import ViewportComboBox from '@/components/fields/ViewportComboBox';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
+import ViewportComboBox from '@/components/fields/ViewportComboBox';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import type {
-  BasePanelProps,
+  ParentBasePanelProps,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
+  DefaultClassValue,
 } from '@/types/compositorTypes';
 
-const StyleParentUpdatePanel = ({
+type StyleableNode = MarkdownPaneFragmentNode | GridLayoutNode;
+
+type ViewportValues = {
+  mobile: string;
+  tablet: string;
+  desktop: string;
+};
+
+type CustomPanelProps = ParentBasePanelProps & {
+  targetProperty: 'parentClasses' | 'gridClasses';
+};
+
+const StyleParentPanelUpdate = ({
   node,
   layer,
   className,
+  targetProperty,
   config,
-}: BasePanelProps) => {
-  if (!node || !className || !layer) return null;
-  if (!isMarkdownPaneFragmentNode(node)) return null;
+}: CustomPanelProps) => {
+  const ctx = getCtx();
+  const styleableNode = node as StyleableNode | null;
 
-  const [mobileValue, setMobileValue] = useState<string>(``);
-  const [tabletValue, setTabletValue] = useState<string>(``);
-  const [desktopValue, setDesktopValue] = useState<string>(``);
-  const [pendingUpdate, setPendingUpdate] = useState<{
-    value: string;
-    viewport: 'mobile' | 'tablet' | 'desktop';
-  } | null>(null);
+  if (
+    !styleableNode ||
+    (!isMarkdownPaneFragmentNode(styleableNode) &&
+      !isGridLayoutNode(styleableNode)) ||
+    !layer ||
+    !className ||
+    !config // Ensure config exists
+  ) {
+    return (
+      <div>
+        Error: Could not find node, layer, class name, or config to update.
+        <pre>
+          {JSON.stringify(
+            {
+              nodeExists: !!styleableNode,
+              layer,
+              className,
+              targetProperty,
+              configExists: !!config,
+            },
+            null,
+            2
+          )}
+        </pre>
+      </div>
+    );
+  }
 
-  const friendlyName = tailwindClasses[className]?.title || className;
-  const values = tailwindClasses[className]?.values || [];
+  const tailwindConfig = tailwindClasses[className];
+  if (!tailwindConfig) {
+    return <div>Error: Tailwind config not found for {className}</div>;
+  }
 
-  const resetStore = () => {
-    if (node?.id)
-      settingsPanelStore.set({
-        nodeId: node.id,
-        layer: layer,
-        action: `style-parent`,
-        expanded: true,
-      });
-  };
-  const handleCancel = () => {
-    resetStore();
-  };
+  const getInitialValues = (): ViewportValues => {
+    let classesSource: DefaultClassValue | undefined;
 
-  // Initialize values from current node state
-  useEffect(() => {
-    const layerIndex = layer - 1;
-    const layerClasses = node?.parentClasses?.[layerIndex];
-    if (!layerClasses) return;
-
-    setMobileValue(layerClasses.mobile[className] || '');
-    setTabletValue(layerClasses.tablet[className] || '');
-    setDesktopValue(layerClasses.desktop[className] || '');
-  }, [node, layer, className]);
-
-  // Handle updates after state changes
-  useEffect(() => {
-    if (!pendingUpdate) return;
-
-    const ctx = getCtx();
-    const allNodes = ctx.allNodes.get();
-    const markdownNode = cloneDeep(
-      allNodes.get(node.id)
-    ) as MarkdownPaneFragmentNode;
-    if (!markdownNode) return;
-
-    const layerIndex = layer - 1;
-    const layerClasses = markdownNode.parentClasses?.[layerIndex];
-    if (!layerClasses) return;
-
-    switch (pendingUpdate.viewport) {
-      case 'mobile':
-        layerClasses.mobile[className] = pendingUpdate.value;
-        setMobileValue(pendingUpdate.value);
-        break;
-      case 'tablet':
-        layerClasses.tablet[className] = pendingUpdate.value;
-        setTabletValue(pendingUpdate.value);
-        break;
-      case 'desktop':
-        layerClasses.desktop[className] = pendingUpdate.value;
-        setDesktopValue(pendingUpdate.value);
-        break;
+    if (targetProperty === 'parentClasses') {
+      const layerIndex = layer - 1;
+      classesSource = styleableNode.parentClasses?.[layerIndex];
+    } else if (
+      targetProperty === 'gridClasses' &&
+      isMarkdownPaneFragmentNode(styleableNode)
+    ) {
+      classesSource = styleableNode.gridClasses;
     }
 
-    ctx.modifyNodes([{ ...markdownNode, isChanged: true }]);
-    setPendingUpdate(null);
-  }, [pendingUpdate, node.id, layer, className]);
+    return {
+      mobile: classesSource?.mobile?.[className] || '',
+      tablet: classesSource?.tablet?.[className] || '',
+      desktop: classesSource?.desktop?.[className] || '',
+    };
+  };
 
-  const handleFinalChange = useCallback(
+  const [values, setValues] = useState<ViewportValues>(getInitialValues);
+
+  const validTailwindValues = useMemo(() => {
+    return ['', ...tailwindConfig.values];
+  }, [tailwindConfig]);
+
+  const handleCancel = () => {
+    settingsPanelStore.set({
+      nodeId: styleableNode.id,
+      layer: layer,
+      action: 'style-parent',
+      expanded: true,
+    });
+  };
+
+  const handleUpdate = useCallback(
     (value: string, viewport: 'mobile' | 'tablet' | 'desktop') => {
-      setPendingUpdate({ value, viewport });
+      const newValues = { ...values, [viewport]: value };
+      setValues(newValues);
+
+      const updatedNode = cloneDeep(styleableNode);
+      let classesTarget: DefaultClassValue | undefined;
+
+      if (targetProperty === 'parentClasses') {
+        const layerIndex = layer - 1;
+        if (!updatedNode.parentClasses) {
+          updatedNode.parentClasses = [];
+        }
+        while (updatedNode.parentClasses.length <= layerIndex) {
+          updatedNode.parentClasses.push({
+            mobile: {},
+            tablet: {},
+            desktop: {},
+          });
+        }
+        if (!updatedNode.parentClasses[layerIndex]) {
+          updatedNode.parentClasses[layerIndex] = {
+            mobile: {},
+            tablet: {},
+            desktop: {},
+          };
+        }
+        classesTarget = updatedNode.parentClasses[layerIndex];
+      } else if (
+        targetProperty === 'gridClasses' &&
+        isMarkdownPaneFragmentNode(updatedNode)
+      ) {
+        if (!updatedNode.gridClasses) {
+          updatedNode.gridClasses = { mobile: {}, tablet: {}, desktop: {} };
+        }
+        classesTarget = updatedNode.gridClasses;
+      }
+
+      if (classesTarget) {
+        if (!classesTarget.mobile) classesTarget.mobile = {};
+        if (!classesTarget.tablet) classesTarget.tablet = {};
+        if (!classesTarget.desktop) classesTarget.desktop = {};
+
+        classesTarget[viewport][className] = value;
+
+        updatedNode.isChanged = true;
+        ctx.modifyNodes([updatedNode]);
+        ctx.notifyNode('root');
+      }
     },
-    []
+    [styleableNode, layer, className, targetProperty, values, ctx]
   );
 
   return (
-    <div className="isolate z-50 space-y-4">
+    <div className="space-y-4">
       <div className="flex flex-row flex-nowrap justify-between">
-        <h3 className="text-xl font-bold">
-          <span className="font-bold">{friendlyName}</span> (Layer {layer})
-        </h3>
         <button
-          className="text-myblue hover:text-black"
           title="Return to preview pane"
-          onClick={() => handleCancel()}
+          onClick={handleCancel}
+          className="text-myblue hover:text-black"
         >
           Go Back
         </button>
       </div>
-      <div className="text-mydarkgrey my-3 flex flex-col gap-y-2.5 text-xl">
+      <div>
+        <h3 className="text-xl font-bold">{tailwindConfig.title}</h3>
+        <p className="text-mydarkgrey mt-1 font-mono text-sm">
+          {tailwindConfig.className}
+        </p>
+      </div>
+
+      <div className="space-y-3">
         <ViewportComboBox
-          value={mobileValue}
-          onFinalChange={handleFinalChange}
-          values={values}
           viewport="mobile"
-          config={config!}
+          value={values.mobile}
+          values={validTailwindValues}
+          onFinalChange={handleUpdate}
+          config={config}
+          allowNegative={tailwindConfig.allowNegative}
         />
         <ViewportComboBox
-          value={tabletValue}
-          onFinalChange={handleFinalChange}
-          values={values}
           viewport="tablet"
-          isInferred={tabletValue === mobileValue}
-          config={config!}
+          value={values.tablet}
+          values={validTailwindValues}
+          onFinalChange={handleUpdate}
+          config={config}
+          allowNegative={tailwindConfig.allowNegative}
         />
         <ViewportComboBox
-          value={desktopValue}
-          onFinalChange={handleFinalChange}
-          values={values}
           viewport="desktop"
-          isInferred={desktopValue === tabletValue}
-          config={config!}
+          value={values.desktop}
+          values={validTailwindValues}
+          onFinalChange={handleUpdate}
+          config={config}
+          allowNegative={tailwindConfig.allowNegative}
         />
       </div>
     </div>
   );
 };
 
-export default StyleParentUpdatePanel;
+export default StyleParentPanelUpdate;

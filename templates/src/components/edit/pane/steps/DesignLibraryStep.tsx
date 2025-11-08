@@ -139,7 +139,7 @@ const TemplatePreviewItem = ({
         </div>
       </div>
       <div className="flex-grow p-3">
-        <h3 className="truncate font-semibold" title={title}>
+        <h3 className="truncate font-bold" title={title}>
           {title}
         </h3>
         <p className="text-sm capitalize text-gray-600">{category}</p>
@@ -226,7 +226,7 @@ export const DesignLibraryStep = ({
 
   return (
     <div className="flex h-full flex-col space-y-4 rounded-lg bg-gray-50 p-4 shadow-inner">
-      <label className="block text-lg font-semibold text-gray-800">
+      <label className="block text-lg font-bold text-gray-800">
         2. Choose a Design
       </label>
 
@@ -241,7 +241,7 @@ export const DesignLibraryStep = ({
           className="w-48"
           positioning={{ gutter: 4 }}
         >
-          <Select.Label className="mb-1 text-sm font-medium text-gray-700">
+          <Select.Label className="mb-1 text-sm font-bold text-gray-700">
             Category
           </Select.Label>
           <Select.Control>
@@ -280,7 +280,7 @@ export const DesignLibraryStep = ({
           className="flex-1"
           positioning={{ gutter: 4 }}
         >
-          <Combobox.Label className="mb-1 text-sm font-medium text-gray-700">
+          <Combobox.Label className="mb-1 text-sm font-bold text-gray-700">
             Filter by Title
           </Combobox.Label>
           <Combobox.Control>

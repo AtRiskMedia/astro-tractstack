@@ -107,6 +107,18 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/compositor/nodes/GridLayout.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/GridLayout.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/compositor/nodes/GridLayout_eraser.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/GridLayout_eraser.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/compositor/nodes/GhostInsertBlock.tsx'
       ),
       dest: 'src/components/compositor/nodes/GhostInsertBlock.tsx',
@@ -154,6 +166,12 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/compositor/nodes/Markdown.tsx'),
       dest: 'src/components/compositor/nodes/Markdown.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/compositor/nodes/Markdown_eraser.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/Markdown_eraser.tsx',
     },
     {
       src: resolve(

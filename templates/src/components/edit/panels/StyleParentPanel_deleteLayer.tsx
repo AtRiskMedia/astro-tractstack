@@ -1,21 +1,37 @@
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 import type {
-  BasePanelProps,
+  ParentBasePanelProps,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
-const StyleParentDeleteLayerPanel = ({ node, layer }: BasePanelProps) => {
-  if (!layer) return null;
-  if (!node || !isMarkdownPaneFragmentNode(node)) return null;
-  if (!node.parentClasses) return null;
+type StyleableNode = MarkdownPaneFragmentNode | GridLayoutNode;
+
+const StyleParentDeleteLayerPanel = ({ node, layer }: ParentBasePanelProps) => {
+  const styleableNode = node as StyleableNode | null;
+
+  if (
+    !layer ||
+    !styleableNode ||
+    !(
+      isMarkdownPaneFragmentNode(styleableNode) ||
+      isGridLayoutNode(styleableNode)
+    )
+  ) {
+    return null;
+  }
+  if (!styleableNode.parentClasses) return null;
 
   const layerIndex = layer - 1;
-  if (layerIndex >= node.parentClasses.length) return null;
+  if (layerIndex >= styleableNode.parentClasses.length) return null;
 
-  const currentLayer = node.parentClasses[layerIndex];
+  const currentLayer = styleableNode.parentClasses[layerIndex];
   const allKeys = new Set([
     ...Object.keys(currentLayer.mobile || {}),
     ...Object.keys(currentLayer.tablet || {}),
@@ -25,7 +41,7 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: BasePanelProps) => {
 
   const resetStore = () => {
     settingsPanelStore.set({
-      nodeId: node.id,
+      nodeId: styleableNode.id,
       action: 'style-parent',
       expanded: true,
     });
@@ -33,25 +49,25 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: BasePanelProps) => {
 
   const handleYesClick = () => {
     const ctx = getCtx();
-    const allNodes = ctx.allNodes.get();
-    const markdownNode = allNodes.get(node.id) as MarkdownPaneFragmentNode;
+    const nodeToUpdate = cloneDeep(
+      ctx.allNodes.get().get(styleableNode.id)
+    ) as StyleableNode;
 
-    if (!markdownNode || !isMarkdownPaneFragmentNode(markdownNode)) return;
-    if (!markdownNode.parentClasses) return;
+    if (!nodeToUpdate.parentClasses) return;
 
     // If this is the last layer, replace with empty classes instead of removing
-    if (markdownNode.parentClasses.length === 1) {
+    if (nodeToUpdate.parentClasses.length === 1) {
       const emptyLayer = {
         mobile: {},
         tablet: {},
         desktop: {},
       };
 
-      const updatedNode: MarkdownPaneFragmentNode = cloneDeep({
-        ...markdownNode,
+      const updatedNode = {
+        ...nodeToUpdate,
         parentClasses: [emptyLayer],
         isChanged: true,
-      });
+      };
 
       ctx.modifyNodes([updatedNode]);
       resetStore();
@@ -60,15 +76,15 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: BasePanelProps) => {
 
     // Otherwise remove the layer
     const newParentClasses = [
-      ...markdownNode.parentClasses.slice(0, layerIndex),
-      ...markdownNode.parentClasses.slice(layerIndex + 1),
+      ...nodeToUpdate.parentClasses.slice(0, layerIndex),
+      ...nodeToUpdate.parentClasses.slice(layerIndex + 1),
     ];
 
-    const updatedNode: MarkdownPaneFragmentNode = cloneDeep({
-      ...markdownNode,
+    const updatedNode = {
+      ...nodeToUpdate,
       parentClasses: newParentClasses,
       isChanged: true,
-    });
+    };
 
     ctx.modifyNodes([updatedNode]);
     resetStore();

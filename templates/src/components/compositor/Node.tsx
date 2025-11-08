@@ -8,8 +8,12 @@ import {
 } from 'react';
 import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
-import { styleElementInfoStore, viewportKeyStore } from '@/stores/storykeep';
-import { getType } from '@/utils/compositor/typeGuards';
+import {
+  settingsPanelStore,
+  styleElementInfoStore,
+  viewportKeyStore,
+} from '@/stores/storykeep';
+import { isGridLayoutNode, getType } from '@/utils/compositor/typeGuards';
 import { NodeWithGuid } from './NodeWithGuid';
 import PanelVisibilityWrapper from './PanelVisibilityWrapper';
 import { Pane } from './nodes/Pane';
@@ -31,6 +35,9 @@ import { NodeBasicTagInsert } from './nodes/tagElements/NodeBasicTag_insert';
 import { NodeBasicTagEraser } from './nodes/tagElements/NodeBasicTag_eraser';
 import { NodeBasicTagSettings } from './nodes/tagElements/NodeBasicTag_settings';
 import { Pane_DesignLibrary } from './nodes/Pane_DesignLibrary';
+import { GridLayout } from './nodes/GridLayout';
+import { GridLayoutEraser } from './nodes/GridLayout_eraser';
+import { MarkdownEraser } from './nodes/Markdown_eraser';
 import AddPanePanel from '@/components/edit/pane/AddPanePanel';
 import ConfigPanePanel from '@/components/edit/pane/ConfigPanePanel';
 import StoryFragmentConfigPanel from '@/components/edit/storyfragment/StoryFragmentConfigPanel';
@@ -124,8 +131,18 @@ const getElement = (
   const type = getType(node);
 
   switch (type) {
-    case 'Markdown':
+    case 'Markdown': {
+      const toolModeVal = getCtx(props).toolModeValStore.get().value;
+      if (toolModeVal === 'eraser') {
+        const parentNode = node.parentId
+          ? getCtx(props).allNodes.get().get(node.parentId)
+          : null;
+        if (parentNode && isGridLayoutNode(parentNode)) {
+          return <MarkdownEraser {...sharedProps} />;
+        }
+      }
       return <Markdown {...sharedProps} />;
+    }
 
     case 'StoryFragment': {
       const sf = node as StoryFragmentNode;
@@ -308,6 +325,13 @@ const getElement = (
 
     case 'BgPane':
       return <BgPaneWrapper {...sharedProps} />;
+    case 'GridLayoutNode': {
+      const toolModeVal = getCtx(props).toolModeValStore.get().value;
+      if (toolModeVal === 'eraser') {
+        return <GridLayoutEraser {...sharedProps} />;
+      }
+      return <GridLayout {...sharedProps} />;
+    }
     case 'TagElement':
       return <TagElement {...sharedProps} />;
     // tag elements
@@ -328,27 +352,14 @@ const getElement = (
         );
 
         const handleElementClick = (e: MouseEvent<HTMLElement>) => {
-          // 1. ALWAYS stop the event from bubbling up to the Pane.
           e.stopPropagation();
-
-          // 2. Check the selection store. The handleMouseUp in Compositor.tsx
-          // has already run by the time this 'click' event fires.
-          //
-          // - If it was a drag, Compositor.tsx set 'isActive: true' (line 267).
-          // - If it was a click, Compositor.tsx called 'resetSelectionStore'
-          //   (line 242), so 'isActive: false'.
-          //
           const { isActive } = selectionStore.get();
-
           if (isActive) {
             // A drag just finished. The user's intent was to select text.
             // Do NOT open the panel.
             return;
           }
-
-          // 3. 'isActive' was false. This was a genuine click.
-          // We can safely open the settings panel.
-          // 'node' is already in scope from the getElement function.
+          // else
           handleClickEventDefault(node as FlatNode, true);
         };
 
@@ -459,6 +470,7 @@ const getElement = (
 const Node = memo((props: NodeProps) => {
   const node = getCtx(props).allNodes.get().get(props.nodeId) as FlatNode;
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
+  const settingsPanel = useStore(settingsPanelStore);
 
   const {
     markdownParentId,
@@ -535,6 +547,18 @@ const Node = memo((props: NodeProps) => {
     : '';
 
   const element = getElement(node, props);
+  const isPanelActive =
+    settingsPanel?.action === 'style-parent' &&
+    settingsPanel?.nodeId === props.nodeId;
+  const isStyleableContainer =
+    node?.nodeType === 'Markdown' || isGridLayoutNode(node);
+
+  if (isPanelActive && isStyleableContainer) {
+    const highlightStyle = {
+      outline: '3.5px dotted rgba(255, 165, 0, 0.85)',
+    };
+    return <div style={highlightStyle}>{element}</div>;
+  }
 
   if (!isPreview && getCtx(props).showGuids.get()) {
     return <NodeWithGuid {...props} element={element} />;

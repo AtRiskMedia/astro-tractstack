@@ -141,7 +141,10 @@ const ImpressionWrapper = ({
     const currentImpression = visibleImpressions[currentImpressionIndex];
 
     return (
-      <div className="impression-overlay fixed bottom-4 right-4 z-50 w-96 max-w-[calc(100vw-2rem)]">
+      <div
+        className="impression-overlay fixed bottom-4 right-4 z-50 w-96"
+        style={{ maxWidth: 'calc(100vw - 2rem)' }}
+      >
         <div className="relative rounded-lg border border-gray-200 bg-white shadow-lg">
           {/* Close button */}
           <button

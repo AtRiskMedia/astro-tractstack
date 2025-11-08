@@ -7,15 +7,27 @@ import {
 import ViewportComboBox from '@/components/fields/ViewportComboBox';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { getCtx } from '@/stores/nodes';
-import { isMarkdownPaneFragmentNode } from '@/utils/compositor/typeGuards';
+import {
+  isMarkdownPaneFragmentNode,
+  isGridLayoutNode,
+} from '@/utils/compositor/typeGuards';
 import { cloneDeep } from '@/utils/helpers';
 import { tagTitles } from '@/types/compositorTypes';
 import type {
   Tag,
-  BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
+import type { BrandConfig } from '@/types/tractstack';
+
+export interface StyleElementUpdatePanelProps {
+  node: FlatNode;
+  parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
+  className: string;
+  onTitleChange?: (title: string) => void;
+  config?: BrandConfig | null;
+}
 
 const StyleElementUpdatePanel = ({
   node,
@@ -23,12 +35,12 @@ const StyleElementUpdatePanel = ({
   className,
   onTitleChange,
   config,
-}: BasePanelProps) => {
+}: StyleElementUpdatePanelProps) => {
   if (
     !node ||
     !className ||
     !parentNode ||
-    !isMarkdownPaneFragmentNode(parentNode)
+    (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
   )
     return null;
 
