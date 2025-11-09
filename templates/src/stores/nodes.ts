@@ -38,6 +38,7 @@ import type {
   PaneNode,
   StoryFragmentNode,
   Tag,
+  TemplateGridLayout,
   TemplateMarkdown,
   TemplateNode,
   TemplatePane,
@@ -1445,124 +1446,126 @@ export class NodesContext {
         }
         break;
 
-      case 'TagElement':
-        {
-          const getButtonClasses = (node: FlatNode) => {
-            return {
-              mobile: strippedStyles(node.buttonPayload?.buttonClasses || {}),
-              tablet: {},
-              desktop: {},
-            };
+      case 'TagElement': {
+        const getButtonClasses = (node: FlatNode) => {
+          return {
+            mobile: strippedStyles(node.buttonPayload?.buttonClasses || {}),
+            tablet: {},
+            desktop: {},
           };
+        };
 
-          const getHoverClasses = (node: FlatNode) => {
-            return {
-              mobile: strippedStyles(
-                node.buttonPayload?.buttonHoverClasses || {}
-              ),
-              tablet: {},
-              desktop: {},
-            };
+        const getHoverClasses = (node: FlatNode) => {
+          return {
+            mobile: strippedStyles(
+              node.buttonPayload?.buttonHoverClasses || {}
+            ),
+            tablet: {},
+            desktop: {},
           };
+        };
 
-          if (hasButtonPayload(node)) {
-            const [classesPayload] = processClassesForViewports(
-              getButtonClasses(node),
-              {},
-              1
-            );
-            const [classesHoverPayload] = processClassesForViewports(
-              getHoverClasses(node),
-              {},
-              1
-            );
-            return `${classesPayload?.length ? classesPayload[0] : ``} ${
-              classesHoverPayload?.length
-                ? addHoverPrefix(classesHoverPayload[0])
-                : ``
-            }`;
-          }
-
-          if ('tagName' in node && node.tagName === 'span') {
-            const spanNode = node as FlatNode;
-            const [all, mobile, tablet, desktop] = processClassesForViewports(
-              { mobile: {}, tablet: {}, desktop: {} },
-              spanNode.overrideClasses || {},
-              1
-            );
-            const outlineClass =
-              this.toolModeValStore.get().value === 'styles'
-                ? ' outline outline-1 outline-dotted outline-gray-400/60'
-                : '';
-
-            const getClassString = (classes: string[]): string =>
-              classes && classes.length > 0 ? classes[0] : '';
-
-            if (isPreview) return getClassString(desktop) + outlineClass;
-            switch (viewport) {
-              case 'desktop':
-                return getClassString(desktop) + outlineClass;
-              case 'tablet':
-                return getClassString(tablet) + outlineClass;
-              case 'mobile':
-                return getClassString(mobile) + outlineClass;
-              default:
-                return getClassString(all) + outlineClass;
-            }
-          }
-
-          // Begin Default Class Lookup Logic
-          const markdownParentId = this.getClosestNodeTypeFromId(
-            nodeId,
-            'Markdown'
+        if (hasButtonPayload(node)) {
+          const [classesPayload] = processClassesForViewports(
+            getButtonClasses(node),
+            {},
+            1
           );
-          if (!markdownParentId) break;
+          const [classesHoverPayload] = processClassesForViewports(
+            getHoverClasses(node),
+            {},
+            1
+          );
+          return `${classesPayload?.length ? classesPayload[0] : ``} ${
+            classesHoverPayload?.length
+              ? addHoverPrefix(classesHoverPayload[0])
+              : ``
+          }`;
+        }
 
-          const markdownParentNode = this.allNodes
-            .get()
-            .get(markdownParentId) as MarkdownPaneFragmentNode;
-          if (!markdownParentNode) break;
+        if ('tagName' in node && node.tagName === 'span') {
+          const spanNode = node as FlatNode;
+          const [all, mobile, tablet, desktop] = processClassesForViewports(
+            { mobile: {}, tablet: {}, desktop: {} },
+            spanNode.overrideClasses || {},
+            1
+          );
+          const outlineClass =
+            this.toolModeValStore.get().value === 'styles'
+              ? ' outline outline-1 outline-dotted outline-gray-400/60'
+              : '';
 
-          const tagNameStr = (node as FlatNode).tagName as string;
+          const getClassString = (classes: string[]): string =>
+            classes && classes.length > 0 ? classes[0] : '';
 
-          // By default, assume the markdown node is the source of styles.
-          let styleSourceNode: MarkdownPaneFragmentNode | GridLayoutNode =
-            markdownParentNode;
-          let styles = styleSourceNode.defaultClasses?.[tagNameStr];
-
-          // If the markdown node has no styles for this tag, check for a GridLayout grandparent.
-          // This handles the case where the MarkdownNode is a column.
-          if (!styles || Object.keys(styles.mobile).length === 0) {
-            const grandparent = markdownParentNode.parentId
-              ? this.allNodes.get().get(markdownParentNode.parentId)
-              : null;
-
-            if (grandparent && isGridLayoutNode(grandparent)) {
-              styleSourceNode = grandparent;
-              styles = styleSourceNode.defaultClasses?.[tagNameStr];
-            }
-          }
-
-          if (styles && styles.mobile) {
-            const [all, mobile, tablet, desktop] = processClassesForViewports(
-              styles,
-              (node as FlatNode)?.overrideClasses || {},
-              1
-            );
-            if (isPreview) return desktop[0];
-            switch (viewport) {
-              case 'desktop':
-                return desktop[0];
-              case 'tablet':
-                return tablet[0];
-              case 'mobile':
-                return mobile[0];
-              default:
-                return all[0];
-            }
+          if (isPreview) return getClassString(desktop) + outlineClass;
+          switch (viewport) {
+            case 'desktop':
+              return getClassString(desktop) + outlineClass;
+            case 'tablet':
+              return getClassString(tablet) + outlineClass;
+            case 'mobile':
+              return getClassString(mobile) + outlineClass;
+            default:
+              return getClassString(all) + outlineClass;
           }
         }
-        break;
+
+        // Begin Default Class Lookup Logic
+        const markdownParentId = this.getClosestNodeTypeFromId(
+          nodeId,
+          'Markdown'
+        );
+        if (!markdownParentId) break;
+
+        const markdownParentNode = this.allNodes
+          .get()
+          .get(markdownParentId) as MarkdownPaneFragmentNode;
+        if (!markdownParentNode) break;
+
+        const tagNameStr = (node as FlatNode).tagName as string;
+
+        // By default, assume the markdown node is the source of styles.
+        let styleSourceNode: MarkdownPaneFragmentNode | GridLayoutNode =
+          markdownParentNode;
+        let styles = styleSourceNode.defaultClasses?.[tagNameStr];
+
+        // If the markdown node has no styles for this tag, check for a GridLayout grandparent.
+        // This handles the case where the MarkdownNode is a column.
+        if (!styles || Object.keys(styles.mobile).length === 0) {
+          const grandparent = markdownParentNode.parentId
+            ? this.allNodes.get().get(markdownParentNode.parentId)
+            : null;
+
+          if (grandparent && isGridLayoutNode(grandparent)) {
+            styleSourceNode = grandparent;
+            styles = styleSourceNode.defaultClasses?.[tagNameStr];
+          }
+        }
+
+        const baseStyles =
+          styles && styles.mobile
+            ? styles
+            : { mobile: {}, tablet: {}, desktop: {} };
+
+        const [all, mobile, tablet, desktop] = processClassesForViewports(
+          baseStyles,
+          (node as FlatNode)?.overrideClasses || {},
+          1
+        );
+
+        if (isPreview) return desktop[0];
+        switch (viewport) {
+          case 'desktop':
+            return desktop[0];
+          case 'tablet':
+            return tablet[0];
+          case 'mobile':
+            return mobile[0];
+          default:
+            return all[0];
+        }
+      }
 
       case 'StoryFragment': {
         const storyFragment = node as StoryFragmentNode;
@@ -1775,39 +1778,15 @@ export class NodesContext {
     duplicatedPane.isChanged = true;
 
     // Track all nodes that need to be added
-    let allNodes: BaseNode[] = [];
+    // Call the new helper to process markdown, gridLayout, and bgPane
+    const allNodes: BaseNode[] = this._processPaneTemplate(
+      duplicatedPane,
+      ownerId
+    );
 
-    // must generate nodes from markdown
-    if (duplicatedPane.markdown) {
-      duplicatedPane.markdown = cloneDeep(pane.markdown) as TemplateMarkdown;
-      duplicatedPane.markdown.id = pane?.markdown?.id || ulid();
-      duplicatedPane.markdown.markdownId = pane?.markdown?.markdownId || ulid();
-      duplicatedPane.markdown.parentId = ownerId;
-
-      let markdownNodes: TemplateNode[] = [];
-      if (duplicatedPane.markdown.markdownBody) {
-        const markdownGen = new MarkdownGenerator(this);
-        markdownNodes = markdownGen.markdownToFlatNodes(
-          duplicatedPane.markdown.markdownBody,
-          duplicatedPane.markdown.id
-        ) as TemplateNode[];
-        allNodes = [...allNodes, duplicatedPane.markdown, ...markdownNodes];
-      }
-
-      // Markdown already as nodes
-      else if (
-        typeof duplicatedPane.markdown !== `undefined` &&
-        typeof duplicatedPane.markdown.id === `string`
-      ) {
-        duplicatedPane?.markdown.nodes?.forEach((node) => {
-          const childrenNodes = this.setupTemplateNodeRecursively(
-            node,
-            duplicatedPane?.markdown?.id || ''
-          );
-          markdownNodes.push(...childrenNodes);
-        });
-        allNodes = [...allNodes, duplicatedPane.markdown, ...markdownNodes];
-      }
+    // Remove bgPane from the pane object if it exists, as it's now a separate node
+    if (duplicatedPane.bgPane) {
+      delete duplicatedPane.bgPane;
     }
 
     this.addNode(duplicatedPane as PaneNode);
@@ -1852,85 +1831,15 @@ export class NodesContext {
       }
     }
 
-    let allNodes: BaseNode[] = [];
+    // Call the new helper to process markdown, gridLayout, and bgPane
+    const allNodes: BaseNode[] = this._processPaneTemplate(
+      duplicatedPane,
+      duplicatedPaneId
+    );
 
-    if (duplicatedPane.markdown) {
-      duplicatedPane.markdown = cloneDeep(pane.markdown) as TemplateMarkdown;
-      duplicatedPane.markdown.id = pane?.markdown?.id || ulid();
-      duplicatedPane.markdown.markdownId = pane?.markdown?.markdownId || ulid();
-      duplicatedPane.markdown.parentId = duplicatedPaneId;
-
-      let markdownNodes: TemplateNode[] = [];
-      if (duplicatedPane.markdown.markdownBody) {
-        const markdownGen = new MarkdownGenerator(this);
-        markdownNodes = markdownGen.markdownToFlatNodes(
-          duplicatedPane.markdown.markdownBody,
-          duplicatedPane.markdown.id
-        ) as TemplateNode[];
-        allNodes = [...allNodes, duplicatedPane.markdown, ...markdownNodes];
-      } else if (
-        typeof duplicatedPane.markdown !== `undefined` &&
-        typeof duplicatedPane.markdown.id === `string`
-      ) {
-        // Create a map to track the original node ID to its duplicated node ID
-        const oldToNewIdMap = new Map<string, string>();
-        // First pass: Clone nodes and generate new IDs
-        const nodesClone =
-          duplicatedPane?.markdown?.nodes?.map((originalNode) => {
-            const newNode = cloneDeep(originalNode);
-            newNode.id = ulid();
-            oldToNewIdMap.set(originalNode.id, newNode.id);
-            return newNode;
-          }) || [];
-        // Second pass: Update parent IDs using the mapping
-        nodesClone.forEach((node) => {
-          // Special case for direct children of markdown
-          if (node.parentId === pane?.markdown?.id) {
-            node.parentId = duplicatedPane?.markdown?.id || '';
-          } else {
-            // For all other nodes, use the mapping to find the new parent ID
-            const newParentId = oldToNewIdMap.get(node.parentId || '');
-            if (newParentId) {
-              node.parentId = newParentId;
-            }
-          }
-          markdownNodes.push(node);
-        });
-        allNodes = [...allNodes, duplicatedPane.markdown, ...markdownNodes];
-      }
-    }
-
+    // Remove bgPane from the pane object if it exists, as it's now a separate node
+    // This preserves the original logic
     if (duplicatedPane.bgPane) {
-      const bgPaneId = ulid();
-
-      if (duplicatedPane.bgPane.type === 'visual-break') {
-        const visualBreakPane = duplicatedPane.bgPane as VisualBreakNode;
-        const bgPaneNode: VisualBreakNode = {
-          id: bgPaneId,
-          nodeType: 'BgPane',
-          parentId: duplicatedPaneId,
-          type: 'visual-break',
-          breakDesktop: visualBreakPane.breakDesktop,
-          breakTablet: visualBreakPane.breakTablet,
-          breakMobile: visualBreakPane.breakMobile,
-        };
-        allNodes.push(bgPaneNode);
-      } else if (duplicatedPane.bgPane.type === 'artpack-image') {
-        const artpackBgPane = duplicatedPane.bgPane as ArtpackImageNode;
-        const bgPaneNode: ArtpackImageNode = {
-          id: bgPaneId,
-          nodeType: 'BgPane',
-          parentId: duplicatedPaneId,
-          type: 'artpack-image',
-          collection: artpackBgPane.collection,
-          image: artpackBgPane.image,
-          src: artpackBgPane.src,
-          srcSet: artpackBgPane.srcSet,
-          alt: artpackBgPane.alt || `Artpack image`,
-          objectFit: artpackBgPane.objectFit || 'cover',
-        };
-        allNodes.push(bgPaneNode);
-      }
       delete duplicatedPane.bgPane;
     }
 
@@ -1973,10 +1882,14 @@ export class NodesContext {
     this.addNodes(allNodes);
     this.notifyNode(ownerId);
 
+    // Combine the pane and all its child nodes for the history patch
+    const nodesToHistory = [duplicatedPane as BaseNode, ...allNodes];
+
     this.history.addPatch({
       op: PatchOp.ADD,
       undo: (ctx) => {
-        ctx.deleteNodes(allNodes);
+        // Delete all nodes created (pane + children)
+        ctx.deleteNodes(nodesToHistory);
 
         if (
           storyFragmentNode &&
@@ -1988,8 +1901,6 @@ export class NodesContext {
           );
           storyFragmentNode.isChanged = storyFragmentWasChanged;
         }
-
-        ctx.deleteNodes([duplicatedPane]);
       },
       redo: (ctx) => {
         if (storyFragmentNode?.nodeType === 'StoryFragment') {
@@ -2005,13 +1916,13 @@ export class NodesContext {
           storyFragmentNode.isChanged = true;
         }
 
-        ctx.addNodes([duplicatedPane]);
+        // Add all nodes back (pane + children)
+        ctx.addNodes(nodesToHistory);
         ctx.linkChildToParent(
           duplicatedPane.id,
           duplicatedPane.parentId,
           specificIdx
         );
-        ctx.addNodes(allNodes);
       },
     });
 
@@ -2275,7 +2186,9 @@ export class NodesContext {
 
     node.id = ulid();
     node.parentId = parentId;
-    result.push(node);
+    const thisNode = cloneDeep(node);
+    delete thisNode.nodes;
+    result.push(thisNode);
     if ('nodes' in node && node.nodes) {
       for (let i = 0; i < node.nodes.length; ++i) {
         result = result.concat(
@@ -3223,6 +3136,160 @@ export class NodesContext {
     });
 
     return deletedNodes;
+  }
+
+  /**
+   * Processes a TemplatePane's content (markdown, grid, or bgPane) and
+   * returns a flat list of all nodes to be added to the store.
+   * This is a de-duplicated helper used by addTemplatePane and addContextTemplatePane.
+   * @param paneTemplate - The TemplatePane object to process.
+   * @param newPaneId - The ID of the parent Pane node.
+   * @returns An array of BaseNode objects to be added to allNodes.
+   */
+  private _processPaneTemplate(
+    paneTemplate: TemplatePane,
+    newPaneId: string
+  ): BaseNode[] {
+    let allNodes: BaseNode[] = [];
+
+    // 1. Process Markdown Content
+    if (paneTemplate.markdown) {
+      const duplicatedMarkdown = cloneDeep(
+        paneTemplate.markdown
+      ) as TemplateMarkdown;
+      duplicatedMarkdown.id = paneTemplate.markdown.id || ulid();
+      duplicatedMarkdown.markdownId =
+        paneTemplate.markdown.markdownId || ulid();
+      duplicatedMarkdown.parentId = newPaneId;
+
+      let markdownNodes: TemplateNode[] = [];
+      if (duplicatedMarkdown.markdownBody) {
+        const markdownGen = new MarkdownGenerator(this);
+        markdownNodes = markdownGen.markdownToFlatNodes(
+          duplicatedMarkdown.markdownBody,
+          duplicatedMarkdown.id
+        ) as TemplateNode[];
+        allNodes = [...allNodes, duplicatedMarkdown, ...markdownNodes];
+      } else if (
+        typeof duplicatedMarkdown !== `undefined` &&
+        typeof duplicatedMarkdown.id === `string`
+      ) {
+        // Create a map to track the original node ID to its duplicated node ID
+        const oldToNewIdMap = new Map<string, string>();
+        // First pass: Clone nodes and generate new IDs
+        const nodesClone =
+          duplicatedMarkdown.nodes?.map((originalNode) => {
+            const newNode = cloneDeep(originalNode);
+            newNode.id = ulid();
+            oldToNewIdMap.set(originalNode.id, newNode.id);
+            return newNode;
+          }) || [];
+        // Second pass: Update parent IDs using the mapping
+        nodesClone.forEach((node) => {
+          // Special case for direct children of markdown
+          if (node.parentId === paneTemplate.markdown?.id) {
+            node.parentId = duplicatedMarkdown.id;
+          } else {
+            // For all other nodes, use the mapping to find the new parent ID
+            const newParentId = oldToNewIdMap.get(node.parentId || '');
+            if (newParentId) {
+              node.parentId = newParentId;
+            }
+          }
+          markdownNodes.push(node);
+        });
+        allNodes = [...allNodes, duplicatedMarkdown, ...markdownNodes];
+      }
+
+      // 2. Process GridLayout Content
+    } else if (paneTemplate.gridLayout) {
+      const duplicatedGrid = cloneDeep(
+        paneTemplate.gridLayout
+      ) as TemplateGridLayout;
+      duplicatedGrid.id = paneTemplate.gridLayout.id || ulid();
+      duplicatedGrid.parentId = newPaneId;
+      allNodes.push(duplicatedGrid as GridLayoutNode);
+
+      // Map for all nodes within the grid
+      const oldToNewIdMap = new Map<string, string>();
+
+      // First pass: Collect all column nodes and their descendant nodes
+      const allOriginalNodes: TemplateNode[] = [];
+      const columnNodes: TemplateMarkdown[] = [];
+
+      duplicatedGrid.nodes?.forEach((originalColumn) => {
+        const newColumn = cloneDeep(originalColumn);
+        newColumn.id = ulid();
+        newColumn.markdownId = ulid();
+        oldToNewIdMap.set(originalColumn.id, newColumn.id);
+        columnNodes.push(newColumn);
+
+        originalColumn.nodes?.forEach((colNode) => {
+          allOriginalNodes.push(colNode);
+        });
+      });
+
+      // Second pass: Clone all descendant nodes
+      const allClonedDescendants = allOriginalNodes.map((originalNode) => {
+        const newNode = cloneDeep(originalNode);
+        newNode.id = ulid();
+        oldToNewIdMap.set(originalNode.id, newNode.id);
+        return newNode;
+      });
+
+      // Third pass: Re-map parent IDs for columns
+      columnNodes.forEach((col) => {
+        col.parentId = duplicatedGrid.id;
+        allNodes.push(col as MarkdownPaneFragmentNode);
+      });
+
+      // Fourth pass: Re-map parent IDs for all descendants
+      allClonedDescendants.forEach((node) => {
+        const newParentId = oldToNewIdMap.get(node.parentId || '');
+        if (newParentId) {
+          node.parentId = newParentId;
+        }
+        allNodes.push(node);
+      });
+    }
+
+    // 3. Process Background Pane
+    if (paneTemplate.bgPane) {
+      const bgPaneId = ulid();
+
+      if (paneTemplate.bgPane.type === 'visual-break') {
+        const visualBreakPane = paneTemplate.bgPane as VisualBreakNode;
+        const bgPaneNode: VisualBreakNode = {
+          id: bgPaneId,
+          nodeType: 'BgPane',
+          parentId: newPaneId,
+          type: 'visual-break',
+          breakDesktop: visualBreakPane.breakDesktop,
+          breakTablet: visualBreakPane.breakTablet,
+          breakMobile: visualBreakPane.breakMobile,
+        };
+        allNodes.push(bgPaneNode);
+      } else if (paneTemplate.bgPane.type === 'artpack-image') {
+        const artpackBgPane = paneTemplate.bgPane as ArtpackImageNode;
+        const bgPaneNode: ArtpackImageNode = {
+          id: bgPaneId,
+          nodeType: 'BgPane',
+          parentId: newPaneId,
+          type: 'artpack-image',
+          collection: artpackBgPane.collection,
+          image: artpackBgPane.image,
+          src: artpackBgPane.src,
+          srcSet: artpackBgPane.srcSet,
+          alt: artpackBgPane.alt || `Artpack image`,
+          objectFit: artpackBgPane.objectFit || 'cover',
+        };
+        allNodes.push(bgPaneNode);
+      }
+      // This helper only processes nodes, it doesn't modify the paneTemplate.
+      // The deletion of `duplicatedPane.bgPane` will remain in `addTemplatePane`.
+    }
+
+    return allNodes;
   }
 }
 

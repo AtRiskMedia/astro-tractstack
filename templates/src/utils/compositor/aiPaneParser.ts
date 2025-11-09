@@ -603,31 +603,30 @@ export function parseAiCopyHtml(
 function transformClassesFromShellLayer(
   layer: LLMShellLayer | LLMColumnLayer['gridClasses']
 ): DefaultClassValue {
-  const mergeIntoLayer = (
-    targetLayer: DefaultClassValue,
-    classString: string | undefined
-  ) => {
-    if (!classString) return;
-    const parsed = sanitizeResponsiveClasses(classString);
-    if (parsed.mobile)
-      targetLayer.mobile = { ...targetLayer.mobile, ...parsed.mobile };
-    if (parsed.tablet)
-      targetLayer.tablet = { ...targetLayer.tablet, ...parsed.tablet };
-    if (parsed.desktop)
-      targetLayer.desktop = { ...targetLayer.desktop, ...parsed.desktop };
-  };
+  const mobileClasses = sanitizeResponsiveClasses(layer.mobile);
 
-  const finalLayer: DefaultClassValue = {
-    mobile: {},
-    tablet: {},
-    desktop: {},
-  };
+  const tabletString = layer.tablet
+    ? layer.tablet
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((c) => `md:${c}`)
+        .join(' ')
+    : undefined;
+  const tabletClasses = sanitizeResponsiveClasses(tabletString);
 
-  mergeIntoLayer(finalLayer, layer.mobile);
-  mergeIntoLayer(finalLayer, layer.tablet);
-  mergeIntoLayer(finalLayer, layer.desktop);
+  const desktopString = layer.desktop
+    ? layer.desktop
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((c) => `xl:${c}`)
+        .join(' ')
+    : undefined;
+  const desktopClasses = sanitizeResponsiveClasses(desktopString);
 
-  return finalLayer;
+  let merged = mergeResponsive(mobileClasses, tabletClasses);
+  merged = mergeResponsive(merged, desktopClasses);
+
+  return ensureRequiredViewports(merged);
 }
 
 function transformParentClassesFromShell(
@@ -696,7 +695,7 @@ export const parseAiPane = (
       slug: `ai-${paneId.slice(-4)}`,
       bgColour: shell.bgColour,
       isDecorative: false,
-      nodes: [gridLayoutNode],
+      gridLayout: gridLayoutNode,
     };
     console.log({
       shellDefaults: shellDefaults,

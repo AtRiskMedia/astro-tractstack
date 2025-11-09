@@ -309,8 +309,9 @@ export function convertStorageToLiveTemplate(
     };
   }
 
+  const { gridLayout, ...restOfStoragePane } = storagePane;
   const liveTemplatePane: TemplatePane = {
-    ...storagePane,
+    ...restOfStoragePane,
     id: paneId,
     parentId: '',
     markdown: {

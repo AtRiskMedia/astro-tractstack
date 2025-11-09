@@ -432,7 +432,7 @@ export type TemplatePane = PaneNode & {
   id?: string;
   parentId?: string;
   markdown?: TemplateMarkdown;
-  //gridLayout?: TemplateGridLayout;
+  gridLayout?: TemplateGridLayout;
   bgPane?: VisualBreakNode | ArtpackImageNode | BgImageNode;
 };
 

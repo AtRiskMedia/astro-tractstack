@@ -28,7 +28,6 @@ const StyleImagePanel = ({
   outerContainerNode,
   parentNode,
 }: StyleImagePanelProps) => {
-  console.log(`StyleImagePanel`, parentNode, node);
   const [altDescription, setAltDescription] = useState(node.alt || '');
 
   const imgDefaultClasses = parentNode.defaultClasses?.[node.tagName];
