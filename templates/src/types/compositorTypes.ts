@@ -424,10 +424,15 @@ export type TemplateMarkdown = MarkdownPaneFragmentNode & {
   markdownBody?: string;
 };
 
+export type TemplateGridLayout = GridLayoutNode & {
+  nodes?: TemplateMarkdown[];
+};
+
 export type TemplatePane = PaneNode & {
   id?: string;
   parentId?: string;
   markdown?: TemplateMarkdown;
+  //gridLayout?: TemplateGridLayout;
   bgPane?: VisualBreakNode | ArtpackImageNode | BgImageNode;
 };
 

@@ -7,7 +7,7 @@ import type {
   DefaultClasses,
   ResponsiveClasses,
   ButtonPayload,
-  GridLayoutNode
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 import { isDeepEqual } from '@/utils/helpers';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
@@ -44,12 +44,6 @@ type ShellJson = {
 type ParsedNode = {
   flatNode: TemplateNode;
   responsiveClasses: ResponsiveClasses;
-};
-
-type ParentClassLayer = {
-  mobile: Record<string, string>;
-  tablet: Record<string, string>;
-  desktop: Record<string, string>;
 };
 
 type DefaultClassValue = {
@@ -93,10 +87,10 @@ function buildResponsiveClassLookup(): Map<string, ClassLookupValue> {
     prefix: string;
     key: 'mobile' | 'tablet' | 'desktop';
   }> = [
-      { prefix: '', key: 'mobile' },
-      { prefix: 'md:', key: 'tablet' },
-      { prefix: 'xl:', key: 'desktop' },
-    ];
+    { prefix: '', key: 'mobile' },
+    { prefix: 'md:', key: 'tablet' },
+    { prefix: 'xl:', key: 'desktop' },
+  ];
 
   for (const tailwindKey in tailwindClasses) {
     const def = tailwindClasses[tailwindKey];
@@ -393,7 +387,11 @@ function calculateOverrides(
   defaultStyle: DefaultClassValue
 ): ResponsiveClasses | undefined {
   const overrides: ResponsiveClasses = {};
-  const viewports: Array<keyof ResponsiveClasses> = ['mobile', 'tablet', 'desktop'];
+  const viewports: Array<keyof ResponsiveClasses> = [
+    'mobile',
+    'tablet',
+    'desktop',
+  ];
 
   for (const viewport of viewports) {
     const fullVPStyle = fullStyle[viewport];
@@ -437,7 +435,7 @@ function reconcileClasses(
   const nodesByTag: Record<string, TemplateNode[]> = {};
   const tempParsedNodes: ParsedNode[] = [];
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     // Create a temporary ParsedNode structure for analysis
     const tempParsedNode: ParsedNode = {
       flatNode: node,
@@ -459,14 +457,20 @@ function reconcileClasses(
 
   for (const tagName in nodesByTag) {
     const nodesForTag = nodesByTag[tagName];
-    const tempParsedForTag = nodesForTag.map(n => ({ flatNode: n, responsiveClasses: n.overrideClasses || {} }));
+    const tempParsedForTag = nodesForTag.map((n) => ({
+      flatNode: n,
+      responsiveClasses: n.overrideClasses || {},
+    }));
 
     const commonStyleForTag = findMostCommonClasses(tempParsedForTag);
-    const mergedDefault = mergeResponsive(finalDefaults[tagName], commonStyleForTag);
+    const mergedDefault = mergeResponsive(
+      finalDefaults[tagName],
+      commonStyleForTag
+    );
     finalDefaults[tagName] = ensureRequiredViewports(mergedDefault);
   }
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const tagName = node.tagName;
     const defaultStyleForTag = finalDefaults[tagName];
     const fullStyle = node.overrideClasses || {};
@@ -485,7 +489,7 @@ function reconcileClasses(
     }
   });
 
-  Object.keys(baseDefaults).forEach(key => delete baseDefaults[key]);
+  Object.keys(baseDefaults).forEach((key) => delete baseDefaults[key]);
   Object.assign(baseDefaults, finalDefaults);
 }
 
@@ -636,7 +640,11 @@ export const parseAiPane = (
   shellJson: string,
   copyHtml: string | string[],
   layout: string
-): Omit<TemplatePane, 'nodes'> & { nodes?: (TemplateMarkdown | GridLayoutNode)[] } => {
+): Omit<TemplatePane, 'nodes'> & {
+  nodes?: (TemplateMarkdown | GridLayoutNode)[];
+} => {
+  console.log('--- ENTERING parseAiPane ---', { shellJson, copyHtml, layout });
+
   const shell: ShellJson = JSON.parse(shellJson);
   const paneId = ulid();
 
@@ -690,6 +698,13 @@ export const parseAiPane = (
       isDecorative: false,
       nodes: [gridLayoutNode],
     };
+    console.log({
+      shellDefaults: shellDefaults,
+      transformedParentClasses: transformedParentClasses,
+      childMarkdownNodes: childMarkdownNodes,
+      gridLayoutNode: gridLayoutNode,
+      templatePane: templatePane,
+    });
     return templatePane;
   }
 
