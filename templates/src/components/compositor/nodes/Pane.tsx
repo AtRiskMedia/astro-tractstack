@@ -166,35 +166,18 @@ const Pane = memo(
           className={useFlexLayout ? '' : wrapperClasses}
         >
           {codeHookPayload && codeHookTarget === 'product-card' ? (
-            <ProductCardSetup
-              nodeId={props.nodeId}
-              params={codeHookParams}
-              config={props.config!}
-            />
+            <ProductCardSetup nodeId={props.nodeId} params={codeHookParams} />
           ) : codeHookPayload && codeHookTarget === 'product-grid' ? (
-            <ProductGridSetup
-              nodeId={props.nodeId}
-              params={codeHookParams}
-              config={props.config!}
-            />
+            <ProductGridSetup nodeId={props.nodeId} params={codeHookParams} />
           ) : codeHookPayload && codeHookTarget === 'featured-article' ? (
             <FeaturedArticleSetup
               nodeId={props.nodeId}
               params={codeHookParams}
-              config={props.config!}
             />
           ) : codeHookPayload && codeHookTarget === 'list-content' ? (
-            <ListContentSetup
-              nodeId={props.nodeId}
-              params={codeHookParams}
-              config={props.config!}
-            />
+            <ListContentSetup nodeId={props.nodeId} params={codeHookParams} />
           ) : codeHookPayload && codeHookTarget === 'bunny-video' ? (
-            <BunnyVideoSetup
-              nodeId={props.nodeId}
-              params={codeHookParams}
-              config={props.config!}
-            />
+            <BunnyVideoSetup nodeId={props.nodeId} params={codeHookParams} />
           ) : codeHookPayload && codeHookTarget ? (
             <CodeHookContainer
               payload={{ target: codeHookTarget, params: codeHookParams }}

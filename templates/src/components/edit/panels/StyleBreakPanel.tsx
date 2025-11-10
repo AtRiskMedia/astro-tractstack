@@ -34,7 +34,7 @@ interface BreakNode extends FlatNode {
   bgColor: string;
 }
 
-const StyleBreakPanel = ({ node, parentNode, config }: BasePanelProps) => {
+const StyleBreakPanel = ({ node, parentNode }: BasePanelProps) => {
   if (!node || !isBreakNode(node) || !parentNode || !isPaneNode(parentNode)) {
     return null;
   }
@@ -161,7 +161,6 @@ const StyleBreakPanel = ({ node, parentNode, config }: BasePanelProps) => {
           onColorChange={(color: string) =>
             setSettings((prev) => ({ ...prev, svgFill: color }))
           }
-          config={config!}
         />
         <ColorPickerCombo
           title="Background Color"
@@ -169,7 +168,6 @@ const StyleBreakPanel = ({ node, parentNode, config }: BasePanelProps) => {
           onColorChange={(color: string) =>
             setSettings((prev) => ({ ...prev, bgColor: color }))
           }
-          config={config!}
           allowNull={true}
         />
       </div>

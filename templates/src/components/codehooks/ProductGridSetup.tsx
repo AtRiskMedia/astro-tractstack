@@ -11,12 +11,10 @@ import { fullContentMapStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import CheckCircleIcon from '@heroicons/react/20/solid/CheckCircleIcon';
 import type { PaneNode } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface ProductGridSetupProps {
   nodeId: string;
   params: Record<string, any> | null;
-  config: BrandConfig;
 }
 
 const modes = [

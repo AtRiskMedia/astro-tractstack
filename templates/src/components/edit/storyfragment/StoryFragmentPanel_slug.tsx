@@ -7,7 +7,7 @@ import { Switch } from '@ark-ui/react/switch';
 import { getCtx } from '@/stores/nodes';
 import { pendingHomePageSlugStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
-import type { BrandConfig } from '@/types/tractstack';
+import { brandConfigStore } from '@/stores/storykeep';
 import {
   StoryFragmentMode,
   type StoryFragmentNode,
@@ -16,13 +16,11 @@ import {
 interface StoryFragmentSlugPanelProps {
   nodeId: string;
   setMode: (mode: StoryFragmentMode) => void;
-  config: BrandConfig;
 }
 
 const StoryFragmentSlugPanel = ({
   nodeId,
   setMode,
-  config,
 }: StoryFragmentSlugPanelProps) => {
   const [slug, setSlug] = useState('');
   const [isValid, setIsValid] = useState(false);
@@ -30,7 +28,8 @@ const StoryFragmentSlugPanel = ({
   const [charCount, setCharCount] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [canSave, setCanSave] = useState(false);
-  const isHomeSlug = slug === config.HOME_SLUG;
+  const homeSlug = brandConfigStore.get()?.HOME_SLUG || `hello`;
+  const isHomeSlug = slug === homeSlug;
   const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
   const isSetAsHomePage = pendingHomePageSlug === slug;
 
@@ -51,7 +50,7 @@ const StoryFragmentSlugPanel = ({
     setCharCount(length);
 
     // If it's the home slug, consider it valid but locked
-    if (value === config.HOME_SLUG) {
+    if (value === homeSlug) {
       setIsValid(true);
       setCanSave(false);
       setValidationError(null);
@@ -92,7 +91,7 @@ const StoryFragmentSlugPanel = ({
     value: string
   ): { isValid: boolean; error?: string } => {
     // Don't allow saving if it's the home slug
-    if (value === config.HOME_SLUG) {
+    if (value === homeSlug) {
       return {
         isValid: false,
         error: 'Cannot modify the home page slug',

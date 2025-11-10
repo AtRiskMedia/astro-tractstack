@@ -6,6 +6,7 @@ import type {
   FullContentMapItem,
   Theme,
   ArtpacksStore,
+  BrandConfig,
 } from '@/types/tractstack';
 import type { SettingsPanelSignal, ViewportKey } from '@/types/compositorTypes';
 import type {
@@ -21,9 +22,6 @@ export const fullContentMapStore = atom<FullContentMapItem[]>([]);
 export const hasArtpacksStore = map<ArtpacksStore>({});
 export const urlParamsStore = atom<Record<string, string | boolean>>({});
 export const canonicalURLStore = atom<string>('');
-export const brandColourStore = atom<string>(
-  '10120d,fcfcfc,f58333,c8df8c,293f58,a7b1b7,393d34,e3e3e3'
-);
 export const preferredThemeStore = atom<Theme>('light');
 
 export const hasAssemblyAIStore = atom<boolean>(false);
@@ -155,6 +153,8 @@ export const resetStoryKeepState = () => {
   canUndoStore.set(false);
   canRedoStore.set(false);
 };
+
+export const brandConfigStore = atom<BrandConfig | null>(null);
 
 export const settingsPanelStore = atom<SettingsPanelSignal | null>(null);
 export const stylePanelTargetMemoryStore = atom<Map<string, number>>(

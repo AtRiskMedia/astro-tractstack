@@ -108,14 +108,14 @@ export async function savePaneToLibrary(
     category: string;
     copyMode: CopyMode;
   }
-): Promise<boolean> {
+): Promise<BrandConfigState | null> {
   const ctx = getCtx();
   const { title, category, copyMode } = formData;
   const paneNode = ctx.allNodes.get().get(paneId) as PaneNode;
 
   if (!paneNode) {
     console.error('savePaneToLibrary: PaneNode not found.');
-    return false;
+    return null;
   }
 
   const childNodes = ctx
@@ -208,10 +208,10 @@ export async function savePaneToLibrary(
 
   try {
     await saveBrandConfig(tenantId, backendDTO);
-    return true;
+    return updatedState;
   } catch (error) {
     console.error('Failed to save design library:', error);
-    return false;
+    return null;
   }
 }
 

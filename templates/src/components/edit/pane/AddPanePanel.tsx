@@ -7,7 +7,6 @@ import AddPaneReUsePanel from './AddPanePanel_reuse';
 import AddPaneCodeHookPanel from './AddPanePanel_codehook';
 import { NodesContext, ROOT_NODE_NAME, getCtx } from '@/stores/nodes';
 import { PaneAddMode } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface AddPanePanelProps {
   nodeId: string;
@@ -15,7 +14,6 @@ interface AddPanePanelProps {
   ctx?: NodesContext;
   isStoryFragment?: boolean;
   isContextPane?: boolean;
-  config?: BrandConfig;
   isSandboxMode?: boolean;
 }
 
@@ -25,7 +23,6 @@ const AddPanePanel = ({
   ctx,
   isStoryFragment = false,
   isContextPane = false,
-  config,
   isSandboxMode = false,
 }: AddPanePanelProps) => {
   const [reset, setReset] = useState(false);
@@ -67,7 +64,6 @@ const AddPanePanel = ({
           ctx={nodesCtx}
           isStoryFragment={isStoryFragment}
           isContextPane={isContextPane}
-          config={config!}
           isSandboxMode={isSandboxMode}
         />
       ) : mode === PaneAddMode.BREAK && !isContextPane ? (

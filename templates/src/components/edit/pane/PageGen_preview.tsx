@@ -6,7 +6,7 @@ import ChevronUpDownIcon from '@heroicons/react/20/solid/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/20/solid/CheckIcon';
 import { NodesContext } from '@/stores/nodes';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
-import { brandColourStore, preferredThemeStore } from '@/stores/storykeep';
+import { brandConfigStore, preferredThemeStore } from '@/stores/storykeep';
 import { getTemplateVisualBreakPane } from '@/utils/compositor/TemplatePanes';
 import {
   getJustCopyDesign,
@@ -169,8 +169,9 @@ export const PageCreationPreview = ({
   onBack,
   isApplying,
 }: PageCreationPreviewProps) => {
+  const theme: Theme = brandConfigStore.get()?.THEME || (`light` as Theme);
   const [selectedTheme, setSelectedTheme] = useState<Theme>(
-    preferredThemeStore.get()
+    brandConfigStore.get()?.THEME || (`light` as Theme)
   );
   const [selectedDesignIndex, setSelectedDesignIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +182,7 @@ export const PageCreationPreview = ({
     new Map()
   );
 
-  const brand = brandColourStore.get();
+  const brand = brandConfigStore.get()?.BRAND_COLOURS || '';
   const pageDesigns = getPageDesigns(brand, selectedTheme);
 
   const themesCollection = createListCollection({

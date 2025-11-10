@@ -8,7 +8,6 @@ import ColorPickerCombo from './ColorPickerCombo';
 import { getCtx } from '@/stores/nodes';
 import { hasArtpacksStore, settingsPanelStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
-import type { BrandConfig } from '@/types/tractstack';
 import type {
   BgImageNode,
   ArtpackImageNode,
@@ -18,7 +17,6 @@ import { isArtpackImageNode } from '@/utils/compositor/typeGuards';
 
 export interface BackgroundImageWrapperProps {
   paneId: string;
-  config?: BrandConfig;
 }
 
 const CheckIcon = () => (
@@ -51,10 +49,7 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-const BackgroundImageWrapper = ({
-  paneId,
-  config,
-}: BackgroundImageWrapperProps) => {
+const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
   const ctx = getCtx();
   const allNodes = useStore(ctx.allNodes);
   const $artpacks = useStore(hasArtpacksStore);
@@ -165,7 +160,6 @@ const BackgroundImageWrapper = ({
         title="Pane Background Color"
         defaultColor={(allNodes.get(paneId) as PaneNode)?.bgColour || ''}
         onColorChange={handleColorChange}
-        config={config!}
         allowNull={true}
       />
       {!bgNode && (

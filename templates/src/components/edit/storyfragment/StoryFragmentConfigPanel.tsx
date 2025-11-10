@@ -18,20 +18,16 @@ import {
   hexToTailwind,
   findClosestTailwindColor,
 } from '@/utils/compositor/tailwindColors';
+import { brandConfigStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
-import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
+import type { FullContentMapItem } from '@/types/tractstack';
 import {
   StoryFragmentMode,
   type StoryFragmentNode,
 } from '@/types/compositorTypes';
 
-const StoryFragmentConfigPanel = ({
-  nodeId,
-  config,
-}: {
-  nodeId: string;
-  config?: BrandConfig;
-}) => {
+const StoryFragmentConfigPanel = ({ nodeId }: { nodeId: string }) => {
+  const brandColors = brandConfigStore.get()?.BRAND_COLOURS || '';
   const [isNodeAvailable, setIsNodeAvailable] = useState(false);
   const [storyfragmentNode, setStoryfragmentNode] =
     useState<StoryFragmentNode | null>(null);
@@ -156,7 +152,7 @@ const StoryFragmentConfigPanel = ({
       delete updatedNode.tailwindBgColour;
     } else {
       // Set the new background color
-      const val = hexToTailwind(tempBgColor, config?.BRAND_COLOURS);
+      const val = hexToTailwind(tempBgColor, brandColors);
       const exactValPayload = val
         ? null
         : findClosestTailwindColor(tempBgColor);
@@ -178,23 +174,11 @@ const StoryFragmentConfigPanel = ({
   }
 
   if (mode === StoryFragmentMode.SLUG) {
-    return (
-      <StoryFragmentSlugPanel
-        nodeId={nodeId}
-        setMode={setMode}
-        config={config!}
-      />
-    );
+    return <StoryFragmentSlugPanel nodeId={nodeId} setMode={setMode} />;
   } else if (mode === StoryFragmentMode.MENU) {
     return <StoryFragmentMenuPanel nodeId={nodeId} setMode={setMode} />;
   } else if (mode === StoryFragmentMode.OG) {
-    return (
-      <StoryFragmentOpenGraphPanel
-        nodeId={nodeId}
-        setMode={setMode}
-        config={config}
-      />
-    );
+    return <StoryFragmentOpenGraphPanel nodeId={nodeId} setMode={setMode} />;
   }
 
   return (
@@ -253,7 +237,7 @@ const StoryFragmentConfigPanel = ({
             </>
           )}
 
-          {config && (
+          {brandColors && (
             <div className="flex items-center gap-2">
               <div className="text-md">Background Colour:</div>
               <ColorPickerCombo
@@ -262,12 +246,11 @@ const StoryFragmentConfigPanel = ({
                   storyfragmentNode.tailwindBgColour
                     ? tailwindToHex(
                         storyfragmentNode.tailwindBgColour,
-                        config?.BRAND_COLOURS || null
+                        brandColors
                       )
                     : ''
                 }
                 onColorChange={handleBgColorChange}
-                config={config}
                 allowNull={true}
               />
               {tempBgColor !== null && (

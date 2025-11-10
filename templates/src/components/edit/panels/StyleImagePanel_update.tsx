@@ -288,7 +288,6 @@ const StyleImageUpdatePanel = ({
           onFinalChange={handleFinalChange}
           values={values}
           viewport="mobile"
-          config={config!}
           isInferred={false}
         />
         <ViewportComboBox
@@ -297,7 +296,6 @@ const StyleImageUpdatePanel = ({
           values={values}
           viewport="tablet"
           isInferred={!isOverridden && tabletValue === mobileValue}
-          config={config!}
         />
         <ViewportComboBox
           value={desktopValue}
@@ -305,7 +303,6 @@ const StyleImageUpdatePanel = ({
           values={values}
           viewport="desktop"
           isInferred={!isOverridden && desktopValue === tabletValue}
-          config={config!}
         />
       </div>
     </div>

@@ -9,7 +9,7 @@ import { NodesContext, getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
 import { hasAssemblyAIStore } from '@/stores/storykeep';
 import prompts from '@/constants/prompts.json';
-import type { BrandConfig, DesignLibraryEntry } from '@/types/tractstack';
+import type { DesignLibraryEntry } from '@/types/tractstack';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
 import { useStore } from '@nanostores/react';
 import { CopyInputStep } from './steps/CopyInputStep';
@@ -120,7 +120,6 @@ interface AddPaneNewPanelProps {
   ctx?: NodesContext;
   isStoryFragment?: boolean;
   isContextPane?: boolean;
-  config?: BrandConfig;
   isSandboxMode?: boolean;
 }
 
@@ -131,7 +130,6 @@ const AddPaneNewPanel = ({
   ctx: providedCtx,
   isStoryFragment = false,
   isContextPane = false,
-  config,
   isSandboxMode = false,
 }: AddPaneNewPanelProps) => {
   const ctx = providedCtx || getCtx();
@@ -672,17 +670,13 @@ const AddPaneNewPanel = ({
           ← Back to Choice
         </button>
       </div>
-      <DesignLibraryStep
-        config={config!}
-        onSelect={handleDesignLibrarySelect}
-      />
+      <DesignLibraryStep onSelect={handleDesignLibrarySelect} />
     </div>
   );
 
   const renderAiDesignStep = () => (
     <div className="space-y-4 p-4">
       <AiDesignStep
-        config={config!}
         designConfig={aiDesignConfig}
         onDesignConfigChange={setAiDesignConfig}
       />

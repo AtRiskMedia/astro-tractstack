@@ -53,7 +53,6 @@ const StyleParentPanel = ({
   node: initialNode,
   parentNode: paneNode,
   layer,
-  config,
 }: ParentBasePanelProps) => {
   const [currentView, setCurrentView] = useState<PanelView>('summary');
   const [currentLayer, setCurrentLayer] = useState<number>(layer || 1);
@@ -322,7 +321,6 @@ const StyleParentPanel = ({
               title="Pane Background Color"
               defaultColor={paneNode.bgColour || ''}
               onColorChange={handleColorChange}
-              config={config!}
               allowNull={true}
             />
             <div className="flex items-center justify-between border-t border-gray-200 pt-3">
@@ -599,7 +597,7 @@ const StyleParentPanel = ({
   const renderBackgroundImageVIew = () => (
     <div className="space-y-4">
       <BackButton />
-      <BackgroundImageWrapper paneId={paneNode.id} config={config!} />
+      <BackgroundImageWrapper paneId={paneNode.id} />
     </div>
   );
 

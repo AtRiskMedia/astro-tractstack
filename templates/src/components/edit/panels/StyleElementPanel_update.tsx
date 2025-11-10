@@ -19,14 +19,12 @@ import type {
   MarkdownPaneFragmentNode,
   GridLayoutNode,
 } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 export interface StyleElementUpdatePanelProps {
   node: FlatNode;
   parentNode: MarkdownPaneFragmentNode | GridLayoutNode;
   className: string;
   onTitleChange?: (title: string) => void;
-  config?: BrandConfig | null;
 }
 
 const StyleElementUpdatePanel = ({
@@ -34,7 +32,6 @@ const StyleElementUpdatePanel = ({
   parentNode,
   className,
   onTitleChange,
-  config,
 }: StyleElementUpdatePanelProps) => {
   if (
     !node ||
@@ -309,7 +306,6 @@ const StyleElementUpdatePanel = ({
           onFinalChange={handleFinalChange}
           values={values}
           viewport="mobile"
-          config={config!}
           isInferred={false}
         />
         <ViewportComboBox
@@ -318,7 +314,6 @@ const StyleElementUpdatePanel = ({
           values={values}
           viewport="tablet"
           isInferred={!isOverridden && tabletValue === mobileValue}
-          config={config!}
         />
         <ViewportComboBox
           value={desktopValue}
@@ -326,7 +321,6 @@ const StyleElementUpdatePanel = ({
           values={values}
           viewport="desktop"
           isInferred={!isOverridden && desktopValue === tabletValue}
-          config={config!}
         />
       </div>
     </div>

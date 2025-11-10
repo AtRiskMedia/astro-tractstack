@@ -4,19 +4,22 @@ import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
 import { lispLexer } from '@/utils/actions/lispLexer';
 import { preParseAction } from '@/utils/actions/preParse_Action';
-import { preParseBunny } from '@/utils/actions/preParse_Bunny';
 import ActionBuilderField from '@/components/form/ActionBuilderField';
+import { brandConfigStore } from '@/stores/storykeep';
 import { GOTO_TARGETS } from '@/constants';
-import type { BrandConfig } from '@/types/tractstack';
 import type { FlatNode, LispToken } from '@/types/compositorTypes';
 
 interface StyleLinkConfigPanelProps {
   node: FlatNode;
-  config: BrandConfig;
 }
 
-const StyleLinkConfigPanel = ({ node, config }: StyleLinkConfigPanelProps) => {
-  if (!node?.tagName || (node.tagName !== 'a' && node.tagName !== 'button')) {
+const StyleLinkConfigPanel = ({ node }: StyleLinkConfigPanelProps) => {
+  const config = brandConfigStore.get();
+  if (
+    !config ||
+    !node?.tagName ||
+    (node.tagName !== 'a' && node.tagName !== 'button')
+  ) {
     return null;
   }
 

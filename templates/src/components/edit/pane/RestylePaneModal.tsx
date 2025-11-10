@@ -15,6 +15,7 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { selectionStore } from '@/stores/selection';
 import { getCtx, NodesContext } from '@/stores/nodes';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
+import { brandConfigStore } from '@/stores/storykeep';
 import {
   extractPaneCopy,
   mergeCopyIntoTemplate,
@@ -24,10 +25,10 @@ import type {
   PaneNode,
   StoragePane,
   TemplatePane,
-  TemplateMarkdown, // Added import
-  BaseNode, // Added import
+  TemplateMarkdown,
+  BaseNode,
 } from '@/types/compositorTypes';
-import type { BrandConfig, DesignLibraryEntry } from '@/types/tractstack';
+import type { DesignLibraryEntry } from '@/types/tractstack';
 import {
   PaneSnapshotGenerator,
   type SnapshotData,
@@ -44,13 +45,11 @@ const VERBOSE = false;
 
 interface TemplatePreviewItemProps {
   template: TemplatePane;
-  config: BrandConfig;
   onClick: () => void;
 }
 
 const TemplatePreviewItem = ({
   template,
-  config,
   onClick,
 }: TemplatePreviewItemProps) => {
   const [previewState, setPreviewState] = useState<{
@@ -111,7 +110,6 @@ const TemplatePreviewItem = ({
             id={template.id}
             htmlString={previewState.htmlFragment}
             outputWidth={800}
-            config={config}
             onComplete={(_id, data) => handleSnapshotComplete(data)}
             onError={(_id, err) =>
               setPreviewState((prev) =>
@@ -141,16 +139,12 @@ const TemplatePreviewItem = ({
   );
 };
 
-interface RestylePaneModalProps {
-  config: BrandConfig;
-}
-
-export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
+export const RestylePaneModal = () => {
   const ctx = getCtx();
   const { isRestyleModalOpen, paneToRestyleId } = useStore(selectionStore, {
     keys: ['isRestyleModalOpen', 'paneToRestyleId'],
   });
-  const designLibrary = config?.DESIGN_LIBRARY || [];
+  const designLibrary = brandConfigStore.get()?.DESIGN_LIBRARY || [];
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -502,7 +496,6 @@ export const RestylePaneModal = ({ config }: RestylePaneModalProps) => {
                     <TemplatePreviewItem
                       key={template.id}
                       template={template}
-                      config={config}
                       onClick={() => handleSelectTemplate(template)}
                     />
                   ))}

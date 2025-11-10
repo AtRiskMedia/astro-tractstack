@@ -3,7 +3,6 @@ import { TractStackAPI } from '@/utils/api';
 import { fullContentMapStore } from '@/stores/storykeep';
 import { heldBeliefsScales } from '@/constants/beliefs';
 import { biIcons } from '@/constants';
-import type { BrandConfig } from '@/types/tractstack';
 import type { FlatNode, BeliefNode } from '@/types/compositorTypes';
 import SingleParam from '@/components/fields/SingleParam';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
@@ -42,7 +41,6 @@ type StoredDisclosureItem = Omit<DisclosureItem, 'id' | 'isDisabled'>;
 interface InteractiveDisclosureWidgetProps {
   node: FlatNode;
   onUpdate: (params: string[]) => void;
-  config: BrandConfig;
 }
 
 const generateId = (): string => Math.random().toString(36).substring(2, 9);
@@ -254,7 +252,6 @@ const DisclosureItemEditor = ({
 export default function InteractiveDisclosureWidget({
   node,
   onUpdate,
-  config,
 }: InteractiveDisclosureWidgetProps) {
   const [mode, setMode] = useState<'belief' | 'open'>('belief');
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
@@ -628,7 +625,6 @@ export default function InteractiveDisclosureWidget({
                               onColorChange={(hex) =>
                                 handleColorChange('bgColor', hex)
                               }
-                              config={config}
                               allowNull={true}
                               skipTailwind={false}
                             />
@@ -640,7 +636,6 @@ export default function InteractiveDisclosureWidget({
                               onColorChange={(hex) =>
                                 handleColorChange('textColor', hex)
                               }
-                              config={config}
                               allowNull={true}
                               skipTailwind={false}
                             />

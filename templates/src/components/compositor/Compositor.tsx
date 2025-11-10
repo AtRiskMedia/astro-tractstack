@@ -13,9 +13,9 @@ import {
   canonicalURLStore,
   preferredThemeStore,
   codehookMapStore,
-  brandColourStore,
   hasArtpacksStore,
   settingsPanelStore,
+  brandConfigStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
@@ -290,17 +290,14 @@ export const Compositor = (props: CompositorProps) => {
     urlParamsStore.set(props.urlParams);
     canonicalURLStore.set(props.fullCanonicalURL);
     preferredThemeStore.set(props.config.THEME as Theme);
-    if (props.config.BRAND_COLOURS)
-      brandColourStore.set(props.config.BRAND_COLOURS);
     codehookMapStore.set(props.availableCodeHooks);
+    brandConfigStore.set(props.config);
   }, [
     props.fullContentMap,
-    props.config.HAS_AAI,
-    props.config.THEME,
-    props.config.BRAND_COLOURS,
     props.urlParams,
     props.fullCanonicalURL,
     props.availableCodeHooks,
+    props.config,
   ]);
 
   // Initialize nodes tree and set up subscriptions

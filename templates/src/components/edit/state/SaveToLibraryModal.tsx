@@ -1,13 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
-import type { BrandConfig } from '@/types/tractstack';
+import { CheckIcon } from '@heroicons/react/20/solid';
 import { savePaneToLibrary } from '@/utils/compositor/designLibraryHelper';
 import StringInput from '@/components/form/StringInput';
-import { CheckIcon } from '@heroicons/react/20/solid';
+import { brandConfigStore } from '@/stores/storykeep';
 
 interface SaveToLibraryModalProps {
   paneId: string;
-  config: BrandConfig;
-  tenantId: string;
   onClose: () => void;
 }
 
@@ -37,8 +35,6 @@ const OTHER_CATEGORY = 'other';
 
 export function SaveToLibraryModal({
   paneId,
-  config,
-  tenantId,
   onClose,
 }: SaveToLibraryModalProps) {
   const [title, setTitle] = useState('');
@@ -48,13 +44,14 @@ export function SaveToLibraryModal({
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [error, setError] = useState('');
 
+  const designLibrary = brandConfigStore.get()?.DESIGN_LIBRARY || [];
   const categories = useMemo(() => {
     const cats =
-      config.DESIGN_LIBRARY?.map((item) => item.category).filter(
-        (v, i, a) => a.indexOf(v) === i
-      ) || [];
+      designLibrary
+        .map((item) => item.category)
+        .filter((v, i, a) => a.indexOf(v) === i) || [];
     return [...cats, OTHER_CATEGORY];
-  }, [config.DESIGN_LIBRARY]);
+  }, [designLibrary]);
 
   useEffect(() => {
     if (saveState === 'saved') {
@@ -80,14 +77,28 @@ export function SaveToLibraryModal({
       category: finalCategory,
       copyMode: copyMode,
     };
+    const brandConfig = brandConfigStore.get();
 
-    const success = await savePaneToLibrary(paneId, tenantId, config, formData);
-
-    if (success) {
-      setSaveState('saved');
+    if (brandConfig) {
+      const newBrandConfig = await savePaneToLibrary(
+        paneId,
+        brandConfig.TENANT_ID,
+        brandConfig,
+        formData
+      );
+      if (newBrandConfig) {
+        brandConfigStore.set({
+          ...newBrandConfig,
+          TENANT_ID: brandConfig.TENANT_ID,
+        });
+        setSaveState('saved');
+      } else {
+        setSaveState('idle');
+        setError('Failed to save template. Please try again.');
+      }
     } else {
       setSaveState('idle');
-      setError('Failed to save template. Please try again.');
+      setError('Failed to save template. Brand Config not found.');
     }
   };
 

@@ -9,12 +9,10 @@ import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import type { PaneNode } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface FeaturedArticleSetupProps {
   params: Record<string, string>;
   nodeId: string;
-  config: BrandConfig;
 }
 
 const comboboxItemStyles = `
@@ -29,7 +27,6 @@ const comboboxItemStyles = `
 const FeaturedArticleSetup = ({
   params,
   nodeId,
-  config,
 }: FeaturedArticleSetupProps) => {
   const $contentMap = useStore(fullContentMapStore);
   const $viewportKey = useStore(viewportKeyStore);
@@ -294,7 +291,6 @@ const FeaturedArticleSetup = ({
               title="Background Color"
               defaultColor={bgColor}
               onColorChange={(color: string) => setBgColor(color)}
-              config={config!}
               allowNull={true}
             />
             <p className="mt-1 text-xs text-gray-500">

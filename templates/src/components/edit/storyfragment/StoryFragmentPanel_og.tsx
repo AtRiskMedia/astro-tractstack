@@ -28,11 +28,7 @@ import {
   getImageDimensions,
   type FileValidationOptions,
 } from '@/utils/api/fileHelpers';
-import type {
-  FullContentMapItem,
-  BrandConfig,
-  Topic,
-} from '@/types/tractstack';
+import type { FullContentMapItem, Topic } from '@/types/tractstack';
 import type { ImageDimensions } from '@/types/formTypes';
 import {
   StoryFragmentMode,
@@ -45,7 +41,6 @@ const TARGET_HEIGHT = 630;
 interface StoryFragmentOpenGraphPanelProps {
   nodeId: string;
   setMode: (mode: StoryFragmentMode) => void;
-  config?: BrandConfig;
 }
 
 const hasSlug = (
@@ -58,7 +53,6 @@ const hasSlug = (
 const StoryFragmentOpenGraphPanel = ({
   nodeId,
   setMode,
-  config,
 }: StoryFragmentOpenGraphPanelProps) => {
   const $contentMap = useStore(fullContentMapStore);
   const $storyFragmentTopics = useStore(storyFragmentTopicsStore);
@@ -691,15 +685,12 @@ const StoryFragmentOpenGraphPanel = ({
               </div>
             ) : (
               <>
-                {config && (
-                  <OgImagePreview
-                    nodeId={nodeId}
-                    title={draftTitle}
-                    socialImagePath={draftImagePath}
-                    config={config}
-                    onColorChange={handleColorChange}
-                  />
-                )}
+                <OgImagePreview
+                  nodeId={nodeId}
+                  title={draftTitle}
+                  socialImagePath={draftImagePath}
+                  onColorChange={handleColorChange}
+                />
                 <div className="mt-4 flex space-x-4">
                   <div
                     className="relative w-64 overflow-hidden rounded-md bg-gray-100"

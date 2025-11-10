@@ -4,7 +4,6 @@ import { fullContentMapStore } from '@/stores/storykeep';
 import { classNames, cloneDeep } from '@/utils/helpers';
 import { getCtx } from '@/stores/nodes';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
-import type { BrandConfig } from '@/types/tractstack';
 import type { PaneNode } from '@/types/compositorTypes';
 
 const PER_PAGE = 20;
@@ -12,14 +11,9 @@ const PER_PAGE = 20;
 interface ListContentSetupProps {
   params?: Record<string, string>;
   nodeId: string;
-  config: BrandConfig;
 }
 
-const ListContentSetup = ({
-  params,
-  nodeId,
-  config,
-}: ListContentSetupProps) => {
+const ListContentSetup = ({ params, nodeId }: ListContentSetupProps) => {
   const $contentMap = useStore(fullContentMapStore);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [excludedIds, setExcludedIds] = useState<string[]>(
@@ -327,7 +321,6 @@ const ListContentSetup = ({
               title="Background Color"
               defaultColor={bgColor}
               onColorChange={(color: string) => setBgColor(color)}
-              config={config!}
               allowNull={true}
             />
             <p className="mt-1 text-xs text-gray-500">

@@ -1,5 +1,4 @@
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
-import type { BrandConfig } from '@/types/tractstack';
 
 export interface AiDesignConfig {
   harmony: string;
@@ -10,7 +9,6 @@ export interface AiDesignConfig {
 }
 
 interface AiDesignStepProps {
-  config: BrandConfig;
   designConfig: AiDesignConfig;
   onDesignConfigChange: (newConfig: AiDesignConfig) => void;
 }
@@ -24,7 +22,6 @@ const harmonyOptions = [
 const themeOptions = ['Light', 'Dark', 'Bright', 'Muted', 'Pastel', 'Earthy'];
 
 export const AiDesignStep = ({
-  config,
   designConfig,
   onDesignConfigChange,
 }: AiDesignStepProps) => {
@@ -71,7 +68,6 @@ export const AiDesignStep = ({
         <div>
           <ColorPickerCombo
             title="Base Color (Optional)"
-            config={config}
             defaultColor={designConfig.baseColor}
             onColorChange={(color) => updateField('baseColor', color)}
             allowNull={true}
@@ -80,7 +76,6 @@ export const AiDesignStep = ({
         <div>
           <ColorPickerCombo
             title="Accent Color (Optional)"
-            config={config}
             defaultColor={designConfig.accentColor}
             onColorChange={(color) => updateField('accentColor', color)}
             allowNull={true}

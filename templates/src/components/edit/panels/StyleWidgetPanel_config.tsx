@@ -13,14 +13,12 @@ import ToggleWidget from '@/components/edit/widgets/ToggleWidget';
 import YouTubeWidget from '@/components/edit/widgets/YouTubeWidget';
 import InteractiveDisclosureWidget from '@/components/edit/widgets/InteractiveDisclosureWidget';
 import type { FlatNode } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface StyleWidgetConfigPanelProps {
   node: FlatNode;
-  config: BrandConfig;
 }
 
-function StyleWidgetConfigPanel({ node, config }: StyleWidgetConfigPanelProps) {
+function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
   const [init, setInit] = useState(false);
 
   useEffect(() => {
@@ -97,11 +95,7 @@ function StyleWidgetConfigPanel({ node, config }: StyleWidgetConfigPanelProps) {
     toggle: () => <ToggleWidget node={node} onUpdate={handleParamUpdate} />,
     youtube: () => <YouTubeWidget node={node} onUpdate={handleParamUpdate} />,
     interactiveDisclosure: () => (
-      <InteractiveDisclosureWidget
-        node={node}
-        onUpdate={handleParamUpdate}
-        config={config}
-      />
+      <InteractiveDisclosureWidget node={node} onUpdate={handleParamUpdate} />
     ),
   };
 

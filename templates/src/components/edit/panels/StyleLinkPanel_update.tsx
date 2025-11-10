@@ -7,7 +7,7 @@ import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import ViewportComboBox from '@/components/fields/ViewportComboBox';
 import type { BasePanelProps, FlatNode } from '@/types/compositorTypes';
 
-const StyleLinkUpdatePanel = ({ node, className, config }: BasePanelProps) => {
+const StyleLinkUpdatePanel = ({ node, className }: BasePanelProps) => {
   if (
     !node ||
     !className ||
@@ -99,7 +99,6 @@ const StyleLinkUpdatePanel = ({ node, className, config }: BasePanelProps) => {
           onFinalChange={(newValue) => handleFinalChange(newValue)}
           values={values}
           viewport="mobile"
-          config={config!}
           isInferred={false}
         />
       </div>

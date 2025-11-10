@@ -12,12 +12,11 @@ import {
   findClosestTailwindColor,
   getComputedColor,
 } from '@/utils/compositor/tailwindColors';
+import { brandConfigStore } from '@/stores/storykeep';
 import { debounce, useDropdownDirection } from '@/utils/helpers';
-import type { BrandConfig } from '@/types/tractstack';
 
 export interface ColorPickerProps {
   title: string;
-  config: BrandConfig;
   defaultColor: string;
   onColorChange: (color: string) => void;
   skipTailwind?: boolean;
@@ -28,14 +27,14 @@ const ColorPickerCombo = ({
   title,
   defaultColor,
   onColorChange,
-  config,
   skipTailwind = false,
   allowNull = false,
 }: ColorPickerProps) => {
+  const brandColors = brandConfigStore.get()?.BRAND_COLOURS || '';
   const [hexColor, setHexColor] = useState(defaultColor);
   const initialTailwindColor = skipTailwind
     ? ''
-    : hexToTailwind(defaultColor, config.BRAND_COLOURS) || '';
+    : hexToTailwind(defaultColor, brandColors) || '';
   const [selectedTailwindColor, setSelectedTailwindColor] =
     useState(initialTailwindColor);
   const [query, setQuery] = useState('');
@@ -79,10 +78,7 @@ const ColorPickerCombo = ({
       setHexColor(computedColor);
 
       if (!skipTailwind) {
-        const exactTailwindColor = hexToTailwind(
-          computedColor,
-          config.BRAND_COLOURS
-        );
+        const exactTailwindColor = hexToTailwind(computedColor, brandColors);
         if (exactTailwindColor) {
           setSelectedTailwindColor(exactTailwindColor);
           setQuery('');
@@ -101,7 +97,7 @@ const ColorPickerCombo = ({
 
       onColorChange(computedColor);
     }, 16),
-    [onColorChange, skipTailwind, config.BRAND_COLOURS]
+    [onColorChange, skipTailwind, brandColors]
   );
 
   // Handle Tailwind color selection
@@ -114,12 +110,12 @@ const ColorPickerCombo = ({
       setQuery(''); // Clear query after selection
 
       const newHexColor = getComputedColor(
-        tailwindToHex(`bg-${newTailwindColor}`, config.BRAND_COLOURS || null)
+        tailwindToHex(`bg-${newTailwindColor}`, brandColors || null)
       );
       setHexColor(newHexColor);
       onColorChange(newHexColor);
     },
-    [onColorChange, config, skipTailwind]
+    [onColorChange, brandColors, skipTailwind]
   );
 
   // New function to handle color removal
@@ -259,7 +255,7 @@ const ColorPickerCombo = ({
                               style={{
                                 backgroundColor: tailwindToHex(
                                   `bg-${color}`,
-                                  config.BRAND_COLOURS || null
+                                  brandColors
                                 ),
                               }}
                             />

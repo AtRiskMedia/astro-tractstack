@@ -110,7 +110,6 @@ const EmptyPageHandler = (props: NodeProps) => {
       first={true}
       ctx={ctx}
       isStoryFragment={true}
-      config={props.config!}
       isSandboxMode={props.isSandboxMode}
     />
   );
@@ -200,10 +199,7 @@ const getElement = (
                 panelType="storyfragment"
                 ctx={getCtx(props)}
               >
-                <StoryFragmentConfigPanel
-                  nodeId={props.nodeId}
-                  config={props.config!}
-                />
+                <StoryFragmentConfigPanel nodeId={props.nodeId} />
               </PanelVisibilityWrapper>
               <StoryFragment {...sharedProps} />
             </>
@@ -255,7 +251,6 @@ const getElement = (
                       nodeId={node.id}
                       first={true}
                       ctx={getCtx(props)}
-                      config={props.config!}
                       isContextPane={true}
                     />
                   </PanelVisibilityWrapper>
@@ -283,12 +278,7 @@ const getElement = (
               panelType="add"
               ctx={getCtx(props)}
             >
-              <AddPanePanel
-                nodeId={node.id}
-                first={true}
-                ctx={getCtx(props)}
-                config={props.config!}
-              />
+              <AddPanePanel nodeId={node.id} first={true} ctx={getCtx(props)} />
             </PanelVisibilityWrapper>
           )}
           <div className="py-0.5">
@@ -312,12 +302,7 @@ const getElement = (
             panelType="add"
             ctx={getCtx(props)}
           >
-            <AddPanePanel
-              nodeId={node.id}
-              first={false}
-              ctx={getCtx(props)}
-              config={props.config!}
-            />
+            <AddPanePanel nodeId={node.id} first={false} ctx={getCtx(props)} />
           </PanelVisibilityWrapper>
         </>
       );

@@ -13,9 +13,8 @@ import DevicePhoneMobileIcon from '@heroicons/react/24/outline/DevicePhoneMobile
 import DeviceTabletIcon from '@heroicons/react/24/outline/DeviceTabletIcon';
 import ComputerDesktopIcon from '@heroicons/react/24/outline/ComputerDesktopIcon';
 import { classNames } from '@/utils/helpers';
-import { settingsPanelStore } from '@/stores/storykeep';
+import { brandConfigStore, settingsPanelStore } from '@/stores/storykeep';
 import { tailwindToHex, colorValues } from '@/utils/compositor/tailwindColors';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface ViewportComboBoxProps {
   value: string;
@@ -29,7 +28,6 @@ interface ViewportComboBoxProps {
   allowNegative?: boolean;
   isNegative?: boolean;
   isInferred?: boolean;
-  config: BrandConfig;
 }
 
 const ViewportComboBox = ({
@@ -40,8 +38,8 @@ const ViewportComboBox = ({
   allowNegative = false,
   isNegative = false,
   isInferred = false,
-  config,
 }: ViewportComboBoxProps) => {
+  const brandColors = brandConfigStore.get()?.BRAND_COLOURS || '';
   const [internalValue, setInternalValue] = useState(value);
   const [query, setQuery] = useState('');
   const [isNowNegative, setIsNowNegative] = useState(isNegative);
@@ -174,7 +172,7 @@ const ViewportComboBox = ({
                       style={{
                         backgroundColor: tailwindToHex(
                           internalValue,
-                          config.BRAND_COLOURS || null
+                          brandColors
                         ),
                       }}
                     />
@@ -218,7 +216,7 @@ const ViewportComboBox = ({
                                 style={{
                                   backgroundColor: tailwindToHex(
                                     item,
-                                    config.BRAND_COLOURS || null
+                                    brandColors
                                   ),
                                 }}
                               />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
-import type { BrandConfig } from '@/types/tractstack';
+import { brandConfigStore } from '@/stores/storykeep';
 
 export type SnapshotData = {
   imageData: string;
@@ -12,7 +12,6 @@ export interface PaneSnapshotGeneratorProps {
   htmlString: string;
   onComplete: (id: string, data: SnapshotData) => void;
   onError?: (id: string, error: string) => void;
-  config?: BrandConfig;
   outputWidth?: number;
 }
 
@@ -33,7 +32,6 @@ export const PaneSnapshotGenerator = ({
   htmlString,
   onComplete,
   onError,
-  config,
   outputWidth = 800,
 }: PaneSnapshotGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -80,7 +78,8 @@ export const PaneSnapshotGenerator = ({
         const customCssUrl = `${cssBasePath}/custom.css`;
         const storykeepCssUrl = `${cssBasePath}/storykeep.css`;
 
-        const brandColors = config?.BRAND_COLOURS?.split(',') || [];
+        const brandColors =
+          brandConfigStore.get()?.BRAND_COLOURS?.split(',') || [];
 
         // Get all existing CSS links from current document
         const existingCssLinks = Array.from(
@@ -100,7 +99,7 @@ export const PaneSnapshotGenerator = ({
   <link rel="stylesheet" href="${storykeepCssUrl}">
   ${existingCssLinks.map((href) => `<link rel="stylesheet" href="${href}">`).join('\n')}
   ${
-    config
+    brandColors
       ? `
   <style>
     :root {
@@ -203,7 +202,7 @@ export const PaneSnapshotGenerator = ({
     };
 
     generateSnapshot();
-  }, [id, htmlString, isGenerating, onComplete, onError, config, outputWidth]);
+  }, [id, htmlString, isGenerating, onComplete, onError, outputWidth]);
 
   // Show spinner while generating
   if (isGenerating) {

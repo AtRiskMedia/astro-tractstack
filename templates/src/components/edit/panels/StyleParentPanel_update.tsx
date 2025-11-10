@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { settingsPanelStore } from '@/stores/storykeep';
+import { settingsPanelStore, brandConfigStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { tailwindClasses } from '@/utils/compositor/tailwindClasses';
 import { cloneDeep } from '@/utils/helpers';
@@ -32,10 +32,10 @@ const StyleParentPanelUpdate = ({
   layer,
   className,
   targetProperty,
-  config,
 }: CustomPanelProps) => {
   const ctx = getCtx();
   const styleableNode = node as StyleableNode | null;
+  const config = brandConfigStore.get();
 
   if (
     !styleableNode ||
@@ -182,7 +182,6 @@ const StyleParentPanelUpdate = ({
           value={values.mobile}
           values={validTailwindValues}
           onFinalChange={handleUpdate}
-          config={config}
           allowNegative={tailwindConfig.allowNegative}
         />
         <ViewportComboBox
@@ -190,7 +189,6 @@ const StyleParentPanelUpdate = ({
           value={values.tablet}
           values={validTailwindValues}
           onFinalChange={handleUpdate}
-          config={config}
           allowNegative={tailwindConfig.allowNegative}
         />
         <ViewportComboBox
@@ -198,7 +196,6 @@ const StyleParentPanelUpdate = ({
           value={values.desktop}
           values={validTailwindValues}
           onFinalChange={handleUpdate}
-          config={config}
           allowNegative={tailwindConfig.allowNegative}
         />
       </div>

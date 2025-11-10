@@ -66,7 +66,6 @@ const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-1.5 pt-0 md:p-2.5 md:pt-0">
           <div className="rounded bg-gray-50 p-1.5 md:p-2.5">
             <PanelSwitch
-              config={config}
               availableCodeHooks={availableCodeHooks}
               onTitleChange={setPanelTitle}
             />

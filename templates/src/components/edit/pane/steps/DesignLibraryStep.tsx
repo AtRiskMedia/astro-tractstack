@@ -15,11 +15,12 @@ import { viewportKeyStore } from '@/stores/storykeep';
 import { createEmptyStorykeep } from '@/utils/compositor/nodesHelper';
 import { convertStorageToLiveTemplate } from '@/utils/compositor/designLibraryHelper';
 import type { StoragePane } from '@/types/compositorTypes';
-import type { BrandConfig, DesignLibraryEntry } from '@/types/tractstack';
+import type { DesignLibraryEntry } from '@/types/tractstack';
 import {
   PaneSnapshotGenerator,
   type SnapshotData,
 } from '@/components/compositor/preview/PaneSnapshotGenerator';
+import { brandConfigStore } from '@/stores/storykeep';
 import {
   PanesPreviewGenerator,
   type PanePreviewRequest,
@@ -32,7 +33,6 @@ const PAGE_SIZE = 12;
 // --- Sub-component for rendering a single preview item ---
 interface TemplatePreviewItemProps {
   storageTemplate: StoragePane;
-  config: BrandConfig;
   onClick: () => void;
   title: string;
   category: string;
@@ -40,7 +40,6 @@ interface TemplatePreviewItemProps {
 
 const TemplatePreviewItem = ({
   storageTemplate,
-  config,
   onClick,
   title,
   category,
@@ -113,7 +112,6 @@ const TemplatePreviewItem = ({
             id={liveTemplate.id}
             htmlString={previewState.htmlFragment}
             outputWidth={800}
-            config={config}
             onComplete={(_id, data) => handleSnapshotComplete(data)}
             onError={(_id, err) =>
               setPreviewState((prev) =>
@@ -150,15 +148,11 @@ const TemplatePreviewItem = ({
 
 // --- Main component ---
 interface DesignLibraryStepProps {
-  config: BrandConfig;
   onSelect: (entry: DesignLibraryEntry) => void;
 }
 
-export const DesignLibraryStep = ({
-  config,
-  onSelect,
-}: DesignLibraryStepProps) => {
-  const designLibrary = config?.DESIGN_LIBRARY || [];
+export const DesignLibraryStep = ({ onSelect }: DesignLibraryStepProps) => {
+  const designLibrary = brandConfigStore.get()?.DESIGN_LIBRARY || [];
   const viewport = useStore(viewportKeyStore).value;
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -321,7 +315,6 @@ export const DesignLibraryStep = ({
               <TemplatePreviewItem
                 key={entry.title}
                 storageTemplate={entry.template}
-                config={config}
                 onClick={() => onSelect(entry)}
                 title={entry.title}
                 category={entry.category}

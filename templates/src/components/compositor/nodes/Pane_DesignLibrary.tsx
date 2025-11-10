@@ -52,10 +52,6 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     setIsSaveModalOpen(true);
   };
 
-  if (!props.config || !props.config.TENANT_ID) {
-    return <></>;
-  }
-
   return (
     <div id={getPaneId()} className="pane min-h-16">
       <div id={ctx.getNodeSlug(props.nodeId)} className={wrapperClasses}>
@@ -95,13 +91,11 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
       {isSaveModalOpen && (
         <SaveToLibraryModal
           paneId={props.nodeId}
-          config={props.config}
-          tenantId={props.config.TENANT_ID}
           onClose={() => setIsSaveModalOpen(false)}
         />
       )}
 
-      {isRestyleModalOpen && <RestylePaneModal config={props.config} />}
+      {isRestyleModalOpen && <RestylePaneModal />}
     </div>
   );
 };

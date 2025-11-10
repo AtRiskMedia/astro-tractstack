@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import { setPendingImageOperation } from '@/stores/storykeep';
-import type { BrandConfig } from '@/types/tractstack';
 
 const OG_IMAGE_WIDTH = 1200;
 const OG_IMAGE_HEIGHT = 630;
@@ -12,7 +11,6 @@ interface OgImagePreviewProps {
   nodeId: string;
   title: string;
   socialImagePath: string | null;
-  config: BrandConfig;
   onColorChange?: (textColor: string, bgColor: string) => void;
 }
 
@@ -20,7 +18,6 @@ const OgImagePreview = ({
   nodeId,
   title,
   socialImagePath,
-  config,
   onColorChange,
 }: OgImagePreviewProps) => {
   const [fontSize, setFontSize] = useState<number>(48);
@@ -190,13 +187,11 @@ const OgImagePreview = ({
             title="Text Color"
             defaultColor={textColor}
             onColorChange={handleTextColorChange}
-            config={config}
           />
           <ColorPickerCombo
             title="Background Color"
             defaultColor={bgColor}
             onColorChange={handleBgColorChange}
-            config={config}
           />
         </div>
       )}

@@ -6,12 +6,10 @@ import { useStore } from '@nanostores/react';
 import { fullContentMapStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import type { PaneNode } from '@/types/compositorTypes';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface ProductCardSetupProps {
   nodeId: string;
   params: Record<string, any> | null;
-  config: BrandConfig;
 }
 
 export const ProductCardSetup = (props: ProductCardSetupProps) => {

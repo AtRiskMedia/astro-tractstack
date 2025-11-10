@@ -36,7 +36,6 @@ import StyleLiElementUpdatePanel from './panels/StyleLiElementPanel_update';
 import StyleLiElementRemovePanel from './panels/StyleLiElementPanel_remove';
 import StyleCodeHookPanel from './panels/StyleCodeHookPanel';
 import { getSettingsPanelTitle } from '@/utils/helpers';
-import type { BrandConfig } from '@/types/tractstack';
 import type {
   FlatNode,
   GridLayoutNode,
@@ -44,13 +43,11 @@ import type {
 } from '@/types/compositorTypes';
 
 interface SettingsPanelProps {
-  config: BrandConfig;
   availableCodeHooks: string[];
   onTitleChange?: (title: string) => void;
 }
 
 const PanelSwitch = ({
-  config,
   availableCodeHooks,
   onTitleChange,
 }: SettingsPanelProps) => {
@@ -101,13 +98,7 @@ const PanelSwitch = ({
   switch (signal.action) {
     case 'style-break':
       if (clickedNode && paneNode)
-        return (
-          <StyleBreakPanel
-            config={config}
-            node={clickedNode}
-            parentNode={paneNode}
-          />
-        );
+        return <StyleBreakPanel node={clickedNode} parentNode={paneNode} />;
       break;
 
     case 'style-parent':
@@ -117,7 +108,6 @@ const PanelSwitch = ({
             node={markdownNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
-            config={config}
           />
         );
       else if (gridLayoutNode && paneNode)
@@ -126,7 +116,6 @@ const PanelSwitch = ({
             node={gridLayoutNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
-            config={config}
           />
         );
       break;
@@ -181,7 +170,6 @@ const PanelSwitch = ({
             node={clickedNode}
             layer={signal.layer || 0}
             className={signal.className}
-            config={config}
             targetProperty={(signal as any).targetProperty}
           />
         );
@@ -215,7 +203,6 @@ const PanelSwitch = ({
           <StyleLinkUpdatePanel
             node={clickedNode}
             className={signal.className}
-            config={config}
           />
         );
       break;
@@ -232,8 +219,7 @@ const PanelSwitch = ({
       break;
 
     case 'style-link-config':
-      if (clickedNode)
-        return <StyleLinkConfigPanel node={clickedNode} config={config} />;
+      if (clickedNode) return <StyleLinkConfigPanel node={clickedNode} />;
       break;
 
     case 'style-element':
@@ -280,7 +266,6 @@ const PanelSwitch = ({
             parentNode={styleContextNode}
             className={signal.className}
             onTitleChange={onTitleChange}
-            config={config}
           />
         );
       break;
@@ -353,7 +338,6 @@ const PanelSwitch = ({
             parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
-            config={config}
           />
         );
       break;
@@ -429,8 +413,7 @@ const PanelSwitch = ({
     }
 
     case 'style-code-config':
-      if (clickedNode)
-        return <StyleWidgetConfigPanel node={clickedNode} config={config} />;
+      if (clickedNode) return <StyleWidgetConfigPanel node={clickedNode} />;
       break;
 
     case 'style-code-add':
@@ -453,7 +436,6 @@ const PanelSwitch = ({
             node={clickedNode}
             parentNode={styleContextNode}
             className={signal.className}
-            config={config}
           />
         );
       break;
@@ -467,7 +449,6 @@ const PanelSwitch = ({
             parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
-            config={config}
           />
         );
       break;
@@ -541,7 +522,6 @@ const PanelSwitch = ({
             node={clickedNode}
             parentNode={styleContextNode}
             className={signal.className}
-            config={config}
           />
         );
       break;
@@ -554,7 +534,6 @@ const PanelSwitch = ({
             parentNode={styleContextNode}
             className={signal.className}
             childId={signal.childId}
-            config={config}
           />
         );
       break;

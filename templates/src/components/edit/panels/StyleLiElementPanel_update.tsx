@@ -18,7 +18,6 @@ const StyleLiElementUpdatePanel = ({
   node,
   parentNode,
   className,
-  config,
   childId,
 }: BasePanelProps) => {
   if (
@@ -289,7 +288,6 @@ const StyleLiElementUpdatePanel = ({
           onFinalChange={handleFinalChange}
           values={values}
           viewport="mobile"
-          config={config!}
           isInferred={false}
         />
         <ViewportComboBox
@@ -298,7 +296,6 @@ const StyleLiElementUpdatePanel = ({
           values={values}
           viewport="tablet"
           isInferred={!isOverridden && tabletValue === mobileValue}
-          config={config!}
         />
         <ViewportComboBox
           value={desktopValue}
@@ -306,7 +303,6 @@ const StyleLiElementUpdatePanel = ({
           values={values}
           viewport="desktop"
           isInferred={!isOverridden && desktopValue === tabletValue}
-          config={config!}
         />
       </div>
     </div>

@@ -11,7 +11,6 @@ import { canonicalURLStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
 import ActionBuilderSlugSelector from '@/components/form/ActionBuilderSlugSelector';
-import type { BrandConfig } from '@/types/tractstack';
 import type {
   PaneNode,
   VideoMoment,
@@ -21,7 +20,6 @@ import type {
 interface BunnyVideoSetupProps {
   nodeId: string;
   params: any;
-  config: BrandConfig;
 }
 
 interface Chapter extends VideoMoment {
@@ -40,7 +38,7 @@ const generateId = (): string => {
   return Math.random().toString(36).substring(2, 9);
 };
 
-const BunnyVideoSetup = ({ nodeId, params, config }: BunnyVideoSetupProps) => {
+const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
   const ctx = getCtx();
   const allNodes = ctx.allNodes.get();
   const canonicalURL = canonicalURLStore.get();
@@ -419,7 +417,6 @@ const BunnyVideoSetup = ({ nodeId, params, config }: BunnyVideoSetupProps) => {
                   setBgColor(color);
                   setTimeout(() => saveChanges(), 100);
                 }}
-                config={config!}
                 allowNull={true}
               />
               <p className="mt-1 text-xs text-gray-500">
