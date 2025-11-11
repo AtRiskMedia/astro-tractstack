@@ -147,7 +147,9 @@ function extractNodesFromDOM(
       if (text !== null && text !== undefined) {
         // Remove zero-width spaces
         text = text.replace(/\u200B/g, '');
-
+        if (text.trim() === '') {
+          return;
+        }
         result.push({
           id: ulid(),
           parentId,
@@ -361,16 +363,16 @@ export function processRichTextToNodes(
     if (['a', 'button', 'span'].includes(node.tagName)) {
       const matchingOriginalNode = findMatchingNode(node, originalNodes);
       if (matchingOriginalNode) {
-        if (node.tagName === 'a') {
+        if (['a', 'button'].includes(node.tagName)) {
           if (matchingOriginalNode.href) {
             node.href = matchingOriginalNode.href;
           }
-        } else if (node.tagName === 'button') {
           node.buttonPayload = matchingOriginalNode.buttonPayload;
         } else if (node.tagName === 'span') {
           node.elementCss = matchingOriginalNode.elementCss;
           node.overrideClasses = matchingOriginalNode.overrideClasses;
         }
+        console.log(node);
       } else if (onInsertSignal) {
         // New interactive element detected, trigger insert signal
         onInsertSignal(node.tagName, node.id);

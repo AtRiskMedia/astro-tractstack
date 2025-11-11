@@ -202,7 +202,10 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
           onDoubleClick={handleDoubleClick}
           data-editable-link="true"
           // Preserve display mode
-          style={{ display: 'inline' }}
+          style={{
+            display: 'inline',
+            cursor: isEditMode ? 'text' : 'pointer',
+          }}
         >
           <RenderChildren
             children={ctx.getChildNodeIDs(nodeId)}
