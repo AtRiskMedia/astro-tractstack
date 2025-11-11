@@ -6,7 +6,7 @@ import type {
 } from '@/types/compositorTypes';
 
 const tailwindModifier = ['', 'md:', 'xl:'];
-const tailwindCoreModifier = ['xs:', 'md:', 'xl:'];
+const tailwindCoreModifier = ['', 'md:', 'xl:'];
 
 const stripViewportPrefixes = (classes: string[]): string[] => {
   return classes.map((classStr) =>
