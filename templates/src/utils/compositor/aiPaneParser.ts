@@ -642,7 +642,7 @@ export const parseAiPane = (
 ): Omit<TemplatePane, 'nodes'> & {
   nodes?: (TemplateMarkdown | GridLayoutNode)[];
 } => {
-  console.log('--- ENTERING parseAiPane ---', { shellJson, copyHtml, layout });
+  //console.log('--- ENTERING parseAiPane ---', { shellJson, copyHtml, layout });
 
   const shell: ShellJson = JSON.parse(shellJson);
   const paneId = ulid();
@@ -697,6 +697,7 @@ export const parseAiPane = (
       isDecorative: false,
       gridLayout: gridLayoutNode,
     };
+    /*
     console.log({
       shellDefaults: shellDefaults,
       transformedParentClasses: transformedParentClasses,
@@ -704,6 +705,7 @@ export const parseAiPane = (
       gridLayoutNode: gridLayoutNode,
       templatePane: templatePane,
     });
+    */
     return templatePane;
   }
 

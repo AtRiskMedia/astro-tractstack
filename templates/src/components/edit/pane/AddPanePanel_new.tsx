@@ -18,7 +18,6 @@ import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
 import { parseAiPane, parseAiCopyHtml } from '@/utils/compositor/aiPaneParser';
 import {
   convertStorageToLiveTemplate,
-  mergeCopyIntoTemplate,
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
 import { DirectInjectStep } from './steps/DirectInjectStep';
@@ -141,19 +140,21 @@ const AddPaneNewPanel = ({
   const [layoutChoice, setLayoutChoice] = useState<LayoutChoice>('standard');
   const [error, setError] = useState<string | null>(null);
 
+  // Standard / Single Column State
   const [copyMode, setCopyMode] = useState<CopyMode>('prompt');
   const [promptValue, setPromptValue] = useState('');
   const [copyValue, setCopyValue] = useState('');
 
+  // Grid / 2-Column State (Strictly Prompt-Only)
   const [overallPrompt, setOverallPrompt] = useState(
     prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.default
   );
-  const [copyModeCol1, setCopyModeCol1] = useState<CopyMode>('prompt');
-  const [promptValueCol1, setPromptValueCol1] = useState('');
-  const [copyValueCol1, setCopyValueCol1] = useState('');
-  const [copyModeCol2, setCopyModeCol2] = useState<CopyMode>('prompt');
-  const [promptValueCol2, setPromptValueCol2] = useState('');
-  const [copyValueCol2, setCopyValueCol2] = useState('');
+  const [promptValueCol1, setPromptValueCol1] = useState(
+    prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.left.prompt
+  );
+  const [promptValueCol2, setPromptValueCol2] = useState(
+    prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.right.prompt
+  );
 
   const [selectedLibraryEntry, setSelectedLibraryEntry] =
     useState<DesignLibraryEntry | null>(null);
@@ -226,11 +227,6 @@ const AddPaneNewPanel = ({
     handleApplyTemplate(blankTemplate);
   };
 
-  const handleDesignLibrarySelect = (entry: DesignLibraryEntry) => {
-    setSelectedLibraryEntry(entry);
-    setStep('copyInput');
-  };
-
   const handleAiDesignContinue = () => {
     setStep('copyInput');
   };
@@ -274,6 +270,18 @@ const AddPaneNewPanel = ({
     }
   };
 
+  const handleDesignLibrarySelect = (entry: DesignLibraryEntry) => {
+    setSelectedLibraryEntry(entry);
+
+    if (entry.template.gridLayout) {
+      setLayoutChoice('grid');
+    } else {
+      setLayoutChoice('standard');
+    }
+
+    setStep('copyInput');
+  };
+
   const handleFinalGenerate = useCallback(async () => {
     setError(null);
     setStep('loading');
@@ -284,59 +292,99 @@ const AddPaneNewPanel = ({
           throw new Error('No design library item was selected.');
         }
 
-        if (copyMode === 'raw') {
-          const liveTemplate = convertStorageToLiveTemplate(
-            mergeCopyIntoTemplate(selectedLibraryEntry.template, [])
-          );
-          if (liveTemplate.markdown) {
-            liveTemplate.markdown.markdownBody = copyValue;
-          }
-          handleApplyTemplate(liveTemplate);
-          return;
-        }
+        const liveTemplate = convertStorageToLiveTemplate(
+          selectedLibraryEntry.template
+        );
+        const shellResult = convertTemplateToAIShell(liveTemplate);
+        const layout = 'Text Only';
 
-        if (copyMode === 'prompt') {
-          const liveTemplate = convertStorageToLiveTemplate(
-            selectedLibraryEntry.template
-          );
-          if (!liveTemplate.markdown) {
-            throw new Error(
-              'The selected design library item is not compatible with this workflow as it has no markdown section.'
+        if (layoutChoice === 'grid' && liveTemplate.gridLayout) {
+          const copyPromptDetails = prompts.aiPaneCopyPrompt_2cols;
+          const preset = copyPromptDetails.presets.heroDefault;
+          const copyResults: string[] = [];
+
+          // Only prompt mode supported for grid now
+          const promptsToRun: {
+            prompt: string;
+            presetKey: ColumnPresetKey;
+          }[] = [
+            {
+              prompt: promptValueCol1,
+              presetKey: 'left',
+            },
+            {
+              prompt: promptValueCol2,
+              presetKey: 'right',
+            },
+          ];
+
+          for (const item of promptsToRun) {
+            const columnPreset = preset[item.presetKey];
+            const formattedCopyPrompt = copyPromptDetails.user_template
+              .replace('{{SHELL_JSON}}', shellResult)
+              .replace('{{COPY_INPUT}}', overallPrompt)
+              .replace('{{COLUMN_PROMPT}}', item.prompt)
+              .replace(
+                '{{DESIGN_INPUT}}',
+                "N/A - Use the provided Shell JSON's design."
+              )
+              .replace('{{LAYOUT_TYPE}}', layout)
+              .replace('{{COLUMN_EXAMPLE}}', columnPreset.example);
+
+            const copyResult = await callAskLemurAPI(
+              formattedCopyPrompt,
+              copyPromptDetails.system || '',
+              false,
+              isSandboxMode
             );
+            copyResults.push(copyResult);
           }
 
-          const shellJson = convertTemplateToAIShell(liveTemplate);
-          if (!shellJson || shellJson === '{}') {
-            throw new Error(
-              'Could not generate a valid AI shell from this design.'
-            );
-          }
-
-          const copyPromptDetails = prompts.aiPaneCopyPrompt;
-          const layout = 'Text Only';
-          const formattedCopyPrompt = copyPromptDetails.user_template
-            .replace('{{COPY_INPUT}}', promptValue)
-            .replace(
-              '{{DESIGN_INPUT}}',
-              "N/A - Use the provided Shell JSON's design."
-            )
-            .replace('{{LAYOUT_TYPE}}', layout)
-            .replace('{{SHELL_JSON}}', shellJson);
-
-          const copyResult = await callAskLemurAPI(
-            formattedCopyPrompt,
-            copyPromptDetails.system || '',
-            false,
-            isSandboxMode
-          );
-
-          const newNodes = parseAiCopyHtml(
-            copyResult,
-            liveTemplate.markdown.id
-          );
-          const finalPane = cloneDeep(liveTemplate);
-          finalPane.markdown!.nodes = newNodes;
+          const finalPane = parseAiPane(shellResult, copyResults, layout);
           handleApplyTemplate(finalPane);
+        } else if (layoutChoice === 'standard' && liveTemplate.markdown) {
+          if (copyMode === 'raw') {
+            liveTemplate.markdown.markdownBody = copyValue;
+            handleApplyTemplate(liveTemplate);
+            return;
+          }
+
+          if (copyMode === 'prompt') {
+            if (!shellResult || shellResult === '{}') {
+              throw new Error(
+                'Could not generate a valid AI shell from this design.'
+              );
+            }
+
+            const copyPromptDetails = prompts.aiPaneCopyPrompt;
+            const formattedCopyPrompt = copyPromptDetails.user_template
+              .replace('{{COPY_INPUT}}', promptValue)
+              .replace(
+                '{{DESIGN_INPUT}}',
+                "N/A - Use the provided Shell JSON's design."
+              )
+              .replace('{{LAYOUT_TYPE}}', layout)
+              .replace('{{SHELL_JSON}}', shellResult);
+
+            const copyResult = await callAskLemurAPI(
+              formattedCopyPrompt,
+              copyPromptDetails.system || '',
+              false,
+              isSandboxMode
+            );
+
+            const newNodes = parseAiCopyHtml(
+              copyResult,
+              liveTemplate.markdown.id
+            );
+            const finalPane = cloneDeep(liveTemplate);
+            finalPane.markdown!.nodes = newNodes;
+            handleApplyTemplate(finalPane);
+          }
+        } else {
+          throw new Error(
+            'Template and layout mismatch. Please go back and try again.'
+          );
         }
       } else if (initialChoice === 'ai') {
         let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
@@ -396,32 +444,22 @@ const AddPaneNewPanel = ({
           const preset = copyPromptDetails.presets.heroDefault;
           const copyResults: string[] = [];
 
+          // Grid is strictly prompt-based
           const promptsToRun: {
             prompt: string;
-            copy: string;
-            mode: CopyMode;
             presetKey: ColumnPresetKey;
           }[] = [
             {
               prompt: promptValueCol1,
-              copy: copyValueCol1,
-              mode: copyModeCol1,
               presetKey: 'left',
             },
             {
               prompt: promptValueCol2,
-              copy: copyValueCol2,
-              mode: copyModeCol2,
               presetKey: 'right',
             },
           ];
 
           for (const item of promptsToRun) {
-            if (item.mode === 'raw') {
-              copyResults.push(item.copy);
-              continue;
-            }
-
             const columnPreset = preset[item.presetKey];
             const formattedCopyPrompt = copyPromptDetails.user_template
               .replace('{{SHELL_JSON}}', shellResult)
@@ -454,12 +492,8 @@ const AddPaneNewPanel = ({
     promptValue,
     copyValue,
     overallPrompt,
-    copyModeCol1,
     promptValueCol1,
-    copyValueCol1,
-    copyModeCol2,
     promptValueCol2,
-    copyValueCol2,
     isSandboxMode,
     initialChoice,
     layoutChoice,
@@ -550,58 +584,47 @@ const AddPaneNewPanel = ({
   const renderContentStep = () => {
     if (layoutChoice === 'grid') {
       const isGenerateDisabled =
-        (copyModeCol1 === 'prompt' && !promptValueCol1.trim()) ||
-        (copyModeCol1 === 'raw' && !copyValueCol1.trim()) ||
-        (copyModeCol2 === 'prompt' && !promptValueCol2.trim()) ||
-        (copyModeCol2 === 'raw' && !copyValueCol2.trim()) ||
-        !overallPrompt.trim();
+        !overallPrompt.trim() ||
+        !promptValueCol1.trim() ||
+        !promptValueCol2.trim();
 
       return (
         <div className="space-y-4 p-4">
           <div>
-            <h4 className="mb-2 block text-sm font-bold text-gray-700">
+            <label className="mb-2 block text-sm font-bold text-gray-700">
               Overall Component Brief
-            </h4>
+            </label>
             <textarea
               value={overallPrompt}
               onChange={(e) => setOverallPrompt(e.target.value)}
-              placeholder="e.g., A compelling hero section for a website about Tract Stack..."
               rows={3}
               className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              This context is applied to both columns.
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <h4 className="mb-2 block text-sm font-bold text-gray-700">
-                Left Column Content
-              </h4>
-              <CopyInputStep
-                copyMode={copyModeCol1}
-                onCopyModeChange={setCopyModeCol1}
-                promptValue={promptValueCol1}
-                onPromptValueChange={setPromptValueCol1}
-                copyValue={copyValueCol1}
-                onCopyValueChange={setCopyValueCol1}
-                defaultPrompt={
-                  prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.left.prompt
-                }
+              <label className="mb-2 block text-sm font-bold text-gray-700">
+                Left Column Prompt
+              </label>
+              <textarea
+                value={promptValueCol1}
+                onChange={(e) => setPromptValueCol1(e.target.value)}
+                rows={4}
+                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
               />
             </div>
             <div>
-              <h4 className="mb-2 block text-sm font-bold text-gray-700">
-                Right Column Content
-              </h4>
-              <CopyInputStep
-                copyMode={copyModeCol2}
-                onCopyModeChange={setCopyModeCol2}
-                promptValue={promptValueCol2}
-                onPromptValueChange={setPromptValueCol2}
-                copyValue={copyValueCol2}
-                onCopyValueChange={setCopyValueCol2}
-                defaultPrompt={
-                  prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.right
-                    .prompt
-                }
+              <label className="mb-2 block text-sm font-bold text-gray-700">
+                Right Column Prompt
+              </label>
+              <textarea
+                value={promptValueCol2}
+                onChange={(e) => setPromptValueCol2(e.target.value)}
+                rows={4}
+                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
               />
             </div>
           </div>
@@ -759,25 +782,15 @@ const AddPaneNewPanel = ({
   return (
     <div className="bg-white p-2 shadow-inner">
       <div className="group mb-2 flex w-full items-center gap-1 rounded-md bg-white p-1.5">
-        {first ? (
-          <div className="w-full text-center">
-            <h2 className="font-action py-1.5 text-lg font-bold text-gray-800">
-              Welcome to Tract Stack
-            </h2>
-          </div>
-        ) : (
-          <>
-            <button
-              onClick={() => setParentMode(PaneAddMode.DEFAULT, first)}
-              className="w-fit rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200"
-            >
-              ← Go Back
-            </button>
-            <div className="font-action ml-4 flex-none rounded px-2 py-2.5 text-sm font-bold text-cyan-700 shadow-sm">
-              + Design New Pane
-            </div>
-          </>
-        )}
+        <button
+          onClick={() => setParentMode(PaneAddMode.DEFAULT, first)}
+          className="w-fit rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-gray-200"
+        >
+          ← Go Back
+        </button>
+        <div className="font-action ml-4 flex-none rounded px-2 py-2.5 text-sm font-bold text-cyan-700 shadow-sm">
+          + Design New Pane
+        </div>
       </div>
       <div className="min-h-96 rounded-md border bg-gray-50">
         {renderStep()}

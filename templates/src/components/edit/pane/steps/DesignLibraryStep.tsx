@@ -30,7 +30,6 @@ import { classNames } from '@/utils/helpers';
 
 const PAGE_SIZE = 12;
 
-// --- Sub-component for rendering a single preview item ---
 interface TemplatePreviewItemProps {
   storageTemplate: StoragePane;
   onClick: () => void;
@@ -224,7 +223,6 @@ export const DesignLibraryStep = ({ onSelect }: DesignLibraryStepProps) => {
         2. Choose a Design
       </label>
 
-      {/* --- Filters --- */}
       <nav className="flex items-center gap-x-4 rounded-md border bg-white p-3">
         <Select.Root
           collection={selectCollection}

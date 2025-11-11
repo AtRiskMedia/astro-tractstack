@@ -2,6 +2,8 @@ import { type CSSProperties, useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import ArchiveBoxArrowDownIcon from '@heroicons/react/24/outline/ArchiveBoxArrowDownIcon';
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
+import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
+import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
@@ -10,6 +12,7 @@ import type { NodeProps } from '@/types/nodeProps';
 import { SaveToLibraryModal } from '@/components/edit/state/SaveToLibraryModal';
 import { RestylePaneModal } from '@/components/edit/pane/RestylePaneModal';
 import { selectionStore } from '@/stores/selection';
+import { copyPaneToClipboard } from '@/utils/compositor/designLibraryHelper';
 
 export const Pane_DesignLibrary = (props: NodeProps) => {
   const ctx = getCtx(props);
@@ -32,6 +35,7 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     ...ctx.getChildNodeIDs(props.nodeId),
   ]);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [wasCopied, setWasCopied] = useState(false);
   const getPaneId = (): string => `pane-${props.nodeId}`;
 
   useEffect(() => {
@@ -52,6 +56,15 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     setIsSaveModalOpen(true);
   };
 
+  const handleCopyToClipboard = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const success = await copyPaneToClipboard(props.nodeId);
+    if (success) {
+      setWasCopied(true);
+      setTimeout(() => setWasCopied(false), 2000);
+    }
+  };
+
   return (
     <div id={getPaneId()} className="pane min-h-16">
       <div id={ctx.getNodeSlug(props.nodeId)} className={wrapperClasses}>
@@ -63,7 +76,7 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
             e.stopPropagation();
           }}
         >
-          <div className="absolute left-2 top-2 z-10 flex flex-col gap-y-2">
+          <div className="absolute left-2 top-2 z-10 flex flex-row gap-x-2">
             {!props.isSandboxMode && (
               <button
                 title="Save Pane to Design Library"
@@ -79,6 +92,19 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
               className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 p-1.5 shadow-lg hover:bg-blue-700"
             >
               <ArrowPathRoundedSquareIcon className="h-7 w-7 text-white" />
+            </button>
+            <button
+              title="Copy Pane Design to Clipboard"
+              onClick={handleCopyToClipboard}
+              className={`flex h-10 w-10 items-center justify-center rounded-full p-1.5 shadow-lg transition-colors ${
+                wasCopied ? 'bg-green-500' : 'bg-gray-600 hover:bg-gray-700'
+              }`}
+            >
+              {wasCopied ? (
+                <CheckIcon className="h-7 w-7 text-white" />
+              ) : (
+                <ArrowDownTrayIcon className="h-7 w-7 text-white" />
+              )}
             </button>
           </div>
           {codeHookPayload ? (

@@ -52,6 +52,12 @@ const storykeepToolModes = [
     title: 'Design Library',
     description: 'Save pane to design library',
   },
+  {
+    key: 'debug' as const,
+    Icon: BugAntIcon,
+    title: 'Debug Mode',
+    description: 'Toggle node tree id reveal',
+  },
 ] as const;
 
 interface StoryKeepToolModeProps {
@@ -62,7 +68,6 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const $selection = useStore(selectionStore);
-  const showGuids = useStore(ctx.showGuids);
   const navRef = useRef<HTMLElement>(null);
 
   const hasTitle = useStore(ctx.hasTitle);
@@ -73,8 +78,6 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   const className =
     'w-8 h-8 py-1 rounded-xl bg-white text-myblue hover:bg-mygreen/20 hover:text-black hover:rotate-3 cursor-pointer transition-all';
   const classNameActive = 'w-8 h-8 py-1.5 rounded-md bg-myblue text-white';
-  const classNameDebugActive =
-    'w-8 h-8 py-1.5 rounded-md bg-orange-500 text-white';
 
   const currentToolMode =
     storykeepToolModes.find((mode) => mode.key === toolModeVal) ??
@@ -83,11 +86,6 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
   const handleClick = (mode: ToolModeVal) => {
     settingsPanelStore.set(null);
     ctx.toolModeValStore.set({ value: mode });
-    ctx.notifyNode('root');
-  };
-
-  const handleDebugToggle = () => {
-    ctx.showGuids.set(!showGuids);
     ctx.notifyNode('root');
   };
 
@@ -156,12 +154,6 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
                 )}
               </div>
             ))}
-            <div title="Toggle debug node ids" key="debug">
-              <BugAntIcon
-                className={showGuids ? classNameDebugActive : className}
-                onClick={handleDebugToggle}
-              />
-            </div>
           </div>
         )}
 

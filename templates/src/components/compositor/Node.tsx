@@ -96,14 +96,12 @@ function parseCodeHook(node: BaseNode | FlatNode) {
   return null;
 }
 
-// Helper component to safely set the panel mode for an empty page
 const EmptyPageHandler = (props: NodeProps) => {
   const ctx = getCtx(props);
   useEffect(() => {
     ctx.setPaneAddMode(props.nodeId, PaneAddMode.NEW);
   }, []);
 
-  // Now that the mode is set, render the panel which will read it.
   return (
     <AddPanePanel
       nodeId={props.nodeId}
@@ -128,10 +126,10 @@ const getElement = (
     isSandboxMode: props.isSandboxMode,
   };
   const type = getType(node);
+  const toolModeVal = getCtx(props).toolModeValStore.get().value;
 
   switch (type) {
     case 'Markdown': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === 'eraser') {
         const parentNode = node.parentId
           ? getCtx(props).allNodes.get().get(node.parentId)
@@ -209,12 +207,8 @@ const getElement = (
     }
 
     case 'Pane': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
       const paneNodes = getCtx(props).getChildNodeIDs(node.id);
       const paneNode = node as PaneNode;
-      if (toolModeVal === 'designLibrary') {
-        return <Pane_DesignLibrary {...sharedProps} />;
-      }
       if (paneNode.isContextPane) {
         if (!isPreview)
           getCtx(props).hasTitle.set(!(!paneNode.slug || !paneNode.title));
@@ -237,7 +231,11 @@ const getElement = (
               <ContextPanePanel nodeId={node.id} />
             ) : null}
             <div>
-              <Pane {...sharedProps} />
+              {toolModeVal === 'designLibrary' ? (
+                <Pane_DesignLibrary {...sharedProps} />
+              ) : (
+                <Pane {...sharedProps} />
+              )}
               {!isPreview &&
                 paneNode.slug &&
                 paneNode.title &&
@@ -293,6 +291,8 @@ const getElement = (
               <PaneEraser {...sharedProps} />
             ) : toolModeVal === `layout` ? (
               <PaneLayout {...sharedProps} />
+            ) : toolModeVal === 'designLibrary' ? (
+              <Pane_DesignLibrary {...sharedProps} />
             ) : (
               <Pane {...sharedProps} />
             )}
@@ -311,7 +311,6 @@ const getElement = (
     case 'BgPane':
       return <BgPaneWrapper {...sharedProps} />;
     case 'GridLayoutNode': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === 'eraser') {
         return <GridLayoutEraser {...sharedProps} />;
       }
@@ -328,8 +327,6 @@ const getElement = (
     case 'li':
     case 'aside':
     case 'p': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
-
       if (toolModeVal === 'styles') {
         const className = getCtx(props).getNodeClasses(
           node.id,
@@ -428,13 +425,11 @@ const getElement = (
     case 'text':
       return <NodeText {...sharedProps} />;
     case 'button': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === `eraser`)
         return <NodeButtonEraser {...sharedProps} />;
       return <NodeButton {...sharedProps} isSelectableText={false} />;
     }
     case 'a': {
-      const toolModeVal = getCtx(props).toolModeValStore.get().value;
       if (toolModeVal === `eraser`) return <NodeAEraser {...sharedProps} />;
       return <NodeA {...sharedProps} isSelectableText={false} />;
     }
@@ -456,6 +451,7 @@ const Node = memo((props: NodeProps) => {
   const node = getCtx(props).allNodes.get().get(props.nodeId) as FlatNode;
   const isPreview = getCtx(props).rootNodeId.get() === `tmp`;
   const settingsPanel = useStore(settingsPanelStore);
+  const toolModeVal = getCtx(props).toolModeValStore.get().value;
 
   const {
     markdownParentId,
@@ -545,7 +541,7 @@ const Node = memo((props: NodeProps) => {
     return <div style={highlightStyle}>{element}</div>;
   }
 
-  if (!isPreview && getCtx(props).showGuids.get()) {
+  if (!isPreview && toolModeVal === `debug`) {
     return <NodeWithGuid {...props} element={element} />;
   }
 

@@ -43,6 +43,7 @@ export enum PaneAddMode {
   BREAK = 'BREAK',
   REUSE = 'REUSE',
   CODEHOOK = 'CODEHOOK',
+  PASTE = 'PASTE',
 }
 
 export enum PaneConfigMode {
@@ -478,6 +479,7 @@ export type StorageGridLayoutNode = {
     tablet: number;
     desktop: number;
   };
+  nodes?: StorageMarkdown[];
 };
 
 export type StoragePane = Omit<

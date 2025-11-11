@@ -103,7 +103,6 @@ export class NodesContext {
   toolAddModeStore = map<{ value: ToolAddMode }>({
     value: 'p',
   });
-  showGuids = atom<boolean>(false);
 
   /**
    * Sets an edit lock on a specific node to prevent re-renders during editing
@@ -1784,9 +1783,14 @@ export class NodesContext {
       ownerId
     );
 
-    // Remove bgPane from the pane object if it exists, as it's now a separate node
     if (duplicatedPane.bgPane) {
       delete duplicatedPane.bgPane;
+    }
+    if (duplicatedPane.markdown) {
+      delete duplicatedPane.markdown;
+    }
+    if (duplicatedPane.gridLayout) {
+      delete duplicatedPane.gridLayout;
     }
 
     this.addNode(duplicatedPane as PaneNode);
@@ -1837,10 +1841,14 @@ export class NodesContext {
       duplicatedPaneId
     );
 
-    // Remove bgPane from the pane object if it exists, as it's now a separate node
-    // This preserves the original logic
     if (duplicatedPane.bgPane) {
       delete duplicatedPane.bgPane;
+    }
+    if (duplicatedPane.markdown) {
+      delete duplicatedPane.markdown;
+    }
+    if (duplicatedPane.gridLayout) {
+      delete duplicatedPane.gridLayout;
     }
 
     const storyFragmentNode = ownerNode as StoryFragmentNode;
@@ -2009,7 +2017,7 @@ export class NodesContext {
 
     let autoCreatedMarkdownNode: MarkdownPaneFragmentNode | null = null;
 
-    console.log(`--- [TRAP - TEMPLATE BEFORE] ---`, cloneDeep(node));
+    //console.log(`--- [TRAP - TEMPLATE BEFORE] ---`, cloneDeep(node));
     // 3. HANDLE EMPTY PANE BY AUTO-CREATING A MARKDOWN NODE
     if (targetNode.nodeType === 'Pane') {
       // Create a minimal markdown node to act as the container
@@ -2087,7 +2095,7 @@ export class NodesContext {
       );
     }
 
-    console.log(`--- [TRAP - FLATTENED AFTER] ---`, cloneDeep(flattenedNodes));
+    //console.log(`--- [TRAP - FLATTENED AFTER] ---`, cloneDeep(flattenedNodes));
 
     // 5. PERFORM REMAINING STATE MUTATIONS
     if (originalPaneNode) {

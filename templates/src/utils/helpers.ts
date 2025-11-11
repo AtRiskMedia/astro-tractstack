@@ -291,14 +291,15 @@ export function titleToSlug(title: string, maxLength: number = 50): string {
 }
 
 export function findUniqueSlug(slug: string, existingSlugs: string[]): string {
-  if (!existingSlugs.includes(slug)) {
-    return slug;
+  const tempSlug = slug || `story`;
+  if (!existingSlugs.includes(tempSlug)) {
+    return tempSlug;
   }
   let counter = 1;
-  let newSlug = `${slug}-${counter}`;
+  let newSlug = `${tempSlug}-${counter}`;
   while (existingSlugs.includes(newSlug)) {
     counter++;
-    newSlug = `${slug}-${counter}`;
+    newSlug = `${tempSlug}-${counter}`;
   }
   return newSlug;
 }

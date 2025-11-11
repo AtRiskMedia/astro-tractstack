@@ -37,7 +37,9 @@ const VERBOSE = false;
 export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
   const ctx = getCtx(props);
-  const Tag = ctx.showGuids.get() ? `div` : props.tagName;
+  //const Tag = ctx.showGuids.get() ? `div` : props.tagName;
+  const Tag =
+    ctx.toolModeValStore.get().value === `debug` ? `div` : props.tagName;
 
   if (props.tagName === 'span') {
     const node = ctx.allNodes.get().get(props.nodeId);

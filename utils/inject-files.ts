@@ -455,6 +455,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/AddPanePanel_paste.tsx'
+      ),
+      dest: 'src/components/edit/pane/AddPanePanel_paste.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/AddPanePanel_break.tsx'
       ),
       dest: 'src/components/edit/pane/AddPanePanel_break.tsx',
@@ -549,22 +555,6 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/edit/context/ContextPaneConfig_slug.tsx',
     },
-    {
-      src: resolve('../templates/src/components/edit/pane/PageGenSelector.tsx'),
-      dest: 'src/components/edit/pane/PageGenSelector.tsx',
-    },
-    {
-      src: resolve('../templates/src/components/edit/pane/PageGenSpecial.tsx'),
-      dest: 'src/components/edit/pane/PageGenSpecial.tsx',
-    },
-    {
-      src: resolve('../templates/src/components/edit/pane/PageGen.tsx'),
-      dest: 'src/components/edit/pane/PageGen.tsx',
-    },
-    {
-      src: resolve('../templates/src/components/edit/pane/PageGen_preview.tsx'),
-      dest: 'src/components/edit/pane/PageGen_preview.tsx',
-    },
     // Compositor previews
     {
       src: resolve(
@@ -583,12 +573,6 @@ export async function injectTemplateFiles(
         '../templates/src/components/compositor/preview/OgImagePreview.tsx'
       ),
       dest: 'src/components/compositor/preview/OgImagePreview.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/preview/VisualBreakPreview.tsx'
-      ),
-      dest: 'src/components/compositor/preview/VisualBreakPreview.tsx',
     },
     {
       src: resolve(
@@ -652,16 +636,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),
       dest: 'src/utils/compositor/aiPaneParser.ts',
-    },
-    {
-      src: resolve('../templates/src/utils/compositor/processMarkdown.ts'),
-      dest: 'src/utils/compositor/processMarkdown.ts',
-    },
-    {
-      src: resolve(
-        '../templates/src/utils/compositor/templateMarkdownStyles.ts'
-      ),
-      dest: 'src/utils/compositor/templateMarkdownStyles.ts',
     },
     {
       src: resolve(

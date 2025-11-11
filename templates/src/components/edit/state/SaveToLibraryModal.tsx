@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { CheckIcon } from '@heroicons/react/20/solid';
 import { savePaneToLibrary } from '@/utils/compositor/designLibraryHelper';
+import { convertToBackendFormat } from '@/utils/api/brandHelpers';
 import StringInput from '@/components/form/StringInput';
 import { brandConfigStore } from '@/stores/storykeep';
 
@@ -87,8 +88,9 @@ export function SaveToLibraryModal({
         formData
       );
       if (newBrandConfig) {
+        const backendDTO = convertToBackendFormat(newBrandConfig);
         brandConfigStore.set({
-          ...newBrandConfig,
+          ...backendDTO, // Use the converted DTO
           TENANT_ID: brandConfig.TENANT_ID,
         });
         setSaveState('saved');
