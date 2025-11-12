@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject, type MouseEvent } from 'react';
+import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
-import { viewportKeyStore } from '@/stores/storykeep';
+import { viewportKeyStore, settingsPanelStore } from '@/stores/storykeep';
 import { RenderChildren } from '../RenderChildren';
 import type { FlatNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
@@ -11,6 +12,10 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
   const childNodeIDs = ctx.getChildNodeIDs(node?.parentId ?? '');
   const linkRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
+
+  // Reactivity for outlines
+  const settingsPanel = useStore(settingsPanelStore);
+  const toolMode = useStore(ctx.toolModeValStore).value;
 
   // Get current position and next sibling for spacing logic
   const currentIndex = childNodeIDs.indexOf(nodeId);
@@ -189,7 +194,14 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
 
   // Create appropriate element based on tagName
   let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
-  baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
+
+  if (toolMode === 'styles' && settingsPanel?.nodeId != nodeId) {
+    baseClasses += ' outline outline-1 outline-dotted outline-black';
+  } else if (settingsPanel?.nodeId === nodeId) {
+    baseClasses +=
+      ' outline-4 outline-dotted outline-orange-400 outline-offset-2';
+  }
+
   if (tagName === 'a') {
     return (
       <>

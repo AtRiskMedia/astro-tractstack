@@ -41,6 +41,7 @@ const ViewportComboBox = ({
 }: ViewportComboBoxProps) => {
   const brandColors = brandConfigStore.get()?.BRAND_COLOURS || '';
   const [internalValue, setInternalValue] = useState(value);
+  const [displayValue, setDisplayValue] = useState(value);
   const [query, setQuery] = useState('');
   const [isNowNegative, setIsNowNegative] = useState(isNegative);
 
@@ -54,6 +55,7 @@ const ViewportComboBox = ({
   useEffect(() => {
     if (value !== internalValue) {
       setInternalValue(value);
+      setDisplayValue(value);
       setQuery('');
     }
     if (isNegative !== isNowNegative) {
@@ -61,7 +63,6 @@ const ViewportComboBox = ({
     }
   }, [value, isNegative]);
 
-  // Create collection for combobox
   const collection = useMemo(() => {
     const filteredValues =
       query === ''
@@ -88,6 +89,7 @@ const ViewportComboBox = ({
   const handleInputChange = useCallback(
     (details: Combobox.InputValueChangeDetails) => {
       setQuery(details.inputValue);
+      setDisplayValue(details.inputValue);
     },
     []
   );
@@ -96,6 +98,7 @@ const ViewportComboBox = ({
     (details: { value: string[] }) => {
       const selectedValue = details.value[0] || '';
       setInternalValue(selectedValue);
+      setDisplayValue(selectedValue);
       setQuery('');
       const currentSignal = settingsPanelStore.get();
       if (currentSignal) {
@@ -114,13 +117,13 @@ const ViewportComboBox = ({
       onFinalChange(internalValue, viewport, isNowNegative);
     } else {
       setInternalValue(value);
+      setDisplayValue(value);
     }
     setQuery('');
   }, [internalValue, value, values, onFinalChange, viewport, isNowNegative]);
 
   const isColorValue = colorValues.includes(internalValue);
 
-  // CSS to properly style the combobox items with hover and selection
   const comboboxItemStyles = `
     .viewport-item[data-highlighted] {
       background-color: #0891b2; /* bg-cyan-600 */
@@ -151,6 +154,7 @@ const ViewportComboBox = ({
         <div className="flex items-center">
           <div className="relative flex-grow">
             <Combobox.Root
+              inputValue={displayValue}
               collection={collection}
               value={[internalValue]}
               onValueChange={handleValueChange}

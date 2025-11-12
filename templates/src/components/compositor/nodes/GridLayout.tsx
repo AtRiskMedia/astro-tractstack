@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
 import { isGridLayoutNode } from '@/utils/compositor/typeGuards';
 import type { NodeProps } from '@/types/nodeProps';
 import type { ParentClassesPayload } from '@/types/compositorTypes';
-import { viewportKeyStore } from '@/stores/storykeep';
+import { viewportKeyStore, settingsPanelStore } from '@/stores/storykeep';
 
 export const GridLayout = (props: NodeProps) => {
   const ctx = getCtx(props);
   const node = ctx.allNodes.get().get(props.nodeId);
+  const settingsPanel = useStore(settingsPanelStore);
 
   const [currentViewport, setCurrentViewport] = useState(
     viewportKeyStore.get().value
@@ -65,11 +67,18 @@ export const GridLayout = (props: NodeProps) => {
       break;
   }
   const gridClassName = `grid grid-cols-${gridCols}`;
+  const activeOutline =
+    settingsPanel?.nodeId === props.nodeId
+      ? ' outline-4 outline-dotted outline-orange-400 outline-offset-2'
+      : '';
 
   const children = ctx.getChildNodeIDs(props.nodeId);
 
   let nodesToRender: JSX.Element = (
-    <div className={gridClassName} style={{ position: 'relative', zIndex: 10 }}>
+    <div
+      className={`${gridClassName}${activeOutline}`}
+      style={{ position: 'relative', zIndex: 10 }}
+    >
       <RenderChildren children={children} nodeProps={props} />
     </div>
   );

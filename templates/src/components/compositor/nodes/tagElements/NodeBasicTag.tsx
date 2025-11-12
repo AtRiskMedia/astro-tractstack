@@ -37,7 +37,8 @@ const VERBOSE = false;
 export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
   const ctx = getCtx(props);
-  //const Tag = ctx.showGuids.get() ? `div` : props.tagName;
+  const settingsPanel = useStore(settingsPanelStore);
+  const toolMode = useStore(ctx.toolModeValStore).value;
   const Tag =
     ctx.toolModeValStore.get().value === `debug` ? `div` : props.tagName;
 
@@ -256,7 +257,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
   // For formatting nodes <em> and <strong> and <span>
   if (['em', 'strong', 'span'].includes(props.tagName)) {
-    const isEditorActive = toolModeVal === 'styles';
+    const isEditorActive = ['styles', 'text'].includes(toolModeVal);
+    const isEditorEnabled = toolModeVal === 'styles';
     const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -273,7 +275,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     };
 
     let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
-    baseClasses += ' outline outline-1 outline-dotted outline-gray-400/60';
+    baseClasses += ' outline outline-1 outline-dotted outline-black';
 
     return createElement(
       Tag,
@@ -296,7 +298,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
       },
       [
         <RenderChildren key="children" children={children} nodeProps={props} />,
-        isEditorActive && (
+        isEditorEnabled && (
           <span
             key="chip"
             className="absolute z-10 flex select-none gap-x-1"
@@ -754,13 +756,22 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     ctx.setClickedNodeId(nodeId, true);
   };
 
-  // Determine classes
   const baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
+  let outlineClasses = '';
+  if (settingsPanel?.nodeId === nodeId) {
+    outlineClasses +=
+      ' outline-4 outline-dotted outline-orange-400 outline-offset-2';
+  } else if (toolMode === 'styles') {
+    outlineClasses += ' hover:outline hover:outline-2 hover:outline-black';
+    if (['span', 'strong', 'em'].includes(props.tagName)) {
+      outlineClasses += ' outline outline-1 outline-dotted outline-black';
+    }
+  }
   const editingClasses =
     editState === 'editing'
       ? 'outline-2 outline-cyan-500 outline-offset-2'
       : '';
-  const className = `${baseClasses} ${editingClasses}`.trim();
+  const className = `${baseClasses} ${outlineClasses} ${editingClasses}`.trim();
 
   return (
     <>

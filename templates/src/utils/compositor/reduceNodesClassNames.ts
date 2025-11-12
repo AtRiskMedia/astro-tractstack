@@ -198,38 +198,3 @@ function getTailwindClassInfo(selector: string): {
     useKeyAsClass: classInfo.useKeyAsClass,
   };
 }
-
-export function processGridClassesToString(
-  classes?: DefaultClassValue
-): string {
-  if (!classes) {
-    return '';
-  }
-
-  const finalClasses: string[] = [];
-  const mobileStyles = classes.mobile || {};
-  const tabletStyles = classes.tablet || {};
-  const desktopStyles = classes.desktop || {};
-
-  for (const [selector, value] of Object.entries(mobileStyles)) {
-    if (value) {
-      finalClasses.push(reduceClassName(selector, value, 0));
-    }
-  }
-
-  for (const [selector, value] of Object.entries(tabletStyles)) {
-    if (value && mobileStyles[selector] !== value) {
-      finalClasses.push(reduceClassName(selector, value, 1));
-    }
-  }
-
-  for (const [selector, value] of Object.entries(desktopStyles)) {
-    const tabletValue = tabletStyles[selector];
-    const mobileValue = mobileStyles[selector];
-    if (value && tabletValue !== value && mobileValue !== value) {
-      finalClasses.push(reduceClassName(selector, value, 2));
-    }
-  }
-
-  return finalClasses.filter(Boolean).join(' ');
-}

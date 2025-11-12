@@ -73,19 +73,29 @@ const StyleParentPanel = ({
       return;
     }
 
+    // --- STABILIZATION FIX START ---
+    let effectiveNode = initialNode;
+    if (isMarkdownPaneFragmentNode(initialNode) && initialNode.parentId) {
+      const parent = ctx.allNodes.get().get(initialNode.parentId);
+      if (parent && isGridLayoutNode(parent)) {
+        effectiveNode = parent as GridLayoutNode;
+      }
+    }
+    // --- STABILIZATION FIX END ---
+
     const targets: StyleableTarget[] = [];
-    const isGrid = isGridLayoutNode(initialNode);
+    const isGrid = isGridLayoutNode(effectiveNode);
 
     targets.push({
-      id: initialNode.id,
+      id: effectiveNode.id,
       name: isGrid ? 'Outer Container' : 'Pane Styles',
-      node: initialNode,
+      node: effectiveNode,
       targetProperty: 'parentClasses',
     });
 
     if (isGrid) {
       const columnNodes = ctx
-        .getChildNodeIDs(initialNode.id)
+        .getChildNodeIDs(effectiveNode.id)
         .map((id) => ctx.allNodes.get().get(id) as BaseNode)
         .filter(isMarkdownPaneFragmentNode);
 
@@ -105,6 +115,11 @@ const StyleParentPanel = ({
 
     if (rememberedIndex != null && rememberedIndex < targets.length) {
       setSelectedTargetIndex(rememberedIndex);
+    } else if (initialNode.id !== effectiveNode.id) {
+      // If opened on a child column, find and select it in the list
+      const index = targets.findIndex((t) => t.id === initialNode.id);
+      if (index !== -1) setSelectedTargetIndex(index);
+      else setSelectedTargetIndex(0);
     } else {
       setSelectedTargetIndex(0);
     }
@@ -135,6 +150,30 @@ const StyleParentPanel = ({
     node: selectedTargetNode,
     targetProperty,
   } = selectedTarget;
+
+  const handleNavigation = (direction: 'prev' | 'next') => {
+    const len = styleTargets.length;
+    if (len < 2) return;
+
+    const newIndex =
+      direction === 'next'
+        ? (selectedTargetIndex + 1) % len
+        : (selectedTargetIndex - 1 + len) % len;
+
+    setSelectedTargetIndex(newIndex);
+
+    // Dispatch Signal to move the Orange Outline
+    const newTarget = styleTargets[newIndex];
+    const currentSettings = settingsPanelStore.get();
+
+    if (currentSettings && newTarget) {
+      settingsPanelStore.set({
+        ...currentSettings,
+        nodeId: newTarget.id,
+        action: 'style-parent',
+      });
+    }
+  };
 
   const handleLayerAdd = (position: 'before' | 'after', layerNum: number) => {
     const targetNode = cloneDeep(selectedTargetNode);
@@ -245,11 +284,7 @@ const StyleParentPanel = ({
   const TargetNavigator = () => (
     <div className="mb-4 flex items-center justify-between rounded-md bg-slate-100 p-2">
       <button
-        onClick={() =>
-          setSelectedTargetIndex(
-            (prev) => (prev - 1 + styleTargets.length) % styleTargets.length
-          )
-        }
+        onClick={() => handleNavigation('prev')}
         className="rounded-full p-1 text-gray-500 hover:bg-gray-200 hover:text-black"
         disabled={styleTargets.length < 2}
       >
@@ -259,9 +294,7 @@ const StyleParentPanel = ({
         {selectedTargetName}
       </span>
       <button
-        onClick={() =>
-          setSelectedTargetIndex((prev) => (prev + 1) % styleTargets.length)
-        }
+        onClick={() => handleNavigation('next')}
         className="rounded-full p-1 text-gray-500 hover:bg-gray-200 hover:text-black"
         disabled={styleTargets.length < 2}
       >

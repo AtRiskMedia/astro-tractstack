@@ -3,7 +3,7 @@ import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
 import { GhostInsertBlock } from './GhostInsertBlock';
-import { processGridClassesToString } from '@/utils/compositor/reduceNodesClassNames';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
 import type { NodeProps } from '@/types/nodeProps';
 import type {
   MarkdownPaneFragmentNode,
@@ -111,7 +111,29 @@ export const Markdown = (props: NodeProps) => {
         ? 'flex-row-reverse'
         : 'flex-row';
 
-  const gridClassName = processGridClassesToString(node.gridClasses);
+  const [all, mobile, tablet, desktop] = processClassesForViewports(
+    node.gridClasses || { mobile: {}, tablet: {}, desktop: {} },
+    {},
+    1
+  );
+
+  let gridClassName = '';
+  if (isPreview) gridClassName = desktop[0];
+  else {
+    switch (currentViewport) {
+      case 'desktop':
+        gridClassName = desktop[0];
+        break;
+      case 'tablet':
+        gridClassName = tablet[0];
+        break;
+      case 'mobile':
+        gridClassName = mobile[0];
+        break;
+      default:
+        gridClassName = all[0];
+    }
+  }
 
   let nodesToRender = (
     <>

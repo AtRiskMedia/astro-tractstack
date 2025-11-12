@@ -1489,24 +1489,19 @@ export class NodesContext {
             spanNode.overrideClasses || {},
             1
           );
-          const outlineClass =
-            this.toolModeValStore.get().value === 'styles'
-              ? ' outline outline-1 outline-dotted outline-gray-400/60'
-              : '';
-
           const getClassString = (classes: string[]): string =>
             classes && classes.length > 0 ? classes[0] : '';
 
-          if (isPreview) return getClassString(desktop) + outlineClass;
+          if (isPreview) return getClassString(desktop);
           switch (viewport) {
             case 'desktop':
-              return getClassString(desktop) + outlineClass;
+              return getClassString(desktop);
             case 'tablet':
-              return getClassString(tablet) + outlineClass;
+              return getClassString(tablet);
             case 'mobile':
-              return getClassString(mobile) + outlineClass;
+              return getClassString(mobile);
             default:
-              return getClassString(all) + outlineClass;
+              return getClassString(all);
           }
         }
 

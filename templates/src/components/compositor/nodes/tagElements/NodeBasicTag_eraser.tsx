@@ -30,7 +30,6 @@ export const NodeBasicTagEraser = (props: NodeTagProps) => {
       </div>
       <div className="flex items-center gap-1 rounded bg-white px-2 py-1 text-sm text-red-700 shadow-sm transition-colors group-focus-within:bg-red-700 group-focus-within:text-white group-hover:bg-red-700 group-hover:text-white">
         <TrashIcon className="h-4 w-4" />
-        Click anywhere to delete
       </div>
     </div>
   );

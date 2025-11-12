@@ -127,6 +127,7 @@ const getElement = (
   };
   const type = getType(node);
   const toolModeVal = getCtx(props).toolModeValStore.get().value;
+  const settingsPanel = useStore(settingsPanelStore);
 
   switch (type) {
     case 'Markdown': {
@@ -328,10 +329,14 @@ const getElement = (
     case 'aside':
     case 'p': {
       if (toolModeVal === 'styles') {
-        const className = getCtx(props).getNodeClasses(
+        let className = getCtx(props).getNodeClasses(
           node.id,
           viewportKeyStore.get().value
         );
+        if (settingsPanel?.nodeId === node.id) {
+          className +=
+            ' outline-4 outline-dotted outline-orange-400 outline-offset-2';
+        }
 
         const handleElementClick = (e: MouseEvent<HTMLElement>) => {
           e.stopPropagation();
