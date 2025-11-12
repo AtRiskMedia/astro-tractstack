@@ -516,6 +516,15 @@ export function extractClassesFromNodes(dirtyNodes: BaseNode[]): string[] {
         if (className.trim()) uniqueClasses.add(className.trim());
       });
     }
+
+    // Extract from gridCss arrays
+    if ('gridCss' in node && Array.isArray(node.gridCss)) {
+      node.gridCss.forEach((classString: string) => {
+        classString.split(' ').forEach((className: string) => {
+          if (className.trim()) uniqueClasses.add(className.trim());
+        });
+      });
+    }
   });
 
   return Array.from(uniqueClasses);
