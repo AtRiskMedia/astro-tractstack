@@ -12,6 +12,7 @@ import {
 import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
+import ChatBubbleBottomCenterTextIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterTextIcon';
 import { getCtx } from '@/stores/nodes';
 import {
   viewportKeyStore,
@@ -24,7 +25,7 @@ import {
   processRichTextToNodes,
   getTemplateNode,
 } from '@/utils/compositor/nodesHelper';
-import { cloneDeep } from '@/utils/helpers';
+import { cloneDeep, classNames } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
@@ -273,6 +274,15 @@ export const NodeBasicTag = (props: NodeTagProps) => {
       e.stopPropagation();
       ctx.unwrapNode(nodeId);
     };
+    const handleWordCarouselClick = (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      settingsPanelStore.set({
+        action: 'style-word-carousel',
+        nodeId: nodeId,
+        expanded: true,
+      });
+    };
 
     let baseClasses = ctx.getNodeClasses(nodeId, viewportKeyStore.get().value);
     baseClasses += ' outline outline-1 outline-dotted outline-black';
@@ -300,7 +310,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         <RenderChildren key="children" children={children} nodeProps={props} />,
         isEditorEnabled && (
           <span
-            key="chip"
+            key={`toolbar-${nodeId}`}
             className="absolute z-10 flex select-none gap-x-1"
             data-attr="exclude"
             style={{ top: '-0.9rem', left: '0' }}
@@ -309,7 +319,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
               <button
                 type="button"
                 onClick={handleStyleClick}
-                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100/90 text-blue-700 shadow-sm hover:bg-blue-300/50 focus:outline-none"
+                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 bg-opacity-90 text-blue-700 shadow-sm hover:bg-blue-300 focus:outline-none"
                 aria-label="Style selection"
                 data-attr="exclude"
               >
@@ -318,8 +328,22 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             )}
             <button
               type="button"
+              onClick={handleWordCarouselClick}
+              className={classNames("flex h-4 w-4 items-center justify-center rounded-full shadow-sm bg-opacity-50 focus:outline-none",
+                node.wordCarouselPayload
+                  ? "bg-green-100 text-green-700 hover:bg-green-300" : "bg-gray-100 bg-opacity-90 text-gray-700 hover:bg-gray-300")}
+              aria-label="Edit Carousel"
+              data-attr="exclude"
+            >
+              <ChatBubbleBottomCenterTextIcon
+                className="h-3 w-3"
+                data-attr="exclude"
+              />
+            </button>
+            <button
+              type="button"
               onClick={handleUnwrapClick}
-              className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100/90 text-gray-700 shadow-sm hover:bg-gray-300/50 focus:outline-none"
+              className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 bg-opacity-90 text-gray-700 shadow-sm hover:bg-gray-300 focus:outline-none"
               aria-label="Remove formatting"
               data-attr="exclude"
             >

@@ -399,6 +399,10 @@ export interface FlatNode extends BaseNode {
   };
   elementCss?: string;
   buttonPayload?: ButtonPayload;
+  wordCarouselPayload?: {
+    words: string[];
+    speed: number;
+  };
 }
 export type ButtonPayload = {
   buttonClasses: Record<string, string[]>;

@@ -1422,6 +1422,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/panels/StyleWordCarouselPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/StyleWordCarouselPanel.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/panels/StyleBreakPanel.tsx'
       ),
       dest: 'src/components/edit/panels/StyleBreakPanel.tsx',

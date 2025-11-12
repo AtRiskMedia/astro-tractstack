@@ -83,6 +83,7 @@ export function transformToOptionsPayload(
           codeHookParams: flatNode.codeHookParams,
           buttonPayload: flatNode.buttonPayload,
           overrideClasses: flatNode.overrideClasses,
+          wordCarouselPayload: flatNode.wordCarouselPayload,
         };
 
         if (VERBOSE)

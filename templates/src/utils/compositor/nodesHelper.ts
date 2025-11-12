@@ -371,8 +371,10 @@ export function processRichTextToNodes(
         } else if (node.tagName === 'span') {
           node.elementCss = matchingOriginalNode.elementCss;
           node.overrideClasses = matchingOriginalNode.overrideClasses;
+          if (matchingOriginalNode.wordCarouselPayload) {
+            node.wordCarouselPayload = matchingOriginalNode.wordCarouselPayload;
+          }
         }
-        console.log(node);
       } else if (onInsertSignal) {
         // New interactive element detected, trigger insert signal
         onInsertSignal(node.tagName, node.id);

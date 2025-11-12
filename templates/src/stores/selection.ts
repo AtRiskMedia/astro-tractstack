@@ -18,7 +18,7 @@ export interface SelectionStoreState extends SelectionRange {
   isDragging: boolean;
   isActive: boolean;
   selectionBox: SelectionBox | null;
-  pendingAction: 'style' | 'link' | null;
+  pendingAction: 'style' | 'link' | 'carousel' | null;
   isRestyleModalOpen: boolean;
   paneToRestyleId: string | null;
 }

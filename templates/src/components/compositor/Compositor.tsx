@@ -26,7 +26,7 @@ import {
   resetSelectionStore,
   type SelectionStoreState,
 } from '@/stores/selection';
-import type { LoadData } from '@/types/compositorTypes';
+import type { LoadData, FlatNode } from '@/types/compositorTypes';
 import type {
   Theme,
   BrandConfig,
@@ -408,6 +408,38 @@ export const Compositor = (props: CompositorProps) => {
             nodeId: newSpanNodeId,
             expanded: true,
           });
+        }
+        resetSelectionStore();
+      } else if ($selection.pendingAction === 'carousel') {
+        if (VERBOSE) console.log(LOG_PREFIX + 'useEffect acting on: carousel');
+        const newSpanNodeId = await ctx.wrapRangeInSpan(
+          range as SelectionStoreState,
+          'span'
+        );
+
+        if (newSpanNodeId) {
+          const node = ctx.allNodes.get().get(newSpanNodeId);
+          const childIds = ctx.getChildNodeIDs(newSpanNodeId);
+          let initialText = '';
+          childIds.forEach((childId) => {
+            const child = ctx.allNodes.get().get(childId) as FlatNode;
+            if (child && child.copy) initialText += child.copy;
+          });
+          const words = initialText ? [initialText] : [];
+          if (node) {
+            ctx.modifyNodes([
+              {
+                ...node,
+                wordCarouselPayload: { words, speed: 2 },
+                isChanged: true,
+              } as FlatNode,
+            ]);
+            settingsPanelStore.set({
+              action: 'style-word-carousel',
+              nodeId: newSpanNodeId,
+              expanded: true,
+            });
+          }
         }
         resetSelectionStore();
       }

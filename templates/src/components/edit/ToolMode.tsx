@@ -8,6 +8,7 @@ import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
 import LinkIcon from '@heroicons/react/24/solid/LinkIcon';
+import ChatBubbleBottomCenterTextIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterTextIcon';
 import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
@@ -97,6 +98,10 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
     selectionStore.setKey('pendingAction', 'link');
   };
 
+  const handleCarouselClick = () => {
+    selectionStore.setKey('pendingAction', 'carousel');
+  };
+
   const handleCancelClick = () => {
     resetSelectionStore();
   };
@@ -183,6 +188,15 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
                 title="Hyperlink"
               >
                 <LinkIcon className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleCarouselClick}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 shadow-sm hover:bg-blue-200"
+                aria-label="Create Word Carousel"
+                title="Word Carousel"
+              >
+                <ChatBubbleBottomCenterTextIcon className="h-5 w-5" />
               </button>
               <button
                 type="button"

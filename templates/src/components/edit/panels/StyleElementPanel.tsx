@@ -1,4 +1,5 @@
 import { useMemo, useEffect } from 'react';
+import Cog6ToothIcon from '@heroicons/react/24/outline/Cog6ToothIcon';
 import {
   styleElementInfoStore,
   resetStyleElementInfo,
@@ -141,6 +142,29 @@ const StyleElementPanel = ({
 
   return (
     <div className="space-y-4">
+      {node.wordCarouselPayload && (
+        <div className="pb-2">
+          <div className="text-myblack hover:bg-mygreen/20 w-fit rounded border border-slate-200 p-2 text-sm">
+            <div
+              title="Configure Word Carousel"
+              className="flex items-center gap-2 font-bold"
+            >
+              <Cog6ToothIcon className="h-4 w-4" />
+              <button
+                onClick={() =>
+                  settingsPanelStore.set({
+                    nodeId: node.id,
+                    action: 'style-word-carousel',
+                    expanded: true,
+                  })
+                }
+              >
+                Configure Word Carousel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {Object.keys(mergedClasses).length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {Object.entries(mergedClasses).map(([className, values]) => (

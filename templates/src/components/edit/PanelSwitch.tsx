@@ -34,6 +34,7 @@ import StyleLiElementPanel from './panels/StyleLiElementPanel';
 import StyleLiElementAddPanel from './panels/StyleLiElementPanel_add';
 import StyleLiElementUpdatePanel from './panels/StyleLiElementPanel_update';
 import StyleLiElementRemovePanel from './panels/StyleLiElementPanel_remove';
+import StyleWordCarouselPanel from './panels/StyleWordCarouselPanel';
 import StyleCodeHookPanel from './panels/StyleCodeHookPanel';
 import { getSettingsPanelTitle } from '@/utils/helpers';
 import type {
@@ -268,6 +269,10 @@ const PanelSwitch = ({
             onTitleChange={onTitleChange}
           />
         );
+      break;
+
+    case 'style-word-carousel':
+      if (clickedNode) return <StyleWordCarouselPanel node={clickedNode} />;
       break;
 
     case 'style-image': {
