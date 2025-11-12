@@ -1228,27 +1228,6 @@ export class NodesContext {
     }
   }
 
-  //getStyleByViewport(
-  //  defaultClasses:
-  //    | {
-  //        mobile?: Record<string, string> | undefined;
-  //        tablet?: Record<string, string> | undefined;
-  //        desktop?: Record<string, string> | undefined;
-  //      }
-  //    | undefined,
-  //  viewport: ViewportKey
-  //): Record<string, string> {
-  //  switch (viewport) {
-  //    case "desktop":
-  //      return defaultClasses?.desktop || {};
-  //    case "tablet":
-  //      return defaultClasses?.tablet || {};
-  //    default:
-  //    case "mobile":
-  //      return defaultClasses?.mobile || {};
-  //  }
-  //}
-
   getNodeSlug(nodeId: string): string {
     const node = this.allNodes.get().get(nodeId);
     if (!node || !(`slug` in node) || typeof node.slug !== `string`) return '';
