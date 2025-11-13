@@ -1,15 +1,19 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import Cog6ToothIcon from '@heroicons/react/24/outline/Cog6ToothIcon';
 import {
   styleElementInfoStore,
   resetStyleElementInfo,
   settingsPanelStore,
 } from '@/stores/storykeep';
+import { getCtx } from '@/stores/nodes';
 import { StylesMemory } from '@/components/edit/state/StylesMemory';
 import {
   isMarkdownPaneFragmentNode,
   isGridLayoutNode,
 } from '@/utils/compositor/typeGuards';
+import { getNodeText } from '@/utils/compositor/nodesHelper';
+import { cloneDeep } from '@/utils/helpers';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import { tagTitles } from '@/types/compositorTypes';
 import type {
@@ -18,6 +22,78 @@ import type {
   MarkdownPaneFragmentNode,
   GridLayoutNode,
 } from '@/types/compositorTypes';
+
+type SpanOverride = {
+  mobile?: Record<string, string>;
+  tablet?: Record<string, string>;
+  desktop?: Record<string, string>;
+};
+
+const spanStyleClasses: SpanOverride[] = [
+  {
+    mobile: {
+      bgCLIP: 'text',
+      bgGradientDIRECTION: 'r',
+      gradientFrom: 'blue-600',
+      gradientTo: 'teal-500',
+      textCOLOR: 'transparent',
+    },
+  },
+  {
+    mobile: {
+      textCOLOR: 'blue-600',
+    },
+  },
+  {
+    mobile: {
+      bgCOLOR: 'yellow-300',
+      textCOLOR: 'slate-900',
+      px: '1',
+      rounded: 'sm',
+    },
+  },
+  {
+    mobile: {
+      display: 'inline-block',
+      bgCOLOR: 'indigo-100',
+      textCOLOR: 'indigo-700',
+      textSIZE: 'xs',
+      fontWEIGHT: 'bold',
+      px: '2.5',
+      py: '0.5',
+      rounded: 'full',
+    },
+  },
+  {
+    mobile: {
+      bgCLIP: 'text',
+      textCOLOR: 'transparent',
+      bgGradientDIRECTION: 'r',
+      gradientFrom: 'orange-400',
+      gradientVia: 'pink-500',
+      gradientTo: 'purple-600',
+      fontWEIGHT: 'bold',
+    },
+  },
+  {
+    mobile: {
+      textDECORATION: 'underline',
+      textDECORATIONSTYLE: 'wavy',
+      textDECORATIONCOLOR: 'teal-400',
+      textDECORATIONTHICKNESS: '4',
+      textUNDERLINEOFFSET: '4',
+    },
+  },
+  {
+    mobile: {
+      display: 'inline-block',
+      bgCOLOR: 'rose-500',
+      textCOLOR: 'white',
+      px: '2',
+      skew: '-3',
+    },
+  },
+];
 
 export interface StyleElementPanelProps {
   node: FlatNode;
@@ -30,6 +106,8 @@ const StyleElementPanel = ({
   parentNode,
   onTitleChange,
 }: StyleElementPanelProps) => {
+  const [showPresets, setShowPresets] = useState(true);
+
   if (
     !node?.tagName ||
     (!isMarkdownPaneFragmentNode(parentNode) && !isGridLayoutNode(parentNode))
@@ -40,6 +118,18 @@ const StyleElementPanel = ({
   const defaultClasses = parentNode.defaultClasses?.[node.tagName];
   const overrideClasses = node.overrideClasses;
 
+  const hasOverrides = useMemo(() => {
+    return (
+      overrideClasses &&
+      ((overrideClasses.mobile &&
+        Object.keys(overrideClasses.mobile).length > 0) ||
+        (overrideClasses.tablet &&
+          Object.keys(overrideClasses.tablet).length > 0) ||
+        (overrideClasses.desktop &&
+          Object.keys(overrideClasses.desktop).length > 0))
+    );
+  }, [overrideClasses]);
+
   const mergedClasses = useMemo(() => {
     const result: {
       [key: string]: {
@@ -49,7 +139,6 @@ const StyleElementPanel = ({
       };
     } = {};
 
-    // First add all default classes
     if (defaultClasses) {
       Object.keys(defaultClasses.mobile).forEach((className) => {
         result[className] = {
@@ -64,7 +153,6 @@ const StyleElementPanel = ({
       });
     }
 
-    // Then overlay any override classes
     if (overrideClasses) {
       ['mobile', 'tablet', 'desktop'].forEach((viewport) => {
         const viewportOverrides =
@@ -114,6 +202,24 @@ const StyleElementPanel = ({
     });
   };
 
+  const applySpanPreset = (styleIndex: number) => {
+    const ctx = getCtx();
+    const allNodes = ctx.allNodes.get();
+    const targetNode = cloneDeep(allNodes.get(node.id)) as FlatNode;
+    if (!targetNode) return;
+
+    const preset = spanStyleClasses[styleIndex];
+
+    targetNode.overrideClasses = {
+      ...targetNode.overrideClasses,
+      ...preset,
+    };
+
+    ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+
+    setShowPresets(false);
+  };
+
   useEffect(() => {
     if (
       styleElementInfoStore.get().markdownParentId !== parentNode.id ||
@@ -140,6 +246,10 @@ const StyleElementPanel = ({
     }
   }, [node?.tagName, onTitleChange]);
 
+  const shouldShowQuickStyles =
+    node.tagName === 'span' && !hasOverrides && showPresets;
+  const nodeText = shouldShowQuickStyles ? getNodeText(node) : '';
+
   return (
     <div className="space-y-4">
       {node.wordCarouselPayload && (
@@ -165,42 +275,90 @@ const StyleElementPanel = ({
           </div>
         </div>
       )}
-      {Object.keys(mergedClasses).length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(mergedClasses).map(([className, values]) => (
-            <SelectedTailwindClass
-              key={className}
-              name={className}
-              values={values}
-              onRemove={handleRemove}
-              onUpdate={handleUpdate}
-            />
-          ))}
+
+      {shouldShowQuickStyles ? (
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-mydarkgrey text-sm font-bold">
+              Quick Style Selection
+            </h3>
+            <p className="text-xs text-gray-500">
+              Select a preset style for your text selection.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {spanStyleClasses.map((style, index) => {
+              const [classesPayload] = processClassesForViewports(
+                style as any,
+                {},
+                1
+              );
+              const combinedClasses = classesPayload[0] || '';
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => applySpanPreset(index)}
+                  className="group w-full text-left text-xl transition-colors hover:outline-dotted hover:outline-2 hover:outline-black"
+                >
+                  <span className={combinedClasses}>
+                    {nodeText || 'Sample Text'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="border-t border-gray-100 pt-4">
+            <button
+              onClick={() => setShowPresets(false)}
+              className="text-myblue w-full text-center text-sm underline hover:text-black"
+            >
+              Apply your own styles manually
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          <em>No styles.</em>
-        </div>
-      )}
+        <>
+          {Object.keys(mergedClasses).length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(mergedClasses).map(([className, values]) => (
+                <SelectedTailwindClass
+                  key={className}
+                  name={className}
+                  values={values}
+                  onRemove={handleRemove}
+                  onUpdate={handleUpdate}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <em>No styles.</em>
+            </div>
+          )}
 
-      <div className="space-y-4">
-        <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
-          <li>
-            <em>Actions:</em>
-          </li>
-          <li>
-            <button
-              onClick={() => handleClickAdd()}
-              className="text-myblue font-bold underline hover:text-black"
-            >
-              Add Style
-            </button>
-          </li>
-          <li>
-            <StylesMemory node={node} parentNode={parentNode} />
-          </li>
-        </ul>
-      </div>
+          <div className="space-y-4">
+            <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+              <li>
+                <em>Actions:</em>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleClickAdd()}
+                  className="text-myblue font-bold underline hover:text-black"
+                >
+                  Add Style
+                </button>
+              </li>
+              <li>
+                <StylesMemory node={node} parentNode={parentNode} />
+              </li>
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 };

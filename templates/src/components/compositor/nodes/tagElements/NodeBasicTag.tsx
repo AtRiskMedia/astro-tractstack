@@ -329,9 +329,12 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             <button
               type="button"
               onClick={handleWordCarouselClick}
-              className={classNames("flex h-4 w-4 items-center justify-center rounded-full shadow-sm bg-opacity-50 focus:outline-none",
+              className={classNames(
+                'flex h-4 w-4 items-center justify-center rounded-full bg-opacity-50 shadow-sm focus:outline-none',
                 node.wordCarouselPayload
-                  ? "bg-green-100 text-green-700 hover:bg-green-300" : "bg-gray-100 bg-opacity-90 text-gray-700 hover:bg-gray-300")}
+                  ? 'bg-green-100 text-green-700 hover:bg-green-300'
+                  : 'bg-gray-100 bg-opacity-90 text-gray-700 hover:bg-gray-300'
+              )}
               aria-label="Edit Carousel"
               data-attr="exclude"
             >

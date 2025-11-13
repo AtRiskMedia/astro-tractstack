@@ -55,7 +55,7 @@ const StyleWordCarouselPanel = ({ node }: StyleWordCarouselPanelProps) => {
           firstWord,
           node.id,
           [],
-          () => { }
+          () => {}
         );
         if (newNodes.length > 0) {
           ctx.addNodes(newNodes);
@@ -149,10 +149,11 @@ const StyleWordCarouselPanel = ({ node }: StyleWordCarouselPanelProps) => {
             <button
               key={s}
               onClick={() => handleSpeedChange(s)}
-              className={`rounded px-3 py-1 text-sm font-bold transition-colors ${speed === s
-                ? 'bg-myblue text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+              className={`rounded px-3 py-1 text-sm font-bold transition-colors ${
+                speed === s
+                  ? 'bg-myblue text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
             >
               {s}s
             </button>
