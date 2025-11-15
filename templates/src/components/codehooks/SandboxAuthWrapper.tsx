@@ -5,22 +5,48 @@ import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
 import { ProfileStorage } from '@/utils/profileStorage';
 import SandboxRegisterForm from '@/components/codehooks/SandboxRegisterForm';
 
-export default function SandboxAuthWrapper() {
+interface SandboxAuthWrapperProps {
+  isServerSideAuthenticated: boolean;
+}
+
+export default function SandboxAuthWrapper({
+  isServerSideAuthenticated,
+}: SandboxAuthWrapperProps) {
   const [profileExists, setProfileExists] = useState<boolean | null>(null);
 
   useEffect(() => {
-    setProfileExists(ProfileStorage.hasProfile());
-  }, []);
+    const hasLocalProfile = ProfileStorage.hasProfile();
+
+    if (hasLocalProfile && !isServerSideAuthenticated) {
+      const token = localStorage.getItem('tractstack_profile_token');
+
+      if (token) {
+        ProfileStorage.storeProfileToken(token);
+        window.location.reload();
+        return;
+      } else {
+        ProfileStorage.clearProfile();
+        setProfileExists(false);
+      }
+    } else {
+      setProfileExists(hasLocalProfile);
+    }
+  }, [isServerSideAuthenticated]);
 
   const handleRegistrationSuccess = () => {
     setProfileExists(true);
+    window.location.reload();
   };
 
   const handleClose = () => {
     window.location.href = '/';
   };
 
-  if (profileExists === null || profileExists === true) {
+  if (profileExists === true && isServerSideAuthenticated) {
+    return null;
+  }
+
+  if (profileExists === null) {
     return null;
   }
 
