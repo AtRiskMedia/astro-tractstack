@@ -281,12 +281,15 @@ export interface MarkdownPaneFragmentNode extends PaneFragmentNode {
   parentClasses?: ParentClassesPayload;
   parentCss?: string[];
   gridClasses?: DefaultClassValue;
+  gridCss?: string;
 }
 
 export interface GridLayoutNode extends PaneFragmentNode {
   nodeType: 'GridLayoutNode';
   type: 'grid-layout';
   parentClasses?: ParentClassesPayload;
+  parentCss?: string;
+  gridCss?: string;
   defaultClasses?: Record<
     string,
     {

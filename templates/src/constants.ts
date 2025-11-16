@@ -141,6 +141,9 @@ export const toolAddModes = [
   //"aside",
 ] as const;
 
+export const regexpHook =
+  /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|interactiveDisclosure|signup)\((.*)\)$/;
+
 export const toolAddModeTitles: Record<ToolAddMode, string> = {
   p: 'Paragraph',
   h2: 'Heading 2',
@@ -292,9 +295,6 @@ export const contactPersona = [
     disabled: false,
   },
 ];
-
-export const regexpHook =
-  /^(identifyAs|youtube|bunny|bunnyContext|toggle|resource|belief|interactiveDisclosure|signup)\((.*)\)$/;
 
 export const biIcons = [
   '0-circle',

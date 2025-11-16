@@ -5,25 +5,41 @@ import type { TemplatePane } from '@/types/compositorTypes';
 interface DirectInjectStepProps {
   onBack: () => void;
   onCreatePane: (template: TemplatePane) => void;
+  layout: 'standard' | 'grid';
 }
 
 export const DirectInjectStep = ({
   onBack,
   onCreatePane,
+  layout,
 }: DirectInjectStepProps) => {
   const [shellJson, setShellJson] = useState('');
-  const [copyHtml, setCopyHtml] = useState('');
+  const [columnContent, setColumnContent] = useState<string[]>(
+    layout === 'grid' ? ['', ''] : ['']
+  );
   const [error, setError] = useState<string | null>(null);
+
+  const handleContentChange = (index: number, value: string) => {
+    const newContent = [...columnContent];
+    newContent[index] = value;
+    setColumnContent(newContent);
+  };
 
   const handleCreate = () => {
     setError(null);
-    if (!shellJson.trim() || !copyHtml.trim()) {
-      setError('Both Shell JSON and Inner HTML must be provided.');
+    if (!shellJson.trim()) {
+      setError('Shell JSON must be provided.');
+      return;
+    }
+    if (columnContent.some((c) => !c.trim())) {
+      setError('All content fields must be filled.');
       return;
     }
 
     try {
-      const finalPane = parseAiPane(shellJson, copyHtml, 'DirectInject');
+      const contentPayload =
+        layout === 'standard' ? columnContent[0] : columnContent;
+      const finalPane = parseAiPane(shellJson, contentPayload, 'DirectInject');
       onCreatePane(finalPane);
     } catch (err: any) {
       console.error('Direct Inject Error:', err);
@@ -52,22 +68,27 @@ export const DirectInjectStep = ({
             placeholder={`{ "bgColour": "#ffffff", "parentClasses": [...], "defaultClasses": {...} }`}
           />
         </div>
-        <div>
-          <label
-            htmlFor="copyHtml"
-            className="block text-sm font-bold text-gray-700"
-          >
-            Inner HTML
-          </label>
-          <textarea
-            id="copyHtml"
-            rows={10}
-            value={copyHtml}
-            onChange={(e) => setCopyHtml(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-            placeholder={`<h2 class="...">...</h2>\n<p class="...">...</p>`}
-          />
-        </div>
+
+        {columnContent.map((content, index) => (
+          <div key={index}>
+            <label
+              htmlFor={`copyHtml-${index}`}
+              className="block text-sm font-bold text-gray-700"
+            >
+              {layout === 'grid'
+                ? `Inner HTML (Column ${index + 1})`
+                : 'Inner HTML'}
+            </label>
+            <textarea
+              id={`copyHtml-${index}`}
+              rows={layout === 'grid' ? 6 : 10}
+              value={content}
+              onChange={(e) => handleContentChange(index, e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+              placeholder={`<h2 class="...">...</h2>\n<p class="...">...</p>`}
+            />
+          </div>
+        ))}
       </div>
 
       {error && (
@@ -85,7 +106,6 @@ export const DirectInjectStep = ({
         </button>
         <button
           onClick={handleCreate}
-          disabled={!shellJson.trim() || !copyHtml.trim()}
           className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           Create Pane

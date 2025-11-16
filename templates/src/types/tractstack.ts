@@ -4,6 +4,8 @@ export type DesignLibraryEntry = {
   category: string;
   title: string;
   markdownCount: number;
+  retain?: boolean;
+  locked?: boolean;
   template: StoragePane;
 };
 

@@ -3199,6 +3199,9 @@ export class NodesContext {
       const allOriginalNodes: TemplateNode[] = [];
       const columnNodes: TemplateMarkdown[] = [];
 
+      // Instantiate generator for column markdown parsing
+      const markdownGen = new MarkdownGenerator(this);
+
       duplicatedGrid.nodes?.forEach((originalColumn) => {
         const newColumn = cloneDeep(originalColumn);
         newColumn.id = ulid();
@@ -3206,12 +3209,22 @@ export class NodesContext {
         oldToNewIdMap.set(originalColumn.id, newColumn.id);
         columnNodes.push(newColumn);
 
-        originalColumn.nodes?.forEach((colNode) => {
-          allOriginalNodes.push(colNode);
-        });
+        if (originalColumn.markdownBody) {
+          const columnContentNodes = markdownGen.markdownToFlatNodes(
+            originalColumn.markdownBody,
+            newColumn.id
+          ) as TemplateNode[];
+          // Add generated nodes directly to allNodes
+          allNodes.push(...columnContentNodes);
+        } else {
+          // Standard flow: collect existing nodes for remapping
+          originalColumn.nodes?.forEach((colNode) => {
+            allOriginalNodes.push(colNode);
+          });
+        }
       });
 
-      // Second pass: Clone all descendant nodes
+      // Second pass: Clone all descendant nodes (only those from the standard flow)
       const allClonedDescendants = allOriginalNodes.map((originalNode) => {
         const newNode = cloneDeep(originalNode);
         newNode.id = ulid();

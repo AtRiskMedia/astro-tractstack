@@ -62,7 +62,7 @@ function convertLiveNodeToStorageNode(
     fileId: copyMode === 'retain' ? node.fileId : undefined,
     buttonPayload: copyMode === 'retain' ? node.buttonPayload : undefined,
     codeHookParams: copyMode === 'retain' ? node.codeHookParams : undefined,
-    elementCss: copyMode === 'retain' ? node.elementCss : undefined,
+    copy: copyMode === 'retain' ? node.copy : undefined,
   };
 
   const childIds = ctx.getChildNodeIDs(node.id);
@@ -500,7 +500,8 @@ function convertLivePaneToStoragePane(
           : [],
     };
   } else if (gridLayoutNode) {
-    const { id, parentId, isChanged, ...restOfGrid } = gridLayoutNode;
+    const { id, parentId, isChanged, parentCss, gridCss, ...restOfGrid } =
+      gridLayoutNode;
     storageGridLayout = {
       ...restOfGrid,
       nodes: ctx
@@ -517,6 +518,7 @@ function convertLivePaneToStoragePane(
             isChanged,
             markdownId,
             parentCss,
+            gridCss,
             ...restOfColumn
           } = columnNode;
 
@@ -584,10 +586,11 @@ export async function savePaneToLibrary(
     title: string;
     category: string;
     copyMode: CopyMode;
+    locked?: boolean;
   }
 ): Promise<BrandConfigState | null> {
   const ctx = getCtx();
-  const { title, category, copyMode } = formData;
+  const { title, category, copyMode, locked } = formData;
 
   const newStoragePane = convertLivePaneToStoragePane(paneId, ctx, {
     title,
@@ -613,6 +616,8 @@ export async function savePaneToLibrary(
     title: title,
     markdownCount: actualMarkdownCount,
     template: newStoragePane,
+    retain: copyMode === 'retain',
+    locked: !!locked,
   };
 
   const currentState: BrandConfigState = convertToLocalState(config);

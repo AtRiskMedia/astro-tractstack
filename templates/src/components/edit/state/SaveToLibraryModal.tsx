@@ -4,6 +4,8 @@ import { savePaneToLibrary } from '@/utils/compositor/designLibraryHelper';
 import { convertToBackendFormat } from '@/utils/api/brandHelpers';
 import StringInput from '@/components/form/StringInput';
 import { brandConfigStore } from '@/stores/storykeep';
+import { getCtx } from '@/stores/nodes';
+import type { FlatNode } from '@/types/compositorTypes';
 
 interface SaveToLibraryModalProps {
   paneId: string;
@@ -42,6 +44,7 @@ export function SaveToLibraryModal({
   const [selectedCategory, setSelectedCategory] = useState(OTHER_CATEGORY);
   const [customCategory, setCustomCategory] = useState('');
   const [copyMode, setCopyMode] = useState<CopyMode>('retain');
+  const [locked, setLocked] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [error, setError] = useState('');
 
@@ -53,6 +56,34 @@ export function SaveToLibraryModal({
         .filter((v, i, a) => a.indexOf(v) === i) || [];
     return [...cats, OTHER_CATEGORY];
   }, [designLibrary]);
+
+  useEffect(() => {
+    const ctx = getCtx();
+    const childIds = ctx.getChildNodeIDs(paneId);
+
+    const hasWidget = (ids: string[]): boolean => {
+      for (const id of ids) {
+        const node = ctx.allNodes.get().get(id) as FlatNode;
+        if (!node) continue;
+
+        // Strict check for widget based on tagName being 'code'
+        if (node.tagName === 'code') {
+          return true;
+        }
+
+        const children = ctx.getChildNodeIDs(id);
+        if (children.length > 0 && hasWidget(children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (hasWidget(childIds)) {
+      setLocked(true);
+      setCopyMode('retain');
+    }
+  }, [paneId]);
 
   useEffect(() => {
     if (saveState === 'saved') {
@@ -77,6 +108,7 @@ export function SaveToLibraryModal({
       title: title,
       category: finalCategory,
       copyMode: copyMode,
+      locked: locked,
     };
     const brandConfig = brandConfigStore.get();
 
@@ -90,7 +122,7 @@ export function SaveToLibraryModal({
       if (newBrandConfig) {
         const backendDTO = convertToBackendFormat(newBrandConfig);
         brandConfigStore.set({
-          ...backendDTO, // Use the converted DTO
+          ...backendDTO,
           TENANT_ID: brandConfig.TENANT_ID,
         });
         setSaveState('saved');
@@ -106,7 +138,7 @@ export function SaveToLibraryModal({
 
   return (
     <div
-      className="z-105 fixed inset-0 flex items-center justify-center bg-black/50"
+      className="z-105 fixed inset-0 flex items-center justify-center bg-black bg-opacity-75"
       onClick={saveState === 'idle' ? onClose : undefined}
     >
       <div
@@ -151,38 +183,40 @@ export function SaveToLibraryModal({
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-bold text-gray-700">
-              Content Mode
-            </label>
-            <fieldset className="mt-2">
-              <legend className="sr-only">Copy Mode</legend>
-              <div className="space-y-2">
-                {copyOptions.map((option) => (
-                  <div key={option.id} className="flex items-center">
-                    <input
-                      id={option.id}
-                      name="copy-mode"
-                      type="radio"
-                      value={option.id}
-                      checked={copyMode === option.id}
-                      onChange={() => setCopyMode(option.id)}
-                      className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
-                    />
-                    <label
-                      htmlFor={option.id}
-                      className="ml-3 block text-sm font-bold text-gray-700"
-                    >
-                      {option.title}
-                      <p className="text-xs text-gray-500">
-                        {option.description}
-                      </p>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </fieldset>
-          </div>
+          {!locked && (
+            <div>
+              <label className="block text-sm font-bold text-gray-700">
+                Content Mode
+              </label>
+              <fieldset className="mt-2">
+                <legend className="sr-only">Copy Mode</legend>
+                <div className="space-y-2">
+                  {copyOptions.map((option) => (
+                    <div key={option.id} className="flex items-center">
+                      <input
+                        id={option.id}
+                        name="copy-mode"
+                        type="radio"
+                        value={option.id}
+                        checked={copyMode === option.id}
+                        onChange={() => setCopyMode(option.id)}
+                        className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <label
+                        htmlFor={option.id}
+                        className="ml-3 block text-sm font-bold text-gray-700"
+                      >
+                        {option.title}
+                        <p className="text-xs text-gray-500">
+                          {option.description}
+                        </p>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </fieldset>
+            </div>
+          )}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>

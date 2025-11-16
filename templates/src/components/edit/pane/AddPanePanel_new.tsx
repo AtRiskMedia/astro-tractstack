@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import DocumentPlusIcon from '@heroicons/react/24/outline/DocumentPlusIcon';
 import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import SwatchIcon from '@heroicons/react/24/outline/SwatchIcon';
@@ -12,7 +12,7 @@ import prompts from '@/constants/prompts.json';
 import type { DesignLibraryEntry } from '@/types/tractstack';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
 import { useStore } from '@nanostores/react';
-import { CopyInputStep } from './steps/CopyInputStep';
+import { CopyInputStep, type CopyMode } from './steps/CopyInputStep';
 import { DesignLibraryStep } from './steps/DesignLibraryStep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
 import { parseAiPane, parseAiCopyHtml } from '@/utils/compositor/aiPaneParser';
@@ -21,6 +21,8 @@ import {
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
 import { DirectInjectStep } from './steps/DirectInjectStep';
+import BooleanToggle from '@/components/form/BooleanToggle';
+import EnumSelect from '@/components/form/EnumSelect';
 
 type Step =
   | 'initial'
@@ -33,7 +35,6 @@ type Step =
   | 'directInject';
 
 type InitialChoice = 'library' | 'ai' | 'blank';
-type CopyMode = 'prompt' | 'raw';
 type LayoutChoice = 'standard' | 'grid';
 type ColumnPresetKey = 'left' | 'right';
 
@@ -140,12 +141,13 @@ const AddPaneNewPanel = ({
   const [layoutChoice, setLayoutChoice] = useState<LayoutChoice>('standard');
   const [error, setError] = useState<string | null>(null);
 
-  // Standard / Single Column State
+  const [selectedPromptId, setSelectedPromptId] = useState<string>('');
+  const [isAiStyling, setIsAiStyling] = useState(false);
+
   const [copyMode, setCopyMode] = useState<CopyMode>('prompt');
   const [promptValue, setPromptValue] = useState('');
   const [copyValue, setCopyValue] = useState('');
 
-  // Grid / 2-Column State (Strictly Prompt-Only)
   const [overallPrompt, setOverallPrompt] = useState(
     prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.default
   );
@@ -155,6 +157,8 @@ const AddPaneNewPanel = ({
   const [promptValueCol2, setPromptValueCol2] = useState(
     prompts.aiPaneCopyPrompt_2cols.presets.heroDefault.right.prompt
   );
+  const [col1Copy, setCol1Copy] = useState('');
+  const [col2Copy, setCol2Copy] = useState('');
 
   const [selectedLibraryEntry, setSelectedLibraryEntry] =
     useState<DesignLibraryEntry | null>(null);
@@ -165,6 +169,52 @@ const AddPaneNewPanel = ({
     theme: 'Light',
     additionalNotes: '',
   });
+
+  const promptOptions = useMemo(() => {
+    return prompts.aiPromptsIndex
+      .filter((p) => p.layout === layoutChoice)
+      .map((p) => ({ label: p.label, value: p.id }));
+  }, [layoutChoice]);
+
+  useEffect(() => {
+    if (promptOptions.length > 0) {
+      const currentValid = promptOptions.find(
+        (p) => p.value === selectedPromptId
+      );
+      if (!currentValid) {
+        setSelectedPromptId(promptOptions[0].value);
+      }
+    }
+  }, [promptOptions, selectedPromptId]);
+
+  useEffect(() => {
+    if (!selectedPromptId) return;
+
+    const activeConfig = prompts.aiPromptsIndex.find(
+      (p) => p.id === selectedPromptId
+    );
+    if (!activeConfig) return;
+
+    const promptKey = activeConfig.prompts.copy;
+    const copyPromptGroup = (prompts as any)[promptKey];
+    if (!copyPromptGroup) return;
+
+    const variant = activeConfig.variants
+      ? activeConfig.variants[0]
+      : 'default';
+
+    if (layoutChoice === 'standard') {
+      const newText = copyPromptGroup[variant] || '';
+      setPromptValue(newText);
+    } else if (layoutChoice === 'grid') {
+      const preset = copyPromptGroup.presets?.[variant];
+      if (preset) {
+        setOverallPrompt(preset.default || '');
+        setPromptValueCol1(preset.left?.prompt || '');
+        setPromptValueCol2(preset.right?.prompt || '');
+      }
+    }
+  }, [selectedPromptId, layoutChoice]);
 
   const handleInitialChoice = (choice: InitialChoice) => {
     setInitialChoice(choice);
@@ -279,6 +329,18 @@ const AddPaneNewPanel = ({
       setLayoutChoice('standard');
     }
 
+    if (entry.locked) {
+      const liveTemplate = convertStorageToLiveTemplate(entry.template);
+      handleApplyTemplate(liveTemplate);
+      return;
+    }
+
+    if (entry.retain) {
+      setCopyMode('original');
+    } else {
+      setCopyMode('prompt');
+    }
+
     setStep('copyInput');
   };
 
@@ -295,27 +357,60 @@ const AddPaneNewPanel = ({
         const liveTemplate = convertStorageToLiveTemplate(
           selectedLibraryEntry.template
         );
+
+        if (copyMode === 'original') {
+          handleApplyTemplate(liveTemplate);
+          return;
+        }
+
         const shellResult = convertTemplateToAIShell(liveTemplate);
         const layout = 'Text Only';
 
         if (layoutChoice === 'grid' && liveTemplate.gridLayout) {
+          if (copyMode === 'raw' && isAiStyling) {
+            const activeConfig =
+              prompts.aiPromptsIndex.find((p) => p.id === selectedPromptId) ||
+              prompts.aiPromptsIndex.find((p) => p.layout === 'grid') ||
+              prompts.aiPromptsIndex[0];
+
+            const stylePromptKey = activeConfig.prompts.style;
+            const stylePromptDetails = (prompts as any)[stylePromptKey];
+
+            const copyResults: string[] = [];
+            const rawContents = [col1Copy, col2Copy];
+
+            for (const rawContent of rawContents) {
+              const formattedStylePrompt = stylePromptDetails.user_template
+                .replace('{{SHELL_JSON}}', shellResult)
+                .replace('{{COPY_INPUT}}', rawContent);
+
+              const styledResult = await callAskLemurAPI(
+                formattedStylePrompt,
+                stylePromptDetails.system || '',
+                false,
+                isSandboxMode
+              );
+              copyResults.push(styledResult);
+            }
+            const finalPane = parseAiPane(shellResult, copyResults, layout);
+            handleApplyTemplate(finalPane);
+            return;
+          }
+
+          if (copyMode === 'raw') {
+            const nodes = liveTemplate.gridLayout.nodes;
+            if (nodes && nodes[0]) nodes[0].markdownBody = col1Copy;
+            if (nodes && nodes[1]) nodes[1].markdownBody = col2Copy;
+            handleApplyTemplate(liveTemplate);
+            return;
+          }
+
           const copyPromptDetails = prompts.aiPaneCopyPrompt_2cols;
           const preset = copyPromptDetails.presets.heroDefault;
           const copyResults: string[] = [];
-
-          // Only prompt mode supported for grid now
-          const promptsToRun: {
-            prompt: string;
-            presetKey: ColumnPresetKey;
-          }[] = [
-            {
-              prompt: promptValueCol1,
-              presetKey: 'left',
-            },
-            {
-              prompt: promptValueCol2,
-              presetKey: 'right',
-            },
+          const promptsToRun = [
+            { prompt: promptValueCol1, presetKey: 'left' as ColumnPresetKey },
+            { prompt: promptValueCol2, presetKey: 'right' as ColumnPresetKey },
           ];
 
           for (const item of promptsToRun) {
@@ -339,16 +434,36 @@ const AddPaneNewPanel = ({
             );
             copyResults.push(copyResult);
           }
-
           const finalPane = parseAiPane(shellResult, copyResults, layout);
           handleApplyTemplate(finalPane);
         } else if (layoutChoice === 'standard' && liveTemplate.markdown) {
+          if (copyMode === 'raw' && isAiStyling) {
+            const activeConfig =
+              prompts.aiPromptsIndex.find((p) => p.id === selectedPromptId) ||
+              prompts.aiPromptsIndex[0];
+            const stylePromptKey = activeConfig.prompts.style;
+            const stylePromptDetails = (prompts as any)[stylePromptKey];
+
+            const formattedStylePrompt = stylePromptDetails.user_template
+              .replace('{{SHELL_JSON}}', shellResult)
+              .replace('{{COPY_INPUT}}', copyValue);
+
+            const styledResult = await callAskLemurAPI(
+              formattedStylePrompt,
+              stylePromptDetails.system || '',
+              false,
+              isSandboxMode
+            );
+            const finalPane = parseAiPane(shellResult, styledResult, layout);
+            handleApplyTemplate(finalPane);
+            return;
+          }
+
           if (copyMode === 'raw') {
             liveTemplate.markdown.markdownBody = copyValue;
             handleApplyTemplate(liveTemplate);
             return;
           }
-
           if (copyMode === 'prompt') {
             if (!shellResult || shellResult === '{}') {
               throw new Error(
@@ -387,6 +502,11 @@ const AddPaneNewPanel = ({
           );
         }
       } else if (initialChoice === 'ai') {
+        const activeConfig = prompts.aiPromptsIndex.find(
+          (p) => p.id === selectedPromptId
+        );
+        if (!activeConfig) throw new Error('Selected prompt type not found.');
+
         let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
         if (aiDesignConfig.baseColor)
           designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
@@ -396,9 +516,11 @@ const AddPaneNewPanel = ({
           designInput += ` Refine with these notes: "${aiDesignConfig.additionalNotes}"`;
 
         const layout = 'Text Only';
+        const promptMap = prompts as any;
 
         if (layoutChoice === 'standard') {
-          const shellPromptDetails = prompts.aiPaneShellPrompt;
+          const shellPromptKey = activeConfig.prompts.shell;
+          const shellPromptDetails = promptMap[shellPromptKey];
           const formattedShellPrompt = shellPromptDetails.user_template
             .replace('{{DESIGN_INPUT}}', designInput)
             .replace('{{LAYOUT_TYPE}}', layout);
@@ -410,7 +532,8 @@ const AddPaneNewPanel = ({
             isSandboxMode
           );
 
-          const copyPromptDetails = prompts.aiPaneCopyPrompt;
+          const copyPromptKey = activeConfig.prompts.copy;
+          const copyPromptDetails = promptMap[copyPromptKey];
           const copyInputContent =
             copyMode === 'prompt' ? promptValue : copyValue;
           const formattedCopyPrompt = copyPromptDetails.user_template
@@ -428,7 +551,8 @@ const AddPaneNewPanel = ({
           const finalPane = parseAiPane(shellResult, copyResult, layout);
           handleApplyTemplate(finalPane);
         } else if (layoutChoice === 'grid') {
-          const shellPromptDetails = prompts.aiPaneShellPrompt_2cols;
+          const shellPromptKey = activeConfig.prompts.shell;
+          const shellPromptDetails = promptMap[shellPromptKey];
           const formattedShellPrompt = shellPromptDetails.user_template
             .replace('{{COPY_INPUT}}', overallPrompt)
             .replace('{{DESIGN_INPUT}}', designInput);
@@ -440,23 +564,16 @@ const AddPaneNewPanel = ({
             isSandboxMode
           );
 
-          const copyPromptDetails = prompts.aiPaneCopyPrompt_2cols;
-          const preset = copyPromptDetails.presets.heroDefault;
+          const copyPromptKey = activeConfig.prompts.copy;
+          const copyPromptDetails = promptMap[copyPromptKey];
+          const preset =
+            copyPromptDetails.presets?.[activeConfig.variants[0]] ||
+            copyPromptDetails.presets?.heroDefault;
           const copyResults: string[] = [];
 
-          // Grid is strictly prompt-based
-          const promptsToRun: {
-            prompt: string;
-            presetKey: ColumnPresetKey;
-          }[] = [
-            {
-              prompt: promptValueCol1,
-              presetKey: 'left',
-            },
-            {
-              prompt: promptValueCol2,
-              presetKey: 'right',
-            },
+          const promptsToRun = [
+            { prompt: promptValueCol1, presetKey: 'left' as ColumnPresetKey },
+            { prompt: promptValueCol2, presetKey: 'right' as ColumnPresetKey },
           ];
 
           for (const item of promptsToRun) {
@@ -491,6 +608,8 @@ const AddPaneNewPanel = ({
     copyMode,
     promptValue,
     copyValue,
+    col1Copy,
+    col2Copy,
     overallPrompt,
     promptValueCol1,
     promptValueCol2,
@@ -499,6 +618,8 @@ const AddPaneNewPanel = ({
     layoutChoice,
     selectedLibraryEntry,
     handleApplyTemplate,
+    selectedPromptId,
+    isAiStyling,
   ]);
 
   const renderInitialStep = () => (
@@ -584,50 +705,160 @@ const AddPaneNewPanel = ({
   const renderContentStep = () => {
     if (layoutChoice === 'grid') {
       const isGenerateDisabled =
-        !overallPrompt.trim() ||
-        !promptValueCol1.trim() ||
-        !promptValueCol2.trim();
+        copyMode === 'prompt'
+          ? !overallPrompt.trim() ||
+            !promptValueCol1.trim() ||
+            !promptValueCol2.trim()
+          : copyMode === 'raw'
+            ? !col1Copy.trim() || !col2Copy.trim()
+            : false;
 
       return (
         <div className="space-y-4 p-4">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-gray-700">
-              Overall Component Brief
-            </label>
-            <textarea
-              value={overallPrompt}
-              onChange={(e) => setOverallPrompt(e.target.value)}
-              rows={3}
-              className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              This context is applied to both columns.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-bold text-gray-700">
-                Left Column Prompt
-              </label>
-              <textarea
-                value={promptValueCol1}
-                onChange={(e) => setPromptValueCol1(e.target.value)}
-                rows={4}
-                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+          <label className="block text-lg font-bold text-gray-800">
+            1. Provide Content
+          </label>
+
+          <div className="my-2 flex flex-wrap gap-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={copyMode === 'prompt'}
+                onChange={() => setCopyMode('prompt')}
+                className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
               />
+              <label className="text-sm font-bold text-gray-700">Prompt</label>
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-bold text-gray-700">
-                Right Column Prompt
-              </label>
-              <textarea
-                value={promptValueCol2}
-                onChange={(e) => setPromptValueCol2(e.target.value)}
-                rows={4}
-                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                checked={copyMode === 'raw'}
+                onChange={() => setCopyMode('raw')}
+                className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
               />
+              <label className="text-sm font-bold text-gray-700">
+                Manual Markdown
+              </label>
             </div>
+            {selectedLibraryEntry?.retain && (
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  checked={copyMode === 'original'}
+                  onChange={() => setCopyMode('original')}
+                  className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                />
+                <label className="text-sm font-bold text-gray-700">
+                  Use Original
+                </label>
+              </div>
+            )}
           </div>
+
+          {copyMode === 'raw' && initialChoice === 'library' && (
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2">
+              <span className="text-sm text-gray-600">
+                Style this content with AI?
+              </span>
+              <div className="flex items-center">
+                <BooleanToggle
+                  label="AI Styles"
+                  value={isAiStyling}
+                  onChange={setIsAiStyling}
+                  size="sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {copyMode === 'prompt' && (
+            <>
+              <div className="mb-4">
+                <EnumSelect
+                  label="Section Type"
+                  value={selectedPromptId}
+                  onChange={setSelectedPromptId}
+                  options={promptOptions}
+                  placeholder="Select a section type..."
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">
+                  Overall Component Brief
+                </label>
+                <textarea
+                  value={overallPrompt}
+                  onChange={(e) => setOverallPrompt(e.target.value)}
+                  rows={3}
+                  className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  This context is applied to both columns.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-gray-700">
+                    Left Column Prompt
+                  </label>
+                  <textarea
+                    value={promptValueCol1}
+                    onChange={(e) => setPromptValueCol1(e.target.value)}
+                    rows={4}
+                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-gray-700">
+                    Right Column Prompt
+                  </label>
+                  <textarea
+                    value={promptValueCol2}
+                    onChange={(e) => setPromptValueCol2(e.target.value)}
+                    rows={4}
+                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {copyMode === 'raw' && (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">
+                  Left Column Markdown
+                </label>
+                <textarea
+                  value={col1Copy}
+                  onChange={(e) => setCol1Copy(e.target.value)}
+                  rows={8}
+                  className="block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-bold text-gray-700">
+                  Right Column Markdown
+                </label>
+                <textarea
+                  value={col2Copy}
+                  onChange={(e) => setCol2Copy(e.target.value)}
+                  rows={8}
+                  className="block w-full rounded-md border-gray-300 p-2 font-mono text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {copyMode === 'original' && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 p-4 text-blue-700">
+              <p className="text-sm">
+                The original text saved with this design will be used.
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-between">
             <button
               onClick={handleBack}
@@ -656,11 +887,18 @@ const AddPaneNewPanel = ({
           onPromptValueChange={setPromptValue}
           copyValue={copyValue}
           onCopyValueChange={setCopyValue}
+          hasRetainedContent={selectedLibraryEntry?.retain}
           defaultPrompt={
             first
               ? prompts.aiPaneCopyPrompt.heroDefault
               : prompts.aiPaneCopyPrompt.contentDefault
           }
+          promptOptions={promptOptions}
+          selectedPromptId={selectedPromptId}
+          onSelectedPromptIdChange={setSelectedPromptId}
+          isAiStyling={isAiStyling}
+          onIsAiStylingChange={setIsAiStyling}
+          showStyleToggle={initialChoice === 'library'}
         />
         <div className="flex justify-between">
           <button
@@ -672,7 +910,11 @@ const AddPaneNewPanel = ({
           <button
             onClick={handleFinalGenerate}
             disabled={
-              copyMode === 'prompt' ? !promptValue.trim() : !copyValue.trim()
+              copyMode === 'prompt'
+                ? !promptValue.trim()
+                : copyMode === 'raw'
+                  ? !copyValue.trim()
+                  : false
             }
             className="rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
@@ -732,7 +974,11 @@ const AddPaneNewPanel = ({
   );
 
   const renderDirectInjectStep = () => (
-    <DirectInjectStep onBack={handleBack} onCreatePane={handleApplyTemplate} />
+    <DirectInjectStep
+      onBack={handleBack}
+      onCreatePane={handleApplyTemplate}
+      layout={layoutChoice}
+    />
   );
 
   const renderLoading = () => (

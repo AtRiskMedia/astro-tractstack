@@ -93,24 +93,6 @@ export const isMarkdownPaneFragmentNode = (
   );
 };
 
-interface WidgetNode extends FlatNode {
-  tagName: 'code';
-  codeHookParams: (string | string[])[];
-  copy: string;
-}
-
-export const isWidgetNode = (
-  node: BaseNode | FlatNode | null
-): node is WidgetNode => {
-  return (
-    node !== null &&
-    'tagName' in node &&
-    node.tagName === 'code' &&
-    'codeHookParams' in node &&
-    Array.isArray(node.codeHookParams)
-  );
-};
-
 export function hasTagName(
   node: BaseNode | null | undefined
 ): node is FlatNode {
