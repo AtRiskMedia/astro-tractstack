@@ -35,6 +35,7 @@ import type {
   MenuNode,
   NodeType,
   PaneFragmentNode,
+  BgImageNode,
   PaneNode,
   StoryFragmentNode,
   Tag,
@@ -3262,6 +3263,15 @@ export class NodesContext {
           breakDesktop: visualBreakPane.breakDesktop,
           breakTablet: visualBreakPane.breakTablet,
           breakMobile: visualBreakPane.breakMobile,
+        };
+        allNodes.push(bgPaneNode);
+      } else if (paneTemplate.bgPane.type === 'background-image') {
+        const bgImagePane = paneTemplate.bgPane as BgImageNode;
+        const bgPaneNode: BgImageNode = {
+          ...bgImagePane,
+          id: bgPaneId,
+          nodeType: 'BgPane',
+          parentId: newPaneId,
         };
         allNodes.push(bgPaneNode);
       } else if (paneTemplate.bgPane.type === 'artpack-image') {

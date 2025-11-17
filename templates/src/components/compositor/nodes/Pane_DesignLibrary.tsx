@@ -9,26 +9,53 @@ import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
 import { CodeHookContainer } from './Pane';
 import type { NodeProps } from '@/types/nodeProps';
+import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
 import { SaveToLibraryModal } from '@/components/edit/state/SaveToLibraryModal';
 import { RestylePaneModal } from '@/components/edit/pane/RestylePaneModal';
 import { selectionStore } from '@/stores/selection';
 import { copyPaneToClipboard } from '@/utils/compositor/designLibraryHelper';
 
+function getSizeClasses(
+  size: string,
+  side: 'image' | 'content',
+  viewport: string
+): string {
+  if (viewport === 'mobile') {
+    return 'w-full';
+  }
+  switch (size) {
+    case 'narrow':
+      return side === 'image' ? 'w-1/3' : 'w-2/3';
+    case 'wide':
+      return side === 'image' ? 'w-2/3' : 'w-1/3';
+    default:
+      return 'w-1/2';
+  }
+}
+
 export const Pane_DesignLibrary = (props: NodeProps) => {
   const ctx = getCtx(props);
-
   const { isRestyleModalOpen } = useStore(selectionStore, {
     keys: ['isRestyleModalOpen'],
   });
-
-  const wrapperClasses = `grid ${ctx.getNodeClasses(
-    props.nodeId,
+  const [currentViewport, setCurrentViewport] = useState(
     viewportKeyStore.get().value
-  )}`;
+  );
+
+  useEffect(() => {
+    const unsubscribeViewport = viewportKeyStore.subscribe((newViewport) => {
+      setCurrentViewport(newViewport.value);
+    });
+    return () => unsubscribeViewport();
+  }, []);
+
+  const wrapperClasses = `grid ${ctx.getNodeClasses(props.nodeId, currentViewport)}`;
   const contentClasses = 'relative w-full h-auto justify-self-start';
   const contentStyles: CSSProperties = {
     ...ctx.getNodeCSSPropertiesStyles(props.nodeId),
     gridArea: '1/1/1/1',
+    position: 'relative',
+    zIndex: 1,
   };
   const codeHookPayload = ctx.getNodeCodeHookPayload(props.nodeId);
   const [children, setChildren] = useState<string[]>([
@@ -36,11 +63,14 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
   ]);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [wasCopied, setWasCopied] = useState(false);
+  const [renderCount, setRenderCount] = useState(0);
+
   const getPaneId = (): string => `pane-${props.nodeId}`;
 
   useEffect(() => {
     const unsubscribe = ctx.notifications.subscribe(props.nodeId, () => {
       setChildren([...ctx.getChildNodeIDs(props.nodeId)]);
+      setRenderCount((prev) => prev + 1);
     });
     return unsubscribe;
   }, [props.nodeId, ctx.notifications]);
@@ -65,54 +95,145 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     }
   };
 
+  const Buttons = () => (
+    <div className="absolute left-2 top-2 z-10 flex flex-row gap-x-2">
+      {!props.isSandboxMode && (
+        <button
+          title="Save Pane to Design Library"
+          onClick={handleSaveClick}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-600 p-1.5 shadow-lg hover:bg-cyan-700"
+        >
+          <ArchiveBoxArrowDownIcon className="h-7 w-7 text-white" />
+        </button>
+      )}
+      <button
+        title="Restyle Pane from Design Library"
+        onClick={handleRestyleClick}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 p-1.5 shadow-lg hover:bg-blue-700"
+      >
+        <ArrowPathRoundedSquareIcon className="h-7 w-7 text-white" />
+      </button>
+      <button
+        title="Copy Pane Design to Clipboard"
+        onClick={handleCopyToClipboard}
+        className={`flex h-10 w-10 items-center justify-center rounded-full p-1.5 shadow-lg transition-colors ${
+          wasCopied ? 'bg-green-500' : 'bg-gray-600 hover:bg-gray-700'
+        }`}
+      >
+        {wasCopied ? (
+          <CheckIcon className="h-7 w-7 text-white" />
+        ) : (
+          <ArrowDownTrayIcon className="h-7 w-7 text-white" />
+        )}
+      </button>
+    </div>
+  );
+
+  const allNodes = ctx.allNodes.get();
+  const bgNode = children
+    .map((id) => allNodes.get(id))
+    .find(
+      (node) =>
+        node?.nodeType === 'BgPane' &&
+        'type' in node &&
+        (node.type === 'background-image' || node.type === 'artpack-image')
+    ) as (BgImageNode | ArtpackImageNode) | undefined;
+
+  const useFlexLayout =
+    bgNode &&
+    (bgNode.position === 'leftBleed' || bgNode.position === 'rightBleed');
+  const deferFlexLayout =
+    bgNode && (bgNode.position === 'left' || bgNode.position === 'right');
+
+  const flexDirection =
+    currentViewport === 'mobile'
+      ? 'flex-col'
+      : bgNode?.position === 'rightBleed'
+        ? 'flex-row-reverse'
+        : 'flex-row';
+
   return (
     <div id={getPaneId()} className="pane min-h-16">
-      <div id={ctx.getNodeSlug(props.nodeId)} className={wrapperClasses}>
-        <div
-          className={contentClasses}
-          style={contentStyles}
-          onClick={(e) => {
-            ctx.setClickedNodeId(props.nodeId);
-            e.stopPropagation();
-          }}
-        >
-          <div className="absolute left-2 top-2 z-10 flex flex-row gap-x-2">
-            {!props.isSandboxMode && (
-              <button
-                title="Save Pane to Design Library"
-                onClick={handleSaveClick}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-600 p-1.5 shadow-lg hover:bg-cyan-700"
-              >
-                <ArchiveBoxArrowDownIcon className="h-7 w-7 text-white" />
-              </button>
-            )}
-            <button
-              title="Restyle Pane from Design Library"
-              onClick={handleRestyleClick}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 p-1.5 shadow-lg hover:bg-blue-700"
-            >
-              <ArrowPathRoundedSquareIcon className="h-7 w-7 text-white" />
-            </button>
-            <button
-              title="Copy Pane Design to Clipboard"
-              onClick={handleCopyToClipboard}
-              className={`flex h-10 w-10 items-center justify-center rounded-full p-1.5 shadow-lg transition-colors ${
-                wasCopied ? 'bg-green-500' : 'bg-gray-600 hover:bg-gray-700'
-              }`}
-            >
-              {wasCopied ? (
-                <CheckIcon className="h-7 w-7 text-white" />
-              ) : (
-                <ArrowDownTrayIcon className="h-7 w-7 text-white" />
-              )}
-            </button>
-          </div>
-          {codeHookPayload ? (
+      <div
+        id={ctx.getNodeSlug(props.nodeId)}
+        className={useFlexLayout ? '' : wrapperClasses}
+      >
+        {codeHookPayload ? (
+          <div className={contentClasses} style={contentStyles}>
+            <Buttons />
             <CodeHookContainer payload={codeHookPayload} />
-          ) : (
-            <RenderChildren children={children} nodeProps={props} />
-          )}
-        </div>
+          </div>
+        ) : useFlexLayout ? (
+          <div
+            className={`flex flex-nowrap ${flexDirection} ${ctx.getNodeClasses(props.nodeId, currentViewport)}`}
+          >
+            <div
+              className={`relative overflow-hidden ${getSizeClasses(bgNode.size || 'equal', 'image', currentViewport)}`}
+            >
+              <RenderChildren
+                children={children.filter((id) => {
+                  const node = allNodes.get(id);
+                  return node?.nodeType === 'BgPane';
+                })}
+                nodeProps={props}
+                key={`bg-children-${props.nodeId}-${renderCount}`}
+              />
+            </div>
+            <div
+              className={`${contentClasses} ${getSizeClasses(bgNode.size || 'equal', 'content', currentViewport)}`}
+              style={ctx.getNodeCSSPropertiesStyles(props.nodeId)}
+              onClick={(e) => {
+                ctx.setClickedNodeId(props.nodeId);
+                e.stopPropagation();
+              }}
+            >
+              <Buttons />
+              <RenderChildren
+                children={children.filter((id) => {
+                  const node = allNodes.get(id);
+                  return node?.nodeType !== 'BgPane';
+                })}
+                nodeProps={props}
+                key={`content-children-${props.nodeId}-${renderCount}`}
+              />
+            </div>
+          </div>
+        ) : deferFlexLayout ? (
+          <div
+            className={contentClasses}
+            style={contentStyles}
+            onClick={(e) => {
+              ctx.setClickedNodeId(props.nodeId);
+              e.stopPropagation();
+            }}
+          >
+            <Buttons />
+            <RenderChildren
+              children={children.filter((id) => {
+                const node = allNodes.get(id);
+                return node?.nodeType !== 'BgPane';
+              })}
+              nodeProps={props}
+              key={`content-children-${props.nodeId}-${renderCount}`}
+            />
+          </div>
+        ) : (
+          <div
+            className={contentClasses}
+            style={contentStyles}
+            onClick={(e) => {
+              ctx.setClickedNodeId(props.nodeId);
+              e.stopPropagation();
+            }}
+          >
+            <Buttons />
+            <RenderChildren
+              children={children}
+              nodeProps={props}
+              key={`render-children-${props.nodeId}-${renderCount}`}
+            />
+          </div>
+        )}
       </div>
       {isSaveModalOpen && (
         <SaveToLibraryModal

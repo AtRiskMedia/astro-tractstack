@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+#### [2.0.31] - 2025-11-15
+
+### Added
+
+- allow BgNode (background image) on storage panes
+- redirect path on re-auth
+
+### Fixed
+
+- background image on eraser and designLibrary mode
+
 #### [2.0.30] - 2025-11-15
 
 ### Added

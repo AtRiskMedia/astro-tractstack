@@ -78,7 +78,8 @@ export function getUserRole(astro: any): 'admin' | 'editor' | null {
  */
 export function requireAdmin(astro: any): Response | undefined {
   if (!isAdmin(astro)) {
-    return astro.redirect('/storykeep/login');
+    const target = encodeURIComponent(astro.url.pathname + astro.url.search);
+    return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
 }
 
@@ -88,7 +89,8 @@ export function requireAdmin(astro: any): Response | undefined {
  */
 export function requireEditor(astro: any): Response | undefined {
   if (!isEditor(astro)) {
-    return astro.redirect('/storykeep/login');
+    const target = encodeURIComponent(astro.url.pathname + astro.url.search);
+    return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
 }
 
@@ -98,7 +100,8 @@ export function requireEditor(astro: any): Response | undefined {
  */
 export function requireAdminOrEditor(astro: any): Response | undefined {
   if (!isAuthenticated(astro)) {
-    return astro.redirect('/storykeep/login');
+    const target = encodeURIComponent(astro.url.pathname + astro.url.search);
+    return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
 }
 

@@ -16,6 +16,8 @@ import {
   hasArtpacksStore,
   settingsPanelStore,
   brandConfigStore,
+  viewportModeStore,
+  setViewportMode,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
@@ -283,6 +285,12 @@ export const Compositor = (props: CompositorProps) => {
     selectionStore.setKey('isDragging', false);
     selectionOrigin.current = null;
   };
+
+  useEffect(() => {
+    if (viewportModeStore.get() === 'auto') {
+      setViewportMode('auto');
+    }
+  }, []);
 
   useEffect(() => {
     fullContentMapStore.set(props.fullContentMap);
