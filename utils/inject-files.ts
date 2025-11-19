@@ -2086,20 +2086,6 @@ export async function injectTemplateFiles(
       src: resolve('../templates/socials/youtube.svg'),
       dest: 'public/socials/youtube.svg',
     },
-
-    // Multi-Tenant Features
-    {
-      src: resolve('../templates/src/components/tenant/RegistrationForm.tsx'),
-      dest: 'src/components/tenant/RegistrationForm.tsx',
-    },
-    {
-      src: resolve('../templates/src/utils/api/tenantConfig.ts'),
-      dest: 'src/utils/api/tenantConfig.ts',
-    },
-    {
-      src: resolve('../templates/src/utils/api/tenantHelpers.ts'),
-      dest: 'src/utils/api/tenantHelpers.ts',
-    },
     // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
@@ -2107,19 +2093,6 @@ export async function injectTemplateFiles(
           {
             src: resolve('../templates/src/middleware.ts'),
             dest: 'src/middleware.ts',
-          },
-          // Pages
-          {
-            src: resolve('../templates/src/pages/sandbox/register.astro'),
-            dest: 'src/pages/sandbox/register.astro',
-          },
-          {
-            src: resolve('../templates/src/pages/sandbox/activate.astro'),
-            dest: 'src/pages/sandbox/activate.astro',
-          },
-          {
-            src: resolve('../templates/src/pages/sandbox/success.astro'),
-            dest: 'src/pages/sandbox/success.astro',
           },
         ]
       : []),
