@@ -29,6 +29,8 @@ export const codehookMapStore = atom<string[]>([]);
 
 export const pendingHomePageSlugStore = atom<string | null>(null);
 
+export const saasModalOpenStore = atom<boolean>(false);
+
 // Tool mode types
 export type ToolModeVal =
   | 'styles'

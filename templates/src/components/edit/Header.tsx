@@ -14,6 +14,7 @@ import {
   setViewportMode,
   settingsPanelStore,
   pendingHomePageSlugStore,
+  saasModalOpenStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME } from '@/stores/nodes';
 import SaveModal from '@/components/edit/state/SaveModal';
@@ -48,7 +49,11 @@ const StoryKeepHeader = ({
   }, [ctx.history]);
 
   const handleSave = () => {
-    setShowSaveModal(true);
+    if (isSandboxMode) {
+      saasModalOpenStore.set(true);
+    } else {
+      setShowSaveModal(true);
+    }
   };
 
   const handleCloseSaveModal = () => {
@@ -167,7 +172,7 @@ const StoryKeepHeader = ({
           </div>
         )}
 
-        {shouldShowSave && !isSandboxMode && (
+        {shouldShowSave && (
           <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             <button
               onClick={handleSave}

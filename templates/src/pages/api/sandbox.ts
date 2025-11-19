@@ -1,7 +1,6 @@
 import type { APIRoute } from '@/types/astro';
 
 export const POST: APIRoute = async ({ request }) => {
-  console.log(1);
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
   const sharedSecret = import.meta.env.PRIVATE_SANDBOX_SECRET;
@@ -9,9 +8,6 @@ export const POST: APIRoute = async ({ request }) => {
     request.headers.get('X-Tenant-ID') ||
     import.meta.env.PUBLIC_TENANTID ||
     'default';
-  console.log(goBackend);
-  console.log(sharedSecret);
-  console.log(tenantId);
 
   if (!sharedSecret || sharedSecret === 'false' || sharedSecret === 'true') {
     return new Response(
@@ -35,12 +31,10 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 403, headers: { 'Content-Type': 'application/json' } }
     );
   }
-  console.log(profileCookie);
 
   try {
     const body = await request.json();
     const { action, payload } = body;
-    console.log(action, payload);
 
     if (action !== 'askLemur') {
       return new Response(

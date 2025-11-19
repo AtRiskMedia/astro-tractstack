@@ -4,7 +4,9 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import { components as codeHookComponents } from '@/custom/CodeHook.astro';
+import CodeHook, {
+  components as codeHookComponents,
+} from '@/custom/CodeHook.astro';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
@@ -62,6 +64,16 @@ const hasProfile = Astro.request.headers
   isEditor={true}
 >
   <SandboxAuthWrapper client:load isServerSideAuthenticated={!!hasProfile} />
+
+  <CodeHook
+    target="get-tractstack"
+    options={{
+      params: {
+        options: JSON.stringify({ isEmbedded: false }),
+      },
+    }}
+  />
+
   <Header
     title={title}
     slug="sandbox"

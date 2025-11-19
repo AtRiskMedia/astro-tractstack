@@ -23,6 +23,7 @@ import {
 import { DirectInjectStep } from './steps/DirectInjectStep';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import EnumSelect from '@/components/form/EnumSelect';
+import type { StoryFragmentNode } from '@/types/compositorTypes';
 
 type Step =
   | 'initial'
@@ -306,8 +307,12 @@ const AddPaneNewPanel = ({
             first ? 'before' : 'after'
           );
         });
-        ctx.notifyNode(`root`);
+        const storyFragment = cloneDeep(
+          ctx.allNodes.get().get(ownerId)
+        ) as StoryFragmentNode;
+        ctx.modifyNodes([{ ...storyFragment, isChanged: true }]);
       }
+      ctx.notifyNode(`root`);
       setParentMode(PaneAddMode.DEFAULT, false);
     } catch (err) {
       console.error('Error inserting template:', err);
