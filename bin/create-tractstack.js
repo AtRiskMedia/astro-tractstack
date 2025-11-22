@@ -496,8 +496,8 @@ export default defineConfig({
   integrations: [
     react(),
     tractstack({
-      includeExamples: ${responses.includeExamples},
-      enableMultiTenant: ${responses.enableMultiTenant},
+      includeExamples: ${finalResponses.includeExamples},
+      enableMultiTenant: ${finalResponses.enableMultiTenant},
     }),
   ],
   output: 'server',
@@ -515,8 +515,8 @@ export default defineConfig({
   integrations: [
     react(),
     tractstack({
-      includeExamples: ${responses.includeExamples},
-      enableMultiTenant: ${responses.enableMultiTenant},
+      includeExamples: ${finalResponses.includeExamples},
+      enableMultiTenant: ${finalResponses.enableMultiTenant},
     }),
   ],
   output: 'server',
@@ -613,10 +613,10 @@ export default defineConfig({
   // Success message
   console.log(kleur.green('\n🎉 TractStack setup complete!'));
 
-  const runCommand =
-    packageManager === 'pnpm' ? 'pnpm run' : `${packageManager} run`;
+  //const runCommand =
+  //  packageManager === 'pnpm' ? 'pnpm run' : `${packageManager} run`;
 
-  if (responses.enableMultiTenant) {
+  if (finalResponses.enableMultiTenant) {
     console.log('\n' + kleur.bold('Multi-tenant features enabled:'));
     console.log(`  • Tenant registration: ${kleur.cyan('/sandbox/register')}`);
     console.log(`  • Subdomain routing middleware added`);
@@ -625,7 +625,7 @@ export default defineConfig({
     );
   }
 
-  if (responses.includeExamples) {
+  if (finalResponses.includeExamples) {
     console.log(`\n${kleur.bold('Example components included:')}`);
     console.log(
       `  • Collections route: ${kleur.cyan('/collections/[param1]')}`

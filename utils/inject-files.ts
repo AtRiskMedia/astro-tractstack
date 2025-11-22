@@ -2082,6 +2082,7 @@ export async function injectTemplateFiles(
       src: resolve('../templates/socials/youtube.svg'),
       dest: 'public/socials/youtube.svg',
     },
+
     // Multi-Tenant Features (Conditional)
     ...(config?.enableMultiTenant
       ? [
@@ -2092,10 +2093,21 @@ export async function injectTemplateFiles(
           },
         ]
       : []),
-    // Multi-Tenant Types (Always included due to plan reference)
+
+    // Manual Setup Wizard
     {
-      src: resolve('../templates/src/types/multiTenant.ts'),
-      dest: 'src/types/multiTenant.ts',
+      src: resolve('../templates/src/utils/api/setupHelpers.ts'),
+      dest: 'src/utils/api/setupHelpers.ts',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/widgets/SetupWizard.tsx'
+      ),
+      dest: 'src/components/storykeep/widgets/SetupWizard.tsx',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/init.astro'),
+      dest: 'src/pages/storykeep/init.astro',
     },
 
     // Custom Components (Conditional)
