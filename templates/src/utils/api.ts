@@ -1,6 +1,5 @@
 import type {
   DiscoverySuggestion,
-  FTSResult,
   CategorizedResults,
 } from '@/types/tractstack';
 
@@ -30,7 +29,10 @@ function getConfig() {
   }
 
   return {
-    goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
+    goBackend:
+      window.TRACTSTACK_CONFIG?.backendUrl ||
+      import.meta.env.PUBLIC_GO_BACKEND ||
+      'http://localhost:8080',
     tenantId:
       window.TRACTSTACK_CONFIG?.tenantId ||
       import.meta.env.PUBLIC_TENANTID ||
