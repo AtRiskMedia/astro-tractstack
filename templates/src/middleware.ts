@@ -9,6 +9,14 @@ interface Locals {
   };
 }
 
+interface CacheEntry {
+  tenantId: string;
+  timestamp: number;
+}
+
+const domainCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function onRequest(
   context: APIContext & { locals: Locals },
   next: MiddlewareNext
@@ -16,37 +24,77 @@ export async function onRequest(
   const isMultiTenantEnabled =
     import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
 
-  // Only set tenant in locals if we have a trusted subdomain (production multi-tenant)
   if (isMultiTenantEnabled && !import.meta.env.DEV) {
     const hostname =
       context.request.headers.get('x-forwarded-host') ||
       context.request.headers.get('host');
 
     if (hostname) {
-      // Parse production subdomain pattern: {tenantId}.sandbox.{platform}.com
+      let tenantId: string | null = null;
+
+      // Strategy 1: Regex Pattern (Fastest)
       const parts = hostname.split('.');
       if (
+        parts.length === 3 &&
+        ['freewebpress', 'tractstack'].includes(parts[1]) &&
+        parts[2] === 'com'
+      ) {
+        tenantId = parts[0];
+      } else if (
         parts.length >= 4 &&
         parts[1] === 'sandbox' &&
         ['freewebpress', 'tractstack'].includes(parts[2]) &&
         parts[3] === 'com'
       ) {
-        // Only set locals.tenant when we have a trusted subdomain
+        tenantId = parts[0];
+      }
+
+      // Strategy 2: Cache Lookup (Fast)
+      if (!tenantId) {
+        const cached = domainCache.get(hostname);
+        if (cached) {
+          if (Date.now() - cached.timestamp < CACHE_TTL) {
+            tenantId = cached.tenantId;
+          } else {
+            domainCache.delete(hostname);
+          }
+        }
+      }
+
+      // Strategy 3: Backend Lookup (Fallback)
+      if (!tenantId) {
+        try {
+          // We assume the backend is always reachable on localhost:8080 in this architecture
+          const response = await fetch(
+            `http://127.0.0.1:8080/api/v1/resolve-domain?host=${encodeURIComponent(hostname)}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.tenantId) {
+              tenantId = data.tenantId;
+              domainCache.set(hostname, {
+                tenantId: data.tenantId,
+                timestamp: Date.now(),
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to resolve domain ${hostname}:`, error);
+        }
+      }
+
+      if (tenantId) {
         context.locals.tenant = {
-          id: parts[0],
+          id: tenantId,
           domain: hostname,
           isMultiTenant: true,
           isLocalhost: false,
         };
 
-        // Set header for backend communication
-        context.request.headers.set('X-Tenant-ID', parts[0]);
+        context.request.headers.set('X-Tenant-ID', tenantId);
       }
     }
   }
-
-  // If no trusted subdomain detected, leave locals.tenant undefined
-  // This allows the cascading check to fall through to PUBLIC_TENANTID
 
   return next();
 }
