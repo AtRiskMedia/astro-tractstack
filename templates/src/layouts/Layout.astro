@@ -212,16 +212,35 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
       // This makes the scope explicit and resolves the linter error.
       const initialStoryfragmentId = storyfragmentId;
       const initialSessionId = sessionId;
-
       function updateTractstackConfig() {
         const storyfragmentMeta = document.querySelector(
           'meta[name="storyfragment-id"]'
         );
         const sessionMeta = document.querySelector('meta[name="session-id"]');
 
+        // Dynamic Backend URL Fix:
+        // If we are on a subdomain (sandbox.domain.com), force the API call to match
+        // (sandbox.domain.com:10000) so cookies are sent correctly.
+        let dynamicBackendUrl = goBackend;
+        try {
+          const currentHost = window.location.hostname;
+          const backendUrlObj = new URL(goBackend);
+
+          // If the hostnames differ (e.g. sandbox.site.com vs site.com), align them
+          if (currentHost !== backendUrlObj.hostname) {
+            backendUrlObj.hostname = currentHost;
+            dynamicBackendUrl = backendUrlObj.toString().replace(/\/$/, '');
+          }
+        } catch (e) {
+          console.warn(
+            'TractStack: Failed to construct dynamic backend URL',
+            e
+          );
+        }
+
         window.TRACTSTACK_CONFIG = {
           configured: true,
-          backendUrl: goBackend,
+          backendUrl: dynamicBackendUrl,
           tenantId: tenantId,
           fontBasePath: fontBasePath,
           // Use the meta tag if it exists (for subsequent client-side loads),
