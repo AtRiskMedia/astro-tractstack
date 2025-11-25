@@ -759,6 +759,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api.ts',
     },
     {
+      src: resolve('../templates/src/utils/tenantResolver.ts'),
+      dest: 'src/utils/tenantResolver.ts',
+    },
+    {
       src: resolve('../templates/src/utils/api/brandConfig.ts'),
       dest: 'src/utils/api/brandConfig.ts',
     },

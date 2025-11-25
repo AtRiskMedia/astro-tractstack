@@ -24,6 +24,7 @@ import { DirectInjectStep } from './steps/DirectInjectStep';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import EnumSelect from '@/components/form/EnumSelect';
 import type { StoryFragmentNode } from '@/types/compositorTypes';
+import { TractStackAPI } from '@/utils/api'; // <--- IMPORT ADDED
 
 type Step =
   | 'initial'
@@ -51,9 +52,10 @@ const callAskLemurAPI = async (
   expectJson: boolean,
   isSandboxMode: boolean
 ): Promise<string> => {
-  const goBackend =
-    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-  const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+  // FIX: Use the centralized API class to ensure correct Tenant ID resolution
+  const api = new TractStackAPI();
+  const tenantId = api.getTenantId(); // Gets correct ID from window config
+
   const requestBody = {
     prompt,
     input_text: context,
@@ -62,43 +64,47 @@ const callAskLemurAPI = async (
     max_tokens: 2000,
   };
 
-  let response: Response;
+  let resultData: any;
+
   if (isSandboxMode) {
-    response = await fetch(`/api/sandbox`, {
+    // Sandbox mode still uses local fetch, but we pass the correct tenant ID
+    const response = await fetch(`/api/sandbox`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
       credentials: 'include',
       body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
     });
-  } else {
-    response = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
-      credentials: 'include',
-      body: JSON.stringify(requestBody),
-    });
-  }
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    let backendError = `API call failed: ${response.status} ${response.statusText}`;
-    try {
-      const errorJson = JSON.parse(errorText);
-      if (errorJson?.error) backendError = errorJson.error;
-    } catch (e) {
-      /* ignore */
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Sandbox API failed: ${response.status} ${errorText}`);
     }
-    throw new Error(backendError);
+
+    const json = await response.json();
+    if (!json.success) {
+      throw new Error(json.error || 'Sandbox generation failed');
+    }
+    resultData = json.data; // { response: ... }
+  } else {
+    // Production mode: Use the robust API class
+    const response = await api.post('/api/v1/aai/askLemur', requestBody);
+
+    if (!response.success) {
+      throw new Error(
+        response.error || 'Generation failed to return valid response.'
+      );
+    }
+
+    // TractStackAPI unwraps the 'data' field automatically
+    resultData = response.data; // { response: ... }
   }
 
-  const result = (await response.json()) as GenerationResponse;
-  if (!result.success || !result.data?.response) {
-    throw new Error(
-      result.error || 'Generation failed to return valid response.'
-    );
+  if (!resultData?.response) {
+    throw new Error('Generation failed to return a response object.');
   }
 
-  let rawResponseData = result.data.response;
+  let rawResponseData = resultData.response;
+
   if (expectJson && typeof rawResponseData === 'object') {
     return JSON.stringify(rawResponseData);
   }

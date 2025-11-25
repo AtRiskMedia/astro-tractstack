@@ -20,7 +20,6 @@ export interface TractStackEvent {
 }
 
 function getConfig() {
-  // Server-side safety check
   if (typeof window === 'undefined') {
     return {
       goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
@@ -40,47 +39,26 @@ function getConfig() {
   };
 }
 
-//function getTenantFromDomain(): string {
-//  if (typeof window === 'undefined') return 'default';
-//
-//  const hostname = window.location.hostname;
-//
-//  //if (hostname === 'localhost' || hostname === '127.0.0.1') {
-//  //  return 'default';
-//  //}
-//
-//  const parts = hostname.split('.');
-//  if (
-//    parts.length >= 4 &&
-//    parts[1] === 'sandbox' &&
-//    ['tractstack', 'freewebpress'].includes(parts[2]) &&
-//    parts[3] === 'com'
-//  ) {
-//    return parts[0];
-//  }
-//
-//  return 'default';
-//}
-
 export class TractStackAPI {
-  private baseUrl: string;
-  private tenantId: string;
+  private explicitTenantId?: string;
 
   constructor(tenantId?: string) {
-    const config = getConfig();
-    this.baseUrl = config.goBackend;
-    this.tenantId = tenantId || config.tenantId;
+    this.explicitTenantId = tenantId;
   }
 
   async request<T = any>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<APIResponse<T>> {
-    const url = `${this.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+    const config = getConfig();
+    const effectiveTenantId = this.explicitTenantId || config.tenantId;
+    const baseUrl = config.goBackend;
+
+    const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
     const defaultHeaders = {
       'Content-Type': 'application/json',
-      'X-Tenant-ID': this.tenantId,
+      'X-Tenant-ID': effectiveTenantId,
       ...(typeof window !== 'undefined' &&
         (window as any).TRACTSTACK_CONFIG?.sessionId && {
           'X-TractStack-Session-ID': (window as any).TRACTSTACK_CONFIG
@@ -170,11 +148,12 @@ export class TractStackAPI {
   }
 
   getTenantId(): string {
-    return this.tenantId;
+    const config = getConfig();
+    return this.explicitTenantId || config.tenantId;
   }
 
   setTenantId(tenantId: string): void {
-    this.tenantId = tenantId;
+    this.explicitTenantId = tenantId;
   }
 
   async getContentMapWithTimestamp(
@@ -185,11 +164,7 @@ export class TractStackAPI {
       endpoint += `?lastUpdated=${lastUpdated}`;
     }
 
-    // Use the raw request method to get the full response
     const response = await this.request(endpoint);
-
-    // For this endpoint, the backend returns {data: [...], lastUpdated: 123} directly
-    // So response.data IS the {data: [...], lastUpdated: 123} object
     return response as APIResponse<{ data: any[]; lastUpdated: number }>;
   }
 }

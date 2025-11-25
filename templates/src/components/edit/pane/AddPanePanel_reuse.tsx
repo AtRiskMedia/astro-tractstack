@@ -10,6 +10,7 @@ import {
 } from '@/components/compositor/preview/PaneSnapshotGenerator';
 import { PaneAddMode, type StoryFragmentNode } from '@/types/compositorTypes';
 import type { FullContentMapItem } from '@/types/tractstack';
+import { TractStackAPI } from '@/utils/api';
 
 interface AddPaneReUsePanelProps {
   nodeId: string;
@@ -127,23 +128,15 @@ const AddPaneReUsePanel = ({
     const fetchFragments = async () => {
       try {
         const paneIds = visiblePreviews.map((preview) => preview.pane.id);
+        const api = new TractStackAPI();
 
-        const goBackend =
-          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const response = await fetch(`${goBackend}/api/v1/fragments/panes`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
-          },
-          body: JSON.stringify({ paneIds }),
-        });
+        const response = await api.post('/api/v1/fragments/panes', { paneIds });
 
-        if (!response.ok) {
-          throw new Error(`Fragment API failed: ${response.status}`);
+        if (!response.success) {
+          throw new Error(response.error || `Fragment API failed`);
         }
 
-        const data = await response.json();
+        const data = response.data;
 
         setPreviews((prevPreviews) => {
           const updated = [...prevPreviews];
@@ -206,22 +199,16 @@ const AddPaneReUsePanel = ({
     if (!selectedPaneId) return;
 
     try {
-      const goBackend =
-        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-      const response = await fetch(
-        `${goBackend}/api/v1/nodes/panes/${selectedPaneId}/template`,
-        {
-          headers: {
-            'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
-          },
-        }
+      const api = new TractStackAPI();
+      const response = await api.get(
+        `/api/v1/nodes/panes/${selectedPaneId}/template`
       );
 
-      if (!response.ok) {
-        throw new Error(`Template API failed: ${response.status}`);
+      if (!response.success) {
+        throw new Error(response.error || `Template API failed`);
       }
 
-      const templateData = await response.json();
+      const templateData = response.data;
       const ctx = getCtx();
 
       // Find storyfragment

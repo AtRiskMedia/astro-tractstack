@@ -7,6 +7,7 @@ import { getBrandConfig } from '@/utils/api/brandConfig';
 import { freshInstallStore } from '@/stores/backend';
 import type { MenuNode } from '@/types/tractstack';
 import type { ImpressionNode } from '@/types/compositorTypes';
+import { resolveTenantId } from '@/utils/tenantResolver';
 export interface Props {
   title: string;
   slug?: string;
@@ -49,8 +50,17 @@ const {
 
 const isInitialized = !freshInstallStore.get().needsSetup;
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-const tenantId =
-  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+// Resolve tenant explicitly "Above the Fences" to guarantee the client gets the truth
+const resolution = await resolveTenantId(Astro.request);
+const tenantId = resolution.id;
+if (!Astro.locals.tenant) {
+  Astro.locals.tenant = {
+    id: tenantId,
+    domain: Astro.url.hostname,
+    isMultiTenant: true,
+    isLocalhost: false,
+  };
+}
 const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));
 const cssBasePath = isInitialized ? '/media/css' : '/styles';
 const fontBasePath = isInitialized ? '/media/fonts' : '/fonts';
