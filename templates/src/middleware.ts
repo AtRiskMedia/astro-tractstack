@@ -64,9 +64,9 @@ export async function onRequest(
       // Strategy 3: Backend Lookup (Fallback)
       if (!tenantId) {
         try {
-          // We assume the backend is always reachable on localhost:8080 in this architecture
+          const backendUrl = import.meta.env.PUBLIC_GO_BACKEND;
           const response = await fetch(
-            `http://127.0.0.1:8080/api/v1/resolve-domain?host=${encodeURIComponent(hostname)}`
+            `${backendUrl}/api/v1/resolve-domain?host=${encodeURIComponent(hostname)}`
           );
           if (response.ok) {
             const data = await response.json();
