@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { transformLivePaneForPreview } from '@/utils/etl';
 import type { NodesContext } from '@/stores/nodes';
+import { TractStackAPI } from '@/utils/api';
 
 export interface PanePreviewRequest {
   id: string;
@@ -67,27 +68,22 @@ export const PanesPreviewGenerator = ({
           requestMap.set(previewPayload.id, request.id);
         }
 
-        const goBackend =
-          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const response = await fetch(`${goBackend}/api/v1/fragments/preview`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
-          },
-          body: JSON.stringify({ panes: previewPayloads }),
+        const api = new TractStackAPI();
+        const response = await api.post('/api/v1/fragments/preview', {
+          panes: previewPayloads,
         });
 
-        if (!response.ok) {
-          throw new Error(`Preview API failed: ${response.status}`);
+        if (!response.success) {
+          throw new Error(response.error || `Preview API failed`);
         }
 
-        const { fragments, errors } = await response.json();
+        // TractStackAPI unwraps the response.data for us
+        const { fragments, errors } = response.data;
 
         const results: PaneFragmentResult[] = [];
 
         for (const [paneId, requestId] of requestMap.entries()) {
-          if (fragments[paneId]) {
+          if (fragments && fragments[paneId]) {
             results.push({
               id: requestId,
               htmlString: fragments[paneId],
