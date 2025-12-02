@@ -11,7 +11,6 @@ export interface AppliedFilter {
   value: string;
 }
 
-// Internal tenant-keyed storage
 const tenantEpinetCustomFilters = atom<
   Record<
     string,
@@ -50,13 +49,13 @@ const tenantFullContentMaps = atom<
 
 // Helper to get current tenant ID
 function getCurrentTenantId(): string {
-  if (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) {
-    return window.TRACTSTACK_CONFIG.tenantId;
-  }
-  return import.meta.env.PUBLIC_TENANTID || 'default';
+  const resolvedTenantId =
+    (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
+  return resolvedTenantId;
 }
 
-// Default filter state
 const defaultEpinetFilters = {
   enabled: false,
   visitorType: 'all' as 'all' | 'anonymous' | 'known',
@@ -69,7 +68,6 @@ const defaultEpinetFilters = {
   appliedFilters: [],
 };
 
-// Create tenant-aware atoms that work with useStore
 const createEpinetFiltersStore = () => {
   const store = {
     get: () => {
@@ -95,8 +93,6 @@ const createEpinetFiltersStore = () => {
         callback(filters[tenantId] || defaultEpinetFilters);
       });
     },
-
-    // Required nanostore properties for useStore
     lc: 0,
     listen: function (callback: any) {
       return this.subscribe(callback);
@@ -131,8 +127,6 @@ const createFullContentMapStore = () => {
         callback(maps[tenantId] || null);
       });
     },
-
-    // Required nanostore properties for useStore
     lc: 0,
     listen: function (callback: any) {
       return this.subscribe(callback);
@@ -152,15 +146,12 @@ export const fullContentMapStore = createFullContentMapStore();
 
 export async function getFullContentMap(tenantId: string): Promise<any[]> {
   const api = new TractStackAPI(tenantId);
-
-  // Check tenant-specific cache
   const cached = tenantFullContentMaps.get()[tenantId];
 
   try {
     const response = await api.getContentMapWithTimestamp(cached?.lastUpdated);
 
     if (response.success && response.data) {
-      // Update tenant-specific cache
       const newData = {
         data: response.data.data,
         lastUpdated: response.data.lastUpdated,

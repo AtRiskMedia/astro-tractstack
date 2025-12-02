@@ -326,6 +326,7 @@ export function createEmptyStorykeep(id: string) {
   return {
     id,
     nodeType: 'StoryFragment',
+    tractStackId: 'temp',
     parentId: null,
     isChanged: false,
     paneIds: [],
@@ -503,12 +504,15 @@ export function extractClassesFromNodes(dirtyNodes: BaseNode[]): string[] {
   const uniqueClasses = new Set<string>();
 
   dirtyNodes.forEach((node) => {
-    // Extract from parentCss arrays (like legacy getTailwindWhitelist)
     if ('parentCss' in node && Array.isArray(node.parentCss)) {
       node.parentCss.forEach((classString: string) => {
         classString.split(' ').forEach((className: string) => {
           if (className.trim()) uniqueClasses.add(className.trim());
         });
+      });
+    } else if ('parentCss' in node && typeof node.parentCss === `string`) {
+      node.parentCss.split(' ').forEach((className: string) => {
+        if (className.trim()) uniqueClasses.add(className.trim());
       });
     }
 

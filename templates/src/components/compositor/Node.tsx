@@ -198,7 +198,10 @@ const getElement = (
                 panelType="storyfragment"
                 ctx={getCtx(props)}
               >
-                <StoryFragmentConfigPanel nodeId={props.nodeId} />
+                <StoryFragmentConfigPanel
+                  nodeId={props.nodeId}
+                  isSandboxMode={props.isSandboxMode || false}
+                />
               </PanelVisibilityWrapper>
               <StoryFragment {...sharedProps} />
             </>

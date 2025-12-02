@@ -34,6 +34,7 @@ const {
 } = Astro.props;
 
 const isHome = slug === brandConfig?.HOME_SLUG;
+console.log(slug, isHome);
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';

@@ -4,14 +4,12 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import PanelSwitch from './PanelSwitch';
-import type { BrandConfig } from '@/types/tractstack';
 
 interface SettingsPanelProps {
-  config: BrandConfig;
   availableCodeHooks: string[];
 }
 
-const SettingsPanel = ({ config, availableCodeHooks }: SettingsPanelProps) => {
+const SettingsPanel = ({ availableCodeHooks }: SettingsPanelProps) => {
   const [panelTitle, setPanelTitle] = useState('Settings');
   const signal = useStore(settingsPanelStore);
   const ctx = getCtx();

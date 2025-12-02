@@ -2,14 +2,29 @@ import type { APIRoute } from '@/types/astro';
 
 export const POST: APIRoute = async ({ cookies }) => {
   try {
-    // Clear admin and editor auth cookies
-    cookies.delete('admin_auth', {
-      path: '/',
-    });
+    const goBackend =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+    let rootDomain: string | undefined;
 
-    cookies.delete('editor_auth', {
-      path: '/',
-    });
+    try {
+      const url = new URL(goBackend);
+      // Only set domain for non-localhost to preserve local dev behavior
+      if (url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+        rootDomain = url.hostname;
+      }
+    } catch (e) {
+      console.warn('Logout: Failed to parse backend URL for cookie domain', e);
+    }
+
+    // Determine the options ONCE to prevent overwriting
+    const cookieOptions: any = { path: '/' };
+    if (rootDomain) {
+      cookieOptions.domain = rootDomain;
+    }
+
+    // Execute deletion with the single, correct configuration
+    cookies.delete('admin_auth', cookieOptions);
+    cookies.delete('editor_auth', cookieOptions);
 
     return new Response(
       JSON.stringify({

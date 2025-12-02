@@ -1,13 +1,11 @@
 import type { APIRoute } from '@/types/astro';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const tenantId =
+    locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
   const sharedSecret = import.meta.env.PRIVATE_SANDBOX_SECRET;
-  const tenantId =
-    request.headers.get('X-Tenant-ID') ||
-    import.meta.env.PUBLIC_TENANTID ||
-    'default';
 
   if (!sharedSecret || sharedSecret === 'false' || sharedSecret === 'true') {
     return new Response(

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import StoryKeepDashboard from '../Dashboard';
 import StoryKeepDashboard_Branding from '../Dashboard_Branding';
+import HydrateWizard from '../widgets/HydrateWizard';
 import type { FullContentMapItem, BrandConfig } from '@/types/tractstack';
+import type { LoadData } from '@/types/compositorTypes';
 
 interface BrandingPageWrapperProps {
   fullContentMap: FullContentMapItem[];
@@ -9,6 +11,7 @@ interface BrandingPageWrapperProps {
   role: string | null;
   initializing: boolean;
   initialBrandConfig: BrandConfig;
+  initialSuitcase?: LoadData | null;
 }
 
 export default function BrandingPageWrapper({
@@ -17,10 +20,19 @@ export default function BrandingPageWrapper({
   role,
   initializing,
   initialBrandConfig,
+  initialSuitcase,
 }: BrandingPageWrapperProps) {
-  // Manage shared brandConfig state at this level
   const [brandConfig, setBrandConfig] =
     useState<BrandConfig>(initialBrandConfig);
+
+  if (initialBrandConfig.HAS_HYDRATION_TOKEN && initialSuitcase) {
+    return (
+      <HydrateWizard
+        initialSuitcase={initialSuitcase}
+        fullContentMap={fullContentMap}
+      />
+    );
+  }
 
   return (
     <>

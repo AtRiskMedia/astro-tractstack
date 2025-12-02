@@ -1,12 +1,10 @@
 import type { APIRoute } from '@/types/astro';
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
   const tenantId =
-    request.headers.get('X-Tenant-ID') ||
-    import.meta.env.PUBLIC_TENANTID ||
-    'default';
+    locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
   try {
     // Get Authorization header from frontend

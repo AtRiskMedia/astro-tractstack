@@ -46,11 +46,15 @@ export default function ActionBuilderField({
   const [command, setCommand] = useState<ActionCommand>('goto');
   const [params, setParams] = useState('');
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
         const {
           data: { beliefIds },
         } = await api.get('/api/v1/nodes/beliefs');

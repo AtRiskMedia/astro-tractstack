@@ -6,6 +6,7 @@ import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { preHealthCheck } from '@/utils/backend';
+import type { LoadData } from '@/types/compositorTypes';
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
@@ -23,9 +24,24 @@ if (authCheck) {
 const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
-
 const brandConfig = await getBrandConfig(tenantId);
 const initializing = !brandConfig.SITE_INIT;
+
+let initialSuitcase: LoadData | null = null;
+if (initializing) {
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  try {
+    const response = await fetch(`${goBackend}/api/v1/setup/suitcase`, {
+      headers: { 'X-Tenant-Id': tenantId },
+    });
+    if (response.ok) {
+      initialSuitcase = await response.json();
+    }
+  } catch (e) {
+    console.warn('[Branding] Failed to probe suitcase:', e);
+  }
+}
 
 const title = 'Branding | StoryKeep';
 
@@ -52,6 +68,7 @@ try {
         role={role}
         initializing={initializing}
         initialBrandConfig={brandConfig}
+        initialSuitcase={initialSuitcase}
       />
     </div>
   </main>

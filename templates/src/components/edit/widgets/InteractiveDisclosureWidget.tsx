@@ -253,6 +253,10 @@ export default function InteractiveDisclosureWidget({
   node,
   onUpdate,
 }: InteractiveDisclosureWidgetProps) {
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
   const [mode, setMode] = useState<'belief' | 'open'>('belief');
   const [beliefs, setBeliefs] = useState<BeliefNode[]>([]);
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
@@ -367,7 +371,7 @@ export default function InteractiveDisclosureWidget({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
         const {
           data: { beliefIds },
         } = await api.get('/api/v1/nodes/beliefs');

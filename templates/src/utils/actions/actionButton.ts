@@ -18,6 +18,8 @@ async function sendAnalyticsEvent(event: {
   try {
     const config = window.TRACTSTACK_CONFIG;
     if (!config || !config.sessionId) return;
+    const backendUrl =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
     const sessionId = config.sessionId;
     const formData: { [key: string]: string } = {
@@ -31,7 +33,7 @@ async function sendAnalyticsEvent(event: {
       formData.duration = event.duration.toString();
     }
 
-    await fetch(`${config.backendUrl}/api/v1/state`, {
+    await fetch(`${backendUrl}/api/v1/state`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

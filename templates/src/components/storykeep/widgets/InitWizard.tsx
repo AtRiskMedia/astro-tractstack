@@ -9,7 +9,7 @@ import {
   initializeSystem,
 } from '@/utils/api/setupHelpers';
 
-export default function SetupWizard() {
+export default function InitWizard() {
   const formState = useFormState({
     initialData: initialSetupState,
     validator: validateSetup,
@@ -17,8 +17,9 @@ export default function SetupWizard() {
     onSave: async (data) => {
       try {
         await initializeSystem(data);
-        // Hard redirect to break out of any potential state/cache issues
-        window.location.href = '/storykeep';
+        setTimeout(() => {
+          window.location.href = '/storykeep';
+        }, 1000);
         return data;
       } catch (error) {
         console.error('Installation failed:', error);

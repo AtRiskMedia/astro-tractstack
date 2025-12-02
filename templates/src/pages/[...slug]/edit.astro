@@ -213,7 +213,6 @@ for (const [key, value] of Astro.url.searchParams) {
     }
     <div class="pointer-events-auto max-h-full">
       <SettingsPanel
-        config={brandConfig}
         availableCodeHooks={Object.keys(codeHookComponents)}
         client:only="react"
       />

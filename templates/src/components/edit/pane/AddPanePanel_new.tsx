@@ -24,7 +24,7 @@ import { DirectInjectStep } from './steps/DirectInjectStep';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import EnumSelect from '@/components/form/EnumSelect';
 import type { StoryFragmentNode } from '@/types/compositorTypes';
-import { TractStackAPI } from '@/utils/api'; // <--- IMPORT ADDED
+import { TractStackAPI } from '@/utils/api';
 
 type Step =
   | 'initial'
@@ -40,21 +40,17 @@ type InitialChoice = 'library' | 'ai' | 'blank';
 type LayoutChoice = 'standard' | 'grid';
 type ColumnPresetKey = 'left' | 'right';
 
-interface GenerationResponse {
-  success: boolean;
-  data?: { response: string | object };
-  error?: string;
-}
-
 const callAskLemurAPI = async (
   prompt: string,
   context: string,
   expectJson: boolean,
   isSandboxMode: boolean
 ): Promise<string> => {
-  // FIX: Use the centralized API class to ensure correct Tenant ID resolution
-  const api = new TractStackAPI();
-  const tenantId = api.getTenantId(); // Gets correct ID from window config
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
+  const api = new TractStackAPI(tenantId);
 
   const requestBody = {
     prompt,

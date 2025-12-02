@@ -26,7 +26,13 @@ import {
   type StoryFragmentNode,
 } from '@/types/compositorTypes';
 
-const StoryFragmentConfigPanel = ({ nodeId }: { nodeId: string }) => {
+const StoryFragmentConfigPanel = ({
+  nodeId,
+  isSandboxMode,
+}: {
+  nodeId: string;
+  isSandboxMode: boolean;
+}) => {
   const brandColors = brandConfigStore.get()?.BRAND_COLOURS || '';
   const [isNodeAvailable, setIsNodeAvailable] = useState(false);
   const [storyfragmentNode, setStoryfragmentNode] =
@@ -185,21 +191,26 @@ const StoryFragmentConfigPanel = ({ nodeId }: { nodeId: string }) => {
     <div className="mb-4">
       <div className="w-full rounded-b-md bg-white p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setMode(StoryFragmentMode.OG)}
-            className="text-md min-h-9 rounded border border-cyan-200 bg-white px-3 text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white"
-          >
-            Title: <span className="font-bold">{storyfragmentNode.title}</span>
-          </button>
+          {!isSandboxMode && (
+            <>
+              <button
+                onClick={() => setMode(StoryFragmentMode.OG)}
+                className="text-md min-h-9 rounded border border-cyan-200 bg-white px-3 text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white"
+              >
+                Title:{' '}
+                <span className="font-bold">{storyfragmentNode.title}</span>
+              </button>
+              <button
+                onClick={() => setMode(StoryFragmentMode.SLUG)}
+                className="text-md h-9 rounded border border-cyan-200 bg-white px-3 text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white"
+              >
+                Slug:{' '}
+                <span className="font-bold">{storyfragmentNode.slug}</span>
+              </button>
+            </>
+          )}
 
-          <button
-            onClick={() => setMode(StoryFragmentMode.SLUG)}
-            className="text-md h-9 rounded border border-cyan-200 bg-white px-3 text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white"
-          >
-            Slug: <span className="font-bold">{storyfragmentNode.slug}</span>
-          </button>
-
-          {!isTemplate && (
+          {!isSandboxMode && !isTemplate && (
             <>
               <button
                 onClick={() => setMode(StoryFragmentMode.MENU)}

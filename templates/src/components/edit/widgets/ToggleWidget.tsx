@@ -14,6 +14,10 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [currentScale, setCurrentScale] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   const widgetInfo = widgetMeta.toggle;
 
@@ -38,7 +42,6 @@ export default function ToggleWidget({ node, onUpdate }: ToggleWidgetProps) {
       try {
         const goBackend =
           import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
         const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {
           headers: {

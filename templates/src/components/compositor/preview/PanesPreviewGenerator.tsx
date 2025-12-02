@@ -26,6 +26,10 @@ export const PanesPreviewGenerator = ({
   onError,
 }: PanesPreviewGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   useEffect(() => {
     if (requests.length === 0) return;
@@ -68,7 +72,7 @@ export const PanesPreviewGenerator = ({
           requestMap.set(previewPayload.id, request.id);
         }
 
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
         const response = await api.post('/api/v1/fragments/preview', {
           panes: previewPayloads,
         });

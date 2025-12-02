@@ -31,20 +31,22 @@ export function useSearch(): UseSearchReturn {
   const [suggestions, setSuggestions] = useState<DiscoverySuggestion[]>([]);
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState<string | null>(null);
+  const tenantId =
+    (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
-  // Retrieve state
   const [searchResults, setSearchResults] = useState<CategorizedResults | null>(
     null
   );
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState<string | null>(null);
 
-  // --- REVISED STATE FOR SEARCH LOGIC ---
   const searchTimerRef = useRef<NodeJS.Timeout>();
   const lastExecutionTimeRef = useRef<number>(0);
   const pendingQueryRef = useRef<string | null>(null);
   const inflightQueryRef = useRef<string | null>(null);
-  const api = useMemo(() => new TractStackAPI(), []);
+  const api = useMemo(() => new TractStackAPI(tenantId), []);
 
   const performDiscovery = useCallback(
     async (query: string) => {

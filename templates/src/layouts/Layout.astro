@@ -228,33 +228,11 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
         );
         const sessionMeta = document.querySelector('meta[name="session-id"]');
 
-        // Dynamic Backend URL Fix:
-        // If we are on a subdomain (sandbox.domain.com), force the API call to match
-        // (sandbox.domain.com:10000) so cookies are sent correctly.
-        let dynamicBackendUrl = goBackend;
-        try {
-          const currentHost = window.location.hostname;
-          const backendUrlObj = new URL(goBackend);
-
-          // If the hostnames differ (e.g. sandbox.site.com vs site.com), align them
-          if (currentHost !== backendUrlObj.hostname) {
-            backendUrlObj.hostname = currentHost;
-            dynamicBackendUrl = backendUrlObj.toString().replace(/\/$/, '');
-          }
-        } catch (e) {
-          console.warn(
-            'TractStack: Failed to construct dynamic backend URL',
-            e
-          );
-        }
-
         window.TRACTSTACK_CONFIG = {
           configured: true,
-          backendUrl: dynamicBackendUrl,
+          backendUrl: goBackend,
           tenantId: tenantId,
           fontBasePath: fontBasePath,
-          // Use the meta tag if it exists (for subsequent client-side loads),
-          // otherwise fall back to the initial server-rendered value.
           storyfragmentId: storyfragmentMeta
             ? storyfragmentMeta.content
             : initialStoryfragmentId,

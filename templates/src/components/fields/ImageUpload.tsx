@@ -48,6 +48,10 @@ export const ImageUpload = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const comboboxRef = useRef<HTMLDivElement>(null);
   const { openAbove, maxHeight } = useDropdownDirection(comboboxRef);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   // Find the current image node
   const currentImageNode = nodeId
@@ -61,7 +65,6 @@ export const ImageUpload = ({
       try {
         const goBackend =
           import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
         // First, get all file IDs
         const idsResponse = await fetch(`${goBackend}/api/v1/nodes/files`, {

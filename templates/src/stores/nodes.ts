@@ -609,7 +609,7 @@ export class NodesContext {
       return { left: originalNode, right: null };
     }
 
-    // Handle split at the beginning of the string (THE FIX)
+    // Handle split at the beginning of the string
     if (offset === 0) {
       if (VERBOSE)
         console.log(
@@ -1992,8 +1992,6 @@ export class NodesContext {
 
     let autoCreatedMarkdownNode: MarkdownPaneFragmentNode | null = null;
 
-    //console.log(`--- [TRAP - TEMPLATE BEFORE] ---`, cloneDeep(node));
-    // 3. HANDLE EMPTY PANE BY AUTO-CREATING A MARKDOWN NODE
     if (targetNode.nodeType === 'Pane') {
       // Create a minimal markdown node to act as the container
       const newMarkdownNode: MarkdownPaneFragmentNode = {
@@ -2069,8 +2067,6 @@ export class NodesContext {
         parentId
       );
     }
-
-    //console.log(`--- [TRAP - FLATTENED AFTER] ---`, cloneDeep(flattenedNodes));
 
     // 5. PERFORM REMAINING STATE MUTATIONS
     if (originalPaneNode) {
@@ -2838,7 +2834,6 @@ export class NodesContext {
 
   getDirtyNodesClassData(): { dirtyPaneIds: string[]; classes: string[] } {
     const dirtyNodes = this.getDirtyNodes();
-
     const dirtyPaneIds = dirtyNodes
       .filter((node) => node.nodeType === 'Pane')
       .map((node) => node.id);

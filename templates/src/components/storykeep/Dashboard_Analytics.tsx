@@ -178,14 +178,16 @@ export default function StoryKeepDashboard_Analytics({
       setIsDownloading(true);
 
       const config = window.TRACTSTACK_CONFIG;
+      const backendUrl =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
       const response = await fetch(
-        `${config?.backendUrl || ''}/api/v1/admin/leads/download`,
+        `${backendUrl}/api/v1/admin/leads/download`,
         {
           method: 'GET',
           headers: {
             'X-Tenant-ID': config?.tenantId || 'default',
           },
-          credentials: 'include', // Include cookies for auth
+          credentials: 'include',
         }
       );
 

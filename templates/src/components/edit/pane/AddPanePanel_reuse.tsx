@@ -34,6 +34,10 @@ const AddPaneReUsePanel = ({
   first,
   setMode,
 }: AddPaneReUsePanelProps) => {
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
   const [previews, setPreviews] = useState<PreviewItem[]>([]);
   const [query, setQuery] = useState('');
   const [availablePanes, setAvailablePanes] = useState<FullContentMapItem[]>(
@@ -128,7 +132,7 @@ const AddPaneReUsePanel = ({
     const fetchFragments = async () => {
       try {
         const paneIds = visiblePreviews.map((preview) => preview.pane.id);
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
 
         const response = await api.post('/api/v1/fragments/panes', { paneIds });
 
@@ -199,7 +203,7 @@ const AddPaneReUsePanel = ({
     if (!selectedPaneId) return;
 
     try {
-      const api = new TractStackAPI();
+      const api = new TractStackAPI(tenantId);
       const response = await api.get(
         `/api/v1/nodes/panes/${selectedPaneId}/template`
       );

@@ -1,6 +1,6 @@
 import type { APIRoute } from '@/types/astro';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const GO_BACKEND =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
@@ -11,13 +11,15 @@ export const POST: APIRoute = async ({ request }) => {
     // Create abort controller for request timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const tenantId =
+      locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 
     try {
       const response = await fetch(`${GO_BACKEND}/api/v1/auth/profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-ID': import.meta.env.PUBLIC_TENANTID || 'default',
+          'X-Tenant-ID': tenantId,
           ...(request.headers.get('Authorization') && {
             Authorization: request.headers.get('Authorization')!,
           }),

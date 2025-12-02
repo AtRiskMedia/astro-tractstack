@@ -16,6 +16,10 @@ export default function IdentifyAsWidget({
   const [selectedBeliefTag, setSelectedBeliefTag] = useState<string>('');
   const [targetValues, setTargetValues] = useState<string[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   // Sync state with node.codeHookParams
   useEffect(() => {
@@ -54,7 +58,7 @@ export default function IdentifyAsWidget({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
 
         // Step 1: Get all belief IDs
         const idsResponse = await api.get('/api/v1/nodes/beliefs');

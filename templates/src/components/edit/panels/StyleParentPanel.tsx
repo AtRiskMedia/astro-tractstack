@@ -73,7 +73,6 @@ const StyleParentPanel = ({
       return;
     }
 
-    // --- STABILIZATION FIX START ---
     let effectiveNode = initialNode;
     if (isMarkdownPaneFragmentNode(initialNode) && initialNode.parentId) {
       const parent = ctx.allNodes.get().get(initialNode.parentId);
@@ -81,7 +80,6 @@ const StyleParentPanel = ({
         effectiveNode = parent as GridLayoutNode;
       }
     }
-    // --- STABILIZATION FIX END ---
 
     const targets: StyleableTarget[] = [];
     const isGrid = isGridLayoutNode(effectiveNode);

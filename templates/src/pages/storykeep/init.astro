@@ -1,7 +1,7 @@
 ---
 import { freshInstallStore } from '@/stores/backend';
 import { preHealthCheck } from '@/utils/backend';
-import SetupWizard from '@/components/storykeep/widgets/SetupWizard';
+import InitWizard from '@/components/storykeep/widgets/InitWizard';
 
 const isMultiTenant = import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
 
@@ -41,7 +41,7 @@ const mainStylesUrl = isDev
         </div>
       ) : (
         <div class="max-w-5xl p-3.5 md:p-8">
-          <SetupWizard client:load />
+          <InitWizard client:load />
         </div>
       )
     }

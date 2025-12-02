@@ -40,6 +40,7 @@ export function convertToLocalState(
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
     designLibrary: brandConfig.DESIGN_LIBRARY ?? undefined,
     hasAAI: brandConfig.HAS_AAI ?? false,
+    hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
   };
 }
 

@@ -24,10 +24,11 @@ const tenantOrphanAnalysis = atom<Record<string, OrphanAnalysisState>>({});
 
 // Helper to get current tenant ID
 function getCurrentTenantId(): string {
-  if (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) {
-    return window.TRACTSTACK_CONFIG.tenantId;
-  }
-  return import.meta.env.PUBLIC_TENANTID || 'default';
+  const resolvedTenantId =
+    (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
+  return resolvedTenantId;
 }
 
 // Default state
@@ -38,7 +39,6 @@ const defaultOrphanState: OrphanAnalysisState = {
   lastFetched: null,
 };
 
-// Create tenant-aware store that works with useStore
 const createOrphanAnalysisStore = () => {
   const store = {
     get: () => {
@@ -52,8 +52,6 @@ const createOrphanAnalysisStore = () => {
         callback(analysis[tenantId] || defaultOrphanState);
       });
     },
-
-    // Required nanostore properties for useStore
     lc: 0,
     listen: function (callback: any) {
       return this.subscribe(callback);
@@ -71,7 +69,6 @@ const createOrphanAnalysisStore = () => {
 
 export const orphanAnalysisStore = createOrphanAnalysisStore();
 
-// Helper to update state for specific tenant
 function updateTenantState(
   tenantId: string,
   updates: Partial<OrphanAnalysisState>
@@ -88,7 +85,6 @@ function updateTenantState(
   });
 }
 
-// Helper function to count orphans from the analysis data
 export function countOrphans(data: OrphanAnalysisData | null): number {
   if (!data) return 0;
 
@@ -373,35 +369,4 @@ function stopPolling(tenantId: string): void {
 
   // Clean up polling state
   pollingState.delete(tenantId);
-}
-
-export function clearOrphanAnalysis(): void {
-  const tenantId = getCurrentTenantId();
-  stopPolling(tenantId);
-  fetchingStates.set(tenantId, false);
-
-  updateTenantState(tenantId, defaultOrphanState);
-}
-
-// Enhanced utility function to get polling status for debugging
-export function getPollingStatus(tenantId?: string): Record<string, any> {
-  const targetTenantId = tenantId || getCurrentTenantId();
-  const state = pollingState.get(targetTenantId);
-  const isActive = pollingIntervals.has(targetTenantId);
-
-  if (!state && !isActive) {
-    return { status: 'inactive', tenantId: targetTenantId };
-  }
-
-  return {
-    status: isActive ? 'active' : 'stopped',
-    tenantId: targetTenantId,
-    attempts: state?.attempts || 0,
-    maxAttempts: MAX_POLLING_ATTEMPTS,
-    consecutiveErrors: state?.consecutiveErrors || 0,
-    startTime: state?.startTime,
-    lastAttemptTime: state?.lastAttemptTime,
-    elapsed: state?.startTime ? Date.now() - state.startTime : 0,
-    maxDuration: MAX_POLLING_DURATION,
-  };
 }

@@ -39,20 +39,20 @@ const StoryFragmentMenuPanel = ({
   const [selectedMenu, setSelectedMenu] = useState<MenuNode | null>(null);
   const [showMenuEditor, setShowMenuEditor] = useState(false);
   const [contentMap, setContentMap] = useState<FullContentMapItem[]>([]);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const api = new TractStackAPI();
+        const api = new TractStackAPI(tenantId);
 
         // Get current content map first if we haven't already
         if (!contentMap) {
           const currentContentMap = await api.getContentMapWithTimestamp();
           if (currentContentMap.success && currentContentMap.data) {
-            const tenantId =
-              window.TRACTSTACK_CONFIG?.tenantId ||
-              import.meta.env.PUBLIC_TENANTID ||
-              'default';
             fullContentMapStore.set(tenantId, currentContentMap.data);
             setContentMap(currentContentMap.data.data);
           }
@@ -240,8 +240,6 @@ const StoryFragmentMenuPanel = ({
                           setShowMenuEditor(false);
                           if (saved) {
                             try {
-                              const tenantId =
-                                import.meta.env.PUBLIC_TENANTID || 'default';
                               const refreshedContentMap =
                                 await getFullContentMap(tenantId);
                               setContentMap(refreshedContentMap);

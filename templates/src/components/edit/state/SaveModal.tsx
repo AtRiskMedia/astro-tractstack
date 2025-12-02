@@ -13,22 +13,25 @@ import {
   pendingHomePageSlugStore,
 } from '@/stores/storykeep';
 import { startLoadingAnimation } from '@/utils/helpers';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
 import type {
   FlatNode,
   BaseNode,
   PaneNode,
   StoryFragmentNode,
   MarkdownPaneFragmentNode,
+  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 type SaveStage =
   | 'PREPARING'
   | 'SAVING_PENDING_FILES'
   | 'PROCESSING_OG_IMAGES'
+  | 'COOKING_NODES'
+  | 'PROCESSING_STYLES'
   | 'SAVING_PANES'
   | 'SAVING_STORY_FRAGMENTS'
   | 'LINKING_FILES'
-  | 'PROCESSING_STYLES'
   | 'UPDATING_HOME_PAGE'
   | 'COMPLETED'
   | 'ERROR';
@@ -46,6 +49,7 @@ interface SaveModalProps {
   isContext: boolean;
   onClose: () => void;
   isSandboxMode?: boolean;
+  hydrate?: boolean;
 }
 
 const PROGRESS_PHASES = {
@@ -56,6 +60,7 @@ const PROGRESS_PHASES = {
 };
 
 const INDETERMINATE_STAGES: SaveStage[] = [
+  'COOKING_NODES',
   'SAVING_PANES',
   'LINKING_FILES',
   'PROCESSING_STYLES',
@@ -109,6 +114,7 @@ export default function SaveModal({
   isContext,
   onClose,
   isSandboxMode = false,
+  hydrate = false,
 }: SaveModalProps) {
   const [stage, setStage] = useState<SaveStage>('PREPARING');
   const [progress, setProgress] = useState(0);
@@ -127,7 +133,10 @@ export default function SaveModal({
   const pendingHomePageSlug = pendingHomePageSlugStore.get();
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-  const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   const addDebugMessage = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -388,264 +397,135 @@ export default function SaveModal({
           dirtyPanes.length + dirtyStoryFragments.length;
         let completedProcessingSteps = 0;
 
-        if (dirtyPanes.length > 0) {
-          setStage('SAVING_PANES');
+        // --- NEW COOKING STAGE ---
+        if (allDirtyNodes.length > 0) {
+          setStage('COOKING_NODES');
           setIsIndeterminateStage(true);
-          setStageProgress({
-            currentStep: 0,
-            totalSteps: dirtyPanes.length,
-          });
+          addDebugMessage('Cooking nodes for whitelist extraction...');
 
-          const bulkPayload = dirtyPanes.map((paneNode) =>
-            transformLivePaneForSave(ctx, paneNode.id, isContext)
-          );
+          const cookingUpdates: BaseNode[] = [];
 
-          bulkPayload.forEach((payload) => {
-            payload.optionsPayload.nodes.forEach((transformedNode) => {
-              const liveNode = ctx.allNodes.get().get(transformedNode.id);
-              if (!liveNode) return;
+          allDirtyNodes.forEach((liveNode) => {
+            try {
+              let updatedNode: BaseNode | null = null;
 
-              let needsUpdate = false;
-              let updatedNode: BaseNode = { ...liveNode };
-
-              if (
-                transformedNode.nodeType === 'TagElement' &&
-                transformedNode.elementCss
-              ) {
+              // Pattern 1: TagElements -> elementCss
+              if (liveNode.nodeType === 'TagElement') {
                 const flatNode = liveNode as FlatNode;
-                if (flatNode.elementCss !== transformedNode.elementCss) {
-                  (updatedNode as FlatNode).elementCss =
-                    transformedNode.elementCss;
-                  needsUpdate = true;
+                const computedCSS = ctx.getNodeClasses(flatNode.id, 'auto', 0);
+                if (flatNode.elementCss !== computedCSS) {
+                  updatedNode = {
+                    ...liveNode,
+                    elementCss: computedCSS,
+                  } as FlatNode;
                 }
               }
-
-              if (
-                transformedNode.nodeType === 'Markdown' &&
-                transformedNode.parentCss
-              ) {
+              // Pattern 2: Markdown Nodes -> parentCss & gridCss
+              else if (liveNode.nodeType === 'Markdown') {
                 const markdownNode = liveNode as MarkdownPaneFragmentNode;
-                const currentParentCss = markdownNode.parentCss;
-                const newParentCss = transformedNode.parentCss as string[];
+                let needsUpdate = false;
+                const nextNode = { ...markdownNode };
 
-                const isDifferent =
-                  !currentParentCss ||
-                  currentParentCss.length !== newParentCss.length ||
-                  currentParentCss.some(
-                    (css, index) => css !== newParentCss[index]
+                // parentCss
+                if (markdownNode.parentClasses) {
+                  const computedParentCss = markdownNode.parentClasses.map(
+                    (_: any, index: number) =>
+                      ctx.getNodeClasses(liveNode.id, 'auto', index)
                   );
-
-                if (isDifferent) {
-                  (updatedNode as MarkdownPaneFragmentNode).parentCss =
-                    newParentCss;
-                  needsUpdate = true;
+                  if (
+                    JSON.stringify(markdownNode.parentCss) !==
+                    JSON.stringify(computedParentCss)
+                  ) {
+                    nextNode.parentCss = computedParentCss;
+                    needsUpdate = true;
+                  }
                 }
+
+                // gridCss
+                if (markdownNode.gridClasses) {
+                  const [allClasses] = processClassesForViewports(
+                    markdownNode.gridClasses,
+                    {},
+                    1
+                  );
+                  if (allClasses && allClasses.length > 0) {
+                    const computedGridCss = allClasses[0];
+                    if (markdownNode.gridCss !== computedGridCss) {
+                      nextNode.gridCss = computedGridCss;
+                      needsUpdate = true;
+                    }
+                  }
+                }
+
+                if (needsUpdate) updatedNode = nextNode;
+              }
+              // Pattern 3: GridLayout Nodes -> parentCss & gridCss
+              else if (liveNode.nodeType === 'GridLayoutNode') {
+                const gridNode = liveNode as GridLayoutNode;
+                let needsUpdate = false;
+                const nextNode = { ...gridNode };
+
+                // parentCss
+                if (gridNode.parentClasses) {
+                  const computedParentCss = gridNode.parentClasses.map(
+                    (_: any, index: number) =>
+                      ctx.getNodeClasses(liveNode.id, 'auto', index)
+                  );
+                  if (
+                    JSON.stringify(gridNode.parentCss) !==
+                    JSON.stringify(computedParentCss)
+                  ) {
+                    nextNode.parentCss = computedParentCss.join(` `);
+                    needsUpdate = true;
+                  }
+                }
+
+                // gridCss
+                if (gridNode.gridColumns) {
+                  const { mobile, tablet, desktop } = gridNode.gridColumns;
+                  let computedGridCss = `grid grid-cols-${mobile}`;
+                  if (tablet !== mobile) {
+                    computedGridCss += ` md:grid-cols-${tablet}`;
+                  }
+                  if (desktop !== tablet) {
+                    computedGridCss += ` xl:grid-cols-${desktop}`;
+                  }
+
+                  if (gridNode.gridCss !== computedGridCss) {
+                    nextNode.gridCss = computedGridCss;
+                    needsUpdate = true;
+                  }
+                }
+
+                if (needsUpdate) updatedNode = nextNode;
               }
 
-              if (needsUpdate) {
-                ctx.allNodes.get().set(transformedNode.id, updatedNode);
+              if (updatedNode) {
+                cookingUpdates.push(updatedNode);
               }
-            });
+            } catch (e) {
+              console.warn(`Failed to cook node ${liveNode.id}`, e);
+            }
           });
 
-          const endpoint = `${goBackend}/api/v1/nodes/panes/bulk`;
-          addDebugMessage(
-            `Processing ${dirtyPanes.length} panes via -> POST ${endpoint}`
-          );
-
-          //console.log(`bulkPayload`, bulkPayload)
-
-          try {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Tenant-ID': tenantId,
-              },
-              credentials: 'include',
-              body: JSON.stringify({ panes: bulkPayload }),
+          if (cookingUpdates.length > 0) {
+            ctx.modifyNodes(cookingUpdates, {
+              notify: false,
+              recordHistory: false,
             });
-
-            if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(
-                `HTTP error! status: ${response.status} - ${errorText}`
-              );
-            }
-
-            await response.json();
-            addDebugMessage(
-              `${dirtyPanes.length} panes saved successfully via bulk endpoint.`
-            );
-          } catch (bulkError) {
-            const errorMsg =
-              bulkError instanceof Error
-                ? bulkError.message
-                : 'Unknown bulk save error';
-            addDebugMessage(`Bulk pane save failed: ${errorMsg}`);
-            throw new Error(`Failed to save panes in bulk: ${errorMsg}`);
-          } finally {
-            setIsIndeterminateStage(false);
-          }
-
-          setStageProgress({
-            currentStep: dirtyPanes.length,
-            totalSteps: dirtyPanes.length,
-          });
-          completedProcessingSteps += dirtyPanes.length;
-          const processingProgress =
-            (completedProcessingSteps / totalProcessingSteps) *
-            PROGRESS_PHASES.PROCESSING;
-          setProgress(
-            PROGRESS_PHASES.PREPARATION +
-              PROGRESS_PHASES.UPLOADS +
-              processingProgress
-          );
-        }
-
-        if (!isContext && dirtyStoryFragments.length > 0) {
-          setStage('SAVING_STORY_FRAGMENTS');
-          setStageProgress({
-            currentStep: 0,
-            totalSteps: dirtyStoryFragments.length,
-          });
-          for (let i = 0; i < dirtyStoryFragments.length; i++) {
-            const fragment = dirtyStoryFragments[i];
-
-            try {
-              const payload = await transformStoryFragmentForSave(
-                ctx,
-                fragment.id,
-                window.TRACTSTACK_CONFIG?.tenantId || 'default'
-              );
-
-              if (uploadedOGPaths[fragment.id]) {
-                payload.socialImagePath = uploadedOGPaths[fragment.id];
-              }
-
-              const endpoint = isCreateMode
-                ? `${goBackend}/api/v1/nodes/storyfragments/create`
-                : `${goBackend}/api/v1/nodes/storyfragments/${payload.id}/complete`;
-              const method = isCreateMode ? 'POST' : 'PUT';
-
-              addDebugMessage(
-                `Processing story fragment ${i + 1}/${
-                  dirtyStoryFragments.length
-                }: ${fragment.id} -> ${method} ${endpoint}`
-              );
-
-              const response = await fetch(endpoint, {
-                method,
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Tenant-ID': tenantId,
-                },
-                credentials: 'include',
-                body: JSON.stringify(payload),
-              });
-
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-
-              await response.json();
-              addDebugMessage(
-                `StoryFragment ${fragment.id} saved successfully`
-              );
-
-              if (uploadedOGPaths[fragment.id]) {
-                clearPendingImageOperation(fragment.id);
-                addDebugMessage(
-                  `Cleared pending image operation for ${fragment.id}`
-                );
-              }
-            } catch (etlError) {
-              const errorMsg =
-                etlError instanceof Error ? etlError.message : 'Unknown error';
-              addDebugMessage(
-                `StoryFragment ${fragment.id} ETL failed: ${errorMsg}`
-              );
-              throw new Error(
-                `Failed to save story fragment ${fragment.id}: ${errorMsg}`
-              );
-            }
-
-            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
-            completedProcessingSteps++;
-            const processingProgress =
-              (completedProcessingSteps / totalProcessingSteps) *
-              PROGRESS_PHASES.PROCESSING;
-            setProgress(
-              PROGRESS_PHASES.PREPARATION +
-                PROGRESS_PHASES.UPLOADS +
-                processingProgress
-            );
-          }
-        }
-
-        const baseFinalizationProgress =
-          PROGRESS_PHASES.PREPARATION +
-          PROGRESS_PHASES.UPLOADS +
-          PROGRESS_PHASES.PROCESSING;
-
-        if (dirtyPanes.length > 0) {
-          setStage('LINKING_FILES');
-          setIsIndeterminateStage(true);
-          setProgress(baseFinalizationProgress);
-          addDebugMessage('Starting file-pane relationship linking...');
-
-          const relationships = [];
-          for (const paneNode of dirtyPanes) {
-            const fileIds = ctx.getPaneImageFileIds(paneNode.id);
-            relationships.push({
-              paneId: paneNode.id,
-              fileIds: fileIds,
-            });
-          }
-
-          if (relationships.some((rel) => rel.fileIds.length > 0)) {
-            try {
-              const bulkEndpoint = `${goBackend}/api/v1/nodes/panes/files/bulk`;
-              addDebugMessage(
-                `Linking relationships: ${JSON.stringify(relationships)}`
-              );
-
-              const response = await fetch(bulkEndpoint, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Tenant-ID': tenantId,
-                },
-                credentials: 'include',
-                body: JSON.stringify({ relationships }),
-              });
-
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-
-              const result = await response.json();
-              addDebugMessage(
-                `File-pane relationships linked successfully: ${result.message}`
-              );
-            } catch (error) {
-              const errorMsg =
-                error instanceof Error ? error.message : 'Unknown error';
-              addDebugMessage(
-                `Failed to link file-pane relationships: ${errorMsg}`
-              );
-              throw new Error(
-                `Failed to link file-pane relationships: ${errorMsg}`
-              );
-            }
-          } else {
-            addDebugMessage('No file relationships to link');
+            addDebugMessage(`Cooked ${cookingUpdates.length} nodes.`);
           }
           setIsIndeterminateStage(false);
         }
 
+        // --- PROCESSING STYLES ---
+        // Moved before SAVING_PANES to ensure the whitelist is generated from the cooked, exhaustive inventory
         setStage('PROCESSING_STYLES');
         setIsIndeterminateStage(true);
+        const baseFinalizationProgress =
+          PROGRESS_PHASES.PREPARATION +
+          PROGRESS_PHASES.UPLOADS +
+          PROGRESS_PHASES.PROCESSING;
         setProgress(
           baseFinalizationProgress + PROGRESS_PHASES.FINALIZATION / 2
         );
@@ -712,6 +592,260 @@ export default function SaveModal({
           setIsIndeterminateStage(false);
         }
 
+        // --- SAVING PANES ---
+        // Runs after styles to ensure DB gets minimal, correct payload
+        if (dirtyPanes.length > 0) {
+          setStage('SAVING_PANES');
+          setIsIndeterminateStage(true);
+          setStageProgress({
+            currentStep: 0,
+            totalSteps: dirtyPanes.length,
+          });
+
+          const bulkPayload = dirtyPanes.map((paneNode) =>
+            transformLivePaneForSave(ctx, paneNode.id, isContext)
+          );
+
+          // Update context with minimal strings (idempotent, restoring runtime state)
+          bulkPayload.forEach((payload) => {
+            payload.optionsPayload.nodes.forEach((transformedNode) => {
+              const liveNode = ctx.allNodes.get().get(transformedNode.id);
+              if (!liveNode) return;
+
+              let needsUpdate = false;
+              let updatedNode: BaseNode = { ...liveNode };
+
+              if (
+                transformedNode.nodeType === 'TagElement' &&
+                transformedNode.elementCss
+              ) {
+                const flatNode = liveNode as FlatNode;
+                if (flatNode.elementCss !== transformedNode.elementCss) {
+                  (updatedNode as FlatNode).elementCss =
+                    transformedNode.elementCss;
+                  needsUpdate = true;
+                }
+              }
+
+              if (
+                transformedNode.nodeType === 'Markdown' &&
+                transformedNode.parentCss
+              ) {
+                const markdownNode = liveNode as MarkdownPaneFragmentNode;
+                const currentParentCss = markdownNode.parentCss;
+                const newParentCss = transformedNode.parentCss as string[];
+
+                const isDifferent =
+                  !currentParentCss ||
+                  currentParentCss.length !== newParentCss.length ||
+                  currentParentCss.some(
+                    (css, index) => css !== newParentCss[index]
+                  );
+
+                if (isDifferent) {
+                  (updatedNode as MarkdownPaneFragmentNode).parentCss =
+                    newParentCss;
+                  needsUpdate = true;
+                }
+              }
+
+              if (needsUpdate) {
+                ctx.allNodes.get().set(transformedNode.id, updatedNode);
+              }
+            });
+          });
+
+          const endpoint = `${goBackend}/api/v1/nodes/panes/bulk`;
+          addDebugMessage(
+            `Processing ${dirtyPanes.length} panes via -> POST ${endpoint}`
+          );
+
+          try {
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+              body: JSON.stringify({ panes: bulkPayload }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(
+                `HTTP error! status: ${response.status} - ${errorText}`
+              );
+            }
+
+            await response.json();
+            addDebugMessage(
+              `${dirtyPanes.length} panes saved successfully via bulk endpoint.`
+            );
+          } catch (bulkError) {
+            const errorMsg =
+              bulkError instanceof Error
+                ? bulkError.message
+                : 'Unknown bulk save error';
+            addDebugMessage(`Bulk pane save failed: ${errorMsg}`);
+            throw new Error(`Failed to save panes in bulk: ${errorMsg}`);
+          } finally {
+            setIsIndeterminateStage(false);
+          }
+
+          setStageProgress({
+            currentStep: dirtyPanes.length,
+            totalSteps: dirtyPanes.length,
+          });
+          completedProcessingSteps += dirtyPanes.length;
+          const processingProgress =
+            (completedProcessingSteps / totalProcessingSteps) *
+            PROGRESS_PHASES.PROCESSING;
+          setProgress(
+            PROGRESS_PHASES.PREPARATION +
+              PROGRESS_PHASES.UPLOADS +
+              processingProgress
+          );
+        }
+
+        if (!isContext && dirtyStoryFragments.length > 0) {
+          setStage('SAVING_STORY_FRAGMENTS');
+          setStageProgress({
+            currentStep: 0,
+            totalSteps: dirtyStoryFragments.length,
+          });
+          for (let i = 0; i < dirtyStoryFragments.length; i++) {
+            const fragment = dirtyStoryFragments[i];
+
+            try {
+              const payload = await transformStoryFragmentForSave(
+                ctx,
+                fragment.id,
+                tenantId
+              );
+
+              if (uploadedOGPaths[fragment.id]) {
+                payload.socialImagePath = uploadedOGPaths[fragment.id];
+              }
+
+              const endpoint = isCreateMode
+                ? `${goBackend}/api/v1/nodes/storyfragments/create`
+                : `${goBackend}/api/v1/nodes/storyfragments/${payload.id}/complete`;
+              const method = isCreateMode ? 'POST' : 'PUT';
+
+              addDebugMessage(
+                `Processing story fragment ${i + 1}/${
+                  dirtyStoryFragments.length
+                }: ${fragment.id} -> ${method} ${endpoint}`
+              );
+
+              const response = await fetch(endpoint, {
+                method,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Tenant-ID': tenantId,
+                },
+                credentials: 'include',
+                body: JSON.stringify(payload),
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              await response.json();
+              addDebugMessage(
+                `StoryFragment ${fragment.id} saved successfully`
+              );
+
+              if (uploadedOGPaths[fragment.id]) {
+                clearPendingImageOperation(fragment.id);
+                addDebugMessage(
+                  `Cleared pending image operation for ${fragment.id}`
+                );
+              }
+            } catch (etlError) {
+              const errorMsg =
+                etlError instanceof Error ? etlError.message : 'Unknown error';
+              addDebugMessage(
+                `StoryFragment ${fragment.id} ETL failed: ${errorMsg}`
+              );
+              throw new Error(
+                `Failed to save story fragment ${fragment.id}: ${errorMsg}`
+              );
+            }
+
+            setStageProgress((prev) => ({ ...prev, currentStep: i + 1 }));
+            completedProcessingSteps++;
+            const processingProgress =
+              (completedProcessingSteps / totalProcessingSteps) *
+              PROGRESS_PHASES.PROCESSING;
+            setProgress(
+              PROGRESS_PHASES.PREPARATION +
+                PROGRESS_PHASES.UPLOADS +
+                processingProgress
+            );
+          }
+        }
+
+        if (dirtyPanes.length > 0) {
+          setStage('LINKING_FILES');
+          setIsIndeterminateStage(true);
+          // ... Linking files logic continues ...
+          // Note: Linking files remains after saving panes because it relies on panes existing in DB
+          setProgress(baseFinalizationProgress);
+          addDebugMessage('Starting file-pane relationship linking...');
+
+          const relationships = [];
+          for (const paneNode of dirtyPanes) {
+            const fileIds = ctx.getPaneImageFileIds(paneNode.id);
+            relationships.push({
+              paneId: paneNode.id,
+              fileIds: fileIds,
+            });
+          }
+
+          if (relationships.some((rel) => rel.fileIds.length > 0)) {
+            try {
+              const bulkEndpoint = `${goBackend}/api/v1/nodes/panes/files/bulk`;
+              addDebugMessage(
+                `Linking relationships: ${JSON.stringify(relationships)}`
+              );
+
+              const response = await fetch(bulkEndpoint, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Tenant-ID': tenantId,
+                },
+                credentials: 'include',
+                body: JSON.stringify({ relationships }),
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              const result = await response.json();
+              addDebugMessage(
+                `File-pane relationships linked successfully: ${result.message}`
+              );
+            } catch (error) {
+              const errorMsg =
+                error instanceof Error ? error.message : 'Unknown error';
+              addDebugMessage(
+                `Failed to link file-pane relationships: ${errorMsg}`
+              );
+              throw new Error(
+                `Failed to link file-pane relationships: ${errorMsg}`
+              );
+            }
+          } else {
+            addDebugMessage('No file relationships to link');
+          }
+          setIsIndeterminateStage(false);
+        }
+
         if (pendingHomePageSlug) {
           setStage('UPDATING_HOME_PAGE');
           setIsIndeterminateStage(true);
@@ -774,6 +908,30 @@ export default function SaveModal({
           }
         }
 
+        if (hydrate) {
+          addDebugMessage('Finalizing setup (Kill Switch)...');
+          try {
+            const response = await fetch(`${goBackend}/api/v1/setup/complete`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Tenant-ID': tenantId,
+              },
+              credentials: 'include',
+              body: JSON.stringify({}),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Kill Switch failed: ${response.status}`);
+            }
+            addDebugMessage('Hydration token cleared.');
+          } catch (e) {
+            console.error('Kill switch error:', e);
+            // We don't throw here to ensure the user still gets to the dashboard
+            addDebugMessage('Warning: Failed to clear hydration token.');
+          }
+        }
+
         setStage('COMPLETED');
         setProgress(100);
         addDebugMessage('Save process completed successfully!');
@@ -821,6 +979,9 @@ export default function SaveModal({
         break;
       case 'PROCESSING_OG_IMAGES':
         description = `Processing social images${getProgressText()}`;
+        break;
+      case 'COOKING_NODES':
+        description = 'Preparing content styles...';
         break;
       case 'SAVING_PANES':
         description = `${actionText} pane content...`;
@@ -1031,7 +1192,17 @@ export default function SaveModal({
 
               {(stage === 'COMPLETED' || stage === 'ERROR') && (
                 <div className="flex justify-end gap-2">
-                  {stage === 'COMPLETED' && (
+                  {hydrate && stage === 'COMPLETED' && (
+                    <button
+                      onClick={() =>
+                        (window.location.href = '/storykeep/branding')
+                      }
+                      className={`rounded bg-cyan-600 px-4 py-2 text-white transition-colors hover:bg-cyan-700`}
+                    >
+                      Continue
+                    </button>
+                  )}
+                  {!hydrate && stage === 'COMPLETED' && (
                     <>
                       <a
                         href={visitPageUrl}

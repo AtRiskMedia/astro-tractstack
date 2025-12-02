@@ -2105,9 +2105,15 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/storykeep/widgets/SetupWizard.tsx'
+        '../templates/src/components/storykeep/widgets/HydrateWizard.tsx'
       ),
-      dest: 'src/components/storykeep/widgets/SetupWizard.tsx',
+      dest: 'src/components/storykeep/widgets/HydrateWizard.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/widgets/InitWizard.tsx'
+      ),
+      dest: 'src/components/storykeep/widgets/InitWizard.tsx',
     },
     {
       src: resolve('../templates/src/pages/storykeep/init.astro'),

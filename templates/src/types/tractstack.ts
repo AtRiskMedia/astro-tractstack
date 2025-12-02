@@ -184,6 +184,7 @@ export interface BrandConfig {
   KNOWN_RESOURCES?: KnownResourcesConfig;
   DESIGN_LIBRARY?: DesignLibraryConfig;
   HAS_AAI?: boolean;
+  HAS_HYDRATION_TOKEN?: boolean;
 }
 
 export interface BrandConfigState {
@@ -217,6 +218,7 @@ export interface BrandConfigState {
   knownResources: KnownResourcesConfig;
   designLibrary?: DesignLibraryConfig;
   hasAAI: boolean;
+  hasHydrationToken: boolean;
 }
 
 // Form validation types

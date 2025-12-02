@@ -20,28 +20,13 @@ export interface TractStackEvent {
 }
 
 function getConfig() {
-  if (typeof window === 'undefined') {
-    return {
-      goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
-      tenantId: import.meta.env.PUBLIC_TENANTID || 'default',
-    };
-  }
-
   return {
-    goBackend:
-      window.TRACTSTACK_CONFIG?.backendUrl ||
-      import.meta.env.PUBLIC_GO_BACKEND ||
-      'http://localhost:8080',
-    tenantId:
-      window.TRACTSTACK_CONFIG?.tenantId ||
-      import.meta.env.PUBLIC_TENANTID ||
-      'default',
+    goBackend: import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080',
   };
 }
 
 export class TractStackAPI {
   private explicitTenantId?: string;
-
   constructor(tenantId?: string) {
     this.explicitTenantId = tenantId;
   }
@@ -51,7 +36,19 @@ export class TractStackAPI {
     options: RequestInit = {}
   ): Promise<APIResponse<T>> {
     const config = getConfig();
-    const effectiveTenantId = this.explicitTenantId || config.tenantId;
+
+    const effectiveTenantId = this.explicitTenantId;
+
+    if (!effectiveTenantId) {
+      console.error(
+        '[TractStackAPI] CRITICAL ERROR: Tenant ID is required but was not provided to the constructor. Failing request.'
+      );
+      return {
+        success: false,
+        error: 'Tenant ID missing. Must be provided in constructor.',
+      };
+    }
+
     const baseUrl = config.goBackend;
 
     const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -145,15 +142,6 @@ export class TractStackAPI {
 
   async getFragment(fragmentId: string): Promise<APIResponse> {
     return this.get(`/api/v1/fragments/${fragmentId}`);
-  }
-
-  getTenantId(): string {
-    const config = getConfig();
-    return this.explicitTenantId || config.tenantId;
-  }
-
-  setTenantId(tenantId: string): void {
-    this.explicitTenantId = tenantId;
   }
 
   async getContentMapWithTimestamp(

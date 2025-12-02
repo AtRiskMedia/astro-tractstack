@@ -14,6 +14,10 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
   const [currentScaleType, setCurrentScaleType] = useState<string>('');
   const [currentPrompt, setCurrentPrompt] = useState<string>('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const tenantId =
+    window.TRACTSTACK_CONFIG?.tenantId ||
+    import.meta.env.PUBLIC_TENANTID ||
+    'default';
 
   // Get parameter metadata from the widgetMeta constant
   const widgetInfo = widgetMeta.belief;
@@ -43,7 +47,6 @@ export default function BeliefWidget({ node, onUpdate }: BeliefWidgetProps) {
       try {
         const goBackend =
           import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-        const tenantId = import.meta.env.PUBLIC_TENANTID || 'default';
 
         // Step 1: Get all belief IDs
         const idsResponse = await fetch(`${goBackend}/api/v1/nodes/beliefs`, {

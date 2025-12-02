@@ -239,7 +239,7 @@ export interface PaneNode extends BaseNode {
 export interface StoryFragmentNode extends BaseNode {
   title: string;
   slug: string;
-  tractStackId?: string;
+  tractStackId: string;
   paneIds: string[];
   menuId?: string;
   tailwindBgColour?: string;

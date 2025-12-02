@@ -47,8 +47,10 @@ const Impression = ({ payload, currentPage, config }: ImpressionProps) => {
           beliefValue: 'CLICKED',
           paneId: payload.parentId || '',
         };
+        const backendUrl =
+          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-        await fetch(`${tractStackConfig.backendUrl}/api/v1/state`, {
+        await fetch(`${backendUrl}/api/v1/state`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

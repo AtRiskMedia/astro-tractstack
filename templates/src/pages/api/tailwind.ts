@@ -3,17 +3,14 @@ import { createTailwindcss } from '@mhsdesign/jit-browser-tailwindcss';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const tenantId =
+    locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+  const goBackend =
+    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
   try {
     const { dirtyPaneIds, dirtyClasses } = await request.json();
-
-    const tenantId =
-      request.headers.get('X-Tenant-ID') ||
-      import.meta.env.PUBLIC_TENANTID ||
-      'default';
-
-    const goBackend =
-      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
     // Forward authentication cookies to the backend
     const cookieHeader = request.headers.get('cookie') || '';

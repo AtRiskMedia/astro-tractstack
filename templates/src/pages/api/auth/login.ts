@@ -1,6 +1,9 @@
 import type { APIRoute } from '@/types/astro';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const tenantId =
+    locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
   try {
     // Parse request body
     const body = await request.json();
@@ -17,10 +20,6 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Get tenant info from environment
-    const tenantId =
-      request.headers.get('X-Tenant-ID') ||
-      import.meta.env.PUBLIC_TENANTID ||
-      'default';
     const backendUrl =
       import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
