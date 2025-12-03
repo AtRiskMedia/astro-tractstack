@@ -46,30 +46,32 @@ const mainStylesUrl = isDev
       )
     }
 
-    <script>
-      (function initCleanSlate() {
-        try {
-          document.cookie =
-            'admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-          document.cookie =
-            'editor_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-          document.cookie =
-            'tractstack_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    <script is:inline>
+      if (typeof document !== 'undefined') {
+        (function initCleanSlate() {
+          try {
+            document.cookie =
+              'admin_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+            document.cookie =
+              'editor_auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+            document.cookie =
+              'tractstack_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
 
-          const tractStackKeys = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('tractstack_')) {
-              tractStackKeys.push(key);
+            const tractStackKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('tractstack_')) {
+                tractStackKeys.push(key);
+              }
             }
-          }
-          tractStackKeys.forEach((key) => localStorage.removeItem(key));
+            tractStackKeys.forEach((key) => localStorage.removeItem(key));
 
-          console.log('TractStack: Clean slate initialization complete');
-        } catch (error) {
-          console.warn('TractStack: Error during clean slate init:', error);
-        }
-      })();
+            console.log('TractStack: Clean slate initialization complete');
+          } catch (error) {
+            console.warn('TractStack: Error during clean slate init:', error);
+          }
+        })();
+      }
     </script>
   </body>
 </html>
