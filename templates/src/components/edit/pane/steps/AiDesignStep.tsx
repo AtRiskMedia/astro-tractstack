@@ -33,10 +33,7 @@ export const AiDesignStep = ({
   };
 
   return (
-    <div className="space-y-6 rounded-lg bg-gray-50 p-4 shadow-inner">
-      <label className="block text-lg font-bold text-gray-800">
-        2. Configure AI Design
-      </label>
+    <div className="space-y-6">
       <div>
         <label className="block text-base font-bold text-gray-800">
           Color Harmony

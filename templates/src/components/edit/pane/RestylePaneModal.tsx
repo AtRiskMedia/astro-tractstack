@@ -211,7 +211,8 @@ export const RestylePaneModal = () => {
       (entry: DesignLibraryEntry) =>
         (selectedCategory === 'all' || entry.category === selectedCategory) &&
         entry.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        entry.markdownCount === targetMarkdownCount
+        entry.markdownCount === targetMarkdownCount &&
+        !entry.locked
     );
   }, [designLibrary, selectedCategory, searchTerm, targetMarkdownCount]);
 
@@ -350,14 +351,15 @@ export const RestylePaneModal = () => {
     <Dialog.Root
       open={isRestyleModalOpen}
       onOpenChange={handleDialogStateChange}
-      modal={false}
+      modal={true}
+      preventScroll={true}
     >
-      <Dialog.Backdrop className="z-103 fixed inset-0 bg-black/70" />
+      <Dialog.Backdrop className="z-103 fixed inset-0 bg-black bg-opacity-75" />
       <Dialog.Positioner className="z-104 fixed inset-0 flex items-center justify-center">
         <Dialog.Content
           ref={contentRef}
-          className="flex flex-col rounded-lg bg-white shadow-2xl"
-          style={{ maxHeight: '90vw', width: '90vw' }}
+          className="flex max-w-5xl flex-col rounded-lg bg-white shadow-2xl xl:max-w-7xl"
+          style={{ maxHeight: '90vh', width: '90vw' }}
         >
           <header className="flex items-center justify-between border-b p-4">
             <Dialog.Title className="text-xl font-bold">
