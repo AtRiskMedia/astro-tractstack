@@ -66,7 +66,6 @@ const buttonStyleClasses: ButtonStylePair[] = [
       textSIZE: ['base'],
       transition: ['colors'],
       transitionDURATION: ['200'],
-      w: ['full'],
     },
     {
       bgCOLOR: ['blue-700'],
@@ -88,7 +87,6 @@ const buttonStyleClasses: ButtonStylePair[] = [
       textSIZE: ['base'],
       transition: ['colors'],
       transitionDURATION: ['200'],
-      w: ['full'],
     },
     {
       bgCOLOR: ['blue-50'],
@@ -109,7 +107,6 @@ const buttonStyleClasses: ButtonStylePair[] = [
       textSIZE: ['base'],
       transition: ['colors'],
       transitionDURATION: ['200'],
-      w: ['full'],
     },
     {
       bgCOLOR: ['white'],
@@ -133,7 +130,6 @@ const buttonStyleClasses: ButtonStylePair[] = [
       textSIZE: ['base'],
       transition: ['colors'],
       transitionDURATION: ['200'],
-      w: ['full'],
     },
     {
       textCOLOR: ['myblack'],

@@ -22,6 +22,8 @@ export const preParseAction = (
       return ``;
     case `goto`:
       switch (parameterOne) {
+        case `sandbox`:
+          return `/sandbox`;
         case `storykeep`:
           if (parameterTwo) {
             switch (parameterTwo) {
@@ -68,14 +70,6 @@ export const preParseAction = (
           return null;
         case `url`:
           return parameterTwo;
-        case `sandbox`:
-          if (parameterTwo) {
-            switch (parameterTwo) {
-              case `claim`:
-                return `/sandbox/claim`;
-            }
-          }
-          return ``;
         default:
           console.log(`LispActionPayload preParse misfire on goto`, payload);
       }

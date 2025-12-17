@@ -71,6 +71,10 @@ export const GOTO_TARGETS: GotoTargets = {
     name: 'Home Page',
     description: 'Navigate to the home page',
   },
+  sandbox: {
+    name: 'Sandbox',
+    description: 'Enter the Story Keep',
+  },
   concierge: {
     name: 'Concierge',
     subcommands: ['profile'],
