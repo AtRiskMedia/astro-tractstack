@@ -221,7 +221,7 @@ export default function SearchModal({
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-50 backdrop-blur-sm" />
         <Dialog.Positioner className="fixed inset-0 z-50 mx-auto max-w-3xl p-2 pt-16 md:p-4">
           <Dialog.Content
-            className="bg-mywhite mx-auto w-full overflow-hidden rounded-lg shadow-2xl"
+            className="mx-auto w-full overflow-hidden rounded-lg bg-mywhite shadow-2xl"
             style={{ height: '80vh' }}
           >
             <div className="relative w-full border-b border-gray-200 p-4">
@@ -269,7 +269,7 @@ export default function SearchModal({
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder="Search content..."
-                    className="text-mydarkgrey relative z-10 w-full border-none bg-transparent text-xl placeholder-gray-500 outline-none"
+                    className="relative z-10 w-full border-none bg-transparent text-xl text-mydarkgrey placeholder-gray-500 outline-none"
                     style={{ background: 'transparent', padding: '0' }}
                   />
                 </div>
@@ -277,7 +277,7 @@ export default function SearchModal({
 
               <button
                 onClick={handleClose}
-                className="text-mydarkgrey hover:text-myblue absolute right-4 top-6 rounded-lg p-2 transition-colors hover:bg-gray-100"
+                className="absolute right-4 top-6 rounded-lg p-2 text-mydarkgrey transition-colors hover:bg-gray-100 hover:text-myblue"
                 aria-label="Close search"
               >
                 <XMarkIcon className="h-6 w-6" />
@@ -310,8 +310,8 @@ export default function SearchModal({
 
               {query.trim().length >= 3 && isDiscovering && (
                 <div className="w-full p-8 text-center">
-                  <div className="border-myblue inline-block h-8 w-8 animate-spin rounded-full border-b-2"></div>
-                  <p className="text-mydarkgrey mt-4">Discovering...</p>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-myblue"></div>
+                  <p className="mt-4 text-mydarkgrey">Discovering...</p>
                 </div>
               )}
 
@@ -320,7 +320,7 @@ export default function SearchModal({
                   <p>Discovery failed: {discoverError}</p>
                   <button
                     onClick={() => discoverTerms(query.trim())}
-                    className="text-myblue mt-2 hover:underline"
+                    className="mt-2 text-myblue hover:underline"
                   >
                     Try again
                   </button>
@@ -329,7 +329,7 @@ export default function SearchModal({
 
               {showSuggestions && (
                 <div className="w-full p-6">
-                  <p className="text-mydarkgrey mb-4 text-sm font-bold">
+                  <p className="mb-4 text-sm font-bold text-mydarkgrey">
                     Suggestions ({suggestions.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -345,7 +345,7 @@ export default function SearchModal({
                       </button>
                     ))}
                   </div>
-                  <p className="text-mydarkgrey mt-4 text-xs">
+                  <p className="mt-4 text-xs text-mydarkgrey">
                     Click a suggestion or press Enter to search
                   </p>
                   <div className="mt-6 border-t border-gray-200 pt-4">
@@ -379,8 +379,8 @@ export default function SearchModal({
 
               {isRetrieving && (
                 <div className="w-full p-8 text-center">
-                  <div className="border-myblue inline-block h-8 w-8 animate-spin rounded-full border-b-2"></div>
-                  <p className="text-mydarkgrey mt-4">Searching...</p>
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-myblue"></div>
+                  <p className="mt-4 text-mydarkgrey">Searching...</p>
                 </div>
               )}
 

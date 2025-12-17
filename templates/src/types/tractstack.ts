@@ -66,8 +66,7 @@ export interface TractStackEvent {
 
 // Fragment component props
 export interface FragmentProps
-  extends BaseComponentProps,
-    Partial<HTMXAttributes> {
+  extends BaseComponentProps, Partial<HTMXAttributes> {
   /** Fragment ID */
   fragmentId?: string;
 

@@ -126,7 +126,7 @@ const StyleWidgetRemovePanel = ({
         <span className="ml-1">from {elementTypeTitle}?</span>
       </h3>
       <div className="space-y-4 rounded bg-slate-50 p-6">
-        <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
           <li>
             <em>Are you sure?</em>
           </li>

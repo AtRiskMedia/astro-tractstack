@@ -132,7 +132,7 @@ const StyleWordCarouselPanel = ({ node }: StyleWordCarouselPanelProps) => {
           Words (one per line)
         </label>
         <textarea
-          className="focus:border-myblue focus:ring-myblue w-full rounded border border-gray-300 p-2 text-sm focus:ring-1"
+          className="w-full rounded border border-gray-300 p-2 text-sm focus:border-myblue focus:ring-1 focus:ring-myblue"
           rows={5}
           value={words}
           onChange={(e) => handleWordsChange(e.target.value)}

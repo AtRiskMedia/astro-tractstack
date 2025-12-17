@@ -39,7 +39,7 @@ const mainStylesUrl = isDev
 ---
 
 <!doctype html>
-<html lang="en" class="bg-mywhite h-full">
+<html lang="en" class="h-full bg-mywhite">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -48,7 +48,7 @@ const mainStylesUrl = isDev
     <link rel="stylesheet" href={mainStylesUrl} />
   </head>
   <body class="h-full">
-    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:px-6 lg:px-8 flex min-h-full flex-col justify-center py-12">
       <div class="mx-auto pb-6">
         <!-- Logo and Wordmark -->
         <div class="flex flex-col items-center justify-center gap-4">
@@ -69,7 +69,7 @@ const mainStylesUrl = isDev
         </div>
 
         <h2
-          class="text-mydarkgrey mt-6 text-center text-2xl font-bold leading-9 tracking-tight"
+          class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-mydarkgrey"
         >
           Sign in to your Storykeep
         </h2>
@@ -113,7 +113,7 @@ const mainStylesUrl = isDev
             <div>
               <label
                 for="password"
-                class="text-mydarkgrey block text-sm font-bold leading-6"
+                class="block text-sm font-bold leading-6 text-mydarkgrey"
               >
                 Password
               </label>
@@ -123,7 +123,7 @@ const mainStylesUrl = isDev
                   name="password"
                   type="password"
                   required
-                  class="text-mydarkgrey ring-mylightgrey placeholder:text-mylightgrey focus:ring-myorange block w-full rounded-md border-0 px-3 py-1.5 shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6"
+                  class="sm:text-sm sm:leading-6 block w-full rounded-md border-0 px-3 py-1.5 text-mydarkgrey shadow-sm ring-1 ring-inset ring-mylightgrey placeholder:text-mylightgrey focus:ring-2 focus:ring-inset focus:ring-myorange"
                 />
               </div>
             </div>
@@ -139,7 +139,7 @@ const mainStylesUrl = isDev
               <button
                 type="button"
                 id="submitButton"
-                class="bg-myblue hover:bg-myorange focus-visible:outline-myorange flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-bold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                class="flex w-full justify-center rounded-md bg-myblue px-3 py-1.5 text-sm font-bold leading-6 text-white shadow-sm hover:bg-myorange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-myorange"
               >
                 Sign in
               </button>

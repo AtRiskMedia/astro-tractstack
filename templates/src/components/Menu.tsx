@@ -145,7 +145,7 @@ const MenuComponent = (props: MenuProps) => {
       return (
         <button
           type="button"
-          className="text-mydarkgrey focus:ring-myblue block text-2xl font-bold leading-6 hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2"
+          className="block text-2xl font-bold leading-6 text-mydarkgrey hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2 focus:ring-myblue"
           title={item.description}
           aria-label={`${item.name} - ${item.description}`}
           hx-post="/api/v1/state"
@@ -161,7 +161,7 @@ const MenuComponent = (props: MenuProps) => {
       return (
         <a
           href={item.href}
-          className="text-mydarkgrey focus:ring-myblue block text-2xl font-bold leading-6 hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2"
+          className="block text-2xl font-bold leading-6 text-mydarkgrey hover:text-black hover:underline hover:decoration-dashed hover:decoration-4 hover:underline-offset-4 focus:text-black focus:outline-none focus:ring-2 focus:ring-myblue"
           title={item.description}
           aria-label={`${item.name} - ${item.description}`}
         >
@@ -172,7 +172,7 @@ const MenuComponent = (props: MenuProps) => {
 
     return (
       <span
-        className="text-mydarkgrey block text-2xl font-bold leading-6 opacity-50"
+        className="block text-2xl font-bold leading-6 text-mydarkgrey opacity-50"
         title={item.description}
         aria-label={`${item.name} - ${item.description}`}
       >
@@ -186,7 +186,7 @@ const MenuComponent = (props: MenuProps) => {
       <style dangerouslySetInnerHTML={{ __html: menuStyles }} />
 
       {/* Desktop Navigation */}
-      <nav className="font-action ml-6 hidden flex-wrap items-center justify-end space-x-3 md:flex md:space-x-6">
+      <nav className="ml-6 hidden flex-wrap items-center justify-end space-x-3 font-action md:flex md:space-x-6">
         {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
           <div key={item.name} className="relative py-1.5">
             <InteractiveMenuItem item={item} />
@@ -198,7 +198,7 @@ const MenuComponent = (props: MenuProps) => {
       <div className="font-action md:hidden">
         <Menu.Root>
           <Menu.Trigger
-            className="text-myblue focus:ring-myblue inline-flex rounded-md px-3 py-2 text-xl font-bold hover:text-black focus:outline-none focus:ring-2"
+            className="inline-flex rounded-md px-3 py-2 text-xl font-bold text-myblue hover:text-black focus:outline-none focus:ring-2 focus:ring-myblue"
             aria-label="Open navigation menu"
           >
             <span>MENU</span>
@@ -209,20 +209,20 @@ const MenuComponent = (props: MenuProps) => {
             <Menu.Positioner>
               <Menu.Content className="menu-content mt-5 flex">
                 <div className="w-screen">
-                  <div className="text-md ring-mydarkgrey/5 flex-auto overflow-hidden rounded-3xl bg-white p-4 leading-6 shadow-lg ring-1">
+                  <div className="text-md flex-auto overflow-hidden rounded-3xl bg-white p-4 leading-6 shadow-lg ring-1 ring-mydarkgrey/5">
                     {/* Featured Links Section */}
                     <div className="px-8">
                       {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
                         <Menu.Item
                           key={item.name}
                           value={item.name}
-                          className="menu-item hover:bg-mygreen/20 group relative flex gap-x-6 rounded-lg p-4"
+                          className="menu-item group relative flex gap-x-6 rounded-lg p-4 hover:bg-mygreen/20"
                         >
                           <div>
                             {item.renderAs === 'button' ? (
                               <button
                                 type="button"
-                                className="font-action text-myblack text-xl hover:text-black focus:text-black focus:outline-none"
+                                className="font-action text-xl text-myblack hover:text-black focus:text-black focus:outline-none"
                                 aria-label={`${item.name} - ${item.description}`}
                                 hx-post="/api/v1/state"
                                 hx-swap="none"
@@ -234,7 +234,7 @@ const MenuComponent = (props: MenuProps) => {
                             ) : item.renderAs === 'a' ? (
                               <a
                                 href={item.href}
-                                className="font-action text-myblack text-xl hover:text-black focus:text-black focus:outline-none"
+                                className="font-action text-xl text-myblack hover:text-black focus:text-black focus:outline-none"
                                 aria-label={`${item.name} - ${item.description}`}
                               >
                                 {item.name}
@@ -242,13 +242,13 @@ const MenuComponent = (props: MenuProps) => {
                               </a>
                             ) : (
                               <span
-                                className="font-action text-myblack text-xl opacity-50"
+                                className="font-action text-xl text-myblack opacity-50"
                                 aria-label={`${item.name} - ${item.description}`}
                               >
                                 {item.name}
                               </span>
                             )}
-                            <p className="text-mydarkgrey mt-1">
+                            <p className="mt-1 text-mydarkgrey">
                               {item.description}
                             </p>
                           </div>
@@ -261,7 +261,7 @@ const MenuComponent = (props: MenuProps) => {
                       <div className="bg-slate-50 p-8">
                         <div className="flex justify-between">
                           <h3
-                            className="text-myblue mt-4 text-sm leading-6"
+                            className="mt-4 text-sm leading-6 text-myblue"
                             id="additional-links-heading"
                           >
                             Additional Links
@@ -282,7 +282,7 @@ const MenuComponent = (props: MenuProps) => {
                                   {item.renderAs === 'button' ? (
                                     <button
                                       type="button"
-                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 hover:text-black focus:text-black focus:underline focus:outline-none"
+                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey hover:text-black focus:text-black focus:underline focus:outline-none"
                                       title={item.description}
                                       aria-label={`${item.name} - ${item.description}`}
                                       hx-post="/api/v1/state"
@@ -295,7 +295,7 @@ const MenuComponent = (props: MenuProps) => {
                                   ) : item.renderAs === 'a' ? (
                                     <a
                                       href={item.href}
-                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 hover:text-black focus:text-black focus:underline focus:outline-none"
+                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey hover:text-black focus:text-black focus:underline focus:outline-none"
                                       title={item.description}
                                       aria-label={`${item.name} - ${item.description}`}
                                     >
@@ -304,7 +304,7 @@ const MenuComponent = (props: MenuProps) => {
                                     </a>
                                   ) : (
                                     <span
-                                      className="text-mydarkgrey block truncate rounded p-2 text-sm font-bold leading-6 opacity-50"
+                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey opacity-50"
                                       title={item.description}
                                       aria-label={`${item.name} - ${item.description}`}
                                     >

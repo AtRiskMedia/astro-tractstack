@@ -17,8 +17,9 @@ export interface StringInputProps extends BaseFormComponentProps<string> {
 }
 
 // String array input props (for tags/chips)
-export interface StringArrayInputProps
-  extends BaseFormComponentProps<string[]> {
+export interface StringArrayInputProps extends BaseFormComponentProps<
+  string[]
+> {
   maxItems?: number;
   allowDuplicates?: boolean;
   separator?: string; // For parsing pasted content
@@ -151,8 +152,9 @@ export interface StringInputProps extends BaseFormComponentProps<string> {
 }
 
 // String array input props (for tags/chips)
-export interface StringArrayInputProps
-  extends BaseFormComponentProps<string[]> {
+export interface StringArrayInputProps extends BaseFormComponentProps<
+  string[]
+> {
   maxItems?: number;
   allowDuplicates?: boolean;
   separator?: string; // For parsing pasted content

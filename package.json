@@ -1,7 +1,7 @@
 {
   "name": "astro-tractstack",
-  "version": "2.0.47",
-  "description": "Astro integration for TractStack - redeeming the web from boring experiences",
+  "version": "2.1.0",
+  "description": "Astro integration for TractStack - the digital experience platform (DXP) for the missing middle",
   "type": "module",
   "main": "dist/index.js",
   "exports": {
@@ -44,42 +44,46 @@
     "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
-    "@astrojs/react": "^4.0.0",
-    "astro": "^5.0.0"
+    "@astrojs/react": "^4.4.2",
+    "astro": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "kleur": "^4.1.5",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@ark-ui/react": "^5.26.0",
-    "@astrojs/react": "^3.6.3",
+    "@ark-ui/react": "^5.30.0",
+    "@astrojs/react": "^4.4.2",
     "@heroicons/react": "^2.1.1",
-    "@internationalized/date": "^3.10.0",
+    "@internationalized/date": "^3.10.1",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
-    "@nanostores/persistent": "^1.1.0",
+    "@nanostores/persistent": "^1.2.0",
     "@nanostores/react": "^1.0.0",
     "@types/d3": "^7.4.3",
-    "@types/d3-sankey": "^0.12.3",
+    "@types/d3-sankey": "^0.12.5",
     "@types/node": "^22.18.0",
     "@types/prompts": "^2.4.9",
-    "@types/react": "18.3.11",
-    "@types/react-dom": "18.3.0",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@types/tinycolor2": "^1.4.6",
-    "astro": "^5.13.3",
+    "astro": "^5.16.6",
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "html-to-image": "^1.11.13",
-    "nanostores": "^1.0.1",
+    "nanostores": "^1.1.0",
     "player.js": "^0.1.0",
-    "prettier": "3.3.3",
+    "prettier": "3.7.4",
     "prettier-plugin-astro": "0.14.1",
-    "prettier-plugin-tailwindcss": "0.6.8",
-    "recharts": "^3.1.2",
+    "prettier-plugin-tailwindcss": "0.7.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "recharts": "^3.6.0",
     "tinycolor2": "^1.6.0",
-    "typescript": "^5.9.2",
-    "ulid": "^3.0.1",
-    "vite": "^7.1.3",
+    "typescript": "^5.9.3",
+    "ulid": "^3.0.2",
+    "vite": "^7.3.0",
     "vite-plugin-dts": "^4.5.4"
   },
   "engines": {
@@ -88,7 +92,8 @@
   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0",
   "pnpm": {
     "overrides": {
-      "esbuild@<=0.24.2": ">=0.25.0"
+      "esbuild@<=0.24.2": ">=0.25.0",
+      "@internationalized/date": "3.10.1"
     }
   }
 }

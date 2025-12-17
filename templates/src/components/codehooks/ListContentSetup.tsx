@@ -288,7 +288,7 @@ const ListContentSetup = ({ params, nodeId }: ListContentSetupProps) => {
             <input
               type="text"
               id="list-title"
-              className="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600 sm:text-sm"
+              className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-600 focus:ring-cyan-600"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Recent Articles"
@@ -305,7 +305,7 @@ const ListContentSetup = ({ params, nodeId }: ListContentSetupProps) => {
             <select
               id="page-size"
               name="page-size"
-              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-600 focus:outline-none focus:ring-cyan-600 sm:text-sm"
+              className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-600 focus:outline-none focus:ring-cyan-600"
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
             >

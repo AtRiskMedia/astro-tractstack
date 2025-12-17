@@ -134,7 +134,7 @@ const StoryFragmentConfigPanel = ({
     // Set SEO ready if description exists and is not empty
     const hasValidDescription = Boolean(
       storyFragmentContent?.description &&
-        storyFragmentContent.description.trim() !== ''
+      storyFragmentContent.description.trim() !== ''
     );
 
     setIsSEOReady(hasValidDescription);

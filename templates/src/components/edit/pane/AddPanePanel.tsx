@@ -58,9 +58,9 @@ const AddPanePanel = ({
   };
 
   return (
-    <div className="add-pane-panel-wrapper border-mydarkgrey border-b-2 border-t-2 border-dotted">
+    <div className="add-pane-panel-wrapper border-b-2 border-t-2 border-dotted border-mydarkgrey">
       {isExpanded && (
-        <div className="border-mylightgrey border-t border-dotted">
+        <div className="border-t border-dotted border-mylightgrey">
           <div className="group flex w-full flex-wrap items-center gap-2 px-1.5 pb-0.5 pt-1.5">
             <button
               onClick={() => {
@@ -112,7 +112,7 @@ const AddPanePanel = ({
           isContextPane={isContextPane}
         />
       ) : isExpanded ? (
-        <div className="border-mylightgrey border-t border-dotted">
+        <div className="border-t border-dotted border-mylightgrey">
           <div className="group flex w-full flex-wrap items-center gap-2 px-1.5 pb-0.5 pt-1.5">
             <div className={`flex flex-wrap gap-1 transition-opacity`}>
               <button
@@ -157,13 +157,13 @@ const AddPanePanel = ({
           </div>
         </div>
       ) : (
-        <div className="border-mylightgrey flex border-t border-dotted p-0.5">
+        <div className="flex border-t border-dotted border-mylightgrey p-0.5">
           <button
             onClick={() => setIsExpanded(true)}
             title="Insert Pane here"
             className="group w-full text-gray-500"
           >
-            <div className="text-mydarkgrey hover:bg-myoffwhite rounded-md transition-colors duration-150 ease-in-out hover:bg-opacity-50 hover:mix-blend-difference">
+            <div className="rounded-md text-mydarkgrey transition-colors duration-150 ease-in-out hover:bg-myoffwhite hover:bg-opacity-50 hover:mix-blend-difference">
               <PlusCircleIcon className="mx-auto h-8 w-8" />
             </div>
           </button>

@@ -163,7 +163,7 @@ const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
         allowNull={true}
       />
       {!bgNode && (
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="sm:flex-row flex flex-col gap-4">
           <div className="flex-1">
             <h4 className="mb-2 text-sm font-bold text-gray-700">
               Background Image
@@ -204,7 +204,7 @@ const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
                 Position
               </Select.Label>
               <Select.Control>
-                <Select.Trigger className="focus:border-myblue focus:ring-myblue flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1">
+                <Select.Trigger className="flex w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-myblue focus:outline-none focus:ring-1 focus:ring-myblue">
                   <Select.ValueText
                     className="capitalize"
                     placeholder="Select a position"
@@ -249,7 +249,7 @@ const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
                       value={s}
                       checked={size === s}
                       onChange={() => handleSizeChange(s)}
-                      className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
+                      className="h-4 w-4 border-gray-300 text-myblue focus:ring-myblue"
                     />
                     <span className="ml-2 text-sm capitalize text-gray-700">
                       {s === 'narrow'

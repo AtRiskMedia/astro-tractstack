@@ -320,7 +320,7 @@ const StyleImagePanel = ({
         />
 
         <div>
-          <label className="text-mydarkgrey block text-sm">
+          <label className="block text-sm text-mydarkgrey">
             Alt Description
           </label>
           <input
@@ -333,7 +333,7 @@ const StyleImagePanel = ({
                 e.currentTarget.blur();
               }
             }}
-            className="border-mydarkgrey w-full rounded-md py-2 pl-3 text-base"
+            className="w-full rounded-md border-mydarkgrey py-2 pl-3 text-base"
             placeholder="Describe the image..."
           />
         </div>
@@ -357,14 +357,14 @@ const StyleImagePanel = ({
         )}
 
         <div className="space-y-4">
-          <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
             <li>
               <em>Actions:</em>
             </li>
             <li>
               <button
                 onClick={handleImgAdd}
-                className="text-myblue font-bold underline hover:text-black"
+                className="font-bold text-myblue underline hover:text-black"
               >
                 Add Style
               </button>
@@ -400,14 +400,14 @@ const StyleImagePanel = ({
         )}
 
         <div className="space-y-4">
-          <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
             <li>
               <em>Actions:</em>
             </li>
             <li>
               <button
                 onClick={handleContainerAdd}
-                className="text-myblue font-bold underline hover:text-black"
+                className="font-bold text-myblue underline hover:text-black"
               >
                 Add Style
               </button>
@@ -441,14 +441,14 @@ const StyleImagePanel = ({
         )}
 
         <div className="space-y-4">
-          <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
             <li>
               <em>Actions:</em>
             </li>
             <li>
               <button
                 onClick={handleOuterAdd}
-                className="text-myblue font-bold underline hover:text-black"
+                className="font-bold text-myblue underline hover:text-black"
               >
                 Add Style
               </button>

@@ -27,7 +27,7 @@ const AddElementsPanel = ({
           className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${
             currentToolAddMode === mode
               ? 'bg-myblue text-white'
-              : 'text-myblue hover:bg-myblue/10 border border-gray-200 bg-white'
+              : 'border border-gray-200 bg-white text-myblue hover:bg-myblue/10'
           }`}
         >
           {toolAddModeTitles[mode]}
@@ -52,13 +52,13 @@ const StoryKeepToolBar = () => {
   return (
     <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-4 shadow-xl">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-myblue text-lg font-bold">Add Elements</h3>
+        <h3 className="text-lg font-bold text-myblue">Add Elements</h3>
         <button
           onClick={() => {
             ctx.toolModeValStore.set({ value: `text` });
             toggleSettingsPanel;
           }}
-          className="hover:text-myblue text-gray-500"
+          className="text-gray-500 hover:text-myblue"
         >
           <XMarkIcon className="h-5 w-5" />
         </button>

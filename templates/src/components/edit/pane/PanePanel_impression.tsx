@@ -182,7 +182,7 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
 
         <div className="space-y-4">
           <div>
-            <label className="text-mydarkgrey block text-sm">Title</label>
+            <label className="block text-sm text-mydarkgrey">Title</label>
             <input
               type="text"
               value={formData.title}
@@ -194,7 +194,7 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
           </div>
 
           <div>
-            <label className="text-mydarkgrey block text-sm">Body</label>
+            <label className="block text-sm text-mydarkgrey">Body</label>
             <textarea
               value={formData.body}
               onChange={(e) => handleInputChange('body', e.target.value)}
@@ -205,7 +205,7 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
           </div>
 
           <div>
-            <label className="text-mydarkgrey block text-sm">Button Text</label>
+            <label className="block text-sm text-mydarkgrey">Button Text</label>
             <input
               type="text"
               value={formData.buttonText}
@@ -217,7 +217,7 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
           </div>
 
           <div className="relative">
-            <label className="text-mydarkgrey block text-sm">Actions</label>
+            <label className="block text-sm text-mydarkgrey">Actions</label>
             <ActionBuilderField
               value={formData.actionsLisp}
               onChange={(value) => handleInputChange('actionsLisp', value)}

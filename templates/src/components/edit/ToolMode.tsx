@@ -135,15 +135,15 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
         id="mainNav"
         ref={navRef}
         className={classNames(
-          'z-102 bg-mywhite md:bg-mywhite/70 fixed bottom-0 left-0 right-0 p-1.5 md:bottom-2 md:right-auto md:h-auto md:w-auto md:rounded-r-xl md:border md:border-black/5 md:p-2 md:shadow-lg md:backdrop-blur-sm',
+          'fixed bottom-0 left-0 right-0 z-102 bg-mywhite p-1.5 md:bottom-2 md:right-auto md:h-auto md:w-auto md:rounded-r-xl md:border md:border-black/5 md:bg-mywhite/70 md:p-2 md:shadow-lg md:backdrop-blur-sm',
           isSelectionActive ? `outline-dashed outline-4 outline-red-600` : ``
         )}
       >
         {!isSelectionActive && (
           <div className="flex flex-wrap justify-around gap-4 py-0.5 md:flex-nowrap md:justify-start md:gap-4 md:p-0">
-            <div className="text-mydarkgrey text-center text-sm font-bold">
+            <div className="text-center text-sm font-bold text-mydarkgrey">
               mode:
-              <div className="font-action text-myblue pt-1.5 text-center text-xs">
+              <div className="pt-1.5 text-center font-action text-xs text-myblue">
                 {currentToolMode.title}
               </div>
             </div>
@@ -164,9 +164,9 @@ const StoryKeepToolMode = ({ isContext }: StoryKeepToolModeProps) => {
 
         {isSelectionActive && (
           <div className="flex items-center justify-around gap-x-2 py-0.5 md:justify-start md:p-0">
-            <div className="text-mydarkgrey text-center text-sm font-bold">
+            <div className="text-center text-sm font-bold text-mydarkgrey">
               mode:
-              <div className="font-action text-myblue pt-1.5 text-center text-xs">
+              <div className="pt-1.5 text-center font-action text-xs text-myblue">
                 Action Pending
               </div>
             </div>

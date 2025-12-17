@@ -85,7 +85,7 @@ export const canEditText = (props: NodeTagProps): boolean => {
   const parentIsButton = getCtx(props).getParentNodeByTagNames(nodeId, ['a']);
   if (parentIsButton?.length > 0) return false;
 
-  if (forbiddenEditTags.has(props.tagName)) return false;
+  if (forbiddenEditTags.has(props.tagName as string)) return false;
   return true;
 };
 

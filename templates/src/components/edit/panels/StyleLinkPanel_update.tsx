@@ -93,7 +93,7 @@ const StyleLinkUpdatePanel = ({ node, className }: BasePanelProps) => {
         </button>
       </div>
 
-      <div className="text-mydarkgrey my-3 flex flex-col gap-y-2.5 text-xl">
+      <div className="my-3 flex flex-col gap-y-2.5 text-xl text-mydarkgrey">
         <ViewportComboBox
           value={value}
           onFinalChange={(newValue) => handleFinalChange(newValue)}

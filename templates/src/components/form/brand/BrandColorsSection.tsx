@@ -188,7 +188,7 @@ export default function BrandColorsSection({
           ) : (
             <div className="space-y-1">
               {contrastIssues.map((issue, index) => (
-                <p key={index} className="text-mydarkgrey text-sm">
+                <p key={index} className="text-sm text-mydarkgrey">
                   {issue}
                 </p>
               ))}

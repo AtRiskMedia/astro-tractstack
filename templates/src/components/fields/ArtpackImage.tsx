@@ -265,9 +265,9 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
             ></div>
             <button
               onClick={handleRemoveImage}
-              className="hover:bg-mylightgrey absolute right-2 top-2 rounded-full bg-white p-1 shadow-md"
+              className="absolute right-2 top-2 rounded-full bg-white p-1 shadow-md hover:bg-mylightgrey"
             >
-              <XMarkIcon className="text-mydarkgrey h-4 w-4" />
+              <XMarkIcon className="h-4 w-4 text-mydarkgrey" />
             </button>
           </div>
         )}
@@ -275,7 +275,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="text-myblue flex items-center text-sm hover:text-cyan-600"
+            className="flex items-center text-sm text-myblue hover:text-cyan-600"
           >
             <SwatchIcon className="mr-1 h-4 w-4" />
             {previewUrl ? 'Change Artpack Image' : 'Use Artpack Image'}
@@ -300,7 +300,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                     onChange={() =>
                       handleObjectFitChange(fit as 'cover' | 'contain' | 'fill')
                     }
-                    className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
+                    className="h-4 w-4 border-gray-300 text-myblue focus:ring-myblue"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {fit}
@@ -328,7 +328,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                         e.target.checked
                       )
                     }
-                    className="text-myblue focus:ring-myblue h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-gray-300 text-myblue focus:ring-myblue"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {viewport}
@@ -367,7 +367,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
               ) : (
                 <div className="space-y-6">
                   <div>
-                    <label className="text-mydarkgrey mb-2 block text-sm font-bold">
+                    <label className="mb-2 block text-sm font-bold text-mydarkgrey">
                       Select Collection
                     </label>
                     <Combobox.Root
@@ -382,20 +382,20 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                       composite={true}
                     >
                       <div className="relative">
-                        <div className="focus-within:border-myblue focus-within:ring-myblue relative w-full cursor-default overflow-hidden rounded-lg border border-gray-300 bg-white text-left shadow-sm focus-within:ring-1">
+                        <div className="relative w-full cursor-default overflow-hidden rounded-lg border border-gray-300 bg-white text-left shadow-sm focus-within:border-myblue focus-within:ring-1 focus-within:ring-myblue">
                           <Combobox.Input
-                            className="text-mydarkgrey w-full border-none py-2 pl-3 pr-10 text-sm leading-5 focus:ring-0"
+                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-mydarkgrey focus:ring-0"
                             placeholder="Select a collection..."
                             autoComplete="off"
                           />
                           <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
                             <ChevronUpDownIcon
-                              className="text-mydarkgrey h-5 w-5"
+                              className="h-5 w-5 text-mydarkgrey"
                               aria-hidden="true"
                             />
                           </Combobox.Trigger>
                         </div>
-                        <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        <Combobox.Content className="sm:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           {collection.items.length === 0 ? (
                             <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                               No collections found.
@@ -405,7 +405,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                               <Combobox.Item
                                 key={item}
                                 item={item}
-                                className="collection-item text-mydarkgrey relative cursor-default select-none py-2 pl-10 pr-4"
+                                className="collection-item relative cursor-default select-none py-2 pl-10 pr-4 text-mydarkgrey"
                               >
                                 <span className="block truncate">{item}</span>
                                 <span className="collection-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
@@ -426,10 +426,10 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                   selectedCollection &&
                   availableImages.length > 0 ? (
                     <div>
-                      <label className="text-mydarkgrey mb-2 block text-sm font-bold">
+                      <label className="mb-2 block text-sm font-bold text-mydarkgrey">
                         Select Image from {selectedCollection}
                       </label>
-                      <div className="grid grid-cols-2 gap-4 p-2 sm:grid-cols-3 md:grid-cols-4">
+                      <div className="sm:grid-cols-3 grid grid-cols-2 gap-4 p-2 md:grid-cols-4">
                         {availableImages.map((image) => (
                           <div
                             key={image}
@@ -451,7 +451,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                               className="aspect-video w-full object-cover"
                             />
                             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 transition-opacity hover:bg-opacity-20">
-                              <span className="text-mydarkgrey max-w-full truncate rounded bg-white bg-opacity-80 px-2 py-1 text-xs">
+                              <span className="max-w-full truncate rounded bg-white bg-opacity-80 px-2 py-1 text-xs text-mydarkgrey">
                                 {image}
                               </span>
                             </div>
@@ -466,7 +466,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                   ) : null}
 
                   <div className="mt-4 flex justify-end space-x-3">
-                    <Dialog.CloseTrigger className="bg-mylightgrey text-mydarkgrey rounded px-4 py-2 hover:bg-gray-300">
+                    <Dialog.CloseTrigger className="rounded bg-mylightgrey px-4 py-2 text-mydarkgrey hover:bg-gray-300">
                       Cancel
                     </Dialog.CloseTrigger>
                   </div>

@@ -24,7 +24,7 @@ const SettingsPanel = ({ availableCodeHooks }: SettingsPanelProps) => {
 
   return (
     <div
-      className="bg-mydarkgrey flex h-full min-w-96 max-w-sm flex-col rounded-xl bg-opacity-20 p-0.5 backdrop-blur-sm"
+      className="flex h-full min-w-96 max-w-sm flex-col rounded-xl bg-mydarkgrey bg-opacity-20 p-0.5 backdrop-blur-sm"
       style={
         {
           animation: window.matchMedia(
@@ -50,10 +50,10 @@ const SettingsPanel = ({ availableCodeHooks }: SettingsPanelProps) => {
         {/* Header Section (fixed height) */}
         <div className="flex-shrink-0 p-1.5 md:p-2.5">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-myblue text-lg font-bold">{panelTitle}</h3>
+            <h3 className="text-lg font-bold text-myblue">{panelTitle}</h3>
             <button
               onClick={() => settingsPanelStore.set(null)}
-              className="hover:text-myblue text-gray-500"
+              className="text-gray-500 hover:text-myblue"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>

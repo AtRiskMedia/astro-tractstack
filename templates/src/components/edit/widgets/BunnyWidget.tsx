@@ -382,7 +382,7 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
                   </Dialog.Title>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <div className="lg:grid-cols-2 grid grid-cols-1 gap-4">
                     <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
                       <div className="flex items-center justify-between border-b border-gray-200 p-3">
                         <h3 className="text-base font-bold text-gray-900">
@@ -433,7 +433,7 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
                                   onBlur={() =>
                                     handleUpdate(videoId, title, chapters)
                                   }
-                                  className={`mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm sm:text-sm ${formErrors[`title-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
+                                  className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm ${formErrors[`title-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
                                 />
                               </div>
                               <div>
@@ -451,7 +451,7 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
                                   onBlur={() =>
                                     handleUpdate(videoId, title, chapters)
                                   }
-                                  className="mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                                  className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                 />
                               </div>
                               <div className="grid grid-cols-2 gap-2">
@@ -472,7 +472,7 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
                                     onBlur={() =>
                                       handleUpdate(videoId, title, chapters)
                                     }
-                                    className={`mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm sm:text-sm ${formErrors[`startTime-${index}`] || formErrors[`overlap-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
+                                    className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm ${formErrors[`startTime-${index}`] || formErrors[`overlap-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
                                   />
                                 </div>
                                 <div>
@@ -491,7 +491,7 @@ function BunnyWidget({ node, onUpdate }: BunnyWidgetProps) {
                                     onBlur={() =>
                                       handleUpdate(videoId, title, chapters)
                                     }
-                                    className={`mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm sm:text-sm ${formErrors[`endTime-${index}`] || formErrors[`overlap-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
+                                    className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2 py-1 shadow-sm ${formErrors[`endTime-${index}`] || formErrors[`overlap-${index}`] ? 'border-red-300' : 'focus:border-cyan-500 focus:ring-cyan-500'}`}
                                   />
                                 </div>
                               </div>

@@ -226,7 +226,7 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
   return (
     <>
       <style>{selectItemStyles}</style>
-      <h3 className="font-action py-6 text-xl text-blue-600">
+      <h3 className="py-6 font-action text-xl text-blue-600">
         Feel free to introduce yourself
       </h3>
       <p className="text-md pb-6">
@@ -332,7 +332,7 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
 
                   <Portal>
                     <Select.Positioner>
-                      <Select.Content className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      <Select.Content className="sm:text-sm relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                         {contactPersona.map((item) => (
                           <Select.Item
                             key={item.id}
@@ -434,7 +434,7 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
           )}
 
           {badSave ? (
-            <div className="align-center font-action col-span-3 flex justify-center py-12 text-red-500">
+            <div className="align-center col-span-3 flex justify-center py-12 font-action text-red-500">
               Profile could not be saved. Email already registered.
             </div>
           ) : null}
@@ -445,7 +445,7 @@ export const ProfileCreate = ({ onSuccess, onError }: ProfileCreateProps) => {
                 type="submit"
                 disabled={isLoading}
                 className={classNames(
-                  `font-action rounded-lg px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1`,
+                  `rounded-lg px-3.5 py-2.5 font-action text-white transition-all duration-200 hover:rotate-1`,
                   isLoading
                     ? `cursor-not-allowed bg-gray-400`
                     : `bg-black hover:bg-orange-500`

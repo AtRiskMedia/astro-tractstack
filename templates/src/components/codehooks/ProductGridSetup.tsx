@@ -198,7 +198,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
             value={productType}
             onChange={(e) => setProductType(e.target.value)}
             placeholder="e.g., 'electronics'"
-            className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+            className="sm:text-sm w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
           />
         </div>
       )}
@@ -238,7 +238,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
                 </Combobox.Label>
                 <Combobox.Control>
                   <Combobox.Input
-                    className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                    className="sm:text-sm w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                     placeholder="Search products..."
                   />
                 </Combobox.Control>

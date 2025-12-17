@@ -78,7 +78,7 @@ export const AiDesignStep = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="sm:grid-cols-2 grid grid-cols-1 gap-4">
         <div>
           <ColorPickerCombo
             title="Base Color (Optional)"
@@ -141,7 +141,7 @@ export const AiDesignStep = ({
           onChange={(e) => updateField('additionalNotes', e.target.value)}
           placeholder="Enter additional notes..."
           rows={3}
-          className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+          className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
         />
       </div>
     </div>

@@ -338,9 +338,9 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
             <button
               onClick={handleRemoveImage}
               disabled={isProcessing}
-              className="hover:bg-mylightgrey absolute right-2 top-2 rounded-full bg-white p-1 shadow-md disabled:opacity-50"
+              className="absolute right-2 top-2 rounded-full bg-white p-1 shadow-md hover:bg-mylightgrey disabled:opacity-50"
             >
-              <XMarkIcon className="text-mydarkgrey h-4 w-4" />
+              <XMarkIcon className="h-4 w-4 text-mydarkgrey" />
             </button>
           </div>
         ) : null}
@@ -350,7 +350,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className={`text-myblue flex items-center text-sm hover:text-cyan-600`}
+              className={`flex items-center text-sm text-myblue hover:text-cyan-600`}
             >
               <ArrowUpTrayIcon className="mr-1 h-4 w-4" />
               {isProcessing
@@ -362,7 +362,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
 
             <button
               onClick={() => setIsSelectingFile(true)}
-              className="text-myblue flex items-center text-sm hover:text-cyan-600"
+              className="flex items-center text-sm text-myblue hover:text-cyan-600"
             >
               <FolderIcon className="mr-1 h-4 w-4" />
               Select Image
@@ -399,7 +399,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
                     onChange={() =>
                       handleObjectFitChange(fit as 'cover' | 'contain' | 'fill')
                     }
-                    className="text-myblue focus:ring-myblue h-4 w-4 border-gray-300"
+                    className="h-4 w-4 border-gray-300 text-myblue focus:ring-myblue"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {fit}
@@ -427,7 +427,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
                         e.target.checked
                       )
                     }
-                    className="text-myblue focus:ring-myblue h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-gray-300 text-myblue focus:ring-myblue"
                   />
                   <span className="ml-2 text-sm capitalize text-gray-700">
                     {viewport}
@@ -450,7 +450,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
               value={localAltDescription}
               onChange={(e) => setLocalAltDescription(e.target.value)}
               onBlur={handleAltDescriptionBlur}
-              className="border-mylightgrey focus:border-myblue focus:ring-myblue block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+              className="block w-full rounded-md border border-mylightgrey px-3 py-2 text-sm focus:border-myblue focus:outline-none focus:ring-1 focus:ring-myblue"
               placeholder="Describe this image for accessibility"
             />
           </div>
@@ -479,20 +479,20 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
             <Combobox.Control className="relative">
               <Combobox.Input
                 placeholder="Search files..."
-                className="border-mylightgrey focus:border-myblue focus:ring-myblue block w-full rounded-md border px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-1"
+                className="block w-full rounded-md border border-mylightgrey px-3 py-2 pr-10 text-sm focus:border-myblue focus:outline-none focus:ring-1 focus:ring-myblue"
               />
               <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronUpDownIcon className="text-mydarkgrey h-5 w-5" />
+                <ChevronUpDownIcon className="h-5 w-5 text-mydarkgrey" />
               </Combobox.Trigger>
             </Combobox.Control>
 
             <Combobox.Positioner>
-              <Combobox.Content className="border-mylightgrey max-h-60 w-full overflow-auto rounded-md border bg-white shadow-lg">
+              <Combobox.Content className="max-h-60 w-full overflow-auto rounded-md border border-mylightgrey bg-white shadow-lg">
                 {collection.items.map((file) => (
                   <Combobox.Item
                     key={file.id}
                     item={file}
-                    className="file-item hover:bg-mylightgrey relative cursor-pointer select-none px-3 py-2 text-sm"
+                    className="file-item relative cursor-pointer select-none px-3 py-2 text-sm hover:bg-mylightgrey"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex flex-1 items-center">
@@ -511,13 +511,13 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
                             {file.altDescription || file.filename}
                           </div>
                           {file.altDescription && (
-                            <div className="text-mydarkgrey text-xs">
+                            <div className="text-xs text-mydarkgrey">
                               {file.filename}
                             </div>
                           )}
                         </div>
                       </div>
-                      <CheckIcon className="file-indicator text-myblue h-4 w-4 flex-shrink-0" />
+                      <CheckIcon className="file-indicator h-4 w-4 flex-shrink-0 text-myblue" />
                     </div>
                   </Combobox.Item>
                 ))}

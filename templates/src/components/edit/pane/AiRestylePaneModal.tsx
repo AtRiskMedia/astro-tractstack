@@ -163,8 +163,8 @@ export const AiRestylePaneModal = ({
       open={isAiRestyleModalOpen}
       onOpenChange={(e) => !e.open && handleClose()}
     >
-      <Dialog.Backdrop className="z-103 fixed inset-0 bg-black bg-opacity-75" />
-      <Dialog.Positioner className="z-104 fixed inset-0 flex items-center justify-center p-4">
+      <Dialog.Backdrop className="fixed inset-0 z-103 bg-black bg-opacity-75" />
+      <Dialog.Positioner className="fixed inset-0 z-104 flex items-center justify-center p-4">
         <Dialog.Content className="flex max-w-2xl flex-col rounded-lg bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b p-4">
             <h3 className="flex items-center gap-2 text-lg font-bold">

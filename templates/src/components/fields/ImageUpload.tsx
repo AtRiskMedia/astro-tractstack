@@ -197,7 +197,7 @@ export const ImageUpload = ({
       // Update the node with base64Data
       if (currentImageNode) {
         const updatedNode = cloneDeep(currentImageNode);
-        (updatedNode.fileId = ulid()), (updatedNode.src = base64); // Set src to base64 for immediate display
+        ((updatedNode.fileId = ulid()), (updatedNode.src = base64)); // Set src to base64 for immediate display
         updatedNode.base64Data = base64;
         updatedNode.alt = defaultAlt;
         updatedNode.isChanged = true;
@@ -303,7 +303,7 @@ export const ImageUpload = ({
             </button>
             <button
               onClick={() => setIsSelectingFile(true)}
-              className="text-myblue flex items-center text-sm hover:text-cyan-600"
+              className="flex items-center text-sm text-myblue hover:text-cyan-600"
             >
               <FolderIcon className="mr-1 h-4 w-4" />
               Select Existing
@@ -326,7 +326,7 @@ export const ImageUpload = ({
       {isSelectingFile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-            <h3 className="text-mydarkgrey mb-4 text-lg font-bold">
+            <h3 className="mb-4 text-lg font-bold text-mydarkgrey">
               Select an Image
             </h3>
 
@@ -343,11 +343,11 @@ export const ImageUpload = ({
               <div ref={comboboxRef} className="relative">
                 <Combobox.Control className="relative">
                   <Combobox.Input
-                    className="border-mydarkgrey text-myblack w-full rounded-md py-2 pl-3 pr-10"
+                    className="w-full rounded-md border-mydarkgrey py-2 pl-3 pr-10 text-myblack"
                     placeholder="Search files..."
                   />
                   <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon className="text-mydarkgrey h-5 w-5" />
+                    <ChevronUpDownIcon className="h-5 w-5 text-mydarkgrey" />
                   </Combobox.Trigger>
                 </Combobox.Control>
 
@@ -359,7 +359,7 @@ export const ImageUpload = ({
                     style={{ maxHeight: `${maxHeight}px` }}
                   >
                     {collection.items.length === 0 ? (
-                      <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                      <div className="relative cursor-default select-none px-4 py-2 text-mydarkgrey">
                         Nothing found.
                       </div>
                     ) : (
@@ -367,7 +367,7 @@ export const ImageUpload = ({
                         <Combobox.Item
                           key={file.id}
                           item={file}
-                          className="file-item text-myblack relative cursor-default select-none py-2 pl-10 pr-4"
+                          className="file-item relative cursor-default select-none py-2 pl-10 pr-4 text-myblack"
                         >
                           <div className="flex items-center space-x-3">
                             <img
@@ -391,7 +391,7 @@ export const ImageUpload = ({
             </Combobox.Root>
 
             <button
-              className="bg-mylightgrey text-myblack mt-4 rounded-md px-4 py-2 text-sm hover:bg-cyan-600 hover:text-white"
+              className="mt-4 rounded-md bg-mylightgrey px-4 py-2 text-sm text-myblack hover:bg-cyan-600 hover:text-white"
               onClick={() => setIsSelectingFile(false)}
             >
               Cancel

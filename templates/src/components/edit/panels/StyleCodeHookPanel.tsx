@@ -310,7 +310,7 @@ const StyleCodeHookPanel = ({
       <div className="space-y-4">
         {/* Target ComboBox */}
         <div className="max-w-md">
-          <label className="text-mydarkgrey block text-sm">Target</label>
+          <label className="block text-sm text-mydarkgrey">Target</label>
           <div className="relative mt-1">
             <Combobox.Root
               collection={collection}
@@ -336,7 +336,7 @@ const StyleCodeHookPanel = ({
                   />
                   <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
                     <ChevronUpDownIcon
-                      className="text-mydarkgrey h-5 w-5"
+                      className="h-5 w-5 text-mydarkgrey"
                       aria-hidden="true"
                     />
                   </Combobox.Trigger>
@@ -345,9 +345,9 @@ const StyleCodeHookPanel = ({
 
               <Portal>
                 <Combobox.Positioner style={{ zIndex: 1002 }}>
-                  <Combobox.Content className="z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  <Combobox.Content className="sm:text-sm z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     {collection.items.length === 0 ? (
-                      <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                      <div className="relative cursor-default select-none px-4 py-2 text-mydarkgrey">
                         Nothing found.
                       </div>
                     ) : (
@@ -381,7 +381,7 @@ const StyleCodeHookPanel = ({
 
         {/* Options section */}
         <div>
-          <label className="text-mydarkgrey block text-sm">Options</label>
+          <label className="block text-sm text-mydarkgrey">Options</label>
           {localOptions.map((option, index) => (
             <div key={index} className="mt-2 flex items-center space-x-2">
               <input
@@ -436,7 +436,7 @@ const StyleCodeHookPanel = ({
           ))}
           <button
             onClick={addOption}
-            className="text-myblue mt-2 flex items-center hover:text-cyan-600"
+            className="mt-2 flex items-center text-myblue hover:text-cyan-600"
           >
             <PlusIcon className="mr-1 h-5 w-5" />
             Add Option

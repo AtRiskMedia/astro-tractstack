@@ -195,7 +195,7 @@ const KnownResourceTable = ({
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {fieldCount} {fieldCount === 1 ? 'field' : 'fields'}
                     </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-bold sm:pr-6">
+                    <td className="sm:pr-6 relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-bold">
                       <div className="flex items-center justify-end space-x-2">
                         {/* Edit button */}
                         <button

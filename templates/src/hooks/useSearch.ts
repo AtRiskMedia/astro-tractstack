@@ -42,7 +42,7 @@ export function useSearch(): UseSearchReturn {
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [retrieveError, setRetrieveError] = useState<string | null>(null);
 
-  const searchTimerRef = useRef<NodeJS.Timeout>();
+  const searchTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastExecutionTimeRef = useRef<number>(0);
   const pendingQueryRef = useRef<string | null>(null);
   const inflightQueryRef = useRef<string | null>(null);

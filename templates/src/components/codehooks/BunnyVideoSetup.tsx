@@ -353,7 +353,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
                 <input
                   type="text"
                   id="videoUrl"
-                  className={`block w-full rounded-md border-gray-300 px-2.5 py-1.5 pr-10 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm ${videoUrl && !isValidBunnyUrl(videoUrl) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  className={`sm:text-sm block w-full rounded-md border-gray-300 px-2.5 py-1.5 pr-10 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 ${videoUrl && !isValidBunnyUrl(videoUrl) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   onKeyDown={(e) => {
@@ -396,7 +396,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
               <input
                 type="text"
                 id="videoTitle"
-                className="mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                 value={videoTitle}
                 onChange={(e) => setVideoTitle(e.target.value)}
                 onKeyDown={(e) => {
@@ -524,7 +524,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
                           }
                         }}
                         onBlur={() => saveChanges()}
-                        className={`mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm ${
+                        className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 ${
                           formErrors[`title-${index}`] ? 'border-red-300' : ''
                         }`}
                       />
@@ -551,7 +551,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
                           }
                         }}
                         onBlur={() => saveChanges()}
-                        className="mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                        className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                       />
                     </div>
                   </div>
@@ -577,7 +577,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
                             e.currentTarget.blur();
                           }
                         }}
-                        className={`mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm ${
+                        className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 ${
                           formErrors[`startTime-${index}`]
                             ? 'border-red-300'
                             : ''
@@ -611,7 +611,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
                             e.currentTarget.blur();
                           }
                         }}
-                        className={`mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm ${
+                        className={`sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-2.5 py-1.5 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 ${
                           formErrors[`endTime-${index}`] ? 'border-red-300' : ''
                         }`}
                         placeholder="60"

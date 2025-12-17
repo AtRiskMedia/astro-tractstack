@@ -18,7 +18,7 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
 ---
 
 <!doctype html>
-<html lang="en" class="bg-mywhite h-full">
+<html lang="en" class="h-full bg-mywhite">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,7 +27,7 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
     <link rel="stylesheet" href="/styles/storykeep.css" />
   </head>
   <body class="h-full">
-    <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:px-6 lg:px-8 flex min-h-full flex-col justify-center py-12">
       <div class="mx-auto pb-6">
         <div class="flex flex-col items-center justify-center gap-4">
           <div class="h-16 w-auto">
@@ -47,7 +47,7 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
         </div>
 
         <h2
-          class="text-mydarkgrey mt-6 text-center text-2xl font-bold leading-9 tracking-tight"
+          class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-mydarkgrey"
         >
           Service Temporarily Unavailable
         </h2>
@@ -56,7 +56,7 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
       <div class="mx-auto">
         <div class="rounded-lg bg-white px-6 py-12 shadow-inner">
           <div class="space-y-6 text-center">
-            <div class="text-myorange mx-auto h-12 w-12">
+            <div class="mx-auto h-12 w-12 text-myorange">
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -72,16 +72,16 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
               </svg>
             </div>
 
-            <p class="text-mydarkgrey text-sm">
+            <p class="text-sm text-mydarkgrey">
               We're experiencing technical difficulties. The service will be
               restored automatically.
             </p>
 
             <div
               id="status-indicator"
-              class="border-mylightgrey inline-flex items-center rounded-md border bg-white px-4 py-2 shadow-sm"
+              class="inline-flex items-center rounded-md border border-mylightgrey bg-white px-4 py-2 shadow-sm"
             >
-              <div class="text-myorange -ml-1 mr-3 h-5 w-5 animate-spin">
+              <div class="-ml-1 mr-3 h-5 w-5 animate-spin text-myorange">
                 <svg fill="none" viewBox="0 0 24 24">
                   <circle
                     class="opacity-25"
@@ -97,12 +97,12 @@ const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
                   ></path>
                 </svg>
               </div>
-              <span class="text-mydarkgrey text-sm"
+              <span class="text-sm text-mydarkgrey"
                 >Checking service status...</span
               >
             </div>
 
-            <div class="text-mylightgrey text-center text-xs">
+            <div class="text-center text-xs text-mylightgrey">
               <p>
                 This page will automatically refresh when the service is
                 available

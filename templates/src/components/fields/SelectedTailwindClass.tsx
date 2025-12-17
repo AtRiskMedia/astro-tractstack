@@ -23,7 +23,7 @@ const SelectedTailwindClass = ({ name, values, onRemove, onUpdate }: Props) => {
           .join(', ');
 
   return (
-    <div className="text-myblack hover:bg-mygreen/20 w-fit rounded border border-slate-200 p-2 text-sm">
+    <div className="w-fit rounded border border-slate-200 p-2 text-sm text-myblack hover:bg-mygreen/20">
       <div title={title} className="flex items-center gap-2 font-bold">
         <button onClick={() => onUpdate(name)}>
           {tailwindClasses[name]?.title || name}
@@ -34,7 +34,7 @@ const SelectedTailwindClass = ({ name, values, onRemove, onUpdate }: Props) => {
           aria-label={`Remove ${name} class`}
           title={`Remove ${tailwindClasses[name]?.title || name} class`}
         >
-          <XMarkIcon className="text-mydarkgrey h-4 w-4 hover:font-bold hover:text-black" />
+          <XMarkIcon className="h-4 w-4 text-mydarkgrey hover:font-bold hover:text-black" />
         </button>
       </div>
     </div>

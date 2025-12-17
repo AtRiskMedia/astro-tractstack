@@ -289,9 +289,9 @@ const StyleElementUpdatePanel = ({
           checked={isOverridden}
           onChange={(e) => handleToggleOverride(e.target.checked)}
           disabled={node.tagName === 'span'}
-          className="border-mydarkgrey text-myorange focus:ring-myorange h-4 w-4 rounded disabled:opacity-50"
+          className="h-4 w-4 rounded border-mydarkgrey text-myorange focus:ring-myorange disabled:opacity-50"
         />
-        <span className="text-mydarkgrey text-sm">
+        <span className="text-sm text-mydarkgrey">
           {node.tagName === 'span'
             ? 'Styling this selection (Override mode).'
             : isOverridden
@@ -300,7 +300,7 @@ const StyleElementUpdatePanel = ({
         </span>
       </div>
 
-      <div className="text-mydarkgrey my-3 flex flex-col gap-y-2.5 text-xl">
+      <div className="my-3 flex flex-col gap-y-2.5 text-xl text-mydarkgrey">
         <ViewportComboBox
           value={mobileValue}
           onFinalChange={handleFinalChange}

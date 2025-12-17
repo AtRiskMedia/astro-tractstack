@@ -87,7 +87,7 @@ const hasProfile = Astro.request.headers
         <section
           id="storykeepHeader"
           role="banner"
-          class="z-101 bg-mywhite left-0 right-0 drop-shadow transition-all duration-200"
+          class="left-0 right-0 z-101 bg-mywhite drop-shadow transition-all duration-200"
         >
           <StoryKeepHeader
             slug="sandbox"
@@ -101,7 +101,7 @@ const hasProfile = Astro.request.headers
           <StoryKeepToolMode isContext={false} client:only="react" />
 
           <main id="mainContent" class="relative flex-1 overflow-x-auto">
-            <div class="bg-myblue/20 bg-mylightgrey h-full p-1.5">
+            <div class="h-full bg-myblue/20 bg-mylightgrey p-1.5">
               <div
                 class="h-fit min-h-screen pb-96"
                 style={{
@@ -127,7 +127,7 @@ const hasProfile = Astro.request.headers
 
         <aside
           id="settingsControls"
-          class="z-101 pointer-events-none fixed bottom-16 right-2 flex flex-col items-end gap-2 md:bottom-2"
+          class="pointer-events-none fixed bottom-16 right-2 z-101 flex flex-col items-end gap-2 md:bottom-2"
         >
           <div class="pointer-events-none flex-grow" />
 

@@ -25,7 +25,7 @@ export default function TabIndicator({
 
   return (
     <div
-      className="animate-fadeIn mt-1.5 flex cursor-pointer items-center border-t border-dashed border-cyan-500 py-1 text-sm hover:bg-cyan-50/20"
+      className="mt-1.5 flex animate-fadeIn cursor-pointer items-center border-t border-dashed border-cyan-500 py-1 text-sm hover:bg-cyan-50/20"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}

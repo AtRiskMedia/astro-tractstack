@@ -354,8 +354,8 @@ export const RestylePaneModal = () => {
       modal={true}
       preventScroll={true}
     >
-      <Dialog.Backdrop className="z-103 fixed inset-0 bg-black bg-opacity-75" />
-      <Dialog.Positioner className="z-104 fixed inset-0 flex items-center justify-center">
+      <Dialog.Backdrop className="fixed inset-0 z-103 bg-black bg-opacity-75" />
+      <Dialog.Positioner className="fixed inset-0 z-104 flex items-center justify-center">
         <Dialog.Content
           ref={contentRef}
           className="flex max-w-5xl flex-col rounded-lg bg-white shadow-2xl xl:max-w-7xl"
@@ -450,7 +450,7 @@ export const RestylePaneModal = () => {
                 <p className="text-gray-500">No designs found.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="lg:grid-cols-3 grid grid-cols-1 gap-6 md:grid-cols-2">
                 {mergedTemplates.map(({ template }) => (
                   <TemplatePreviewItem
                     key={template.id}

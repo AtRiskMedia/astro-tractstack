@@ -288,7 +288,7 @@ export default function BeliefForm({
                 onChange={(e) => handleCustomValueChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter custom value"
-                className={`block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6 ${
+                className={`sm:text-sm sm:leading-6 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset ${
                   customValueError
                     ? 'ring-red-500 focus:ring-red-600'
                     : 'ring-gray-300 focus:ring-cyan-600'

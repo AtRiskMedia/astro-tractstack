@@ -138,7 +138,7 @@ export function SaveToLibraryModal({
 
   return (
     <div
-      className="z-105 fixed inset-0 flex items-center justify-center bg-black bg-opacity-75"
+      className="fixed inset-0 z-105 flex items-center justify-center bg-black bg-opacity-75"
       onClick={saveState === 'idle' ? onClose : undefined}
     >
       <div
@@ -165,7 +165,7 @@ export function SaveToLibraryModal({
               id="category-select"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 sm:text-sm"
+              className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>

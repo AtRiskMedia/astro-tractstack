@@ -226,7 +226,7 @@ export default function SearchResults({
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h2 className="text-mydarkgrey text-lg font-bold">
+        <h2 className="text-lg font-bold text-mydarkgrey">
           {totalResults} result{totalResults !== 1 ? 's' : ''} found
         </h2>
         <p className="mt-1 text-sm text-gray-600">
@@ -246,7 +246,7 @@ export default function SearchResults({
               <div className="flex flex-col md:flex-row md:items-start md:gap-4">
                 {/* Mobile: Full width image without overlay badge */}
                 <div
-                  className="bg-mydarkgrey relative w-full overflow-hidden rounded-lg md:hidden"
+                  className="relative w-full overflow-hidden rounded-lg bg-mydarkgrey md:hidden"
                   style={{ aspectRatio: '1200/630' }}
                 >
                   <img
@@ -258,7 +258,7 @@ export default function SearchResults({
 
                 {/* Desktop: Side image without overlay badge */}
                 <div
-                  className="bg-mydarkgrey relative hidden flex-shrink-0 overflow-hidden rounded-lg md:block"
+                  className="relative hidden flex-shrink-0 overflow-hidden rounded-lg bg-mydarkgrey md:block"
                   style={{ width: '240px', height: '135px' }}
                 >
                   <img
@@ -271,11 +271,11 @@ export default function SearchResults({
                 <div className="mt-3 min-w-0 flex-1 md:mt-0">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-mydarkgrey group-hover:text-myblue mb-2 text-lg font-bold transition-colors">
+                      <h3 className="mb-2 text-lg font-bold text-mydarkgrey transition-colors group-hover:text-myblue">
                         {item.title}
                       </h3>
                       {item.description && (
-                        <p className="text-mydarkgrey mb-2 text-sm">
+                        <p className="mb-2 text-sm text-mydarkgrey">
                           {item.description}
                         </p>
                       )}
@@ -291,13 +291,13 @@ export default function SearchResults({
                             {item.topics.slice(0, 3).map((topic, idx) => (
                               <span
                                 key={idx}
-                                className="bg-myoffwhite text-mydarkgrey rounded px-2 py-1 text-xs"
+                                className="rounded bg-myoffwhite px-2 py-1 text-xs text-mydarkgrey"
                               >
                                 {topic}
                               </span>
                             ))}
                             {item.topics.length > 3 && (
-                              <span className="text-mydarkgrey text-xs">
+                              <span className="text-xs text-mydarkgrey">
                                 +{item.topics.length - 3} more
                               </span>
                             )}
@@ -321,7 +321,7 @@ export default function SearchResults({
             page={currentPage}
             onPageChange={(details) => handlePageChange(details.page)}
           >
-            <Pagination.PrevTrigger className="text-mydarkgrey hover:text-myblue mr-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold transition-colors disabled:opacity-50">
+            <Pagination.PrevTrigger className="mr-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold text-mydarkgrey transition-colors hover:text-myblue disabled:opacity-50">
               <ChevronLeftIcon className="h-4 w-4" />
               Previous
             </Pagination.PrevTrigger>
@@ -346,7 +346,7 @@ export default function SearchResults({
                     ) : (
                       <span
                         key={index}
-                        className="text-mydarkgrey px-2 text-sm"
+                        className="px-2 text-sm text-mydarkgrey"
                       >
                         {page.type === 'ellipsis' ? '...' : ''}
                       </span>
@@ -356,7 +356,7 @@ export default function SearchResults({
               </Pagination.Context>
             </div>
 
-            <Pagination.NextTrigger className="text-mydarkgrey hover:text-myblue ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold transition-colors disabled:opacity-50">
+            <Pagination.NextTrigger className="ml-2 flex items-center gap-1 rounded px-3 py-2 text-sm font-bold text-mydarkgrey transition-colors hover:text-myblue disabled:opacity-50">
               Next
               <ChevronRightIcon className="h-4 w-4" />
             </Pagination.NextTrigger>

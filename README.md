@@ -1,23 +1,43 @@
-# TractStack v2
+# TractStack v2.1
 
-**Redeeming the web from boring experiences**
+**The Digital Experience Platform (DXP) for the Missing Middle.**
 
-Free web press by [At Risk Media](https://atriskmedia.com)
+> "Static websites treat every visitor like a stranger. TractStack treats them like a relationship."
 
-## Epistemic Hypermedia Server
+## The Problem: The Legacy Web has Amnesia
 
-TractStack is a new species of web platform that makes it possible for millions of websites to adapt to each visitor instead of showing everyone the same thing. It's an **adaptive website builder** that creates fast, beautiful, SEO-ready, and accessible websites that respond intelligently to user behavior.
+Static technology forces you to serve the exact same generic monologue to everyone—whether they are a "tire kicker" or a "high-ticket buyer."
 
-Built on [Astro](https://astro.build/) with [HTMX](https://htmx.org/) and a [Golang](https://go.dev/) backend, TractStack uses SQLite by default with optional [Turso](https://app.turso.tech/) cloud database support.
+Legacy tools (Wix, WordPress) suffer from **Intent Blindness**. They were built for page views, not signal clarity. They force your best leads to dig through a haystack to find the "hidden door" they need, causing them to bounce.
 
-## Key Features
+## The Solution: A Living Funnel
 
-- **Adaptive Content**: Websites that dynamically respond to visitor behavior
-- **Multi-tenant Architecture**: Host multiple sites from a single installation
-- **Built-in CMS**: StoryKeep content management system
-- **Real-time Updates**: Server-sent events and HTMX for dynamic interactions
-- **Production Ready**: SSL certificates, nginx integration, systemd services
-- **Zero Config Database**: Works out of the box with SQLite3
+TractStack is an **Epistemic Hypermedia Server** that acts as a triage nurse, not a brochure. It turns a fragile "page view" into a powerful, privacy-first user journey.
+
+### Core Philosophy
+
+1. **The Recall (No Cookies Required):** We moved "memory" from fragile cookies to a proprietary server-side logic engine. This ensures the conversation persists across privacy blocks and browser refreshes.
+2. **Smart Triage:** Our logic engine identifies 'High-Intent' users instantly and accelerates them to conversion, while automatically nurturing the rest.
+3. **Hidden Doors:** Instead of a static page, you define content paths that only open when a user signals interest.
+
+---
+
+## The Tech Stack: "Convert OS"
+
+TractStack is a hybrid engine designed for performance and logic.
+
+- **Frontend:** [Astro](https://astro.build/) (The "Free" Web Press). Renders SEO-ready, indexable HTML.
+- **Backend:** [Golang](https://go.dev/) (The Logic Processor). A compiled, server-side engine that manages state, session continuity, and adaptive content.
+- **Glue:** [HTMX](https://htmx.org/). Enables real-time, dynamic interactions without heavy client-side frameworks.
+- **Database:** SQLite by default (Zero Config) with optional [Turso](https://app.turso.tech/) support.
+
+## For Agencies & Empire Builders
+
+TractStack was engineered for the "Missing Middle"—high-volume creators and agencies who have outgrown static sites but don't need enterprise bloat.
+
+- **Wholesale DXP:** An infrastructure-first model. Agencies pay a flat wholesale fee and own the recurring margin on "Growth Projects."
+- **Visual Journey Mapping:** Don't guess what works. See it. TractStack visualizes the narrative journey of your audience, showing exactly how they navigate your Hidden Doors.
+- **No Code Required:** Build engaging, interactive websites where the "general noise" fades and specific content triggers based on engagement.
 
 ## Quick Install
 
@@ -174,22 +194,6 @@ TractStack v2 includes powerful multi-tenant capabilities:
 - **Capacity Management**: Configurable tenant limits
 - **Email Activation**: Automated tenant activation emails
 
-## SSL Certificate Management
-
-### Cloudflare DNS (Automated)
-
-Create `/root/.secrets/certbot/cloudflare.ini`:
-
-```ini
-dns_cloudflare_api_token = YOUR_API_TOKEN_HERE
-```
-
-Certificates are obtained automatically during installation.
-
-### Manual DNS Verification
-
-Without Cloudflare, the installer guides you through manual DNS TXT record verification.
-
 ## Service Management
 
 ### Main Installation
@@ -291,17 +295,9 @@ sudo ~/t8k/src/tractstack-go/pkg/scripts/t8k-uninstall.sh
 ## License
 
 The frontend Astro integration is available via the MIT license.
-
-The backend epistemic hypermedia server is available via the **Functional Source License (FSL)** - Commercial use encouraged!
-
-The only restriction is no re-selling TractStack as-a-service. Perfect for:
-
-- Agency client projects
-- Corporate websites
-- Personal projects
-- Open source contributions
+The backend epistemic hypermedia server is available via the **O'Sassy Open Source License**
 
 ---
 
-_TractStack v2 - Making the web adaptive, one site at a time_  
+TractStack v2.1
 _Made with ❤️ by [At Risk Media](https://atriskmedia.com)_

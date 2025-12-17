@@ -126,7 +126,7 @@ const ImpressionWrapper = ({
         <button
           type="button"
           title="Click for notifications"
-          className="bg-brand-1 hover:bg-brand-3 flex h-6 w-6 items-center justify-center rounded-full text-sm font-bold text-white transition-colors motion-safe:animate-bounce"
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-1 text-sm font-bold text-white transition-colors hover:bg-brand-3 motion-safe:animate-bounce"
           onClick={() => setIsExpanded(true)}
         >
           <span className="sr-only">Show impressions</span>
@@ -149,7 +149,7 @@ const ImpressionWrapper = ({
           {/* Close button */}
           <button
             type="button"
-            className="focus:ring-brand-1 absolute right-2 top-2 z-10 rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+            className="absolute right-2 top-2 z-10 rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-1 focus:ring-offset-2"
             onClick={() => setIsExpanded(false)}
           >
             <span className="sr-only">Close impressions</span>

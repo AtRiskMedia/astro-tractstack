@@ -98,22 +98,22 @@ export default function PaneBreakShapeSelector({
         composite={true}
       >
         <div className="relative mt-1 flex-grow">
-          <div className="border-mydarkgrey focus-within:border-myblue focus-within:ring-myblue flex w-full items-center rounded-md border shadow-sm">
+          <div className="flex w-full items-center rounded-md border border-mydarkgrey shadow-sm focus-within:border-myblue focus-within:ring-myblue">
             <Combobox.Input
-              className="xs:text-sm w-full rounded-l-md border-0 py-2 pl-3 pr-0 focus:ring-0"
+              className="w-full rounded-l-md border-0 py-2 pl-3 pr-0 focus:ring-0 xs:text-sm"
               autoComplete="off"
             />
             <div className="py-2 pr-8">{renderShapePreview(selectedImage)}</div>
             <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronUpDownIcon
-                className="text-mydarkgrey h-5 w-5"
+                className="h-5 w-5 text-mydarkgrey"
                 aria-hidden="true"
               />
             </Combobox.Trigger>
           </div>
         </div>
 
-        <Combobox.Content className="xs:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none xs:text-sm">
           {collection.items.map((shape) => (
             <Combobox.Item
               key={shape}

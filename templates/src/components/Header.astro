@@ -107,15 +107,15 @@ const authStatus = {
 
   <!-- BOTTOM ROW: Title + Action Icons -->
   <div
-    class="bg-mywhite flex flex-row flex-nowrap justify-between px-4 pb-3 pt-4 shadow-inner md:px-8"
+    class="flex flex-row flex-nowrap justify-between bg-mywhite px-4 pb-3 pt-4 shadow-inner md:px-8"
   >
-    <h1 class="text-mydarkgrey truncate text-xl">{title}</h1>
+    <h1 class="truncate text-xl text-mydarkgrey">{title}</h1>
     <div class="flex flex-row flex-nowrap items-center gap-x-2">
       {
         !isHome ? (
           <a
             href="/"
-            class="text-myblue/80 hover:text-myblue hover:rotate-6"
+            class="text-myblue/80 hover:rotate-6 hover:text-myblue"
             title="Go to home page"
           >
             <svg
@@ -139,11 +139,11 @@ const authStatus = {
         authStatus.isAdmin || authStatus.isAuthenticated ? (
           <a
             href="/storykeep"
-            class="hover:text-myblue hover:rotate-6"
+            class="hover:rotate-6 hover:text-myblue"
             title="Your Story Keep Dashboard"
           >
             <svg
-              class="text-myblue/80 h-6 w-6"
+              class="h-6 w-6 text-myblue/80"
               fill="none"
               viewBox="0 0 24 24"
               stroke-width="1.5"
@@ -165,7 +165,7 @@ const authStatus = {
           <a
             data-astro-reload
             href={!isContext ? `/${slug}/edit` : `/context/${slug}/edit`}
-            class="text-myblue/80 hover:text-myblue hover:rotate-6"
+            class="text-myblue/80 hover:rotate-6 hover:text-myblue"
             title={!isContext ? 'Edit this story' : 'Edit this page'}
           >
             <svg

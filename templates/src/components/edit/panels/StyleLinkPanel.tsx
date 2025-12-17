@@ -269,7 +269,7 @@ const StyleLinkPanel = ({ node }: BasePanelProps) => {
     <div className="space-y-8">
       <div className="space-y-4">
         <div className="pb-2">
-          <div className="text-myblack hover:bg-mygreen/20 w-fit rounded border border-slate-200 p-2 text-sm">
+          <div className="w-fit rounded border border-slate-200 p-2 text-sm text-myblack hover:bg-mygreen/20">
             <div
               title="Configure this Link"
               className="flex items-center gap-2 font-bold"
@@ -339,14 +339,14 @@ const StyleLinkPanel = ({ node }: BasePanelProps) => {
             )}
 
             <div className="space-y-4">
-              <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
                 <li>
                   <em>Actions:</em>
                 </li>
                 <li>
                   <button
                     onClick={handleButtonStyleAdd}
-                    className="text-myblue font-bold underline hover:text-black"
+                    className="font-bold text-myblue underline hover:text-black"
                   >
                     Add Style
                   </button>
@@ -383,14 +383,14 @@ const StyleLinkPanel = ({ node }: BasePanelProps) => {
           )}
 
           <div className="space-y-4">
-            <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
               <li>
                 <em>Actions:</em>
               </li>
               <li>
                 <button
                   onClick={handleHoverStyleAdd}
-                  className="text-myblue font-bold underline hover:text-black"
+                  className="font-bold text-myblue underline hover:text-black"
                 >
                   Add Style
                 </button>

@@ -171,7 +171,7 @@ const StyleParentPanelUpdate = ({
       </div>
       <div>
         <h3 className="text-xl font-bold">{tailwindConfig.title}</h3>
-        <p className="text-mydarkgrey mt-1 font-mono text-sm">
+        <p className="mt-1 font-mono text-sm text-mydarkgrey">
           {tailwindConfig.className}
         </p>
       </div>

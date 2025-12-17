@@ -214,9 +214,9 @@ const StyleWidgetPanelAdd = ({ node, parentNode, childId }: BasePanelProps) => {
           id="show-advanced"
           checked={showAdvanced}
           onChange={(e) => setShowAdvanced(e.target.checked)}
-          className="border-mydarkgrey h-4 w-4 rounded text-cyan-600 focus:ring-cyan-600"
+          className="h-4 w-4 rounded border-mydarkgrey text-cyan-600 focus:ring-cyan-600"
         />
-        <label htmlFor="show-advanced" className="text-mydarkgrey text-sm">
+        <label htmlFor="show-advanced" className="text-sm text-mydarkgrey">
           Show Advanced Styles
         </label>
       </div>
@@ -238,13 +238,13 @@ const StyleWidgetPanelAdd = ({ node, parentNode, childId }: BasePanelProps) => {
           <Combobox.Control ref={comboboxRef}>
             <div className="relative">
               <Combobox.Input
-                className="border-mydarkgrey focus:border-myblue focus:ring-myblue w-full rounded-md py-2 pl-3 pr-10 text-xl shadow-sm"
+                className="w-full rounded-md border-mydarkgrey py-2 pl-3 pr-10 text-xl shadow-sm focus:border-myblue focus:ring-myblue"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search styles..."
               />
               <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon
-                  className="text-mydarkgrey h-5 w-5"
+                  className="h-5 w-5 text-mydarkgrey"
                   aria-hidden="true"
                 />
               </Combobox.Trigger>
@@ -255,7 +255,7 @@ const StyleWidgetPanelAdd = ({ node, parentNode, childId }: BasePanelProps) => {
             <Combobox.Positioner style={{ zIndex: 1002 }}>
               <Combobox.Content className="max-h-64 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 {collection.items.length === 0 ? (
-                  <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                  <div className="relative cursor-default select-none px-4 py-2 text-mydarkgrey">
                     Nothing found.
                   </div>
                 ) : (
@@ -291,7 +291,7 @@ const StyleWidgetPanelAdd = ({ node, parentNode, childId }: BasePanelProps) => {
               <button
                 key={style.key}
                 onClick={() => handleSelect({ value: [style.key] })}
-                className="hover:bg-mygreen/20 inline-flex items-center rounded-md bg-slate-50 px-3 py-2 text-sm text-black transition-colors duration-200"
+                className="inline-flex items-center rounded-md bg-slate-50 px-3 py-2 text-sm text-black transition-colors duration-200 hover:bg-mygreen/20"
               >
                 <span className="font-bold">{style.title}</span>
               </button>

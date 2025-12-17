@@ -19,7 +19,7 @@ export const ToggleBelief = ({ prompt }: { prompt: string }) => {
         >
           <Switch.Thumb
             className={classNames(
-              `motion-safe:animate-wig translate-x-0`,
+              `translate-x-0 motion-safe:animate-wig`,
               `pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform duration-200 ease-in-out`
             )}
           />

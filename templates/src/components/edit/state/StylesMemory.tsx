@@ -291,7 +291,7 @@ export const StylesMemory = ({ node, parentNode }: StylesMemoryProps) => {
           disabled={!hasMemory || isMatchingMemory}
           className={`transition-colors ${
             !hasMemory || isMatchingMemory
-              ? 'text-mylightgrey cursor-not-allowed'
+              ? 'cursor-not-allowed text-mylightgrey'
               : 'text-mydarkgrey hover:text-black'
           }`}
           title={

@@ -124,7 +124,7 @@ function SignupWidget({ node, onUpdate }: SignupWidgetProps) {
         >
           <div className="relative mt-1">
             <Combobox.Input
-              className="focus:border-myblue focus:ring-myblue w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-sm shadow-sm"
+              className="w-full rounded-md border border-gray-300 py-2 pl-3 pr-10 text-sm shadow-sm focus:border-myblue focus:ring-myblue"
               placeholder="Select contact persona..."
               defaultValue={selectedPersonaTitle}
             />
@@ -135,7 +135,7 @@ function SignupWidget({ node, onUpdate }: SignupWidgetProps) {
               />
             </Combobox.Trigger>
           </div>
-          <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <Combobox.Content className="sm:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
             {collection.items.length === 0 ? (
               <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                 Nothing found.
@@ -151,7 +151,7 @@ function SignupWidget({ node, onUpdate }: SignupWidgetProps) {
                   <span className="block text-sm text-gray-500">
                     {persona.description}
                   </span>
-                  <span className="persona-indicator text-myblue absolute inset-y-0 left-0 flex items-center pl-3">
+                  <span className="persona-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-myblue">
                     <CheckIcon className="h-5 w-5" aria-hidden="true" />
                   </span>
                 </Combobox.Item>

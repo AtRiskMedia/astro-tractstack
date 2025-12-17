@@ -419,14 +419,14 @@ const StyleParentPanel = ({
                 </div>
               )}
               <div>
-                <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+                <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
                   <li>
                     <em>Actions:</em>
                   </li>
                   <li>
                     <button
                       onClick={handleClickAdd}
-                      className="text-myblue font-bold underline hover:text-black"
+                      className="font-bold text-myblue underline hover:text-black"
                     >
                       Add Style
                     </button>
@@ -554,10 +554,10 @@ const StyleParentPanel = ({
       <div className="space-y-4">
         <BackButton />
         <div className="mb-4 flex items-center gap-3 rounded-md bg-slate-50 p-3">
-          <span className="text-mydarkgrey text-sm font-bold">Layer:</span>
+          <span className="text-sm font-bold text-mydarkgrey">Layer:</span>
           <div className="flex flex-wrap items-center gap-2">
             <button
-              className="border-mydarkgrey/30 text-mydarkgrey rounded border border-dashed p-1 text-xs transition-colors hover:bg-white/50 hover:text-black"
+              className="rounded border border-dashed border-mydarkgrey/30 p-1 text-xs text-mydarkgrey transition-colors hover:bg-white/50 hover:text-black"
               title="Add Layer Here"
               onClick={() => handleLayerAdd('before', 1)}
             >
@@ -574,14 +574,14 @@ const StyleParentPanel = ({
                     className={`min-w-8 rounded-md px-3 py-1.5 text-sm font-bold transition-colors ${
                       currentLayer === num
                         ? 'bg-myblue text-white shadow-sm'
-                        : 'text-mydarkgrey hover:bg-mydarkgrey/10 bg-white hover:text-black'
+                        : 'bg-white text-mydarkgrey hover:bg-mydarkgrey/10 hover:text-black'
                     }`}
                     onClick={() => setCurrentLayer(num)}
                   >
                     {num}
                   </button>
                   <button
-                    className="border-mydarkgrey/30 text-mydarkgrey rounded border border-dashed p-1 text-xs transition-colors hover:bg-white/50 hover:text-black"
+                    className="rounded border border-dashed border-mydarkgrey/30 p-1 text-xs text-mydarkgrey transition-colors hover:bg-white/50 hover:text-black"
                     title="Add Layer Here"
                     onClick={() =>
                       handleLayerAdd(
@@ -618,14 +618,14 @@ const StyleParentPanel = ({
           </div>
         )}
         <div>
-          <ul className="text-mydarkgrey flex flex-wrap gap-x-4 gap-y-1">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
             <li>
               <em>Actions:</em>
             </li>
             <li>
               <button
                 onClick={handleClickAdd}
-                className="text-myblue font-bold underline hover:text-black"
+                className="font-bold text-myblue underline hover:text-black"
               >
                 Add Style
               </button>
@@ -633,7 +633,7 @@ const StyleParentPanel = ({
             <li>
               <button
                 onClick={handleClickDeleteLayer}
-                className="text-myblue font-bold underline hover:text-black"
+                className="font-bold text-myblue underline hover:text-black"
               >
                 Delete Layer
               </button>

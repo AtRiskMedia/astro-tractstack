@@ -154,7 +154,7 @@ export const CopyInputStep = ({
           onChange={(e) => onTopicChange(e.target.value)}
           placeholder="e.g. a SaaS product for team collaboration"
           rows={2}
-          className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+          className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
         />
       </div>
 
@@ -178,7 +178,7 @@ export const CopyInputStep = ({
                 value={promptValue}
                 onChange={(e) => onPromptValueChange(e.target.value)}
                 rows={4}
-                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
               />
               <p className="mt-1 text-xs text-gray-500">
                 Leave [topic] as it will be replaced with your prompt.
@@ -194,7 +194,7 @@ export const CopyInputStep = ({
                   value={overallPrompt}
                   onChange={(e) => onOverallPromptChange(e.target.value)}
                   rows={3}
-                  className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                  className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                 />
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -206,7 +206,7 @@ export const CopyInputStep = ({
                     value={promptValueCol1}
                     onChange={(e) => onPromptValueCol1Change(e.target.value)}
                     rows={4}
-                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                    className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                   />
                 </div>
                 <div>
@@ -217,7 +217,7 @@ export const CopyInputStep = ({
                     value={promptValueCol2}
                     onChange={(e) => onPromptValueCol2Change(e.target.value)}
                     rows={4}
-                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:text-sm"
+                    className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                   />
                 </div>
               </div>

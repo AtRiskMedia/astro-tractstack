@@ -621,7 +621,7 @@ const AddPaneNewPanel = ({
 
   const renderInitialStep = () => (
     <div className="p-4">
-      <h3 className="font-action mb-4 text-center text-xl font-bold text-gray-800">
+      <h3 className="mb-4 text-center font-action text-xl font-bold text-gray-800">
         How would you like to design your new pane?
       </h3>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -854,7 +854,7 @@ const AddPaneNewPanel = ({
         >
           ← Go Back
         </button>
-        <div className="font-action ml-4 flex-none rounded px-2 py-2.5 text-sm font-bold text-cyan-700 shadow-sm">
+        <div className="ml-4 flex-none rounded px-2 py-2.5 font-action text-sm font-bold text-cyan-700 shadow-sm">
           + Design New Pane
         </div>
       </div>

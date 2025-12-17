@@ -1,7 +1,7 @@
-import type { MouseEvent } from 'react';
 import { NodesContext } from '@/stores/nodes';
 import type { BrandConfig } from './tractstack';
 import type { Tag } from './compositorTypes';
+import type { MouseEvent, JSX } from 'react';
 
 export interface WidgetProps {
   nodeId: string;

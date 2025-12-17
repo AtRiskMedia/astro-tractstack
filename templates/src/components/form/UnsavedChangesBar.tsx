@@ -147,7 +147,7 @@ export default function UnsavedChangesBar<T>({
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
 
       {/* Main content bar */}
-      <div className="relative mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="sm:px-6 lg:px-8 relative mx-auto max-w-7xl px-4 py-4">
         <div
           className={`flex items-center justify-between rounded-lg border px-4 py-3 shadow-lg ${styling.bgColor} ${styling.borderColor}`}
         >

@@ -27,7 +27,7 @@ export default function SearchWrapper({ contentMap }: SearchWrapperProps) {
     <>
       <button
         onClick={handleSearchOpen}
-        className="text-myblue/80 hover:text-myblue hover:rotate-6"
+        className="text-myblue/80 hover:rotate-6 hover:text-myblue"
         title="Search content"
         aria-label="Search content"
       >

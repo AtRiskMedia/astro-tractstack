@@ -183,7 +183,7 @@ const ViewportComboBox = ({
                   )}
                   <Combobox.Input
                     className={classNames(
-                      'border-mydarkgrey w-full rounded-md border py-2 text-xl leading-5 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600',
+                      'w-full rounded-md border border-mydarkgrey py-2 text-xl leading-5 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600',
                       isInferred ? 'text-black/20' : 'text-black',
                       isColorValue ? 'pl-12' : 'pl-3',
                       'pr-16'
@@ -193,7 +193,7 @@ const ViewportComboBox = ({
                   />
                   <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pl-2 pr-2">
                     <ChevronUpDownIcon
-                      className="text-mydarkgrey h-5 w-5"
+                      className="h-5 w-5 text-mydarkgrey"
                       aria-hidden="true"
                     />
                   </Combobox.Trigger>
@@ -203,7 +203,7 @@ const ViewportComboBox = ({
                 <Combobox.Positioner style={{ zIndex: 1002 }}>
                   <Combobox.Content className="max-h-64 w-full overflow-auto rounded-md bg-white py-1 text-xl shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     {collection.items.length === 0 ? (
-                      <div className="text-mydarkgrey relative cursor-default select-none px-4 py-2">
+                      <div className="relative cursor-default select-none px-4 py-2 text-mydarkgrey">
                         Nothing found.
                       </div>
                     ) : (
@@ -252,7 +252,7 @@ const ViewportComboBox = ({
                 id={`negative-${viewport}`}
                 checked={isNowNegative}
                 onChange={handleNegativeChange}
-                className="border-mydarkgrey h-4 w-4 rounded text-cyan-600 focus:ring-cyan-600"
+                className="h-4 w-4 rounded border-mydarkgrey text-cyan-600 focus:ring-cyan-600"
               />
               <label
                 htmlFor={`negative-${viewport}`}

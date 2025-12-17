@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';

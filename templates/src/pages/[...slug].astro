@@ -172,7 +172,7 @@ paneIds.forEach((paneId: string) => {
                     {Array.isArray(storyData.codeHookVisibility?.[paneId]) && (
                       <button
                         type="button"
-                        class="text-mydarkgrey absolute right-2 top-2 z-10 rounded-full bg-white p-1.5 hover:bg-black hover:text-white"
+                        class="absolute right-2 top-2 z-10 rounded-full bg-white p-1.5 text-mydarkgrey hover:bg-black hover:text-white"
                         title="Go Back"
                         hx-post="/api/v1/state"
                         hx-trigger="click"

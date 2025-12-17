@@ -106,7 +106,7 @@ const createdDate = created ? new Date(created) : new Date();
             {allLinks.map((item: any) => (
               <a
                 href={item.to}
-                class="bg-brand-7 hover:bg-myblack focus:bg-brand-7 z-10 whitespace-nowrap rounded px-3.5 py-1.5 text-lg text-white shadow-sm transition-colors hover:text-white focus:text-white"
+                class="z-10 whitespace-nowrap rounded bg-brand-7 px-3.5 py-1.5 text-lg text-white shadow-sm transition-colors hover:bg-myblack hover:text-white focus:bg-brand-7 focus:text-white"
                 title={item.description}
               >
                 <span class="font-bold">{item.name}</span>
@@ -126,7 +126,7 @@ const createdDate = created ? new Date(created) : new Date();
             .map((social: string[]) => (
               <a
                 href={social[1]}
-                class="hover:text-myblue group my-1 inline-block p-2 hover:rotate-6"
+                class="group my-1 inline-block p-2 hover:rotate-6 hover:text-myblue"
                 target="_blank"
                 title={social[2] ?? social[1]}
               >
@@ -146,7 +146,7 @@ const createdDate = created ? new Date(created) : new Date();
     }
 
     <div
-      class="text-myblue xs:flex-row my-2 flex flex-col items-center justify-center"
+      class="my-2 flex flex-col items-center justify-center text-myblue xs:flex-row"
     >
       <div class="px-4 text-center text-2xl md:px-12">
         Copyright &#169; {createdDate.getFullYear()}{
@@ -159,7 +159,7 @@ const createdDate = created ? new Date(created) : new Date();
       </div>
     </div>
     <div
-      class="text-myblue my-2 flex flex-row items-center justify-center md:flex-col"
+      class="my-2 flex flex-row items-center justify-center text-myblue md:flex-col"
     >
       <div class="px-4 text-center text-lg md:px-12">
         pressed with

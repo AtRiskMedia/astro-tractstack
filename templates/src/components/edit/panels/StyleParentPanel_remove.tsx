@@ -147,7 +147,7 @@ const StyleParentPanelRemove = ({
       </div>
       <div>
         <h3 className="text-xl font-bold">Remove Style</h3>
-        <p className="text-mydarkgrey mt-2">
+        <p className="mt-2 text-mydarkgrey">
           Are you sure you want to remove this style?
         </p>
         <div className="my-4 rounded-md bg-slate-100 p-4">

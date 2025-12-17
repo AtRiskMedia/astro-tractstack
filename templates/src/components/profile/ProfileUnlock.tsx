@@ -128,7 +128,7 @@ export const ProfileUnlock = ({
 
   return (
     <>
-      <h3 className="font-action py-6 text-xl text-blue-600">
+      <h3 className="py-6 font-action text-xl text-blue-600">
         Welcome back! Please unlock your profile
       </h3>
 
@@ -181,7 +181,7 @@ export const ProfileUnlock = ({
           </div>
 
           {badLogin ? (
-            <div className="align-center font-action col-span-1 flex justify-center py-6 text-red-500">
+            <div className="align-center col-span-1 flex justify-center py-6 font-action text-red-500">
               Invalid credentials. Please try again.
             </div>
           ) : null}
@@ -191,7 +191,7 @@ export const ProfileUnlock = ({
               type="submit"
               disabled={isLoading}
               className={classNames(
-                `font-action rounded-lg px-3.5 py-2.5 text-white transition-all duration-200 hover:rotate-1`,
+                `rounded-lg px-3.5 py-2.5 font-action text-white transition-all duration-200 hover:rotate-1`,
                 isLoading
                   ? `cursor-not-allowed bg-gray-400`
                   : `bg-black hover:bg-orange-500`

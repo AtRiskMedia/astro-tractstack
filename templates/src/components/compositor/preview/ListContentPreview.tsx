@@ -58,7 +58,7 @@ const StoryItem = ({
     <div className="flex-1">
       <h3 className="text-lg font-bold text-black">{story.title}</h3>
       {story.description && (
-        <p className="text-myblack line-clamp-2 text-sm">{story.description}</p>
+        <p className="line-clamp-2 text-sm text-myblack">{story.description}</p>
       )}
       {showTopics && story.topics && story.topics.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-1">
@@ -72,7 +72,7 @@ const StoryItem = ({
           ))}
         </div>
       )}
-      <p className="text-mydarkgrey mt-1 text-xs">
+      <p className="mt-1 text-xs text-mydarkgrey">
         {formatDate(story.changed)}
       </p>
     </div>
@@ -136,8 +136,8 @@ const ListContentPreview = ({
             className={`px-4 py-2 text-sm font-bold ${
               currentMode === 'recent'
                 ? 'bg-myblue text-white'
-                : 'text-myblack bg-white hover:bg-gray-100'
-            } border-myblue rounded-l-md border transition-colors`}
+                : 'bg-white text-myblack hover:bg-gray-100'
+            } rounded-l-md border border-myblue transition-colors`}
             onClick={() => {
               setCurrentMode('recent');
               setCurrentPage(1);
@@ -149,8 +149,8 @@ const ListContentPreview = ({
             className={`px-4 py-2 text-sm font-bold ${
               currentMode === 'popular'
                 ? 'bg-myblue text-white'
-                : 'text-myblack bg-white hover:bg-gray-100'
-            } border-myblue rounded-r-md border transition-colors`}
+                : 'bg-white text-myblack hover:bg-gray-100'
+            } rounded-r-md border border-myblue transition-colors`}
             onClick={() => {
               setCurrentMode('popular');
               setCurrentPage(1);
@@ -190,14 +190,14 @@ const ListContentPreview = ({
             aria-label="Pagination"
           >
             <button
-              className="text-myblack rounded-l-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-l-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-myblack hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((prev) => prev - 1)}
             >
               Previous
             </button>
             <button
-              className="hover:bg-myblue-dark border-myblue bg-myblue rounded-r-md border px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-myblue-dark rounded-r-md border border-myblue bg-myblue px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((prev) => prev + 1)}
             >

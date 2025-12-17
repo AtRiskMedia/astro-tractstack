@@ -67,17 +67,17 @@ export default function PaneBreakCollectionSelector({
       >
         <div className="relative mt-1">
           <Combobox.Input
-            className="border-mydarkgrey focus:border-myblue focus:ring-myblue xs:text-sm w-full rounded-md py-2 pl-3 pr-10 shadow-sm"
+            className="w-full rounded-md border-mydarkgrey py-2 pl-3 pr-10 shadow-sm focus:border-myblue focus:ring-myblue xs:text-sm"
             autoComplete="off"
           />
           <Combobox.Trigger className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
-              className="text-mydarkgrey h-5 w-5"
+              className="h-5 w-5 text-mydarkgrey"
               aria-hidden="true"
             />
           </Combobox.Trigger>
         </div>
-        <Combobox.Content className="xs:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+        <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none xs:text-sm">
           {collection.items.map((item) => (
             <Combobox.Item
               key={item}

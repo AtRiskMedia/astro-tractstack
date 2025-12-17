@@ -109,11 +109,11 @@ function TimeSelectModal({
               value={manualTime}
               onChange={handleManualTimeChange}
               placeholder="Enter time in seconds"
-              className="focus:ring-myorange rounded border px-3 py-2 focus:outline-none focus:ring-2"
+              className="rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-myorange"
             />
             <button
               onClick={handleSeekToTime}
-              className="bg-myblue rounded px-4 py-2 text-white hover:bg-blue-600"
+              className="rounded bg-myblue px-4 py-2 text-white hover:bg-blue-600"
             >
               Seek
             </button>
@@ -128,7 +128,7 @@ function TimeSelectModal({
             </button>
             <button
               onClick={handleGetCurrentTime}
-              className="bg-myorange rounded px-4 py-2 text-white hover:bg-orange-600"
+              className="rounded bg-myorange px-4 py-2 text-white hover:bg-orange-600"
             >
               Use Current Time {currentTime > 0 ? `(${currentTime}s)` : ''}
             </button>
@@ -258,7 +258,7 @@ export default function ActionBuilderTimeSelector({
         >
           <div className="relative">
             <Combobox.Input
-              className="focus:border-myblue focus:ring-myblue w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-myblue focus:ring-myblue"
               placeholder={placeholder}
               autoComplete="off"
             />
@@ -270,7 +270,7 @@ export default function ActionBuilderTimeSelector({
             </Combobox.Trigger>
           </div>
 
-          <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <Combobox.Content className="sm:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
             {availableVideos.length > 0 ? (
               collection.items.length === 0 ? (
                 <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
@@ -326,14 +326,14 @@ export default function ActionBuilderTimeSelector({
             {value !== '' && (
               <button
                 onClick={() => handleTimeSelect(value)}
-                className="bg-myblue rounded px-4 py-2 text-white hover:bg-blue-600"
+                className="rounded bg-myblue px-4 py-2 text-white hover:bg-blue-600"
               >
                 Start at {value}s
               </button>
             )}
             <button
               onClick={() => setShowModal(true)}
-              className="bg-myorange rounded px-4 py-2 text-white hover:bg-orange-600"
+              className="rounded bg-myorange px-4 py-2 text-white hover:bg-orange-600"
             >
               Find Time
             </button>

@@ -309,7 +309,7 @@ const AddPaneReUsePanel = ({
               ← Go Back
             </button>
 
-            <div className="font-action flex-none rounded px-2 py-2.5 text-sm font-bold text-cyan-700 shadow-sm">
+            <div className="flex-none rounded px-2 py-2.5 font-action text-sm font-bold text-cyan-700 shadow-sm">
               Re-use Existing Pane
             </div>
           </div>
@@ -340,7 +340,7 @@ const AddPaneReUsePanel = ({
         </div>
       </div>
 
-      <h3 className="font-action px-3.5 pb-1.5 pt-4 text-xl font-bold text-black">
+      <h3 className="px-3.5 pb-1.5 pt-4 font-action text-xl font-bold text-black">
         Click on a pane to reuse:
       </h3>
 
@@ -349,7 +349,7 @@ const AddPaneReUsePanel = ({
           <div key={preview.pane.id} className="flex flex-col items-center">
             <div
               onClick={() => handlePaneReuse(preview.pane.id, nodeId, first)}
-              className="hover:outline-solid bg-mywhite group relative w-full cursor-pointer rounded-sm shadow-inner transition-all duration-200 hover:outline hover:outline-4"
+              className="hover:outline-solid group relative w-full cursor-pointer rounded-sm bg-mywhite shadow-inner transition-all duration-200 hover:outline hover:outline-4"
               style={{
                 ...(!preview.snapshot ? { minHeight: '75px' } : {}),
               }}
@@ -391,7 +391,7 @@ const AddPaneReUsePanel = ({
                 </div>
               )}
             </div>
-            <p className="bg-mydarkgrey mt-2 w-full break-words p-2 text-center text-sm text-white">
+            <p className="mt-2 w-full break-words bg-mydarkgrey p-2 text-center text-sm text-white">
               {preview.pane.title}
             </p>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type JSX } from 'react';
 import { TractStackAPI } from '@/utils/api';
 import { GOTO_TARGETS, ACTION_COMMANDS, type ActionCommand } from '@/constants';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';

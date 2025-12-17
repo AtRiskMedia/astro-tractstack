@@ -485,7 +485,7 @@ export const Compositor = (props: CompositorProps) => {
       {/* Selection drag box */}
       {selectionRect && (
         <div
-          className="bg-mygreen/20 fixed z-50 border border-blue-600"
+          className="fixed z-50 border border-blue-600 bg-mygreen/20"
           style={{
             left: `${selectionRect.left}px`,
             top: `${selectionRect.top}px`,
