@@ -153,12 +153,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/codehooks/SandboxAuthWrapper.tsx'
-      ),
-      dest: 'src/components/codehooks/SandboxAuthWrapper.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/codehooks/SandboxRegisterForm.tsx'
       ),
       dest: 'src/components/codehooks/SandboxRegisterForm.tsx',

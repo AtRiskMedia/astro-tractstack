@@ -12,7 +12,6 @@ import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
 import SettingsPanel from '@/components/edit/SettingsPanel';
 import { Compositor } from '@/components/compositor/Compositor';
-import SandboxAuthWrapper from '@/components/codehooks/SandboxAuthWrapper.tsx';
 import { preHealthCheck } from '@/utils/backend';
 
 if (!import.meta.env.PRIVATE_SANDBOX_SECRET) {
@@ -63,8 +62,6 @@ const hasProfile = Astro.request.headers
   isStoryKeep={true}
   isEditor={true}
 >
-  <SandboxAuthWrapper client:load isServerSideAuthenticated={!!hasProfile} />
-
   <CodeHook
     target="get-tractstack"
     options={{
