@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import { Portal } from '@ark-ui/react';
+import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
+import { selectionStore } from '@/stores/selection';
 import {
   settingsPanelStore,
   stylePanelTargetMemoryStore,
@@ -18,6 +22,7 @@ import {
 import SelectedTailwindClass from '@/components/fields/SelectedTailwindClass';
 import BackgroundImageWrapper from '@/components/fields/BackgroundImageWrapper';
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
+import { AiRestylePaneModal } from '@/components/edit/pane/AiRestylePaneModal';
 import { cloneDeep } from '@/utils/helpers';
 import {
   convertToGrid,
@@ -60,6 +65,7 @@ const StyleParentPanel = ({
   const [selectedTargetIndex, setSelectedTargetIndex] = useState(0);
 
   const ctx = getCtx();
+  const { isAiRestyleModalOpen } = useStore(selectionStore);
 
   useEffect(() => {
     if (
@@ -518,6 +524,19 @@ const StyleParentPanel = ({
             })}
           </div>
         </div>
+        <div className="space-y-3 border-t border-gray-200 pt-4">
+          <button
+            onClick={() => {
+              ctx.toolModeValStore.set({ value: 'styles' });
+              selectionStore.setKey('paneToRestyleId', paneNode.id);
+              selectionStore.setKey('isAiRestyleModalOpen', true);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:bg-purple-700"
+          >
+            <SparklesIcon className="h-5 w-5" />
+            Re-Color this Pane
+          </button>
+        </div>
       </div>
     );
   };
@@ -645,7 +664,16 @@ const StyleParentPanel = ({
     }
   };
 
-  return <div className="space-y-4">{renderContent()}</div>;
+  return (
+    <div className="space-y-4">
+      {renderContent()}
+      {isAiRestyleModalOpen && (
+        <Portal>
+          <AiRestylePaneModal />
+        </Portal>
+      )}
+    </div>
+  );
 };
 
 export default StyleParentPanel;

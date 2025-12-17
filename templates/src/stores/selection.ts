@@ -20,6 +20,7 @@ export interface SelectionStoreState extends SelectionRange {
   selectionBox: SelectionBox | null;
   pendingAction: 'style' | 'link' | 'carousel' | null;
   isRestyleModalOpen: boolean;
+  isAiRestyleModalOpen: boolean;
   paneToRestyleId: string | null;
 }
 
@@ -35,6 +36,7 @@ const DEFAULT_SELECTION_STATE: SelectionStoreState = {
   selectionBox: null,
   pendingAction: null,
   isRestyleModalOpen: false,
+  isAiRestyleModalOpen: false,
   paneToRestyleId: null,
 };
 

@@ -1,4 +1,5 @@
 import ColorPickerCombo from '@/components/fields/ColorPickerCombo';
+import { findClosestTailwindColor } from '@/utils/compositor/tailwindColors';
 
 export interface AiDesignConfig {
   harmony: string;
@@ -11,6 +12,7 @@ export interface AiDesignConfig {
 interface AiDesignStepProps {
   designConfig: AiDesignConfig;
   onDesignConfigChange: (newConfig: AiDesignConfig) => void;
+  idPrefix?: string;
 }
 
 const harmonyOptions = [
@@ -24,12 +26,27 @@ const themeOptions = ['Light', 'Dark', 'Bright', 'Muted', 'Pastel', 'Earthy'];
 export const AiDesignStep = ({
   designConfig,
   onDesignConfigChange,
+  idPrefix = '',
 }: AiDesignStepProps) => {
   const updateField = <K extends keyof AiDesignConfig>(
     field: K,
     value: AiDesignConfig[K]
   ) => {
     onDesignConfigChange({ ...designConfig, [field]: value });
+  };
+
+  const handleColorChange = (
+    field: 'baseColor' | 'accentColor',
+    color: string
+  ) => {
+    if (!color) {
+      updateField(field, '');
+      return;
+    }
+    const closest = findClosestTailwindColor(color);
+    if (closest) {
+      updateField(field, `${closest.name}-${closest.shade}`);
+    }
   };
 
   return (
@@ -43,15 +60,15 @@ export const AiDesignStep = ({
             <div key={option} className="flex items-center space-x-2">
               <input
                 type="radio"
-                id={`harmony-${option}`}
-                name="harmonyOptions"
+                id={`${idPrefix}harmony-${option}`}
+                name={`${idPrefix}harmonyOptions`}
                 value={option}
                 checked={designConfig.harmony === option}
                 onChange={(e) => updateField('harmony', e.target.value)}
                 className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
               />
               <label
-                htmlFor={`harmony-${option}`}
+                htmlFor={`${idPrefix}harmony-${option}`}
                 className="text-sm font-bold text-gray-700"
               >
                 {option}
@@ -66,7 +83,7 @@ export const AiDesignStep = ({
           <ColorPickerCombo
             title="Base Color (Optional)"
             defaultColor={designConfig.baseColor}
-            onColorChange={(color) => updateField('baseColor', color)}
+            onColorChange={(color) => handleColorChange('baseColor', color)}
             allowNull={true}
           />
         </div>
@@ -74,7 +91,7 @@ export const AiDesignStep = ({
           <ColorPickerCombo
             title="Accent Color (Optional)"
             defaultColor={designConfig.accentColor}
-            onColorChange={(color) => updateField('accentColor', color)}
+            onColorChange={(color) => handleColorChange('accentColor', color)}
             allowNull={true}
           />
         </div>
@@ -89,15 +106,15 @@ export const AiDesignStep = ({
             <div key={option} className="flex items-center space-x-2">
               <input
                 type="radio"
-                id={`theme-${option}`}
-                name="themeOptions"
+                id={`${idPrefix}theme-${option}`}
+                name={`${idPrefix}themeOptions`}
                 value={option}
                 checked={designConfig.theme === option}
                 onChange={(e) => updateField('theme', e.target.value)}
                 className="h-4 w-4 border-gray-300 text-cyan-600 focus:ring-cyan-500"
               />
               <label
-                htmlFor={`theme-${option}`}
+                htmlFor={`${idPrefix}theme-${option}`}
                 className="text-sm font-bold text-gray-700"
               >
                 {option}
@@ -109,7 +126,7 @@ export const AiDesignStep = ({
 
       <div>
         <label
-          htmlFor="additional-notes"
+          htmlFor={`${idPrefix}additional-notes`}
           className="block text-base font-bold text-gray-800"
         >
           Additional Design Notes (Optional)
@@ -119,7 +136,7 @@ export const AiDesignStep = ({
           texture".
         </p>
         <textarea
-          id="additional-notes"
+          id={`${idPrefix}additional-notes`}
           value={designConfig.additionalNotes}
           onChange={(e) => updateField('additionalNotes', e.target.value)}
           placeholder="Enter additional notes..."

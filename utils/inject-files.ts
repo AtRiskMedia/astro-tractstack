@@ -479,6 +479,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/AiRestylePaneModal.tsx'
+      ),
+      dest: 'src/components/edit/pane/AiRestylePaneModal.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/steps/CopyInputStep.tsx'
       ),
       dest: 'src/components/edit/pane/steps/CopyInputStep.tsx',

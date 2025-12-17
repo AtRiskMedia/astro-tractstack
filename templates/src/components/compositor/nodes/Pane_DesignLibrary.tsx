@@ -4,6 +4,7 @@ import ArchiveBoxArrowDownIcon from '@heroicons/react/24/outline/ArchiveBoxArrow
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
+import SparklesIcon from '@heroicons/react/24/solid/SparklesIcon';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
@@ -12,6 +13,7 @@ import type { NodeProps } from '@/types/nodeProps';
 import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
 import { SaveToLibraryModal } from '@/components/edit/state/SaveToLibraryModal';
 import { RestylePaneModal } from '@/components/edit/pane/RestylePaneModal';
+import { AiRestylePaneModal } from '@/components/edit/pane/AiRestylePaneModal';
 import { selectionStore } from '@/stores/selection';
 import { copyPaneToClipboard } from '@/utils/compositor/designLibraryHelper';
 
@@ -35,9 +37,12 @@ function getSizeClasses(
 
 export const Pane_DesignLibrary = (props: NodeProps) => {
   const ctx = getCtx(props);
-  const { isRestyleModalOpen } = useStore(selectionStore, {
-    keys: ['isRestyleModalOpen'],
-  });
+  const { isRestyleModalOpen, isAiRestyleModalOpen } = useStore(
+    selectionStore,
+    {
+      keys: ['isRestyleModalOpen', 'isAiRestyleModalOpen'],
+    }
+  );
   const [currentViewport, setCurrentViewport] = useState(
     viewportKeyStore.get().value
   );
@@ -81,6 +86,12 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     selectionStore.setKey('isRestyleModalOpen', true);
   };
 
+  const handleAiRestyleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    selectionStore.setKey('paneToRestyleId', props.nodeId);
+    selectionStore.setKey('isAiRestyleModalOpen', true);
+  };
+
   const handleSaveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsSaveModalOpen(true);
@@ -106,6 +117,13 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
           <ArchiveBoxArrowDownIcon className="h-7 w-7 text-white" />
         </button>
       )}
+      <button
+        title="Re-Color"
+        onClick={handleAiRestyleClick}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 p-1.5 shadow-lg hover:bg-purple-700"
+      >
+        <SparklesIcon className="h-5 w-5 text-white" />
+      </button>
       <button
         title="Restyle Pane from Design Library"
         onClick={handleRestyleClick}
@@ -243,6 +261,9 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
       )}
 
       {isRestyleModalOpen && <RestylePaneModal />}
+      {isAiRestyleModalOpen && (
+        <AiRestylePaneModal isSandboxMode={props.isSandboxMode} />
+      )}
     </div>
   );
 };

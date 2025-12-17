@@ -560,6 +560,71 @@ export class NodesContext {
     );
   }
 
+  applyShellToPane(paneId: string, template: TemplatePane) {
+    const allNodes = new Map(this.allNodes.get());
+    const paneNode = allNodes.get(paneId) as PaneNode;
+    if (!paneNode) return;
+
+    if (template.bgColour) {
+      paneNode.bgColour = template.bgColour;
+      paneNode.isChanged = true;
+    }
+
+    const childrenIds = this.getChildNodeIDs(paneId);
+
+    const gridLayoutNode = childrenIds
+      .map((id) => allNodes.get(id))
+      .find((n) => n?.nodeType === 'GridLayoutNode') as
+      | GridLayoutNode
+      | undefined;
+
+    const markdownNodes = childrenIds
+      .map((id) => allNodes.get(id))
+      .filter((n) => n?.nodeType === 'Markdown') as MarkdownPaneFragmentNode[];
+
+    if (gridLayoutNode && template.gridLayout) {
+      if (template.gridLayout.parentClasses) {
+        gridLayoutNode.parentClasses = template.gridLayout.parentClasses;
+      }
+      if (template.gridLayout.defaultClasses) {
+        gridLayoutNode.defaultClasses = template.gridLayout.defaultClasses;
+      }
+      gridLayoutNode.isChanged = true;
+
+      if (
+        template.gridLayout.nodes &&
+        Array.isArray(template.gridLayout.nodes)
+      ) {
+        const columnIds = this.getChildNodeIDs(gridLayoutNode.id);
+
+        columnIds.forEach((colId, index) => {
+          const templateCol = template.gridLayout!.nodes![index];
+          if (templateCol && templateCol.gridClasses) {
+            const liveColNode = allNodes.get(colId) as MarkdownPaneFragmentNode;
+            if (liveColNode) {
+              liveColNode.gridClasses = templateCol.gridClasses;
+              liveColNode.isChanged = true;
+            }
+          }
+        });
+      }
+    } else if (markdownNodes.length > 0 && template.markdown) {
+      const primaryMarkdown = markdownNodes[0];
+
+      if (template.markdown.parentClasses) {
+        primaryMarkdown.parentClasses = template.markdown.parentClasses;
+      }
+      if (template.markdown.defaultClasses) {
+        primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
+      }
+      primaryMarkdown.isChanged = true;
+    }
+
+    this.allNodes.set(allNodes);
+    this.notifyNode(paneId);
+    this.notifyNode('root');
+  }
+
   /**
    * Splits a text node at a given character offset.
    * This is a robust function that correctly handles splits at offset 0
