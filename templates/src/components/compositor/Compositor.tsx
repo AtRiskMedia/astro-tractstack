@@ -18,6 +18,7 @@ import {
   brandConfigStore,
   viewportModeStore,
   setViewportMode,
+  sandboxTokenStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
@@ -53,6 +54,7 @@ export type CompositorProps = {
   urlParams: Record<string, string | boolean>;
   fullCanonicalURL: string;
   isSandboxMode?: boolean;
+  sandboxToken?: string;
 };
 
 const VERBOSE = false;
@@ -300,12 +302,16 @@ export const Compositor = (props: CompositorProps) => {
     preferredThemeStore.set(props.config.THEME as Theme);
     codehookMapStore.set(props.availableCodeHooks);
     brandConfigStore.set(props.config);
+    if (props.sandboxToken) {
+      sandboxTokenStore.set(props.sandboxToken);
+    }
   }, [
     props.fullContentMap,
     props.urlParams,
     props.fullCanonicalURL,
     props.availableCodeHooks,
     props.config,
+    props.sandboxToken,
   ]);
 
   // Initialize nodes tree and set up subscriptions

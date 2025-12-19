@@ -6,6 +6,7 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import { getCtx } from '@/stores/nodes';
 import { selectionStore } from '@/stores/selection';
+import { sandboxTokenStore } from '@/stores/storykeep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
 import prompts from '@/constants/prompts.json';
 import { TractStackAPI } from '@/utils/api';
@@ -34,11 +35,13 @@ const callAskLemurAPI = async (
   let resultData: any;
 
   if (isSandboxMode) {
+    const token = sandboxTokenStore.get();
     const response = await fetch(`/api/sandbox`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Tenant-ID': tenantId,
+        'X-Sandbox-Token': token || '',
       },
       credentials: 'include',
       body: JSON.stringify({ action: 'askLemur', payload: requestBody }),

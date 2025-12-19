@@ -30,8 +30,8 @@ export const codehookMapStore = atom<string[]>([]);
 export const pendingHomePageSlugStore = atom<string | null>(null);
 
 export const saasModalOpenStore = atom<boolean>(false);
+export const sandboxTokenStore = atom<string | null>(null);
 
-// Tool mode types
 export type ToolModeVal =
   | 'styles'
   | 'text'
@@ -40,7 +40,6 @@ export type ToolModeVal =
   | 'move'
   | 'debug';
 
-// Tool add mode types
 export type ToolAddMode =
   | 'p'
   | 'h2'
@@ -54,10 +53,8 @@ export type ToolAddMode =
   | 'identify'
   | 'toggle';
 
-// Header positioning state
 export type HeaderPositionState = 'normal' | 'sticky';
 
-// Viewport and display state
 export const viewportModeStore = atom<ViewportKey>('auto');
 export const viewportKeyStore = map<{
   value: 'mobile' | 'tablet' | 'desktop';
@@ -69,26 +66,19 @@ export const isEditingStore = atom<boolean>(false);
 
 export const showAnalyticsStore = atom<boolean>(false);
 
-// Header positioning
 export const headerPositionStore = atom<HeaderPositionState>('normal');
 
-// Settings panel state
 export const settingsPanelOpenStore = atom<boolean>(false);
 export const addPanelOpenStore = atom<boolean>(false);
 
-// Mobile-specific behavior
 export const mobileHeaderFadedStore = atom<boolean>(false);
 
-// Undo/redo state
 export const canUndoStore = atom<boolean>(false);
 export const canRedoStore = atom<boolean>(false);
 
-// Actions
 export const toggleSettingsPanel = () => {
   const isOpen = !settingsPanelOpenStore.get();
   settingsPanelOpenStore.set(isOpen);
-
-  // Handle mobile behavior
   handleSettingsPanelMobile(isOpen);
 };
 export const toggleAddPanel = () => {
@@ -112,7 +102,6 @@ const getViewportFromWidth = (
 
 export const setViewportMode = (mode: ViewportKey) => {
   viewportModeStore.set(mode);
-  // Sync viewportKeyStore
   if (mode === 'auto') {
     const actualViewport = getViewportFromWidth(window.innerWidth);
     viewportKeyStore.setKey('value', actualViewport);

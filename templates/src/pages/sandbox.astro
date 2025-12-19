@@ -1,5 +1,6 @@
 ---
 import { ulid } from 'ulid';
+import { createHmac } from 'node:crypto';
 import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
@@ -48,6 +49,12 @@ const urlParams: Record<string, string | boolean> = {};
 for (const [key, value] of Astro.url.searchParams) {
   urlParams[key] = value === '' ? true : value;
 }
+
+const timestamp = Date.now().toString();
+const signature = createHmac('sha256', import.meta.env.PRIVATE_SANDBOX_SECRET)
+  .update(timestamp)
+  .digest('hex');
+const sandboxToken = `${timestamp}.${signature}`;
 ---
 
 <Layout
@@ -111,6 +118,7 @@ for (const [key, value] of Astro.url.searchParams) {
             urlParams={urlParams}
             availableCodeHooks={Object.keys(codeHookComponents)}
             isSandboxMode={true}
+            sandboxToken={sandboxToken}
             client:only="react"
           />
         </div>

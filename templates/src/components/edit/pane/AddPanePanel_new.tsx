@@ -7,7 +7,7 @@ import SquaresPlusIcon from '@heroicons/react/24/outline/SquaresPlusIcon';
 import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
 import { NodesContext, getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
-import { hasAssemblyAIStore } from '@/stores/storykeep';
+import { hasAssemblyAIStore, sandboxTokenStore } from '@/stores/storykeep';
 import prompts from '@/constants/prompts.json';
 import type { DesignLibraryEntry } from '@/types/tractstack';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
@@ -60,9 +60,14 @@ const callAskLemurAPI = async (
   let resultData: any;
 
   if (isSandboxMode) {
+    const token = sandboxTokenStore.get();
     const response = await fetch(`/api/sandbox`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenantId },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': tenantId,
+        'X-Sandbox-Token': token || '',
+      },
       credentials: 'include',
       body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
     });

@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import type { APIRoute } from '@/types/astro';
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -17,14 +18,48 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 
-  const profileCookie = request.headers
-    .get('cookie')
-    ?.includes('tractstack_profile');
-  if (!profileCookie) {
+  const tokenHeader = request.headers.get('X-Sandbox-Token');
+  if (!tokenHeader) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Forbidden: Missing sandbox profile.',
+        error: 'Unauthorized: Missing sandbox token',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const [timestamp, signature] = tokenHeader.split('.');
+  if (!timestamp || !signature) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Unauthorized: Invalid token format',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const now = Date.now();
+  if (now - parseInt(timestamp, 10) > 2 * 60 * 60 * 1000) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Session expired. Please refresh the page.',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const expectedSignature = createHmac('sha256', sharedSecret)
+    .update(timestamp)
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Unauthorized: Invalid signature',
       }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
     );
