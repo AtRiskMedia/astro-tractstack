@@ -48,10 +48,6 @@ const urlParams: Record<string, string | boolean> = {};
 for (const [key, value] of Astro.url.searchParams) {
   urlParams[key] = value === '' ? true : value;
 }
-
-const hasProfile = Astro.request.headers
-  .get('cookie')
-  ?.includes('tractstack_profile=true');
 ---
 
 <Layout
@@ -81,71 +77,64 @@ const hasProfile = Astro.request.headers
     menu={null}
   />
 
-  {
-    hasProfile && (
-      <>
-        <section
-          id="storykeepHeader"
-          role="banner"
-          class="left-0 right-0 z-101 bg-mywhite drop-shadow transition-all duration-200"
+  <section
+    id="storykeepHeader"
+    role="banner"
+    class="left-0 right-0 z-101 bg-mywhite drop-shadow transition-all duration-200"
+  >
+    <StoryKeepHeader
+      slug="sandbox"
+      isContext={false}
+      isSandboxMode={true}
+      client:only="react"
+    />
+  </section>
+
+  <div class="flex min-h-screen">
+    <StoryKeepToolMode isContext={false} client:only="react" />
+
+    <main id="mainContent" class="relative flex-1 overflow-x-auto">
+      <div class="h-full bg-myblue/20 bg-mylightgrey p-1.5">
+        <div
+          class="h-fit min-h-screen pb-96"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
+          }}
         >
-          <StoryKeepHeader
-            slug="sandbox"
-            isContext={false}
+          <Compositor
+            id={storyFragmentID}
+            nodes={loadData}
+            config={brandConfig}
+            fullContentMap={fullContentMap}
+            fullCanonicalURL="/sandbox"
+            urlParams={urlParams}
+            availableCodeHooks={Object.keys(codeHookComponents)}
             isSandboxMode={true}
             client:only="react"
           />
-        </section>
-
-        <div class="flex min-h-screen">
-          <StoryKeepToolMode isContext={false} client:only="react" />
-
-          <main id="mainContent" class="relative flex-1 overflow-x-auto">
-            <div class="h-full bg-myblue/20 bg-mylightgrey p-1.5">
-              <div
-                class="h-fit min-h-screen pb-96"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(135deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px)',
-                }}
-              >
-                <Compositor
-                  id={storyFragmentID}
-                  nodes={loadData}
-                  config={brandConfig}
-                  fullContentMap={fullContentMap}
-                  fullCanonicalURL="/sandbox"
-                  urlParams={urlParams}
-                  availableCodeHooks={Object.keys(codeHookComponents)}
-                  isSandboxMode={true}
-                  client:only="react"
-                />
-              </div>
-            </div>
-          </main>
         </div>
+      </div>
+    </main>
+  </div>
 
-        <aside
-          id="settingsControls"
-          class="pointer-events-none fixed bottom-16 right-2 z-101 flex flex-col items-end gap-2 md:bottom-2"
-        >
-          <div class="pointer-events-none flex-grow" />
+  <aside
+    id="settingsControls"
+    class="pointer-events-none fixed bottom-16 right-2 z-101 flex flex-col items-end gap-2 md:bottom-2"
+  >
+    <div class="pointer-events-none flex-grow"></div>
 
-          <div class="pointer-events-auto flex-shrink-0">
-            <StoryKeepToolBar client:only="react" />
-          </div>
+    <div class="pointer-events-auto flex-shrink-0">
+      <StoryKeepToolBar client:only="react" />
+    </div>
 
-          <div class="pointer-events-auto max-h-full">
-            <SettingsPanel
-              config={brandConfig}
-              availableCodeHooks={Object.keys(codeHookComponents)}
-              client:only="react"
-            />
-          </div>
-        </aside>
-      </>
-    )
-  }
+    <div class="pointer-events-auto max-h-full">
+      <SettingsPanel
+        availableCodeHooks={Object.keys(codeHookComponents)}
+        client:only="react"
+      />
+    </div>
+  </aside>
 </Layout>
 
 <script>
