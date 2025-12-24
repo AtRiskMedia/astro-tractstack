@@ -158,6 +158,7 @@ paneIds.forEach((paneId: string) => {
                 <div class="relative overflow-hidden">
                   <CodeHook
                     target={codeHookTargets[paneId]}
+                    paneId={paneId}
                     options={(() => {
                       const optionsStr =
                         codeHookTargets[paneId + '-' + codeHookTargets[paneId]];
