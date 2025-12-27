@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Astro integration for TractStack - the digital experience platform (DXP) for the missing middle",
   "type": "module",
   "main": "dist/index.js",

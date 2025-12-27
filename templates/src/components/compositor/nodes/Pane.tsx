@@ -7,7 +7,12 @@ import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
 import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
 import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
-import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
+import { CreativePane } from './CreativePane';
+import type {
+  PaneNode,
+  BgImageNode,
+  ArtpackImageNode,
+} from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
 const TARGETS = [
@@ -119,6 +124,8 @@ const Pane = memo(
 
     // Get background node if it exists
     const allNodes = getCtx(props).allNodes.get();
+    const getPaneId = () => `pane-${props.nodeId}`;
+
     const bgNode = children
       .map((id) => allNodes.get(id))
       .find(
@@ -143,8 +150,6 @@ const Pane = memo(
           ? 'flex-row-reverse'
           : 'flex-row';
 
-    const getPaneId = () => `pane-${props.nodeId}`;
-
     const handleNotification = () => {
       const newChildren = [...getCtx(props).getChildNodeIDs(props.nodeId)];
       setChildren(newChildren); // Fresh copy
@@ -158,6 +163,16 @@ const Pane = memo(
       );
       return unsubscribe;
     }, [props.nodeId]);
+
+    // early exit creative pane?
+    const currentNode = allNodes.get(props.nodeId) as PaneNode;
+    if (currentNode.htmlAst) {
+      return (
+        <div id={getPaneId()} className="pane">
+          <CreativePane nodeId={props.nodeId} htmlAst={currentNode.htmlAst} />
+        </div>
+      );
+    }
 
     return (
       <div id={getPaneId()} className="pane">

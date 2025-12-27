@@ -21,6 +21,7 @@ import {
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
 import { DirectInjectStep } from './steps/DirectInjectStep';
+import { CreativeInjectStep } from './steps/CreativeInjectStep';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import type { StoryFragmentNode } from '@/types/compositorTypes';
 import { TractStackAPI } from '@/utils/api';
@@ -31,6 +32,7 @@ type Step =
   | 'designLibrary'
   | 'loading'
   | 'error'
+  | 'creativeInject'
   | 'directInject';
 
 type InitialChoice = 'library' | 'ai' | 'blank';
@@ -244,7 +246,8 @@ const AddPaneNewPanel = ({
     } else if (
       step === 'designLibrary' ||
       step === 'error' ||
-      step === 'directInject'
+      step === 'directInject' ||
+      step === 'creativeInject'
     ) {
       setStep('initial');
     }
@@ -663,6 +666,14 @@ const AddPaneNewPanel = ({
           </p>
         </button>
       </div>
+      <div className="mt-8 flex justify-center">
+        <button
+          onClick={() => setStep('creativeInject')}
+          className="text-xs font-bold text-gray-400 hover:text-cyan-700 hover:underline"
+        >
+          Direct Inject HTML+CSS
+        </button>
+      </div>
     </div>
   );
 
@@ -810,6 +821,13 @@ const AddPaneNewPanel = ({
     />
   );
 
+  const renderCreativeInjectStep = () => (
+    <CreativeInjectStep
+      onBack={handleBack}
+      onCreatePane={handleApplyTemplate}
+    />
+  );
+
   const renderLoading = () => (
     <div className="flex min-h-80 flex-col items-center justify-center space-y-4 p-6">
       <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
@@ -841,6 +859,8 @@ const AddPaneNewPanel = ({
         return renderDesignLibraryStep();
       case 'loading':
         return renderLoading();
+      case 'creativeInject':
+        return renderCreativeInjectStep();
       case 'directInject':
         return renderDirectInjectStep();
       case 'error':

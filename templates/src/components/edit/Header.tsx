@@ -12,6 +12,7 @@ import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTria
 import {
   viewportModeStore,
   setViewportMode,
+  viewportKeyStore,
   settingsPanelStore,
   pendingHomePageSlugStore,
   saasModalOpenStore,
@@ -47,6 +48,25 @@ const StoryKeepHeader = ({
     ctx.history.headIndex.listen(updateUndoRedo);
     ctx.history.history.listen(updateUndoRedo);
   }, [ctx.history]);
+
+  useEffect(() => {
+    if (viewport !== 'auto') return;
+
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width >= 1368) {
+        viewportKeyStore.setKey('value', 'desktop');
+      } else if (width >= 801) {
+        viewportKeyStore.setKey('value', 'tablet');
+      } else {
+        viewportKeyStore.setKey('value', 'mobile');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewport]);
 
   const handleSave = () => {
     if (isSandboxMode) {

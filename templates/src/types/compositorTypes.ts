@@ -55,6 +55,24 @@ export enum PaneConfigMode {
   CODEHOOK = 'CODEHOOK',
 }
 
+export interface HtmlAstNode {
+  tag: string;
+  attrs?: Record<string, string>;
+  children?: HtmlAstNode[];
+  text?: string;
+  id?: string;
+}
+
+export interface CreativePanePayload {
+  css: string;
+  viewportCss: {
+    xs: string;
+    md: string;
+    xl: string;
+  };
+  tree: HtmlAstNode[];
+}
+
 export enum StoryFragmentMode {
   DEFAULT = 'DEFAULT',
   SLUG = 'SLUG',
@@ -232,6 +250,7 @@ export interface PaneNode extends BaseNode {
   codeHookPayload?: {
     [key: string]: string;
   };
+  htmlAst?: CreativePanePayload;
   heldBeliefs?: BeliefDatum;
   withheldBeliefs?: BeliefDatum;
 }

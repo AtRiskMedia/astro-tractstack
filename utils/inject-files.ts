@@ -107,6 +107,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/compositor/nodes/CreativePane.tsx'
+      ),
+      dest: 'src/components/compositor/nodes/CreativePane.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/compositor/nodes/GridLayout.tsx'
       ),
       dest: 'src/components/compositor/nodes/GridLayout.tsx',
@@ -503,6 +509,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/steps/CreativeInjectStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/CreativeInjectStep.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/AddPanePanel_newCustomCopy.tsx'
       ),
       dest: 'src/components/edit/pane/AddPanePanel_newCustomCopy.tsx',
@@ -638,6 +650,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/compositor/aiPaneParser.ts',
     },
     {
+      src: resolve('../templates/src/utils/compositor/htmlAst.ts'),
+      dest: 'src/utils/compositor/htmlAst.ts',
+    },
+    {
       src: resolve(
         '../templates/src/utils/compositor/nodesMarkdownGenerator.ts'
       ),
@@ -714,6 +730,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/stores/storykeep.ts'),
       dest: 'src/stores/storykeep.ts',
+    },
+    {
+      src: resolve('../templates/src/stores/previews.ts'),
+      dest: 'src/stores/previews.ts',
     },
     {
       src: resolve('../templates/src/stores/analytics.ts'),
@@ -887,6 +907,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/tailwind.ts'),
       dest: 'src/pages/api/tailwind.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/css.ts'),
+      dest: 'src/pages/api/css.ts',
     },
     {
       src: resolve('../templates/src/pages/api/sandbox.ts'),

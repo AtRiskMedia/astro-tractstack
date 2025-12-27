@@ -3193,6 +3193,11 @@ export class NodesContext {
     paneTemplate: TemplatePane,
     newPaneId: string
   ): BaseNode[] {
+    if (paneTemplate.htmlAst) {
+      // No nodes when in htmlAst mode
+      return [];
+    }
+
     let allNodes: BaseNode[] = [];
 
     // 1. Process Markdown Content
@@ -3350,8 +3355,6 @@ export class NodesContext {
         };
         allNodes.push(bgPaneNode);
       }
-      // This helper only processes nodes, it doesn't modify the paneTemplate.
-      // The deletion of `duplicatedPane.bgPane` will remain in `addTemplatePane`.
     }
 
     return allNodes;

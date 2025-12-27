@@ -45,6 +45,16 @@ export function transformToOptionsPayload(
       })),
     });
 
+  if (subtree.paneNode.htmlAst) {
+    return {
+      isDecorative: false,
+      heldBeliefs: subtree.paneNode.heldBeliefs ?? {},
+      withheldBeliefs: subtree.paneNode.withheldBeliefs ?? {},
+      htmlAst: subtree.paneNode.htmlAst,
+      nodes: [],
+    };
+  }
+
   const flattenedNodes = subtree.allChildNodes
     .map((node) => {
       if (VERBOSE)
