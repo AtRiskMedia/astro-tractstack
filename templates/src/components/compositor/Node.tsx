@@ -24,6 +24,7 @@ import { BgPaneWrapper } from './nodes/BgPaneWrapper';
 import { StoryFragment } from './nodes/StoryFragment';
 import { TagElement } from './nodes/TagElement';
 import { Widget } from './nodes/Widget';
+import { CreativePane } from './nodes/CreativePane';
 import { NodeText } from './nodes/tagElements/NodeText';
 import { NodeA } from './nodes/tagElements/NodeA';
 import { NodeAEraser } from './nodes/tagElements/NodeA_eraser';
@@ -213,6 +214,16 @@ const getElement = (
     case 'Pane': {
       const paneNodes = getCtx(props).getChildNodeIDs(node.id);
       const paneNode = node as PaneNode;
+      if (type === 'Pane' && (node as PaneNode).htmlAst) {
+        const isProtected = !['text', 'styles'].includes(toolModeVal);
+        return (
+          <CreativePane
+            nodeId={node.id}
+            htmlAst={(node as PaneNode).htmlAst!}
+            isProtected={isProtected}
+          />
+        );
+      }
       if (paneNode.isContextPane) {
         if (!isPreview)
           getCtx(props).hasTitle.set(!(!paneNode.slug || !paneNode.title));
@@ -489,7 +500,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => {}
+        () => { }
       );
       return () => unsubscribe();
     }
@@ -526,10 +537,10 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-        outline: isOverride
-          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-          : '2.5px dashed rgba(0, 0, 0, 0.3)',
-      }
+      outline: isOverride
+        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+        : '2.5px dashed rgba(0, 0, 0, 0.3)',
+    }
     : {};
   const hoverClasses = isStylesMode
     ? 'hover:outline hover:outline-2 hover:outline-black'

@@ -7,7 +7,6 @@ import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
 import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
 import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
-import { CreativePane } from './CreativePane';
 import type {
   PaneNode,
   BgImageNode,
@@ -113,7 +112,7 @@ const Pane = memo(
     const codeHookTarget = codeHookPayload?.target;
     const codeHookParams =
       codeHookPayload?.params?.options &&
-      typeof codeHookPayload.params.options === 'string'
+        typeof codeHookPayload.params.options === 'string'
         ? JSON.parse(codeHookPayload.params.options)
         : null;
 
@@ -163,16 +162,6 @@ const Pane = memo(
       );
       return unsubscribe;
     }, [props.nodeId]);
-
-    // early exit creative pane?
-    const currentNode = allNodes.get(props.nodeId) as PaneNode;
-    if (currentNode.htmlAst) {
-      return (
-        <div id={getPaneId()} className="pane">
-          <CreativePane nodeId={props.nodeId} htmlAst={currentNode.htmlAst} />
-        </div>
-      );
-    }
 
     return (
       <div id={getPaneId()} className="pane">

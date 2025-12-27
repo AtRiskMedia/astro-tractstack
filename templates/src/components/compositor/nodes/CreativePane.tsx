@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent, type FocusEvent, type KeyboardEvent } from 'react';
 import { useStore } from '@nanostores/react';
 import { renderedPreviews, updatePreview } from '@/stores/previews';
 import { viewportKeyStore } from '@/stores/storykeep';
+import { getCtx } from '@/stores/nodes';
 import type { CreativePanePayload } from '@/types/compositorTypes';
 
 export interface CreativePaneProps {
   nodeId: string;
   htmlAst: CreativePanePayload;
+  isProtected?: boolean;
 }
 
 const viewportMap = {
@@ -15,7 +17,7 @@ const viewportMap = {
   desktop: 'xl',
 } as const;
 
-export const CreativePane = ({ nodeId, htmlAst }: CreativePaneProps) => {
+export const CreativePane = ({ nodeId, htmlAst, isProtected = false }: CreativePaneProps) => {
   const previews = useStore(renderedPreviews);
   const { value: viewportKey } = useStore(viewportKeyStore);
   const [loading, setLoading] = useState(false);
@@ -76,6 +78,61 @@ export const CreativePane = ({ nodeId, htmlAst }: CreativePaneProps) => {
     fetchPreview();
   }, [htmlAst?.tree, nodeId]);
 
+  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const astId = target.closest('[data-ast-id]')?.getAttribute('data-ast-id');
+    const ctx = getCtx();
+    const mode = ctx.toolModeValStore.get().value;
+
+    if (!astId) return;
+
+    if (isProtected) {
+      console.log(`[HUD] PROTECTED MODE (GLASS ON) | NODE: ${astId} | MODE: ${mode}`);
+      // Events still bubble to this wrapper through the glass
+    } else if (mode === 'styles') {
+      e.preventDefault();
+      console.log(`[HUD] STYLES MODE | NODE: ${astId} | Focus Blocked | TAG: ${target.tagName}`);
+    } else if (mode === 'text') {
+      console.log(`[HUD] TEXT MODE | NODE: ${astId} | Focus Allowed | TAG: ${target.tagName}`);
+    } else {
+      console.log(`[HUD] IGNORE | Mode: ${mode} | Node: ${astId}`);
+    }
+
+    if (target.tagName === 'A') {
+      e.preventDefault();
+      console.log(`[HUD] LINK NEUTERED: ${astId}`);
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const ctx = getCtx();
+    const mode = ctx.toolModeValStore.get().value;
+    if (mode !== 'text' || isProtected) return;
+
+    if (e.key === 'Enter') {
+      const target = e.target as HTMLElement;
+      if (target.isContentEditable) {
+        e.preventDefault();
+        console.log(`[HUD] ENTER PRESSED: Committing changes for ${target.getAttribute('data-ast-id')}`);
+        target.blur();
+      }
+    }
+  };
+
+  const handleBlur = (e: FocusEvent<HTMLDivElement>) => {
+    const ctx = getCtx();
+    const mode = ctx.toolModeValStore.get().value;
+    if (mode !== 'text' || isProtected) return;
+
+    const target = e.target as HTMLElement;
+    const astId = target.getAttribute('data-ast-id');
+
+    if (astId && target.isContentEditable) {
+      const newContent = target.innerText;
+      console.log(`[HUD] SAVE TRIGGERED: ${astId} | NEW CONTENT: "${newContent}"`);
+    }
+  };
+
   if (error) {
     return (
       <div className="flex h-full w-full items-center justify-center border border-dashed border-red-300 bg-red-50 p-4 text-sm text-red-500">
@@ -102,9 +159,16 @@ export const CreativePane = ({ nodeId, htmlAst }: CreativePaneProps) => {
     <>
       <style dangerouslySetInnerHTML={{ __html: activeCss }} />
       <div
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-        className="creative-pane-wrapper h-full w-full"
-      />
+        onMouseDown={handleMouseDown}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        className="creative-pane-wrapper relative h-full w-full"
+      >
+        {isProtected && (
+          <div className="absolute inset-0 z-50 cursor-crosshair bg-transparent" />
+        )}
+        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+      </div>
     </>
   );
 };
