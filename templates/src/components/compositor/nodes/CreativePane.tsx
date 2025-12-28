@@ -38,7 +38,7 @@ export const CreativePane = ({
 
   useEffect(() => {
     const fetchPreview = async () => {
-      if (!htmlAst?.tree || previews[nodeId]) return;
+      if (!htmlAst?.tree) return;
 
       setLoading(true);
       setError(null);
