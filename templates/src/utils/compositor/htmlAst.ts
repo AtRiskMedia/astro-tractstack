@@ -1,6 +1,6 @@
 import type { CreativePanePayload, HtmlAstNode } from '@/types/compositorTypes';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 const logger = {
   log: (...args: any[]) => VERBOSE && console.log('[htmlAst]', ...args),
@@ -298,4 +298,73 @@ function hashPath(str: string): string {
     i = str.length;
   while (i) hash = (hash * 33) ^ str.charCodeAt(--i);
   return (hash >>> 0).toString(16);
+}
+
+export function extractTextFromAst(tree: HtmlAstNode[]): string {
+  // Tags that naturally create a visual block/break
+  const blockTags = new Set([
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'div',
+    'section',
+    'article',
+    'li',
+    'blockquote',
+    'ul',
+    'ol',
+    'main',
+    'header',
+    'footer',
+    'tr',
+    'table',
+    'form',
+    'nav',
+    'dt',
+    'dd',
+  ]);
+
+  // Tags that represent distinct data cells/slots
+  const cellTags = new Set(['td', 'th']);
+
+  function traverse(nodes: HtmlAstNode[]): string {
+    return nodes
+      .map((node) => {
+        if (node.tag === 'text') {
+          // Normalize internal whitespace of the text node to single spaces
+          return node.text?.replace(/\s+/g, ' ') || '';
+        }
+
+        if (node.tag === 'br') return '\n';
+        if (node.tag === 'hr') return '\n---\n';
+
+        const childText = node.children ? traverse(node.children) : '';
+
+        if (blockTags.has(node.tag)) {
+          // Ensure block tags break the line
+          return `\n${childText}\n`;
+        }
+
+        if (cellTags.has(node.tag)) {
+          // Ensure table cells have separation (using a pipe helps the AI see structure)
+          return ` ${childText} | `;
+        }
+
+        // Inline elements (span, b, i, a) flow together naturally
+        return childText;
+      })
+      .join(''); // Join with empty string; specific tags provide their own spacing
+  }
+
+  return traverse(tree)
+    .replace(/[ \t]+/g, ' ') // Collapse multiple spaces/tabs
+    .replace(/ \|\n/g, '\n') // Clean up trailing pipes at end of rows
+    .replace(/\n\s+/g, '\n') // Clean start of lines
+    .replace(/\s+\n/g, '\n') // Clean end of lines
+    .replace(/\n+/g, '\n') // Collapse multiple newlines into one
+    .trim();
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
@@ -8,9 +8,12 @@ import { getCtx } from '@/stores/nodes';
 import { selectionStore } from '@/stores/selection';
 import { sandboxTokenStore } from '@/stores/storykeep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
+import { AiCreativeDesignStep } from './steps/AiCreativeDesignStep';
 import prompts from '@/constants/prompts.json';
 import { TractStackAPI } from '@/utils/api';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import { extractTextFromAst } from '@/utils/compositor/htmlAst';
+import type { PaneNode, TemplatePane } from '@/types/compositorTypes';
 
 const callAskLemurAPI = async (
   prompt: string,
@@ -93,11 +96,28 @@ export const AiRestylePaneModal = ({
     additionalNotes: '',
   });
 
+  const node = paneToRestyleId
+    ? (ctx.allNodes.get().get(paneToRestyleId) as PaneNode)
+    : null;
+  const isCreative = !!node?.htmlAst;
+
+  const initialCreativeTopic = useMemo(() => {
+    if (isCreative && node?.htmlAst?.tree) {
+      return extractTextFromAst(node.htmlAst.tree);
+    }
+    return '';
+  }, [isCreative, node]);
+
   const handleClose = () => {
     if (loading) return;
     selectionStore.setKey('isAiRestyleModalOpen', false);
     selectionStore.setKey('paneToRestyleId', null);
     setError(null);
+  };
+
+  const handleCreativeUpdate = (template: TemplatePane) => {
+    if (!paneToRestyleId) return;
+    ctx.applyShellToPane(paneToRestyleId, template);
   };
 
   const handleGenerate = async () => {
@@ -172,7 +192,7 @@ export const AiRestylePaneModal = ({
           <div className="flex items-center justify-between border-b p-4">
             <h3 className="flex items-center gap-2 text-lg font-bold">
               <SparklesIcon className="h-5 w-5 text-purple-600" />
-              Re-Color Pane
+              {isCreative ? 'Re-Design Creative Pane' : 'Re-Color Pane'}
             </h3>
             <button
               onClick={handleClose}
@@ -183,49 +203,63 @@ export const AiRestylePaneModal = ({
             </button>
           </div>
 
-          <form className="p-6" onSubmit={(e) => e.preventDefault()}>
-            <div className={loading ? 'pointer-events-none opacity-50' : ''}>
-              <AiDesignStep
-                designConfig={aiDesignConfig}
-                onDesignConfigChange={setAiDesignConfig}
+          {isCreative ? (
+            <div className="max-h-[80vh] overflow-y-auto">
+              <AiCreativeDesignStep
+                onBack={handleClose}
+                onSuccess={handleClose}
+                onDirectInject={() => {}}
+                onCreatePane={handleCreativeUpdate}
+                isSandboxMode={isSandboxMode}
+                initialTopic={initialCreativeTopic}
+                reStyle={true}
               />
             </div>
-
-            {error && (
-              <div className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
+          ) : (
+            <form className="p-6" onSubmit={(e) => e.preventDefault()}>
+              <div className={loading ? 'pointer-events-none opacity-50' : ''}>
+                <AiDesignStep
+                  designConfig={aiDesignConfig}
+                  onDesignConfigChange={setAiDesignConfig}
+                />
               </div>
-            )}
 
-            <div className="mt-8 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={loading}
-                className="rounded-lg px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-bold text-white shadow transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-75"
-              >
-                {loading ? (
-                  <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <SparklesIcon className="h-5 w-5" />
-                    Apply Re-Color
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {error && (
+                <div className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={loading}
+                  className="rounded-lg px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-bold text-white shadow transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-75"
+                >
+                  {loading ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-5 w-5" />
+                      Apply Re-Color
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
         </Dialog.Content>
       </Dialog.Positioner>
     </Dialog.Root>

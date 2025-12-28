@@ -30,6 +30,7 @@ export const PanesPreviewGenerator = ({
     window.TRACTSTACK_CONFIG?.tenantId ||
     import.meta.env.PUBLIC_TENANTID ||
     'default';
+  console.log(isGenerating, tenantId);
 
   useEffect(() => {
     if (requests.length === 0) return;
@@ -67,6 +68,7 @@ export const PanesPreviewGenerator = ({
             request.ctx,
             actualPaneId
           );
+          console.log(previewPayload);
 
           previewPayloads.push(previewPayload);
           requestMap.set(previewPayload.id, request.id);
@@ -76,6 +78,7 @@ export const PanesPreviewGenerator = ({
         const response = await api.post('/api/v1/fragments/preview', {
           panes: previewPayloads,
         });
+        console.log(response);
 
         if (!response.success) {
           throw new Error(response.error || `Preview API failed`);

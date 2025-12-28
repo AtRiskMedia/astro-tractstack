@@ -19,8 +19,8 @@ export default function APIConfigSection({
   const aaiConfigured = status?.aaiAPIKeySet;
 
   return (
-    <div className="sm:rounded-lg bg-white shadow">
-      <div className="sm:p-6 px-4 py-5">
+    <div className="bg-white shadow md:rounded-lg">
+      <div className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold leading-6 text-gray-900">
             API Configuration

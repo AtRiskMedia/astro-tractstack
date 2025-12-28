@@ -163,7 +163,7 @@ const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
         allowNull={true}
       />
       {!bgNode && (
-        <div className="sm:flex-row flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1">
             <h4 className="mb-2 text-sm font-bold text-gray-700">
               Background Image

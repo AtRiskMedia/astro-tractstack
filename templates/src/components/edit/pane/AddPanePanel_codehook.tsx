@@ -212,7 +212,7 @@ const AddPaneCodeHookPanel = ({
                   </Combobox.Trigger>
                 </div>
 
-                <Combobox.Content className="sm:text-sm absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <Combobox.Content className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:text-sm">
                   {collection.items.length === 0 ? (
                     <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                       Nothing found.

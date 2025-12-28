@@ -1,4 +1,9 @@
-import { type CSSProperties, useEffect, useState } from 'react';
+import {
+  type CSSProperties,
+  type MouseEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { useStore } from '@nanostores/react';
 import ArchiveBoxArrowDownIcon from '@heroicons/react/24/outline/ArchiveBoxArrowDownIcon';
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
@@ -14,8 +19,10 @@ import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
 import { SaveToLibraryModal } from '@/components/edit/state/SaveToLibraryModal';
 import { RestylePaneModal } from '@/components/edit/pane/RestylePaneModal';
 import { AiRestylePaneModal } from '@/components/edit/pane/AiRestylePaneModal';
+import { CreativePane } from './CreativePane';
 import { selectionStore } from '@/stores/selection';
 import { copyPaneToClipboard } from '@/utils/compositor/designLibraryHelper';
+import type { PaneNode } from '@/types/compositorTypes';
 
 function getSizeClasses(
   size: string,
@@ -37,6 +44,8 @@ function getSizeClasses(
 
 export const Pane_DesignLibrary = (props: NodeProps) => {
   const ctx = getCtx(props);
+  const paneNode = getCtx(props).allNodes.get().get(props.nodeId);
+  const isHtmlAstPane = !!(paneNode as PaneNode).htmlAst;
   const { isRestyleModalOpen, isAiRestyleModalOpen } = useStore(
     selectionStore,
     {
@@ -80,24 +89,24 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     return unsubscribe;
   }, [props.nodeId, ctx.notifications]);
 
-  const handleRestyleClick = (e: React.MouseEvent) => {
+  const handleRestyleClick = (e: MouseEvent) => {
     e.stopPropagation();
     selectionStore.setKey('paneToRestyleId', props.nodeId);
     selectionStore.setKey('isRestyleModalOpen', true);
   };
 
-  const handleAiRestyleClick = (e: React.MouseEvent) => {
+  const handleAiRestyleClick = (e: MouseEvent) => {
     e.stopPropagation();
     selectionStore.setKey('paneToRestyleId', props.nodeId);
     selectionStore.setKey('isAiRestyleModalOpen', true);
   };
 
-  const handleSaveClick = (e: React.MouseEvent) => {
+  const handleSaveClick = (e: MouseEvent) => {
     e.stopPropagation();
     setIsSaveModalOpen(true);
   };
 
-  const handleCopyToClipboard = async (e: React.MouseEvent) => {
+  const handleCopyToClipboard = async (e: MouseEvent) => {
     e.stopPropagation();
     const success = await copyPaneToClipboard(props.nodeId);
     if (success) {
@@ -147,6 +156,18 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
     </div>
   );
 
+  const AstButtons = () => (
+    <div className="absolute left-2 top-2 z-101 flex flex-row gap-x-2">
+      <button
+        title="Re-Style"
+        onClick={handleAiRestyleClick}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 p-1.5 shadow-lg hover:bg-purple-700"
+      >
+        <SparklesIcon className="h-5 w-5 text-white" />
+      </button>
+    </div>
+  );
+
   const allNodes = ctx.allNodes.get();
   const bgNode = children
     .map((id) => allNodes.get(id))
@@ -176,7 +197,16 @@ export const Pane_DesignLibrary = (props: NodeProps) => {
         id={ctx.getNodeSlug(props.nodeId)}
         className={useFlexLayout ? '' : wrapperClasses}
       >
-        {codeHookPayload ? (
+        {isHtmlAstPane ? (
+          <div className="relative">
+            <AstButtons />
+            <CreativePane
+              nodeId={props.nodeId}
+              htmlAst={(paneNode as PaneNode).htmlAst!}
+              isProtected={true}
+            />
+          </div>
+        ) : codeHookPayload ? (
           <div className={contentClasses} style={contentStyles}>
             <Buttons />
             <CodeHookContainer payload={codeHookPayload} />

@@ -100,8 +100,8 @@ export default function StoryKeepDashboard_Advanced({
     const icon = status?.tursoEnabled ? '☁️' : '📁';
 
     return (
-      <div className="sm:rounded-lg bg-white shadow">
-        <div className="sm:p-6 px-4 py-5">
+      <div className="bg-white shadow md:rounded-lg">
+        <div className="px-4 py-5 md:p-6">
           <h3 className="text-base font-bold leading-6 text-gray-900">
             Database Configuration
           </h3>

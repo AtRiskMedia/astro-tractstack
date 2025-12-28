@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import DocumentPlusIcon from '@heroicons/react/24/outline/DocumentPlusIcon';
-import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import SwatchIcon from '@heroicons/react/24/outline/SwatchIcon';
 import SquaresPlusIcon from '@heroicons/react/24/outline/SquaresPlusIcon';
 import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
+import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import { NodesContext, getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
 import { hasAssemblyAIStore, sandboxTokenStore } from '@/stores/storykeep';
@@ -15,6 +15,7 @@ import { useStore } from '@nanostores/react';
 import { CopyInputStep, type CopyMode } from './steps/CopyInputStep';
 import { DesignLibraryStep } from './steps/DesignLibraryStep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
+import { AiCreativeDesignStep } from './steps/AiCreativeDesignStep';
 import { parseAiPane, parseAiCopyHtml } from '@/utils/compositor/aiPaneParser';
 import {
   convertStorageToLiveTemplate,
@@ -33,10 +34,11 @@ type Step =
   | 'loading'
   | 'error'
   | 'creativeInject'
-  | 'directInject';
+  | 'directInject'
+  | 'ai-creative';
 
 type InitialChoice = 'library' | 'ai' | 'blank';
-type LayoutChoice = 'standard' | 'grid';
+type LayoutChoice = 'standard' | 'grid' | 'creative';
 type ColumnPresetKey = 'left' | 'right';
 
 const callAskLemurAPI = async (
@@ -137,6 +139,7 @@ const AddPaneNewPanel = ({
 }: AddPaneNewPanelProps) => {
   const ctx = providedCtx || getCtx();
   const hasAssemblyAI = useStore(hasAssemblyAIStore);
+  const isTemplate = useStore(ctx.isTemplate);
 
   const [step, setStep] = useState<Step>('initial');
   const [initialChoice, setInitialChoice] = useState<InitialChoice | null>(
@@ -223,7 +226,10 @@ const AddPaneNewPanel = ({
     }
   }, [selectedPromptId, layoutChoice, topic]);
 
-  const handleInitialChoice = (choice: InitialChoice) => {
+  const handleInitialChoice = (
+    choice: InitialChoice,
+    layout?: LayoutChoice
+  ) => {
     setInitialChoice(choice);
     setError(null);
 
@@ -232,13 +238,19 @@ const AddPaneNewPanel = ({
     } else if (choice === 'library') {
       setStep('designLibrary');
     } else if (choice === 'ai') {
-      setStep('dashboard');
+      if (layout === 'creative') {
+        setLayoutChoice('creative');
+        setStep('ai-creative');
+      } else {
+        setLayoutChoice(layout || 'standard');
+        setStep('dashboard');
+      }
     }
   };
 
   const handleBack = () => {
     setError(null);
-    if (step === 'dashboard') {
+    if (step === 'dashboard' || step === 'ai-creative') {
       setStep('initial');
       setTopic('');
       setShowAdvancedPrompts(false);
@@ -628,50 +640,120 @@ const AddPaneNewPanel = ({
   ]);
 
   const renderInitialStep = () => (
-    <div className="p-4">
-      <h3 className="mb-4 text-center font-action text-xl font-bold text-gray-800">
-        How would you like to design your new pane?
-      </h3>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <button
-          onClick={() => handleInitialChoice('library')}
-          className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
-        >
-          <SwatchIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-          <h4 className="font-bold text-gray-800">Use Design Library</h4>
-          <p className="text-sm text-gray-600">
-            Start with a pre-made design and add your own content.
-          </p>
-        </button>
-        {hasAssemblyAI && (
+    <div className="space-y-4 p-4">
+      {/* Header */}
+      <div className="mb-6 text-center">
+        <h3 className="text-lg font-bold text-gray-800">
+          How would you like to build this pane?
+        </h3>
+        <p className="text-sm text-gray-500">
+          Choose a starting point for your content.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Button 1: Design Library */}
+        {!isTemplate && (
           <button
-            onClick={() => handleInitialChoice('ai')}
-            className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
+            onClick={() => handleInitialChoice('library')}
+            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-cyan-500 hover:shadow-md"
           >
-            <SparklesIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-            <h4 className="font-bold text-gray-800">Design with AI</h4>
-            <p className="text-sm text-gray-600">
-              Let AI generate a complete design and copy from your prompt.
+            <div className="mb-3 rounded-full bg-cyan-50 p-3 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700">
+              <SwatchIcon className="h-8 w-8" />
+            </div>
+            <h4 className="text-base font-bold text-gray-800">
+              Design Library
+            </h4>
+            <p className="mt-1 text-center text-xs text-gray-500">
+              Browse pre-built templates and saved designs.
             </p>
           </button>
         )}
+
+        {/* Button 2: Standard Layout (AI) */}
+        {hasAssemblyAI && (
+          <button
+            onClick={() => handleInitialChoice('ai', 'standard')}
+            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
+          >
+            <div className="absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+              Design with AI
+            </div>
+            <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
+              <DocumentIcon className="h-8 w-8" />
+            </div>
+            <h4 className="text-base font-bold text-gray-800">
+              Standard Layout
+            </h4>
+            <p className="mt-1 text-center text-xs text-gray-500">
+              Single column flow. Perfect for articles and intros.
+            </p>
+          </button>
+        )}
+
+        {/* Button 3: Two-Column Grid (AI) */}
+        {hasAssemblyAI && (
+          <button
+            onClick={() => handleInitialChoice('ai', 'grid')}
+            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
+          >
+            <div className="absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+              Design with AI
+            </div>
+            <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
+              <SquaresPlusIcon className="h-8 w-8" />
+            </div>
+            <h4 className="text-base font-bold text-gray-800">
+              Two-Column Grid
+            </h4>
+            <p className="mt-1 text-center text-xs text-gray-500">
+              Split content. Great for features and comparisons.
+            </p>
+          </button>
+        )}
+
+        {/* Button 4: Creative Design (AI) */}
+        {hasAssemblyAI && (
+          <button
+            onClick={() => handleInitialChoice('ai', 'creative')}
+            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-pink-500 hover:shadow-md"
+          >
+            <div className="absolute right-3 top-3 rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold text-pink-700">
+              Design with AI
+            </div>
+            <div className="mb-3 rounded-full bg-pink-50 p-3 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700">
+              <PaintBrushIcon className="h-8 w-8" />
+            </div>
+            <h4 className="text-base font-bold text-gray-800">
+              Creative Design
+            </h4>
+            <p className="mt-1 text-center text-xs text-gray-500">
+              Free-form HTML/CSS generation. Unique layouts.
+            </p>
+          </button>
+        )}
+
+        {/* Blank Slate - Simple Option */}
         <button
           onClick={() => handleInitialChoice('blank')}
-          className="group flex flex-col items-center space-y-3 rounded-lg border bg-white p-6 text-center shadow-sm transition-all hover:border-cyan-600 hover:shadow-lg"
+          className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-gray-400 hover:shadow-md"
         >
-          <DocumentPlusIcon className="h-10 w-10 text-gray-500 transition-colors group-hover:text-cyan-600" />
-          <h4 className="font-bold text-gray-800">Blank Slate</h4>
-          <p className="text-sm text-gray-600">
-            Add a simple, empty pane to build from scratch.
+          <div className="mb-3 rounded-full bg-gray-50 p-3 text-gray-600 group-hover:bg-gray-100 group-hover:text-gray-700">
+            <DocumentPlusIcon className="h-8 w-8" />
+          </div>
+          <h4 className="text-base font-bold text-gray-800">Blank Slate</h4>
+          <p className="mt-1 text-center text-xs text-gray-500">
+            Start from scratch with an empty pane.
           </p>
         </button>
       </div>
-      <div className="mt-8 flex justify-center">
+
+      <div className="mt-4 flex justify-center border-t border-gray-100 pt-4">
         <button
-          onClick={() => setStep('creativeInject')}
-          className="text-xs font-bold text-gray-400 hover:text-cyan-700 hover:underline"
+          onClick={() => setParentMode(PaneAddMode.DEFAULT, false)}
+          className="text-sm font-medium text-gray-500 hover:text-gray-700"
         >
-          Direct Inject HTML+CSS
+          Cancel
         </button>
       </div>
     </div>
@@ -680,38 +762,8 @@ const AddPaneNewPanel = ({
   const renderDashboard = () => {
     return (
       <div className="space-y-6 p-4">
-        {/* Layout Selection */}
-        {initialChoice === 'ai' && (
-          <div className="flex justify-center border-b pb-4">
-            <div className="inline-flex rounded-lg bg-gray-100 p-1">
-              <button
-                onClick={() => setLayoutChoice('standard')}
-                className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
-                  layoutChoice === 'standard'
-                    ? 'bg-white text-cyan-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                <DocumentIcon className="h-5 w-5" />
-                <span>Standard Layout</span>
-              </button>
-              <button
-                onClick={() => setLayoutChoice('grid')}
-                className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
-                  layoutChoice === 'grid'
-                    ? 'bg-white text-cyan-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                <SquaresPlusIcon className="h-5 w-5" />
-                <span>2-Column Grid</span>
-              </button>
-            </div>
-          </div>
-        )}
-
         <CopyInputStep
-          layoutChoice={layoutChoice}
+          layoutChoice={layoutChoice as 'standard' | 'grid'}
           copyMode={copyMode}
           onCopyModeChange={setCopyMode}
           topic={topic}
@@ -739,6 +791,7 @@ const AddPaneNewPanel = ({
           isAiStyling={isAiStyling}
           onIsAiStylingChange={setIsAiStyling}
           showStyleToggle={initialChoice === 'library'}
+          onDirectInject={() => setStep('directInject')}
         />
 
         {initialChoice === 'ai' && (
@@ -784,17 +837,6 @@ const AddPaneNewPanel = ({
             ✨ Generate Pane
           </button>
         </div>
-
-        {initialChoice === 'ai' && !isSandboxMode && (
-          <div className="text-center text-sm text-gray-600">
-            <button
-              onClick={() => setStep('directInject')}
-              className="font-bold text-cyan-700 underline hover:text-cyan-900 focus:outline-none"
-            >
-              Direct Inject
-            </button>
-          </div>
-        )}
       </div>
     );
   };
@@ -817,7 +859,7 @@ const AddPaneNewPanel = ({
     <DirectInjectStep
       onBack={handleBack}
       onCreatePane={handleApplyTemplate}
-      layout={layoutChoice}
+      layout={layoutChoice === 'grid' ? 'grid' : 'standard'}
     />
   );
 
@@ -825,6 +867,16 @@ const AddPaneNewPanel = ({
     <CreativeInjectStep
       onBack={handleBack}
       onCreatePane={handleApplyTemplate}
+    />
+  );
+
+  const renderAiCreativeStep = () => (
+    <AiCreativeDesignStep
+      onBack={handleBack}
+      onSuccess={() => setParentMode(PaneAddMode.DEFAULT, true)}
+      onDirectInject={() => setStep('creativeInject')}
+      onCreatePane={handleApplyTemplate}
+      isSandboxMode={isSandboxMode}
     />
   );
 
@@ -863,6 +915,8 @@ const AddPaneNewPanel = ({
         return renderCreativeInjectStep();
       case 'directInject':
         return renderDirectInjectStep();
+      case 'ai-creative':
+        return renderAiCreativeStep();
       case 'error':
         return renderError();
       default:

@@ -214,16 +214,8 @@ const getElement = (
     case 'Pane': {
       const paneNodes = getCtx(props).getChildNodeIDs(node.id);
       const paneNode = node as PaneNode;
-      if (type === 'Pane' && (node as PaneNode).htmlAst) {
-        const isProtected = !['text', 'styles'].includes(toolModeVal);
-        return (
-          <CreativePane
-            nodeId={node.id}
-            htmlAst={(node as PaneNode).htmlAst!}
-            isProtected={isProtected}
-          />
-        );
-      }
+      const isHtmlAstPane = !!(node as PaneNode).htmlAst;
+      const isProtected = !['text', 'styles'].includes(toolModeVal);
       if (paneNode.isContextPane) {
         if (!isPreview)
           getCtx(props).hasTitle.set(!(!paneNode.slug || !paneNode.title));
@@ -300,14 +292,20 @@ const getElement = (
               panelType="settings"
               ctx={getCtx(props)}
             >
-              <ConfigPanePanel nodeId={node.id} />
+              <ConfigPanePanel nodeId={node.id} isHtmlAstPane={isHtmlAstPane} />
             </PanelVisibilityWrapper>
             {toolModeVal === `eraser` ? (
               <PaneEraser {...sharedProps} />
-            ) : toolModeVal === `layout` ? (
-              <PaneLayout {...sharedProps} />
             ) : toolModeVal === 'designLibrary' ? (
               <Pane_DesignLibrary {...sharedProps} />
+            ) : isHtmlAstPane ? (
+              <CreativePane
+                nodeId={node.id}
+                htmlAst={(node as PaneNode).htmlAst!}
+                isProtected={isProtected}
+              />
+            ) : toolModeVal === `layout` ? (
+              <PaneLayout {...sharedProps} />
             ) : (
               <Pane {...sharedProps} />
             )}
@@ -500,7 +498,7 @@ const Node = memo((props: NodeProps) => {
     if (!isEditLocked) {
       const unsubscribe = getCtx(props).notifications.subscribe(
         props.nodeId,
-        () => { }
+        () => {}
       );
       return () => unsubscribe();
     }
@@ -537,10 +535,10 @@ const Node = memo((props: NodeProps) => {
 
   const highlightStyle = isHighlighted
     ? {
-      outline: isOverride
-        ? '3.5px dotted rgba(255, 165, 0, 0.85)'
-        : '2.5px dashed rgba(0, 0, 0, 0.3)',
-    }
+        outline: isOverride
+          ? '3.5px dotted rgba(255, 165, 0, 0.85)'
+          : '2.5px dashed rgba(0, 0, 0, 0.3)',
+      }
     : {};
   const hoverClasses = isStylesMode
     ? 'hover:outline hover:outline-2 hover:outline-black'

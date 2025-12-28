@@ -4,8 +4,13 @@ import { viewportKeyStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
 import { CodeHookContainer } from './Pane';
+import { CreativePane } from './CreativePane';
 import type { NodeProps } from '@/types/nodeProps';
-import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
+import type {
+  BgImageNode,
+  ArtpackImageNode,
+  PaneNode,
+} from '@/types/compositorTypes';
 
 function getSizeClasses(
   size: string,
@@ -27,6 +32,8 @@ function getSizeClasses(
 
 export const PaneEraser = (props: NodeProps) => {
   const ctx = getCtx(props);
+  const paneNode = getCtx(props).allNodes.get().get(props.nodeId);
+  const isHtmlAstPane = !!(paneNode as PaneNode).htmlAst;
   const [currentViewport, setCurrentViewport] = useState(
     viewportKeyStore.get().value
   );
@@ -104,7 +111,16 @@ export const PaneEraser = (props: NodeProps) => {
         id={ctx.getNodeSlug(props.nodeId)}
         className={useFlexLayout ? '' : wrapperClasses}
       >
-        {codeHookPayload ? (
+        {isHtmlAstPane ? (
+          <div className="relative">
+            <DeleteButton />
+            <CreativePane
+              nodeId={props.nodeId}
+              htmlAst={(paneNode as PaneNode).htmlAst!}
+              isProtected={true}
+            />
+          </div>
+        ) : codeHookPayload ? (
           <div className={contentClasses} style={contentStyles}>
             <DeleteButton />
             <CodeHookContainer payload={codeHookPayload} />

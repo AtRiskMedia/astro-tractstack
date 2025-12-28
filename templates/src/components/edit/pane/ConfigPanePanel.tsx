@@ -18,9 +18,10 @@ import { PaneConfigMode, type PaneNode } from '@/types/compositorTypes';
 
 interface ConfigPanePanelProps {
   nodeId: string;
+  isHtmlAstPane: boolean;
 }
 
-const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
+const ConfigPanePanel = ({ nodeId, isHtmlAstPane }: ConfigPanePanelProps) => {
   const ctx = getCtx();
   const isTemplate = useStore(ctx.isTemplate);
   const bgColorStyles = ctx.getNodeCSSPropertiesStyles(nodeId);
@@ -142,24 +143,26 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                         ID
                       </button>
                     )}
-                    <button
-                      onClick={() => setSaveMode(PaneConfigMode.IMPRESSION)}
-                      className={buttonClass}
-                    >
-                      {impressionNodes.length ? (
-                        <>
-                          <CheckIcon className="inline h-4 w-4" />
-                          {` `}
-                          <span className="font-bold">Has Impression</span>
-                        </>
-                      ) : (
-                        <>
-                          <XMarkIcon className="inline h-4 w-4" />
-                          {` `}
-                          <span>No Impression</span>
-                        </>
-                      )}
-                    </button>
+                    {!isHtmlAstPane && (
+                      <button
+                        onClick={() => setSaveMode(PaneConfigMode.IMPRESSION)}
+                        className={buttonClass}
+                      >
+                        {impressionNodes.length ? (
+                          <>
+                            <CheckIcon className="inline h-4 w-4" />
+                            {` `}
+                            <span className="font-bold">Has Impression</span>
+                          </>
+                        ) : (
+                          <>
+                            <XMarkIcon className="inline h-4 w-4" />
+                            {` `}
+                            <span>No Impression</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </>
                 )}
                 {isCodeHook && (
@@ -170,7 +173,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                     Configure Code Hook
                   </button>
                 )}
-                {!isCodeHook && (
+                {!isCodeHook && !isHtmlAstPane && (
                   <button onClick={handleEditStyles} className={buttonClass}>
                     <PaintBrushIcon className="inline h-4 w-4" />
                     {` `}
@@ -179,7 +182,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                 )}
               </>
             )}
-            {!isContextPane && !isTemplate && (
+            {!isContextPane && !isTemplate && !isHtmlAstPane && (
               <button
                 onClick={() => setSaveMode(PaneConfigMode.PATH)}
                 className={buttonClass}

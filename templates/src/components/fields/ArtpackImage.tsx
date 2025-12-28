@@ -395,7 +395,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                             />
                           </Combobox.Trigger>
                         </div>
-                        <Combobox.Content className="sm:text-sm absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Combobox.Content className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:text-sm">
                           {collection.items.length === 0 ? (
                             <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                               No collections found.
@@ -429,7 +429,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                       <label className="mb-2 block text-sm font-bold text-mydarkgrey">
                         Select Image from {selectedCollection}
                       </label>
-                      <div className="sm:grid-cols-3 grid grid-cols-2 gap-4 p-2 md:grid-cols-4">
+                      <div className="grid grid-cols-2 gap-4 p-2 md:grid-cols-3 md:grid-cols-4">
                         {availableImages.map((image) => (
                           <div
                             key={image}

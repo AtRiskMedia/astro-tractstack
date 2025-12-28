@@ -450,7 +450,7 @@ export const RestylePaneModal = () => {
                 <p className="text-gray-500">No designs found.</p>
               </div>
             ) : (
-              <div className="lg:grid-cols-3 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {mergedTemplates.map(({ template }) => (
                   <TemplatePreviewItem
                     key={template.id}

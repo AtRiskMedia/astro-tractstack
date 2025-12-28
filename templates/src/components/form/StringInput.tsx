@@ -70,7 +70,7 @@ const StringInput = forwardRef<HTMLInputElement, StringInputProps>(
             disabled
               ? 'cursor-not-allowed bg-gray-50 text-gray-500'
               : 'bg-white',
-            'sm:text-sm sm:leading-6'
+            'md:text-sm md:leading-6'
           )}
         />
         {error && (

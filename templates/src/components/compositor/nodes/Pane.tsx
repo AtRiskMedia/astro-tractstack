@@ -112,7 +112,7 @@ const Pane = memo(
     const codeHookTarget = codeHookPayload?.target;
     const codeHookParams =
       codeHookPayload?.params?.options &&
-        typeof codeHookPayload.params.options === 'string'
+      typeof codeHookPayload.params.options === 'string'
         ? JSON.parse(codeHookPayload.params.options)
         : null;
 

@@ -1,4 +1,10 @@
-import { useEffect, useState, type MouseEvent, type FocusEvent, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useState,
+  type MouseEvent,
+  type FocusEvent,
+  type KeyboardEvent,
+} from 'react';
 import { useStore } from '@nanostores/react';
 import { renderedPreviews, updatePreview } from '@/stores/previews';
 import { viewportKeyStore } from '@/stores/storykeep';
@@ -17,7 +23,11 @@ const viewportMap = {
   desktop: 'xl',
 } as const;
 
-export const CreativePane = ({ nodeId, htmlAst, isProtected = false }: CreativePaneProps) => {
+export const CreativePane = ({
+  nodeId,
+  htmlAst,
+  isProtected = false,
+}: CreativePaneProps) => {
   const previews = useStore(renderedPreviews);
   const { value: viewportKey } = useStore(viewportKeyStore);
   const [loading, setLoading] = useState(false);
@@ -87,13 +97,19 @@ export const CreativePane = ({ nodeId, htmlAst, isProtected = false }: CreativeP
     if (!astId) return;
 
     if (isProtected) {
-      console.log(`[HUD] PROTECTED MODE (GLASS ON) | NODE: ${astId} | MODE: ${mode}`);
+      console.log(
+        `[HUD] PROTECTED MODE (GLASS ON) | NODE: ${astId} | MODE: ${mode}`
+      );
       // Events still bubble to this wrapper through the glass
     } else if (mode === 'styles') {
       e.preventDefault();
-      console.log(`[HUD] STYLES MODE | NODE: ${astId} | Focus Blocked | TAG: ${target.tagName}`);
+      console.log(
+        `[HUD] STYLES MODE | NODE: ${astId} | Focus Blocked | TAG: ${target.tagName}`
+      );
     } else if (mode === 'text') {
-      console.log(`[HUD] TEXT MODE | NODE: ${astId} | Focus Allowed | TAG: ${target.tagName}`);
+      console.log(
+        `[HUD] TEXT MODE | NODE: ${astId} | Focus Allowed | TAG: ${target.tagName}`
+      );
     } else {
       console.log(`[HUD] IGNORE | Mode: ${mode} | Node: ${astId}`);
     }
@@ -113,7 +129,9 @@ export const CreativePane = ({ nodeId, htmlAst, isProtected = false }: CreativeP
       const target = e.target as HTMLElement;
       if (target.isContentEditable) {
         e.preventDefault();
-        console.log(`[HUD] ENTER PRESSED: Committing changes for ${target.getAttribute('data-ast-id')}`);
+        console.log(
+          `[HUD] ENTER PRESSED: Committing changes for ${target.getAttribute('data-ast-id')}`
+        );
         target.blur();
       }
     }
@@ -129,7 +147,9 @@ export const CreativePane = ({ nodeId, htmlAst, isProtected = false }: CreativeP
 
     if (astId && target.isContentEditable) {
       const newContent = target.innerText;
-      console.log(`[HUD] SAVE TRIGGERED: ${astId} | NEW CONTENT: "${newContent}"`);
+      console.log(
+        `[HUD] SAVE TRIGGERED: ${astId} | NEW CONTENT: "${newContent}"`
+      );
     }
   };
 

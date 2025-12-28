@@ -42,6 +42,7 @@ interface CopyInputStepProps {
   isAiStyling: boolean;
   onIsAiStylingChange: (checked: boolean) => void;
   showStyleToggle?: boolean;
+  onDirectInject: () => void;
 }
 
 export const CopyInputStep = ({
@@ -73,6 +74,7 @@ export const CopyInputStep = ({
   isAiStyling,
   onIsAiStylingChange,
   showStyleToggle = true,
+  onDirectInject,
 }: CopyInputStepProps) => {
   const renderModeSelection = () => (
     <div className="my-2 flex flex-wrap gap-4">
@@ -154,7 +156,7 @@ export const CopyInputStep = ({
           onChange={(e) => onTopicChange(e.target.value)}
           placeholder="e.g. a SaaS product for team collaboration"
           rows={2}
-          className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+          className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
         />
       </div>
 
@@ -178,7 +180,7 @@ export const CopyInputStep = ({
                 value={promptValue}
                 onChange={(e) => onPromptValueChange(e.target.value)}
                 rows={4}
-                className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
               />
               <p className="mt-1 text-xs text-gray-500">
                 Leave [topic] as it will be replaced with your prompt.
@@ -194,7 +196,7 @@ export const CopyInputStep = ({
                   value={overallPrompt}
                   onChange={(e) => onOverallPromptChange(e.target.value)}
                   rows={3}
-                  className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                  className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
                 />
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -206,7 +208,7 @@ export const CopyInputStep = ({
                     value={promptValueCol1}
                     onChange={(e) => onPromptValueCol1Change(e.target.value)}
                     rows={4}
-                    className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
                   />
                 </div>
                 <div>
@@ -217,7 +219,7 @@ export const CopyInputStep = ({
                     value={promptValueCol2}
                     onChange={(e) => onPromptValueCol2Change(e.target.value)}
                     rows={4}
-                    className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                    className="block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
                   />
                 </div>
               </div>
@@ -315,6 +317,15 @@ export const CopyInputStep = ({
           </p>
         </div>
       )}
+
+      <div className="mt-4 text-center">
+        <button
+          onClick={onDirectInject}
+          className="text-xs text-gray-400 underline hover:text-gray-600"
+        >
+          Direct Inject HTML+CSS
+        </button>
+      </div>
     </>
   );
 };

@@ -108,7 +108,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
   );
 
   const ElementButtons = () => (
-    <div className="sm:grid-cols-3 grid grid-cols-2 gap-2 p-2">
+    <div className="grid grid-cols-2 gap-2 p-2 md:grid-cols-3">
       {$toolAddModes
         .filter((mode) => !['p', 'h2', 'h3', 'h4'].includes(mode))
         .filter((mode) => allowedModes.includes(mode as ToolAddMode))

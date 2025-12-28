@@ -569,6 +569,10 @@ export class NodesContext {
       paneNode.bgColour = template.bgColour;
       paneNode.isChanged = true;
     }
+    if (template.htmlAst) {
+      paneNode.htmlAst = template.htmlAst;
+      paneNode.isChanged = true;
+    }
 
     const childrenIds = this.getChildNodeIDs(paneId);
 

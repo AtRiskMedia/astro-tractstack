@@ -135,7 +135,7 @@ export const SignUp = ({
               </Select.Control>
               <Portal>
                 <Select.Positioner>
-                  <Select.Content className="sm:text-sm z-50 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none">
+                  <Select.Content className="z-50 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none md:text-sm">
                     {personaCollection.items.map((option) => (
                       <Select.Item
                         key={option.id}
