@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { CheckIcon } from '@heroicons/react/20/solid';
+import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { savePaneToLibrary } from '@/utils/compositor/designLibraryHelper';
 import { convertToBackendFormat } from '@/utils/api/brandHelpers';
 import StringInput from '@/components/form/StringInput';
