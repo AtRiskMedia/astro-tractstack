@@ -88,12 +88,12 @@ export const AiRestylePaneModal = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
     baseColor: '',
     accentColor: '',
     theme: 'Light',
-    additionalNotes: '',
   });
 
   const node = paneToRestyleId
@@ -113,6 +113,7 @@ export const AiRestylePaneModal = ({
     selectionStore.setKey('isAiRestyleModalOpen', false);
     selectionStore.setKey('paneToRestyleId', null);
     setError(null);
+    setAdditionalNotes('');
   };
 
   const handleCreativeUpdate = (template: TemplatePane) => {
@@ -144,8 +145,7 @@ export const AiRestylePaneModal = ({
         designInput += ` Base around **${aiDesignConfig.baseColor}**.`;
       if (aiDesignConfig.accentColor)
         designInput += ` Accent with **${aiDesignConfig.accentColor}**.`;
-      if (aiDesignConfig.additionalNotes)
-        designInput += ` Notes: "${aiDesignConfig.additionalNotes}"`;
+      if (additionalNotes) designInput += ` Notes: "${additionalNotes}"`;
 
       const shellPromptKey = promptConfig.prompts.shell as keyof typeof prompts;
       const shellPromptDetails = prompts[shellPromptKey] as any;
@@ -222,6 +222,27 @@ export const AiRestylePaneModal = ({
                   designConfig={aiDesignConfig}
                   onDesignConfigChange={setAiDesignConfig}
                 />
+
+                <div className="mt-6">
+                  <label
+                    htmlFor="restyle-notes"
+                    className="block text-base font-bold text-gray-800"
+                  >
+                    Additional Design Notes (Optional)
+                  </label>
+                  <p className="mb-2 mt-1 text-sm text-gray-500">
+                    Add specific requests like "use rounded corners", "add
+                    subtle texture".
+                  </p>
+                  <textarea
+                    id="restyle-notes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="Enter additional notes..."
+                    rows={3}
+                    className="block w-full rounded-md border-gray-300 p-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                </div>
               </div>
 
               {error && (

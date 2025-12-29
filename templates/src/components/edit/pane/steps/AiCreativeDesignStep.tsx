@@ -5,6 +5,8 @@ import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
 import type { TemplatePane } from '@/types/compositorTypes';
 import { TractStackAPI } from '@/utils/api';
 import { sandboxTokenStore } from '@/stores/storykeep';
+import BooleanToggle from '@/components/form/BooleanToggle';
+import { AiDesignStep, type AiDesignConfig } from './AiDesignStep';
 
 interface AiCreativeDesignStepProps {
   onBack: () => void;
@@ -27,6 +29,14 @@ export const AiCreativeDesignStep = ({
 }: AiCreativeDesignStepProps) => {
   const [topic, setTopic] = useState(initialTopic);
   const [designNotes, setDesignNotes] = useState('');
+  const [showColors, setShowColors] = useState(false);
+  const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
+    harmony: 'Analogous',
+    baseColor: '',
+    accentColor: '',
+    theme: 'Light',
+  });
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,11 +53,24 @@ export const AiCreativeDesignStep = ({
       const systemPrompt = prompts.aiPaneCreativePrompt.system;
       let userPrompt = prompts.aiPaneCreativePrompt.user_template;
 
-      userPrompt = userPrompt.replace('[topic]', topic);
-      userPrompt = userPrompt.replace(
-        '[design_notes]',
-        designNotes || 'Clean, modern, high contrast.'
-      );
+      let colorContext = '';
+      if (showColors) {
+        colorContext = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
+        if (aiDesignConfig.baseColor)
+          colorContext += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
+        if (aiDesignConfig.accentColor)
+          colorContext += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
+      }
+
+      const combinedNotes = [
+        designNotes || 'Clean, modern, high contrast.',
+        colorContext,
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      userPrompt = userPrompt.replace('{{TOPIC}}', topic);
+      userPrompt = userPrompt.replace('{{DESIGN_NOTES}}', combinedNotes);
 
       const tenantId =
         (window as any).TRACTSTACK_CONFIG?.tenantId ||
@@ -145,6 +168,20 @@ export const AiCreativeDesignStep = ({
     }
   };
 
+  if (isGenerating) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 p-8">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-pink-600" />
+        <div className="text-center">
+          <p className="font-bold text-gray-900">Generating Design...</p>
+          <p className="mt-1 text-sm text-gray-500">
+            This may take a few moments while AI codes your layout.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 p-4">
       <div className="text-center">
@@ -170,7 +207,7 @@ export const AiCreativeDesignStep = ({
           </label>
           <textarea
             rows={6}
-            className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+            className="text-sm mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-pink-500 focus:ring-pink-500"
             placeholder="e.g. A pricing table for a SaaS product..."
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
@@ -184,13 +221,31 @@ export const AiCreativeDesignStep = ({
           </label>
           <textarea
             rows={3}
-            className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+            className="text-sm mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-pink-500 focus:ring-pink-500"
             placeholder="e.g. Dark mode, use rounded cards, neon accents..."
             value={designNotes}
             onChange={(e) => setDesignNotes(e.target.value)}
             disabled={isGenerating}
           />
         </div>
+
+        <div className="my-4 flex items-center">
+          <BooleanToggle
+            label="Customize Colors"
+            value={showColors}
+            onChange={setShowColors}
+            size="sm"
+          />
+        </div>
+
+        {showColors && (
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <AiDesignStep
+              designConfig={aiDesignConfig}
+              onDesignConfigChange={setAiDesignConfig}
+            />
+          </div>
+        )}
       </div>
 
       {error && (
@@ -221,17 +276,8 @@ export const AiCreativeDesignStep = ({
           disabled={isGenerating || !topic.trim()}
           className="flex items-center gap-2 rounded-md bg-pink-600 px-6 py-2 text-sm font-bold text-white shadow-sm hover:bg-pink-700 disabled:bg-gray-400"
         >
-          {isGenerating ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              Generating...
-            </>
-          ) : (
-            <>
-              <SparklesIcon className="h-4 w-4" />
-              {reStyle ? 'Re-Design' : 'Generate'}
-            </>
-          )}
+          <SparklesIcon className="h-4 w-4" />
+          {reStyle ? 'Re-Design' : 'Generate'}
         </button>
       </div>
     </div>

@@ -150,7 +150,7 @@ const AddPaneNewPanel = ({
 
   const [topic, setTopic] = useState('');
   const [showAdvancedPrompts, setShowAdvancedPrompts] = useState(false);
-  const [showStyles, setShowStyles] = useState(false);
+  const [showColors, setShowColors] = useState(false);
 
   const [selectedPromptId, setSelectedPromptId] = useState<string>('');
   const [isAiStyling, setIsAiStyling] = useState(false);
@@ -167,12 +167,12 @@ const AddPaneNewPanel = ({
 
   const [selectedLibraryEntry, setSelectedLibraryEntry] =
     useState<DesignLibraryEntry | null>(null);
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
     baseColor: '',
     accentColor: '',
     theme: 'Light',
-    additionalNotes: '',
   });
 
   const promptOptions = useMemo(() => {
@@ -254,7 +254,8 @@ const AddPaneNewPanel = ({
       setStep('initial');
       setTopic('');
       setShowAdvancedPrompts(false);
-      setShowStyles(false);
+      setShowColors(false);
+      setAdditionalNotes('');
     } else if (
       step === 'designLibrary' ||
       step === 'error' ||
@@ -521,8 +522,8 @@ const AddPaneNewPanel = ({
           designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
         if (aiDesignConfig.accentColor)
           designInput += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
-        if (aiDesignConfig.additionalNotes)
-          designInput += ` Refine with these notes: "${aiDesignConfig.additionalNotes}"`;
+        if (additionalNotes)
+          designInput += ` Refine with these notes: "${additionalNotes}"`;
 
         const layout = 'Text Only';
         const promptMap = prompts as any;
@@ -622,6 +623,7 @@ const AddPaneNewPanel = ({
     }
   }, [
     aiDesignConfig,
+    additionalNotes,
     copyMode,
     promptValue,
     copyValue,
@@ -796,16 +798,33 @@ const AddPaneNewPanel = ({
 
         {initialChoice === 'ai' && (
           <>
+            <div>
+              <label
+                htmlFor="dashboard-notes"
+                className="block text-sm font-bold text-gray-700"
+              >
+                Design Notes
+              </label>
+              <textarea
+                id="dashboard-notes"
+                rows={2}
+                className="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 text-sm"
+                placeholder="e.g. Clean, minimal, high contrast..."
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+              />
+            </div>
+
             <div className="my-4 flex items-center">
               <BooleanToggle
-                label="Customize Styles"
-                value={showStyles}
-                onChange={setShowStyles}
+                label="Customize Colors"
+                value={showColors}
+                onChange={setShowColors}
                 size="sm"
               />
             </div>
 
-            {showStyles && (
+            {showColors && (
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
                 <AiDesignStep
                   designConfig={aiDesignConfig}
