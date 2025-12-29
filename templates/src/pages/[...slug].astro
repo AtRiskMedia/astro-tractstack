@@ -97,7 +97,6 @@ if (!fragmentsData) {
     `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
   );
 }
-console.log(fragmentsData);
 
 const fullContentMap = await getFullContentMap(tenantId);
 const description = fullContentMap.find(
