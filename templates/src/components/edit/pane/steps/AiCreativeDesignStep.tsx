@@ -6,8 +6,7 @@ import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRou
 import prompts from '@/constants/prompts.json';
 import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
 import type { TemplatePane } from '@/types/compositorTypes';
-import { TractStackAPI } from '@/utils/api';
-import { sandboxTokenStore } from '@/stores/storykeep';
+import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import { AiDesignStep, type AiDesignConfig } from './AiDesignStep';
 
@@ -88,69 +87,15 @@ export const AiCreativeDesignStep = ({
       userPrompt = userPrompt.replace('{{TOPIC}}', topic);
       userPrompt = userPrompt.replace('{{DESIGN_NOTES}}', combinedNotes);
 
-      const tenantId =
-        (window as any).TRACTSTACK_CONFIG?.tenantId ||
-        import.meta.env.PUBLIC_TENANTID ||
-        'default';
-
-      const requestBody = {
+      // Use shared infrastructure utility
+      const rawHtml = await callAskLemurAPI({
         prompt: userPrompt,
-        input_text: systemPrompt,
-        final_model: '',
+        context: systemPrompt,
+        expectJson: false,
+        isSandboxMode,
+        maxTokens: 4000,
         temperature: 0.5,
-        max_tokens: 4000,
-      };
-
-      let resultData: any;
-
-      if (isSandboxMode) {
-        const token = sandboxTokenStore.get();
-        const response = await fetch(`/api/sandbox`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': tenantId,
-            'X-Sandbox-Token': token || '',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
-        });
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Sandbox API failed: ${text}`);
-        }
-
-        const json = await response.json();
-        if (!json.success) {
-          throw new Error(json.error || 'Sandbox generation failed');
-        }
-        resultData = json.data;
-      } else {
-        const api = new TractStackAPI(tenantId);
-        const response = await api.post('/api/v1/aai/askLemur', requestBody);
-
-        if (!response.success) {
-          throw new Error(response.error || 'AI generation failed.');
-        }
-        resultData = response.data;
-      }
-
-      if (!resultData?.response) {
-        throw new Error('Generation failed to return a response object.');
-      }
-
-      let rawHtml = resultData.response;
-
-      if (typeof rawHtml === 'string') {
-        if (rawHtml.startsWith('```json')) {
-          rawHtml = rawHtml.slice(7, -3).trim();
-        } else if (rawHtml.startsWith('```html')) {
-          rawHtml = rawHtml.slice(7, -3).trim();
-        }
-      } else {
-        throw new Error('Invalid response format from AI service.');
-      }
+      });
 
       const htmlAst = await htmlToHtmlAst(rawHtml, '');
 
@@ -180,6 +125,11 @@ export const AiCreativeDesignStep = ({
       } else {
         const goBackend =
           import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+        const tenantId =
+          (window as any).TRACTSTACK_CONFIG?.tenantId ||
+          import.meta.env.PUBLIC_TENANTID ||
+          'default';
 
         const previewResponse = await fetch(
           `${goBackend}/api/v1/fragments/ast-preview`,

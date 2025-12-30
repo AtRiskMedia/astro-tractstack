@@ -497,6 +497,18 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/steps/AiStandardDesignStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiStandardDesignStep.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/pane/steps/AiLibraryCopyStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiLibraryCopyStep.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/steps/DesignLibraryStep.tsx'
       ),
       dest: 'src/components/edit/pane/steps/DesignLibraryStep.tsx',
@@ -654,6 +666,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),
       dest: 'src/utils/compositor/aiPaneParser.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/compositor/aiGeneration.ts'),
+      dest: 'src/utils/compositor/aiGeneration.ts',
     },
     {
       src: resolve('../templates/src/utils/compositor/htmlAst.ts'),
