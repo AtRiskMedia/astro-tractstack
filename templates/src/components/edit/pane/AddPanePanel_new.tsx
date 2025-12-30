@@ -215,7 +215,7 @@ const AddPaneNewPanel = ({
             onClick={() => handleInitialChoice('ai', 'standard')}
             className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
           >
-            <div className="absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+            <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
               Design with AI
             </div>
             <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
@@ -235,7 +235,7 @@ const AddPaneNewPanel = ({
             onClick={() => handleInitialChoice('ai', 'grid')}
             className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
           >
-            <div className="absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+            <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
               Design with AI
             </div>
             <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
@@ -255,7 +255,7 @@ const AddPaneNewPanel = ({
             onClick={() => handleInitialChoice('ai', 'creative')}
             className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-pink-500 hover:shadow-md"
           >
-            <div className="absolute right-3 top-3 rounded-full bg-pink-100 px-2 py-0.5 text-[10px] font-bold text-pink-700">
+            <div className="text-md absolute right-3 top-3 rounded-full bg-pink-100 px-2 py-0.5 font-bold text-pink-700">
               Design with AI
             </div>
             <div className="mb-3 rounded-full bg-pink-50 p-3 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700">

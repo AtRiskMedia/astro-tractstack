@@ -235,7 +235,7 @@ export const AiLibraryCopyStep = ({
 
   if (isGenerating) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 p-6">
+      <div className="flex min-h-96 flex-col items-center justify-center space-y-4 p-6">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
         <p className="text-sm text-gray-600">Writing Content...</p>
         <p className="text-xs text-gray-500">

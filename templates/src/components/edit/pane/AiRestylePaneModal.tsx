@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import { getCtx } from '@/stores/nodes';
 import { selectionStore } from '@/stores/selection';
+import { renderedPreviews } from '@/stores/previews';
 import { sandboxTokenStore } from '@/stores/storykeep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
-import { AiCreativeDesignStep } from './steps/AiCreativeDesignStep';
+import { AiRefineDesignStep } from './steps/AiRefineDesignStep';
 import prompts from '@/constants/prompts.json';
 import { TractStackAPI } from '@/utils/api';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
-import { extractTextFromAst } from '@/utils/compositor/htmlAst';
 import type { PaneNode, TemplatePane } from '@/types/compositorTypes';
 
 const callAskLemurAPI = async (
@@ -85,6 +85,7 @@ export const AiRestylePaneModal = ({
 }: AiRestylePaneModalProps) => {
   const ctx = getCtx();
   const { isAiRestyleModalOpen, paneToRestyleId } = useStore(selectionStore);
+  const previews = useStore(renderedPreviews);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,13 +101,6 @@ export const AiRestylePaneModal = ({
     ? (ctx.allNodes.get().get(paneToRestyleId) as PaneNode)
     : null;
   const isCreative = !!node?.htmlAst;
-
-  const initialCreativeTopic = useMemo(() => {
-    if (isCreative && node?.htmlAst?.tree) {
-      return extractTextFromAst(node.htmlAst.tree);
-    }
-    return '';
-  }, [isCreative, node]);
 
   const handleClose = () => {
     if (loading) return;
@@ -188,11 +182,11 @@ export const AiRestylePaneModal = ({
     >
       <Dialog.Backdrop className="fixed inset-0 z-103 bg-black bg-opacity-75" />
       <Dialog.Positioner className="fixed inset-0 z-104 flex items-center justify-center p-4">
-        <Dialog.Content className="flex max-w-2xl flex-col rounded-lg bg-white shadow-2xl">
+        <Dialog.Content className="flex w-full max-w-7xl flex-col rounded-lg bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b p-4">
             <h3 className="flex items-center gap-2 text-lg font-bold">
               <SparklesIcon className="h-5 w-5 text-purple-600" />
-              {isCreative ? 'Re-Design Creative Pane' : 'Re-Color Pane'}
+              {isCreative ? 'Refine Creative Pane' : 'Re-Color Pane'}
             </h3>
             <button
               onClick={handleClose}
@@ -204,15 +198,16 @@ export const AiRestylePaneModal = ({
           </div>
 
           {isCreative ? (
-            <div className="max-h-[80vh] overflow-y-auto">
-              <AiCreativeDesignStep
+            <div className="overflow-y-auto" style={{ maxHeight: `80vh` }}>
+              <AiRefineDesignStep
                 onBack={handleClose}
                 onSuccess={handleClose}
-                onDirectInject={() => {}}
-                onCreatePane={handleCreativeUpdate}
+                onUpdatePane={handleCreativeUpdate}
                 isSandboxMode={isSandboxMode}
-                initialTopic={initialCreativeTopic}
-                reStyle={true}
+                initialHtml={
+                  paneToRestyleId ? previews[paneToRestyleId] || '' : ''
+                }
+                initialCss={node?.htmlAst?.css || ''}
               />
             </div>
           ) : (

@@ -17,7 +17,6 @@ interface AiCreativeDesignStepProps {
   onCreatePane: (template: TemplatePane) => void;
   isSandboxMode?: boolean;
   initialTopic?: string;
-  reStyle?: boolean;
 }
 
 export const AiCreativeDesignStep = ({
@@ -27,7 +26,6 @@ export const AiCreativeDesignStep = ({
   onCreatePane,
   isSandboxMode = false,
   initialTopic = '',
-  reStyle = false,
 }: AiCreativeDesignStepProps) => {
   const [topic, setTopic] = useState(initialTopic);
   const [designNotes, setDesignNotes] = useState('');
@@ -119,44 +117,39 @@ export const AiCreativeDesignStep = ({
         },
       };
 
-      if (reStyle) {
-        onCreatePane(template);
-        onSuccess();
-      } else {
-        const goBackend =
-          import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+      const goBackend =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-        const tenantId =
-          (window as any).TRACTSTACK_CONFIG?.tenantId ||
-          import.meta.env.PUBLIC_TENANTID ||
-          'default';
+      const tenantId =
+        (window as any).TRACTSTACK_CONFIG?.tenantId ||
+        import.meta.env.PUBLIC_TENANTID ||
+        'default';
 
-        const previewResponse = await fetch(
-          `${goBackend}/api/v1/fragments/ast-preview`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Tenant-ID': tenantId,
-            },
-            body: JSON.stringify({
-              id: 'preview-temp',
-              title: 'Editor Preview',
-              tree: htmlAst.tree,
-            }),
-          }
-        );
-
-        if (!previewResponse.ok) {
-          throw new Error('Failed to generate preview HTML');
+      const previewResponse = await fetch(
+        `${goBackend}/api/v1/fragments/ast-preview`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': tenantId,
+          },
+          body: JSON.stringify({
+            id: 'preview-temp',
+            title: 'Editor Preview',
+            tree: htmlAst.tree,
+          }),
         }
+      );
 
-        const htmlString = await previewResponse.text();
-
-        setPendingTemplate(template);
-        setPreviewHtml(htmlString);
-        setReviewMode(true);
+      if (!previewResponse.ok) {
+        throw new Error('Failed to generate preview HTML');
       }
+
+      const htmlString = await previewResponse.text();
+
+      setPendingTemplate(template);
+      setPreviewHtml(htmlString);
+      setReviewMode(true);
     } catch (err: any) {
       console.error('Creative Generation Error:', err);
       setError(err.message || 'Failed to generate design.');
@@ -246,16 +239,13 @@ export const AiCreativeDesignStep = ({
           <SparklesIcon className="h-6 w-6 text-pink-600" aria-hidden="true" />
         </div>
         <h3 className="mt-2 text-lg font-bold text-gray-900">
-          {reStyle ? 'Refine Creative Design' : 'Creative Design'}
+          Creative Design
         </h3>
         <p className="text-sm text-gray-500">
-          {reStyle
-            ? 'Modify the prompt below to iterate on the design.'
-            : 'Describe what you want, and AI will code a unique HTML structure for you.'}
+          Describe what you want, and AI will code a unique HTML structure for
+          you.
         </p>
       </div>
-
-      {reStyle && <h2>WARNING: This will break links</h2>}
 
       <div className="space-y-4">
         {!showAdvanced && (
@@ -373,7 +363,7 @@ export const AiCreativeDesignStep = ({
           className="flex items-center gap-2 rounded-md bg-pink-600 px-6 py-2 text-sm font-bold text-white shadow-sm hover:bg-pink-700 disabled:bg-gray-400"
         >
           <SparklesIcon className="h-4 w-4" />
-          {reStyle ? 'Re-Design' : 'Generate'}
+          Generate
         </button>
       </div>
     </div>

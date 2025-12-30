@@ -509,6 +509,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/steps/AiRefineDesignStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiRefineDesignStep.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/steps/DesignLibraryStep.tsx'
       ),
       dest: 'src/components/edit/pane/steps/DesignLibraryStep.tsx',
