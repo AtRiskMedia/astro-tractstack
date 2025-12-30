@@ -1244,6 +1244,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/storykeep/controls/content/PaneTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/PaneTable.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/storykeep/controls/content/ContentBrowser.tsx'
       ),
       dest: 'src/components/storykeep/controls/content/ContentBrowser.tsx',
