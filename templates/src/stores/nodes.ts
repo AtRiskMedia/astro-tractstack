@@ -83,6 +83,7 @@ export class NodesContext {
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
   impressionNodes = atom<Set<ImpressionNode>>(new Set<ImpressionNode>());
   parentNodes = atom<Map<string, string[]>>(new Map<string, string[]>());
+  showSaveBypass = atom<boolean>(false);
   hasTitle = atom<boolean>(false);
   hasPanes = atom<boolean>(false);
   isTemplate = atom<boolean>(false);
@@ -561,39 +562,48 @@ export class NodesContext {
   }
 
   applyShellToPane(paneId: string, template: TemplatePane) {
+    // 1. Prepare a fresh Map for the update to avoid direct mutation
     const allNodes = new Map(this.allNodes.get());
-    const paneNode = allNodes.get(paneId) as PaneNode;
-    if (!paneNode) return;
+    const originalPane = allNodes.get(paneId);
+    if (!originalPane) return;
 
+    // 2. Clone the target pane to break reference equality
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+
+    // 3. Set the dirty flag so getDirtyNodes() finds it
+    paneNode.isChanged = true;
+
+    // 4. Apply template updates to the clone
     if (template.bgColour) {
       paneNode.bgColour = template.bgColour;
-      paneNode.isChanged = true;
     }
     if (template.htmlAst) {
       paneNode.htmlAst = template.htmlAst;
-      paneNode.isChanged = true;
     }
+
+    // 5. Commit the cloned pane back into our local Map
+    allNodes.set(paneId, paneNode);
 
     const childrenIds = this.getChildNodeIDs(paneId);
 
-    const gridLayoutNode = childrenIds
+    // 6. Handle Grid Layouts: must clone the grid and every affected column
+    const gridNodeRaw = childrenIds
       .map((id) => allNodes.get(id))
-      .find((n) => n?.nodeType === 'GridLayoutNode') as
-      | GridLayoutNode
-      | undefined;
+      .find((n) => n?.nodeType === 'GridLayoutNode');
 
-    const markdownNodes = childrenIds
-      .map((id) => allNodes.get(id))
-      .filter((n) => n?.nodeType === 'Markdown') as MarkdownPaneFragmentNode[];
+    if (gridNodeRaw && template.gridLayout) {
+      const gridLayoutNode = cloneDeep(gridNodeRaw) as GridLayoutNode;
+      gridLayoutNode.isChanged = true;
 
-    if (gridLayoutNode && template.gridLayout) {
       if (template.gridLayout.parentClasses) {
         gridLayoutNode.parentClasses = template.gridLayout.parentClasses;
       }
       if (template.gridLayout.defaultClasses) {
         gridLayoutNode.defaultClasses = template.gridLayout.defaultClasses;
       }
-      gridLayoutNode.isChanged = true;
+
+      // Commit cloned grid back to the local Map
+      allNodes.set(gridLayoutNode.id, gridLayoutNode);
 
       if (
         template.gridLayout.nodes &&
@@ -603,30 +613,52 @@ export class NodesContext {
 
         columnIds.forEach((colId, index) => {
           const templateCol = template.gridLayout!.nodes![index];
-          if (templateCol && templateCol.gridClasses) {
-            const liveColNode = allNodes.get(colId) as MarkdownPaneFragmentNode;
-            if (liveColNode) {
-              liveColNode.gridClasses = templateCol.gridClasses;
-              liveColNode.isChanged = true;
-            }
+          const colNodeRaw = allNodes.get(colId);
+          if (templateCol && colNodeRaw) {
+            // Clone each column to ensure UI reactivity
+            const liveColNode = cloneDeep(
+              colNodeRaw
+            ) as MarkdownPaneFragmentNode;
+            liveColNode.gridClasses = templateCol.gridClasses;
+            liveColNode.isChanged = true;
+            // Commit cloned column back to the local Map
+            allNodes.set(colId, liveColNode);
           }
         });
       }
-    } else if (markdownNodes.length > 0 && template.markdown) {
-      const primaryMarkdown = markdownNodes[0];
+    }
+    // 7. Handle standard Markdown: clone the fragment
+    else {
+      const markdownNodes = childrenIds
+        .map((id) => allNodes.get(id))
+        .filter(
+          (n) => n?.nodeType === 'Markdown'
+        ) as MarkdownPaneFragmentNode[];
 
-      if (template.markdown.parentClasses) {
-        primaryMarkdown.parentClasses = template.markdown.parentClasses;
+      if (markdownNodes.length > 0 && template.markdown) {
+        const primaryMarkdown = cloneDeep(markdownNodes[0]);
+        primaryMarkdown.isChanged = true;
+
+        if (template.markdown.parentClasses) {
+          primaryMarkdown.parentClasses = template.markdown.parentClasses;
+        }
+        if (template.markdown.defaultClasses) {
+          primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
+        }
+        // Commit cloned markdown back to the local Map
+        allNodes.set(primaryMarkdown.id, primaryMarkdown);
       }
-      if (template.markdown.defaultClasses) {
-        primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
-      }
-      primaryMarkdown.isChanged = true;
     }
 
+    // 8. Atomic Store Update: Swap the entire Map
     this.allNodes.set(allNodes);
+
+    // 9. Notify nodes to trigger re-renders
     this.notifyNode(paneId);
     this.notifyNode('root');
+
+    // 10. Trigger the bypass signal for the Save UI
+    this.showSaveBypass.set(true);
   }
 
   /**
