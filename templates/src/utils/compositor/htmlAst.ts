@@ -254,7 +254,17 @@ function processNode(
   index: number,
   registry: StyleRegistry
 ): HtmlAstNode {
-  const id = `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`;
+  const tagName = el.tagName.toLowerCase();
+  const isEditable = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li'].includes(
+    tagName
+  );
+  const isIdentifiable = ['a', 'button', 'img'].includes(tagName);
+
+  const id =
+    isEditable || isIdentifiable
+      ? `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`
+      : undefined;
+
   const attrs: Record<string, string> = {};
 
   if (el.hasAttributes()) {
@@ -277,12 +287,12 @@ function processNode(
     ? Array.from(el.childNodes)
         .map((child, i) => {
           if (child.nodeType === Node.ELEMENT_NODE)
-            return processNode(child as HTMLElement, id, i, registry);
+            return processNode(child as HTMLElement, id || path, i, registry);
           if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
             return {
               tag: 'text',
               text: child.textContent,
-              id: `ast-${hashPath(`${id}-text-${i}`)}`,
+              id: isEditable ? `ast-${hashPath(`${id}-text-${i}`)}` : undefined,
             };
           }
           return null;
@@ -290,7 +300,7 @@ function processNode(
         .filter((n): n is HtmlAstNode => n !== null)
     : [];
 
-  return { tag: el.tagName.toLowerCase(), attrs, children, id };
+  return { tag: tagName, attrs, children, id };
 }
 
 function hashPath(str: string): string {
