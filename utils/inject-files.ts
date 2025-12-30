@@ -1012,6 +1012,10 @@ export async function injectTemplateFiles(
       dest: 'src/components/search/SearchResults.tsx',
     },
     {
+      src: resolve('../templates/src/hooks/usePaneFragments.ts'),
+      dest: 'src/hooks/usePaneFragments.ts',
+    },
+    {
       src: resolve('../templates/src/hooks/useSearch.ts'),
       dest: 'src/hooks/useSearch.ts',
     },

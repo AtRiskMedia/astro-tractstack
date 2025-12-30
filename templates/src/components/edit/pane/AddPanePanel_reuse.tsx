@@ -11,6 +11,7 @@ import {
 import { PaneAddMode, type StoryFragmentNode } from '@/types/compositorTypes';
 import type { FullContentMapItem } from '@/types/tractstack';
 import { TractStackAPI } from '@/utils/api';
+import { usePaneFragments } from '@/hooks/usePaneFragments';
 
 interface AddPaneReUsePanelProps {
   nodeId: string;
@@ -21,8 +22,6 @@ interface AddPaneReUsePanelProps {
 interface PreviewItem {
   ctx: NodesContext;
   snapshot?: SnapshotData;
-  htmlFragment?: string;
-  fragmentError?: string;
   pane: FullContentMapItem;
   index: number;
 }
@@ -43,9 +42,7 @@ const AddPaneReUsePanel = ({
   const [availablePanes, setAvailablePanes] = useState<FullContentMapItem[]>(
     []
   );
-  const [fragmentsLoaded, setFragmentsLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set([0]));
 
   useEffect(() => {
     const ctx = getCtx();
@@ -67,7 +64,6 @@ const AddPaneReUsePanel = ({
     setAvailablePanes(unusedPanes);
   }, [nodeId]);
 
-  // Create collection for Ark UI Combobox
   const collection = useMemo(() => {
     const filteredPanes =
       query === ''
@@ -85,7 +81,6 @@ const AddPaneReUsePanel = ({
     });
   }, [availablePanes, query]);
 
-  // Create previews from filtered panes
   useEffect(() => {
     const filteredPanes =
       query === ''
@@ -100,14 +95,10 @@ const AddPaneReUsePanel = ({
       ctx: new NodesContext(),
       pane,
       index,
-      htmlFragment: undefined,
-      fragmentError: undefined,
     }));
 
     setPreviews(newPreviews);
     setCurrentPage(0);
-    setRenderedPages(new Set([0]));
-    setFragmentsLoaded(false);
   }, [availablePanes, query]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
@@ -115,8 +106,6 @@ const AddPaneReUsePanel = ({
   const handlePageChange = (newPage: number) => {
     if (newPage >= 0 && newPage < totalPages) {
       setCurrentPage(newPage);
-      setRenderedPages((prev) => new Set([...prev, newPage]));
-      setFragmentsLoaded(false);
     }
   };
 
@@ -125,66 +114,15 @@ const AddPaneReUsePanel = ({
     return previews.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [previews, currentPage]);
 
-  // Fetch fragments for visible panes
-  useEffect(() => {
-    if (visiblePreviews.length === 0 || fragmentsLoaded) return;
-
-    const fetchFragments = async () => {
-      try {
-        const paneIds = visiblePreviews.map((preview) => preview.pane.id);
-        const api = new TractStackAPI(tenantId);
-
-        const response = await api.post('/api/v1/fragments/panes', { paneIds });
-
-        if (!response.success) {
-          throw new Error(response.error || `Fragment API failed`);
-        }
-
-        const data = response.data;
-
-        setPreviews((prevPreviews) => {
-          const updated = [...prevPreviews];
-          visiblePreviews.forEach((visiblePreview) => {
-            const globalIndex = prevPreviews.findIndex(
-              (p) => p.pane.id === visiblePreview.pane.id
-            );
-            if (globalIndex !== -1) {
-              updated[globalIndex] = {
-                ...updated[globalIndex],
-                htmlFragment: data.fragments?.[visiblePreview.pane.id] || '',
-                fragmentError:
-                  data.errors?.[visiblePreview.pane.id] || undefined,
-              };
-            }
-          });
-          return updated;
-        });
-
-        setFragmentsLoaded(true);
-      } catch (error) {
-        console.error('Failed to fetch fragments:', error);
-        setPreviews((prevPreviews) => {
-          const updated = [...prevPreviews];
-          visiblePreviews.forEach((visiblePreview) => {
-            const globalIndex = prevPreviews.findIndex(
-              (p) => p.pane.id === visiblePreview.pane.id
-            );
-            if (globalIndex !== -1) {
-              updated[globalIndex] = {
-                ...updated[globalIndex],
-                fragmentError:
-                  error instanceof Error ? error.message : 'Unknown error',
-              };
-            }
-          });
-          return updated;
-        });
-        setFragmentsLoaded(true);
-      }
-    };
-
-    fetchFragments();
-  }, [visiblePreviews, fragmentsLoaded]);
+  const visiblePaneIds = useMemo(
+    () => visiblePreviews.map((p) => p.pane.id),
+    [visiblePreviews]
+  );
+  const {
+    fragments,
+    errors,
+    isLoading: fragmentsLoading,
+  } = usePaneFragments(visiblePaneIds);
 
   const handleSnapshotComplete = (id: string, snapshot: SnapshotData) => {
     const paneId = id.replace('reuse-', '');
@@ -215,7 +153,6 @@ const AddPaneReUsePanel = ({
       const templateData = response.data;
       const ctx = getCtx();
 
-      // Find storyfragment
       const storyfragmentId = ctx.getClosestNodeTypeFromId(
         nodeId,
         'StoryFragment'
@@ -231,7 +168,6 @@ const AddPaneReUsePanel = ({
         throw new Error('No storyfragment found');
       }
 
-      // Set pane parentId
       templateData.paneNode.parentId = storyfragmentId;
 
       let specificIdx = -1;
@@ -260,7 +196,6 @@ const AddPaneReUsePanel = ({
       }
       storyFragmentNode.isChanged = true;
 
-      // Add nodes using exact same pattern as addTemplatePane
       ctx.addNode(templateData.paneNode);
       ctx.linkChildToParent(
         templateData.paneNode.id,
@@ -276,7 +211,6 @@ const AddPaneReUsePanel = ({
     }
   };
 
-  // CSS to properly style the combobox items with hover and selection
   const comboboxItemStyles = `
     .pane-item[data-highlighted] {
       background-color: #0891b2; /* bg-cyan-600 */
@@ -354,25 +288,24 @@ const AddPaneReUsePanel = ({
                 ...(!preview.snapshot ? { minHeight: '75px' } : {}),
               }}
             >
-              {renderedPages.has(currentPage) && !fragmentsLoaded && (
+              {fragmentsLoading && !fragments[preview.pane.id] && (
                 <div className="flex h-24 items-center justify-center">
                   <div className="text-gray-500">Loading...</div>
                 </div>
               )}
 
-              {fragmentsLoaded && preview.fragmentError && (
+              {errors[preview.pane.id] && (
                 <div className="flex h-24 items-center justify-center">
                   <div className="text-red-500">Preview error</div>
                 </div>
               )}
 
-              {fragmentsLoaded &&
-                preview.htmlFragment &&
+              {fragments[preview.pane.id] &&
                 !preview.snapshot &&
-                !preview.fragmentError && (
+                !errors[preview.pane.id] && (
                   <PaneSnapshotGenerator
                     id={`reuse-${preview.pane.id}`}
-                    htmlString={preview.htmlFragment}
+                    htmlString={fragments[preview.pane.id]}
                     onComplete={handleSnapshotComplete}
                     onError={(id, error) =>
                       console.error(`Snapshot error for ${id}:`, error)
