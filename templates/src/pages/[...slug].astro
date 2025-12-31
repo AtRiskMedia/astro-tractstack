@@ -24,7 +24,6 @@ if (slug && (slug.startsWith('images/') || slug.startsWith('media/'))) {
 
 const lookup = slug || '';
 const sessionId = await getOrSetSessionId(Astro, tenantId);
-const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
 let storyData;
 try {
@@ -52,47 +51,7 @@ if (paneIds.length === 0) {
   return Astro.redirect('/storykeep');
 }
 
-let fragmentsData: Record<string, string> = {};
-try {
-  const batchResponse = await fetch(`${goBackend}/api/v1/fragments/panes`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Tenant-ID': tenantId,
-      'X-StoryFragment-ID': storyfragmentId,
-      'X-TractStack-Session-ID': sessionId,
-    },
-    body: JSON.stringify({ paneIds }),
-  });
-
-  if (batchResponse.ok) {
-    const batchData = await batchResponse.json();
-    fragmentsData = batchData.fragments || {};
-    if (batchData.errors) {
-      Object.entries(batchData.errors).forEach(([paneId, error]) => {
-        fragmentsData[paneId] =
-          `<div class="error">Failed to load pane ${paneId}: ${error}</div>`;
-      });
-    }
-  } else {
-    const failedFragmentsResponse = await handleFailedResponse(
-      batchResponse,
-      goBackend,
-      tenantId,
-      Astro.url.pathname
-    );
-    if (failedFragmentsResponse) {
-      return failedFragmentsResponse;
-    }
-  }
-} catch (error) {
-  console.error('Error fetching fragments:', error);
-  return Astro.redirect(
-    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
-  );
-}
-
-if (!fragmentsData) {
+if (!storyData.fragments) {
   return Astro.redirect(
     `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
   );
@@ -203,7 +162,7 @@ paneIds.forEach((paneId: string) => {
                   </div>
                 </div>
               ) : (
-                <Fragment set:html={fragmentsData[paneId] || ''} />
+                <Fragment set:html={storyData.fragments[paneId] || ''} />
               )}
             </div>
           </div>
