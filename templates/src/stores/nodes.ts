@@ -9,6 +9,7 @@ import allowInsert from '@/utils/compositor/allowInsert';
 import { reservedSlugs } from '@/constants';
 import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
 import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
+import { rehydrateChildrenFromHtml } from '@/utils/compositor/htmlAst';
 import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
 import {
   hasButtonPayload,
@@ -640,6 +641,46 @@ export class NodesContext {
     this.notifyNode(paneId);
     this.notifyNode('root');
     this.showSaveBypass.set(true);
+  }
+
+  updateCreativePane(paneId: string, containerId: string, htmlContent: string) {
+    const allNodes = new Map(this.allNodes.get());
+    const originalPane = allNodes.get(paneId);
+
+    // 1. Validation and Clone (matching applyShellToPane pattern)
+    if (!originalPane || originalPane.nodeType !== 'Pane') return;
+
+    // Deep clone ensures we don't mutate state outside the atom update
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+
+    // Guard: Ensure we are in HTML mode
+    if (!('htmlAst' in paneNode) || !paneNode.htmlAst) return;
+
+    // 2. Logic: Rehydrate and Patch
+    const newChildren = rehydrateChildrenFromHtml(htmlContent);
+
+    // Recursive patcher to find the container in the cloned tree
+    const patchNode = (nodes: any[]): boolean => {
+      for (const node of nodes) {
+        if (node.id === containerId) {
+          node.children = newChildren;
+          return true;
+        }
+        if (node.children && node.children.length > 0) {
+          if (patchNode(node.children)) return true;
+        }
+      }
+      return false;
+    };
+
+    // 3. Commit
+    if (patchNode(paneNode.htmlAst.tree)) {
+      paneNode.isChanged = true;
+      allNodes.set(paneId, paneNode);
+      this.allNodes.set(allNodes);
+      this.notifyNode(paneId);
+      this.showSaveBypass.set(true);
+    }
   }
 
   /**

@@ -1,6 +1,7 @@
+import { ulid } from 'ulid';
 import type { CreativePanePayload, HtmlAstNode } from '@/types/compositorTypes';
 
-const VERBOSE = false;
+const VERBOSE = true;
 
 const logger = {
   log: (...args: any[]) => VERBOSE && console.log('[htmlAst]', ...args),
@@ -377,4 +378,89 @@ export function extractTextFromAst(tree: HtmlAstNode[]): string {
     .replace(/\s+\n/g, '\n') // Clean end of lines
     .replace(/\n+/g, '\n') // Collapse multiple newlines into one
     .trim();
+}
+
+export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
+  if (VERBOSE) {
+    console.log(
+      '[HTML-AST] Rehydrating HTML fragment:',
+      html.substring(0, 100) + (html.length > 100 ? '...' : '')
+    );
+  }
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  if (VERBOSE) {
+    console.log('[HTML-AST] DOM parsed child nodes:', div.childNodes.length);
+  }
+
+  const nodes = Array.from(div.childNodes)
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        return processRehydratedNode(child as HTMLElement);
+      }
+      if (child.nodeType === Node.TEXT_NODE && child.textContent) {
+        return {
+          tag: 'text',
+          text: child.textContent,
+        };
+      }
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  if (VERBOSE) {
+    console.log(
+      '[HTML-AST] Rehydration complete. Resulting AST nodes:',
+      nodes.length
+    );
+  }
+
+  return nodes;
+}
+
+function processRehydratedNode(el: HTMLElement): HtmlAstNode {
+  const existingId = el.getAttribute('data-ast-id');
+  const id = existingId || undefined;
+
+  if (VERBOSE && existingId) {
+    console.log(`[HTML-AST] Preserving identity for <${el.tagName}>: ${id}`);
+  }
+
+  const attrs: Record<string, string> = {};
+  if (el.hasAttributes()) {
+    for (const attr of Array.from(el.attributes)) {
+      if (attr.name === 'data-ast-id') continue;
+      if (attr.name === 'contenteditable') continue;
+      attrs[attr.name] = attr.value;
+    }
+  }
+
+  const children: HtmlAstNode[] = Array.from(el.childNodes)
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        return processRehydratedNode(child as HTMLElement);
+      }
+      if (child.nodeType === Node.TEXT_NODE && child.textContent) {
+        return {
+          tag: 'text',
+          text: child.textContent,
+        };
+      }
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  const node: HtmlAstNode = {
+    tag: el.tagName.toLowerCase(),
+    attrs,
+    children,
+  };
+
+  if (id) {
+    node.id = id;
+  }
+
+  return node;
 }

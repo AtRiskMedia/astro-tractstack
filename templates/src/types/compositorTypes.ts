@@ -63,6 +63,30 @@ export interface HtmlAstNode {
   id?: string;
 }
 
+export type CreativeButtonPayload = {
+  callbackPayload: string;
+  isExternalUrl?: boolean;
+  bunnyPayload?: {
+    t: string;
+    videoId: string | null;
+    slug?: string;
+    isContext?: boolean;
+  };
+};
+
+export interface EditableElementMetadata {
+  astId: string;
+  tagName: string;
+  src?: string;
+  srcSet?: string;
+  fileId?: string;
+  base64Data?: string;
+  alt?: string;
+  href?: string;
+  buttonPayload?: CreativeButtonPayload;
+  isCssBackground?: boolean;
+}
+
 export interface CreativePanePayload {
   css: string;
   viewportCss: {
@@ -71,6 +95,7 @@ export interface CreativePanePayload {
     xl: string;
   };
   tree: HtmlAstNode[];
+  editableElements: Record<string, EditableElementMetadata>;
 }
 
 export enum StoryFragmentMode {
@@ -276,11 +301,11 @@ export interface TractStackNode extends BaseNode {
 
 export interface PaneFragmentNode extends BaseNode {
   type:
-    | 'markdown'
-    | 'visual-break'
-    | 'background-image'
-    | 'artpack-image'
-    | 'grid-layout';
+  | 'markdown'
+  | 'visual-break'
+  | 'background-image'
+  | 'artpack-image'
+  | 'grid-layout';
   hiddenViewportMobile?: boolean;
   hiddenViewportTablet?: boolean;
   hiddenViewportDesktop?: boolean;

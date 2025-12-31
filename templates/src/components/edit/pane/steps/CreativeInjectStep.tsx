@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getCtx } from '@/stores/nodes';
 import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
 import type { TemplatePane } from '@/types/compositorTypes';
 
@@ -49,6 +50,8 @@ export const CreativeInjectStep = ({
       };
 
       onCreatePane(template);
+      const ctx = getCtx();
+      ctx.showSaveBypass.set(true);
     } catch (err: any) {
       console.error('Compiler Error:', err);
       setError(`Compilation failed: ${err.message}`);

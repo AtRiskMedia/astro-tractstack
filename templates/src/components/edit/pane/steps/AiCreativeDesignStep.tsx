@@ -4,6 +4,7 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import prompts from '@/constants/prompts.json';
+import { getCtx } from '@/stores/nodes';
 import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
 import type { TemplatePane } from '@/types/compositorTypes';
 import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
@@ -161,6 +162,8 @@ export const AiCreativeDesignStep = ({
   const handleAccept = () => {
     if (pendingTemplate) {
       onCreatePane(pendingTemplate);
+      const ctx = getCtx();
+      ctx.showSaveBypass.set(true);
       onSuccess();
     }
   };

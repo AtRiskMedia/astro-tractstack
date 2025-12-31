@@ -146,10 +146,17 @@ export const CreativePane = ({
     const astId = target.getAttribute('data-ast-id');
 
     if (astId && target.isContentEditable) {
-      const newContent = target.innerText;
-      console.log(
-        `[HUD] SAVE TRIGGERED: ${astId} | NEW CONTENT: "${newContent}"`
-      );
+      // Capture the full structure (innerHTML) to preserve nested elements
+      // and their existing IDs (e.g. links/spans)
+      const content = target.innerHTML;
+      // Execute the transplant in the store
+      ctx.updateCreativePane(nodeId, astId, content);
+
+      console.log('[HUD] SAVE COMMITTED:', {
+        id: astId,
+        paneId: nodeId,
+        contentLength: content.length,
+      });
     }
   };
 

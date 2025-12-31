@@ -4,6 +4,7 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import LockClosedIcon from '@heroicons/react/24/outline/LockClosedIcon';
 import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+import { Toggle } from '@ark-ui/react/toggle';
 import { orphanAnalysisStore } from '@/stores/orphanAnalysis';
 import {
   PaneSnapshotGenerator,
@@ -23,7 +24,7 @@ interface PanePreviewItem {
   snapshot?: SnapshotData;
 }
 
-const ITEMS_PER_PAGE = 16;
+const ITEMS_PER_PAGE = 4;
 
 const DeletingModal = ({ count }: { count: number }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -43,22 +44,34 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [previews, setPreviews] = useState<PanePreviewItem[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showOnlyUnused, setShowOnlyUnused] = useState(false);
 
   const tenantId =
     window.TRACTSTACK_CONFIG?.tenantId ||
     import.meta.env.PUBLIC_TENANTID ||
     'default';
 
+  const isOrphan = (id: string) => {
+    if (!orphanState.data?.panes) return false;
+    const deps = orphanState.data.panes[id];
+    return deps && deps.length === 0;
+  };
+
   const allPanes = useMemo(
     () => fullContentMap.filter((item) => item.type === 'Pane'),
     [fullContentMap]
   );
 
+  const filteredPanes = useMemo(() => {
+    if (!showOnlyUnused) return allPanes;
+    return allPanes.filter((p) => isOrphan(p.id));
+  }, [allPanes, showOnlyUnused, orphanState.data]);
+
   useEffect(() => {
-    setPreviews(allPanes.map((pane) => ({ pane })));
+    setPreviews(filteredPanes.map((pane) => ({ pane })));
     setCurrentPage(0);
     setSelectedIds(new Set());
-  }, [allPanes]);
+  }, [filteredPanes]);
 
   const totalPages = Math.ceil(previews.length / ITEMS_PER_PAGE);
 
@@ -91,12 +104,6 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
         item.pane.id === paneId ? { ...item, snapshot } : item
       )
     );
-  };
-
-  const isOrphan = (id: string) => {
-    if (!orphanState.data?.panes) return false;
-    const deps = orphanState.data.panes[id];
-    return deps && deps.length === 0;
   };
 
   const toggleSelection = (id: string) => {
@@ -145,7 +152,6 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
       });
 
       if (response.success) {
-        // Clear selection first to avoid UI flicker
         setSelectedIds(new Set());
         onRefresh();
       } else {
@@ -164,36 +170,52 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
       {isDeleting && <DeletingModal count={selectedIds.size} />}
 
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-center gap-4">
-          <div className="text-sm font-medium text-gray-700">
-            {selectedIds.size} of {allPanes.length} Selected
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-gray-700">
+              {selectedIds.size} of {filteredPanes.length} Selected
+            </div>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={handleClearSelection}
+                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+              >
+                <XMarkIcon className="h-3 w-3" />
+                Clear
+              </button>
+            )}
           </div>
-          {selectedIds.size > 0 && (
-            <button
-              onClick={handleClearSelection}
-              className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+
+          <div className="flex items-center gap-2 border-l border-gray-300 pl-6">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Filter:</span>
+            <Toggle.Root
+              pressed={showOnlyUnused}
+              onPressedChange={setShowOnlyUnused}
+              className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-bold transition-all shadow-sm ${showOnlyUnused
+                  ? 'border-cyan-600 bg-cyan-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                }`}
             >
-              <XMarkIcon className="h-3 w-3" />
-              Clear
-            </button>
-          )}
+              Show Unused Only ({unusedCount})
+            </Toggle.Root>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={handleSelectAllUnused}
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
             title={`Select all ${unusedCount} unused panes`}
           >
             <CheckCircleIcon className="h-4 w-4 text-green-600" />
-            Select All Unused ({unusedCount})
+            Select All Unused
           </button>
 
           {selectedIds.size > 0 && (
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 shadow-sm"
             >
               <TrashIcon className="h-4 w-4" />
               Delete ({selectedIds.size})
@@ -202,103 +224,108 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 p-2 xl:grid-cols-4">
-        {visiblePreviews.map((item) => {
-          const orphan = isOrphan(item.pane.id);
-          const isSelected = selectedIds.has(item.pane.id);
+      {previews.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-white py-12">
+          <p className="font-medium text-gray-500">No panes found matching the current filter.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-6 p-2 xl:grid-cols-4">
+          {visiblePreviews.map((item) => {
+            const orphan = isOrphan(item.pane.id);
+            const isSelected = selectedIds.has(item.pane.id);
 
-          return (
-            <div
-              key={item.pane.id}
-              className={`relative flex flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${
-                isSelected
-                  ? 'border-cyan-600 ring-2 ring-cyan-100'
-                  : 'border-transparent hover:border-gray-300'
-              }`}
-            >
-              <div className="absolute right-2 top-2 z-10">
-                {orphan ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelection(item.pane.id)}
-                      className="h-5 w-5 cursor-pointer rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 shadow-md"
-                    title="This pane is in use and cannot be deleted"
-                  >
-                    <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                  </div>
-                )}
-              </div>
-
+            return (
               <div
-                className="relative w-full overflow-hidden rounded-t-lg bg-gray-50"
-                style={{
-                  ...(!item.snapshot ? { minHeight: '150px' } : {}),
-                }}
+                key={item.pane.id}
+                className={`relative flex flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${isSelected
+                    ? 'border-cyan-600 ring-2 ring-cyan-100'
+                    : 'border-transparent hover:border-gray-300'
+                  }`}
               >
-                {fragmentsLoading && !fragments[item.pane.id] && (
-                  <div className="flex h-full items-center justify-center text-gray-400">
-                    <span className="text-xs">Loading...</span>
-                  </div>
-                )}
-
-                {errors[item.pane.id] && (
-                  <div className="flex h-full items-center justify-center text-red-400">
-                    <span className="text-xs">Preview Error</span>
-                  </div>
-                )}
-
-                {fragments[item.pane.id] &&
-                  !item.snapshot &&
-                  !errors[item.pane.id] && (
-                    <PaneSnapshotGenerator
-                      id={`table-${item.pane.id}`}
-                      htmlString={fragments[item.pane.id]}
-                      onComplete={handleSnapshotComplete}
-                      outputWidth={400}
-                    />
-                  )}
-
-                {item.snapshot && (
-                  <img
-                    src={item.snapshot.imageData}
-                    alt={item.pane.title}
-                    className="w-full object-cover"
-                  />
-                )}
-              </div>
-
-              <div className="bg-gray-50 p-3">
-                <h4
-                  className="truncate text-sm font-bold text-gray-900"
-                  title={item.pane.title}
-                >
-                  {item.pane.title}
-                </h4>
-                <div className="mt-1 flex items-center justify-between">
-                  <span
-                    className="truncate font-mono text-xs text-gray-500"
-                    title={item.pane.slug}
-                  >
-                    /{item.pane.slug}
-                  </span>
-                  {!orphan && (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                      In Use
-                    </span>
+                <div className="absolute right-2 top-2 z-10">
+                  {orphan ? (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelection(item.pane.id)}
+                        className="h-5 w-5 cursor-pointer rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 shadow-md"
+                      title="This pane is in use and cannot be deleted"
+                    >
+                      <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                    </div>
                   )}
                 </div>
+
+                <div
+                  className="relative w-full overflow-hidden rounded-t-lg bg-gray-50"
+                  style={{
+                    ...(!item.snapshot ? { minHeight: '150px' } : {}),
+                  }}
+                >
+                  {fragmentsLoading && !fragments[item.pane.id] && (
+                    <div className="flex h-full items-center justify-center text-gray-400">
+                      <span className="text-xs">Loading...</span>
+                    </div>
+                  )}
+
+                  {errors[item.pane.id] && (
+                    <div className="flex h-full items-center justify-center text-red-400">
+                      <span className="text-xs">Preview Error</span>
+                    </div>
+                  )}
+
+                  {fragments[item.pane.id] &&
+                    !item.snapshot &&
+                    !errors[item.pane.id] && (
+                      <PaneSnapshotGenerator
+                        id={`table-${item.pane.id}`}
+                        htmlString={fragments[item.pane.id]}
+                        onComplete={handleSnapshotComplete}
+                        outputWidth={400}
+                      />
+                    )}
+
+                  {item.snapshot && (
+                    <img
+                      src={item.snapshot.imageData}
+                      alt={item.pane.title}
+                      className="w-full object-cover"
+                    />
+                  )}
+                </div>
+
+                <div className="bg-gray-50 p-3">
+                  <h4
+                    className="truncate text-sm font-bold text-gray-900"
+                    title={item.pane.title}
+                  >
+                    {item.pane.title}
+                  </h4>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span
+                      className="truncate font-mono text-xs text-gray-500"
+                      title={item.pane.slug}
+                    >
+                      /{item.pane.slug}
+                    </span>
+                    {!orphan && (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                        In Use
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 pt-4">
