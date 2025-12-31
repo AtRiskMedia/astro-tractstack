@@ -337,85 +337,6 @@ function processCssString(css: string, registry: StyleRegistry) {
   }
 }
 
-function processNode(
-  el: HTMLElement,
-  path: string,
-  index: number,
-  registry: StyleRegistry,
-  editableRegistry: Record<string, EditableElementMetadata>
-): HtmlAstNode {
-  const tagName = el.tagName.toLowerCase();
-  const isTextEditable = [
-    'p',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'li',
-  ].includes(tagName);
-
-  logger.group(`processNode: <${tagName}> at ${path}-${index}`);
-
-  const metadataCheck = extractMetadataFromNode(el, 'temp-id', registry);
-  const isIdentifiableAsset = !!metadataCheck;
-
-  const id =
-    isTextEditable || isIdentifiableAsset
-      ? `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`
-      : undefined;
-
-  if (id && isIdentifiableAsset) {
-    const finalMetadata = extractMetadataFromNode(el, id, registry);
-    if (finalMetadata) {
-      editableRegistry[id] = finalMetadata;
-      logger.log(`[processNode] Registered Managed Asset: ${id}`);
-    }
-  }
-
-  const attrs: Record<string, string> = {};
-  if (el.hasAttributes()) {
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name === 'style') {
-        const hash = registry.registerInlineStyle(attr.value);
-        attrs['class'] = `${attrs['class'] || ''} ${hash}`.trim();
-      } else if (attr.name === 'class') {
-        const tokens = attr.value
-          .split(/\s+/)
-          .flatMap((c) => registry.lookupClass(c).split(/\s+/));
-        attrs['class'] = Array.from(new Set(tokens.filter(Boolean))).join(' ');
-      } else {
-        attrs[attr.name] = attr.value;
-      }
-    }
-  }
-
-  const children: HtmlAstNode[] = Array.from(el.childNodes)
-    .map((child, i) => {
-      if (child.nodeType === Node.ELEMENT_NODE)
-        return processNode(
-          child as HTMLElement,
-          id || path,
-          i,
-          registry,
-          editableRegistry
-        );
-      if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
-        return {
-          tag: 'text',
-          text: child.textContent,
-          id: isTextEditable ? `ast-${hashPath(`${id}-text-${i}`)}` : undefined,
-        };
-      }
-      return null;
-    })
-    .filter((n): n is HtmlAstNode => n !== null);
-
-  logger.groupEnd();
-  return { tag: tagName, attrs, children, id };
-}
-
 function hashPath(str: string): string {
   let hash = 5381,
     i = str.length;
@@ -445,57 +366,6 @@ export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
   );
   logger.groupEnd();
   return nodes;
-}
-
-function processRehydratedNode(
-  el: HTMLElement,
-  editableRegistry: Record<string, EditableElementMetadata>
-): HtmlAstNode {
-  const tagName = el.tagName.toLowerCase();
-  const id = el.getAttribute('data-ast-id') || undefined;
-  logger.group(
-    `processRehydratedNode: <${tagName}> (Identity: ${id || 'none'})`
-  );
-
-  if (id) {
-    const metadata = extractMetadataFromNode(el, id);
-    if (metadata) {
-      editableRegistry[id] = metadata;
-      logger.log(`[Rehydrate] Restored identity: ${id}`);
-    }
-  } else {
-    const capabilityMeta = extractMetadataFromNode(
-      el,
-      `rehydrated-${ulid().toLowerCase()}`
-    );
-    if (capabilityMeta) {
-      editableRegistry[capabilityMeta.astId] = capabilityMeta;
-      logger.log(
-        `[Rehydrate] Identity Found via Capability: ${capabilityMeta.astId}`
-      );
-    }
-  }
-
-  const attrs: Record<string, string> = {};
-  if (el.hasAttributes()) {
-    for (const attr of Array.from(el.attributes)) {
-      if (['data-ast-id', 'contenteditable'].includes(attr.name)) continue;
-      attrs[attr.name] = attr.value;
-    }
-  }
-
-  const children: HtmlAstNode[] = Array.from(el.childNodes)
-    .map((child) => {
-      if (child.nodeType === Node.ELEMENT_NODE)
-        return processRehydratedNode(child as HTMLElement, editableRegistry);
-      if (child.nodeType === Node.TEXT_NODE && child.textContent)
-        return { tag: 'text', text: child.textContent };
-      return null;
-    })
-    .filter((n): n is HtmlAstNode => n !== null);
-
-  logger.groupEnd();
-  return { tag: tagName, attrs, children, id };
 }
 
 export function extractTextFromAst(tree: HtmlAstNode[]): string {
@@ -540,4 +410,165 @@ export function extractTextFromAst(tree: HtmlAstNode[]): string {
     .replace(/\s+\n/g, '\n')
     .replace(/\n+/g, '\n')
     .trim();
+}
+
+/**
+ * processNode: The primary entry point for converting a live DOM element into an AST node.
+ * Strictly whitelists allowed attributes and sanitizes text content to prevent
+ * "sloppy" storage and ephemeral attribute leakage.
+ */
+function processNode(
+  el: HTMLElement,
+  path: string,
+  index: number,
+  registry: StyleRegistry,
+  editableRegistry: Record<string, EditableElementMetadata>
+): HtmlAstNode {
+  const tagName = el.tagName.toLowerCase();
+  const isTextEditable = [
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'li',
+  ].includes(tagName);
+
+  const metadataCheck = extractMetadataFromNode(el, 'temp-id', registry);
+  const isIdentifiableAsset = !!metadataCheck;
+
+  const id =
+    isTextEditable || isIdentifiableAsset
+      ? `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`
+      : undefined;
+
+  if (id && isIdentifiableAsset) {
+    const finalMetadata = extractMetadataFromNode(el, id, registry);
+    if (finalMetadata) {
+      editableRegistry[id] = finalMetadata;
+    }
+  }
+
+  const attrs: Record<string, string> = {};
+  const allowedAttributes = [
+    'src',
+    'srcset',
+    'alt',
+    'href',
+    'target',
+    'type',
+    'value',
+    'placeholder',
+  ];
+
+  if (el.hasAttributes()) {
+    for (const attr of Array.from(el.attributes)) {
+      if (attr.name === 'style') {
+        const hash = registry.registerInlineStyle(attr.value);
+        attrs['class'] = `${attrs['class'] || ''} ${hash}`.trim();
+      } else if (attr.name === 'class') {
+        const tokens = attr.value
+          .split(/\s+/)
+          .flatMap((c) => registry.lookupClass(c).split(/\s+/));
+        attrs['class'] = Array.from(new Set(tokens.filter(Boolean))).join(' ');
+      } else if (allowedAttributes.includes(attr.name)) {
+        attrs[attr.name] = attr.value;
+      }
+    }
+  }
+
+  const children: HtmlAstNode[] = Array.from(el.childNodes)
+    .map((child, i) => {
+      if (child.nodeType === Node.ELEMENT_NODE)
+        return processNode(
+          child as HTMLElement,
+          id || path,
+          i,
+          registry,
+          editableRegistry
+        );
+      if (child.nodeType === Node.TEXT_NODE) {
+        const cleanedText = child.textContent?.replace(/\n/g, '').trim();
+        if (cleanedText) {
+          return {
+            tag: 'text',
+            text: cleanedText,
+            id: isTextEditable
+              ? `ast-${hashPath(`${id}-text-${i}`)}`
+              : undefined,
+          };
+        }
+      }
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  return { tag: tagName, attrs, children, id };
+}
+
+/**
+ * processRehydratedNode: Rebuilds an AST node from a static HTML snippet.
+ * Shares the same strict attribute whitelist and text sanitization as processNode.
+ */
+function processRehydratedNode(
+  el: HTMLElement,
+  editableRegistry: Record<string, EditableElementMetadata>
+): HtmlAstNode {
+  const tagName = el.tagName.toLowerCase();
+  const id = el.getAttribute('data-ast-id') || undefined;
+
+  if (id) {
+    const metadata = extractMetadataFromNode(el, id);
+    if (metadata) {
+      editableRegistry[id] = metadata;
+    }
+  } else {
+    const capabilityMeta = extractMetadataFromNode(
+      el,
+      `rehydrated-${ulid().toLowerCase()}`
+    );
+    if (capabilityMeta) {
+      editableRegistry[capabilityMeta.astId] = capabilityMeta;
+    }
+  }
+
+  const attrs: Record<string, string> = {};
+  const allowedAttributes = [
+    'class',
+    'style',
+    'src',
+    'srcset',
+    'alt',
+    'href',
+    'target',
+    'type',
+    'value',
+    'placeholder',
+  ];
+
+  if (el.hasAttributes()) {
+    for (const attr of Array.from(el.attributes)) {
+      if (allowedAttributes.includes(attr.name)) {
+        attrs[attr.name] = attr.value;
+      }
+    }
+  }
+
+  const children: HtmlAstNode[] = Array.from(el.childNodes)
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE)
+        return processRehydratedNode(child as HTMLElement, editableRegistry);
+      if (child.nodeType === Node.TEXT_NODE) {
+        const cleanedText = child.textContent?.replace(/\n/g, '').trim();
+        if (cleanedText) {
+          return { tag: 'text', text: cleanedText };
+        }
+      }
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  return { tag: tagName, attrs, children, id };
 }

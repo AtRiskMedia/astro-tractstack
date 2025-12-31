@@ -76,7 +76,7 @@ export const PaneEraser = (props: NodeProps) => {
         ctx.setClickedNodeId(props.nodeId);
         e.stopPropagation();
       }}
-      className="absolute right-2 top-2 z-10 rounded-full bg-red-700 p-1.5 hover:bg-black"
+      className="absolute right-2 top-2 z-101 rounded-full bg-red-700 p-1.5 hover:bg-black"
     >
       <TrashIcon className="h-10 w-10 text-white" />
     </button>
