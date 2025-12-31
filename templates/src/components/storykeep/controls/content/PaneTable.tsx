@@ -187,14 +187,17 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
           </div>
 
           <div className="flex items-center gap-2 border-l border-gray-300 pl-6">
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Filter:</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+              Filter:
+            </span>
             <Toggle.Root
               pressed={showOnlyUnused}
               onPressedChange={setShowOnlyUnused}
-              className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-bold transition-all shadow-sm ${showOnlyUnused
+              className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-bold shadow-sm transition-all ${
+                showOnlyUnused
                   ? 'border-cyan-600 bg-cyan-600 text-white'
                   : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+              }`}
             >
               Show Unused Only ({unusedCount})
             </Toggle.Root>
@@ -204,7 +207,7 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleSelectAllUnused}
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
             title={`Select all ${unusedCount} unused panes`}
           >
             <CheckCircleIcon className="h-4 w-4 text-green-600" />
@@ -215,7 +218,7 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 shadow-sm"
+              className="flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
             >
               <TrashIcon className="h-4 w-4" />
               Delete ({selectedIds.size})
@@ -226,7 +229,9 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
 
       {previews.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-white py-12">
-          <p className="font-medium text-gray-500">No panes found matching the current filter.</p>
+          <p className="font-medium text-gray-500">
+            No panes found matching the current filter.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-6 p-2 xl:grid-cols-4">
@@ -237,10 +242,11 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
             return (
               <div
                 key={item.pane.id}
-                className={`relative flex flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${isSelected
+                className={`relative flex flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${
+                  isSelected
                     ? 'border-cyan-600 ring-2 ring-cyan-100'
                     : 'border-transparent hover:border-gray-300'
-                  }`}
+                }`}
               >
                 <div className="absolute right-2 top-2 z-10">
                   {orphan ? (

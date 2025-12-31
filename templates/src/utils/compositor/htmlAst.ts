@@ -1,5 +1,9 @@
 import { ulid } from 'ulid';
-import type { CreativePanePayload, HtmlAstNode } from '@/types/compositorTypes';
+import type {
+  CreativePanePayload,
+  HtmlAstNode,
+  EditableElementMetadata,
+} from '@/types/compositorTypes';
 
 const VERBOSE = true;
 
@@ -11,9 +15,110 @@ const logger = {
 };
 
 /**
- * Handles deduplication, hashing, and deterministic viewport-aware flattening.
+ * Scanner: Detects Assets based on Tags or Background Image URLs.
  */
+function extractMetadataFromNode(
+  el: HTMLElement,
+  astId: string,
+  registry?: StyleRegistry
+): EditableElementMetadata | null {
+  logger.group(`extractMetadataFromNode Trace: ${astId}`);
+  const tagName = el.tagName.toLowerCase();
+  const classList = Array.from(el.classList);
+  logger.log(`Target: <${tagName}> | Classes:`, classList);
+
+  // 1. Tag-based Assets
+  if (tagName === 'img') {
+    const imgEl = el as HTMLImageElement;
+    const meta = {
+      astId,
+      tagName,
+      src: imgEl.getAttribute('src') || '',
+      srcSet: imgEl.getAttribute('srcset') || undefined,
+      alt: imgEl.getAttribute('alt') || '',
+    };
+    logger.log(`[Discovery] MATCH: <img> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  if (tagName === 'a') {
+    const anchorEl = el as HTMLAnchorElement;
+    const meta = {
+      astId,
+      tagName,
+      href: anchorEl.getAttribute('href') || '',
+    };
+    logger.log(`[Discovery] MATCH: <a> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  if (tagName === 'button') {
+    const callback = el.getAttribute('data-callback');
+    const meta = {
+      astId,
+      tagName,
+      buttonPayload: {
+        callbackPayload: callback || '',
+        isExternalUrl: el.getAttribute('data-external') === 'true',
+      },
+    };
+    logger.log(`[Discovery] MATCH: <button> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  // 2. Background Image Detection (URL only)
+  let bgImageUrl = '';
+
+  // Check Inline Style
+  const inlineBg = el.style.backgroundImage;
+  if (inlineBg && inlineBg !== 'none') {
+    const match = inlineBg.match(/url\(["']?(.*?)["']?\)/);
+    if (match) {
+      bgImageUrl = match[1];
+      logger.log(`[Discovery] Found inline background-image: ${bgImageUrl}`);
+    }
+  }
+
+  // Check Registry for class-based background image URLs
+  if (!bgImageUrl && registry) {
+    for (const cls of classList) {
+      const ruleBody = registry.getRuleBody(cls);
+      if (ruleBody) {
+        const urlMatch = ruleBody.match(
+          /background-image:\s*url\(["']?(.*?)["']?\)/
+        );
+        if (urlMatch) {
+          bgImageUrl = urlMatch[1];
+          logger.log(
+            `[Discovery] SUCCESS: Found background image in class "${cls}": ${bgImageUrl}`
+          );
+          break;
+        }
+      }
+    }
+  }
+
+  if (bgImageUrl) {
+    const meta = {
+      astId,
+      tagName,
+      src: bgImageUrl,
+      isCssBackground: true,
+    };
+    logger.groupEnd();
+    return meta;
+  }
+
+  logger.log(`[Discovery] REJECTED: No managed capabilities found.`);
+  logger.groupEnd();
+  return null;
+}
+
 class StyleRegistry {
+  private rules = new Map<string, string>();
   private classMap = new Map<string, Set<string>>();
   private hashToOriginal = new Map<
     string,
@@ -35,28 +140,22 @@ class StyleRegistry {
         const rawClassNameEscaped = match[1];
         const suffix = match[2] || '';
         const classNameKey = rawClassNameEscaped.replace(/\\/g, '');
-
         const cleanDecl = body.trim();
-        // Hash must be unique to the content + class context
-        const hash = `t8k-${this.hashString(cleanDecl + classNameKey + suffix)}`;
 
+        // Store rule for lookup by className during the walk
+        this.rules.set(classNameKey, cleanDecl);
+
+        const hash = `t8k-${this.hashString(cleanDecl + classNameKey + suffix)}`;
         if (!this.classMap.has(classNameKey))
           this.classMap.set(classNameKey, new Set());
         this.classMap.get(classNameKey)?.add(hash);
         this.hashToOriginal.set(hash, { className: classNameKey, suffix });
 
         const ruleObj = { hash, suffix, body: cleanDecl };
-
         if (bucketWidth !== undefined) {
           this.mediaBuckets.push({ minWidth: bucketWidth, ...ruleObj });
-          logger.log(
-            `Registered Media (${bucketWidth}px): .${hash}${suffix} for "${classNameKey}"`
-          );
         } else {
           this.cssBuffer.push(ruleObj);
-          logger.log(
-            `Registered Base: .${hash}${suffix} for "${classNameKey}"`
-          );
         }
         return hash;
       }
@@ -64,11 +163,14 @@ class StyleRegistry {
     return null;
   }
 
+  getRuleBody(className: string): string | undefined {
+    return this.rules.get(className);
+  }
+
   registerInlineStyle(declaration: string): string {
     const cleanDecl = declaration.trim();
     const hash = `t8k-${this.hashString(cleanDecl + 'inline')}`;
     this.cssBuffer.push({ hash, suffix: '', body: cleanDecl });
-    logger.log(`Registered Inline Style: ${hash}`);
     return hash;
   }
 
@@ -97,73 +199,40 @@ class StyleRegistry {
   }
 
   generateViewportCss(): { xs: string; md: string; xl: string } {
-    logger.group('Deterministic Flattening Strategy');
-
-    const createSnapshot = (targetBreakPoint: number, label: string) => {
-      logger.group(`Snapshot: ${label} (Breakpoint: ${targetBreakPoint}px)`);
-
-      // 1. Determine "Winners" for every unique Class+Suffix combination
-      // Map<"className:suffix", hash>
+    const createSnapshot = (targetBreakPoint: number) => {
       const winners = new Map<string, string>();
-
-      // Initialize with Base Rules
       this.cssBuffer.forEach((rule) => {
         const info = this.hashToOriginal.get(rule.hash);
         if (info) winners.set(`${info.className}${info.suffix}`, rule.hash);
       });
-
-      // Layer on Media Queries up to target
       this.mediaBuckets
         .filter((b) => b.minWidth <= targetBreakPoint)
         .sort((a, b) => a.minWidth - b.minWidth)
         .forEach((rule) => {
           const info = this.hashToOriginal.get(rule.hash);
-          if (info) {
-            const key = `${info.className}${info.suffix}`;
-            logger.log(
-              `Override found for ${key}: ${winners.get(key)} -> ${rule.hash}`
-            );
-            winners.set(key, rule.hash);
-          }
+          if (info) winners.set(`${info.className}${info.suffix}`, rule.hash);
         });
-
-      // 2. Output ONLY rules whose hashes are current winners
       const output: string[] = [];
       const winnerHashes = new Set(winners.values());
-
-      // Collect all available rules (Base + Matching Buckets)
       const allCandidateRules = [
         ...this.cssBuffer,
         ...this.mediaBuckets.filter((b) => b.minWidth <= targetBreakPoint),
       ];
-
       allCandidateRules.forEach((rule) => {
         if (winnerHashes.has(rule.hash)) {
           output.push(`.${rule.hash}${rule.suffix} { ${rule.body} }`);
-          // Remove from set so we don't print duplicates if multiple buckets match the same hash
           winnerHashes.delete(rule.hash);
-        } else {
-          const info = this.hashToOriginal.get(rule.hash);
-          if (info)
-            logger.log(
-              `Suppressed: .${rule.hash}${rule.suffix} (Class "${info.className}" has better candidate)`
-            );
         }
       });
-
-      logger.groupEnd();
       return output
         .join('\n')
         .replace(/(\d*\.?\d+)(vw|vh)/gi, (m, n) => `${n}%`);
     };
-
-    const final = {
-      xs: createSnapshot(0, 'XS'),
-      md: createSnapshot(801, 'MD'),
-      xl: createSnapshot(1367, 'XL'),
+    return {
+      xs: createSnapshot(0),
+      md: createSnapshot(801),
+      xl: createSnapshot(1367),
     };
-    logger.groupEnd();
-    return final;
   }
 
   private hashString(str: string): string {
@@ -178,8 +247,9 @@ export async function htmlToHtmlAst(
   html: string,
   userCss: string
 ): Promise<CreativePanePayload> {
-  logger.log('--- Pipeline Start ---');
-  const registry = new StyleRegistry();
+  logger.group('--- Pipeline Start: htmlToHtmlAst ---');
+  const styleRegistry = new StyleRegistry();
+  const editableRegistry: Record<string, EditableElementMetadata> = {};
 
   let tailwindCss = '';
   try {
@@ -196,22 +266,41 @@ export async function htmlToHtmlAst(
     logger.error('Tailwind API Fetch Failed', e);
   }
 
-  processCssString(tailwindCss, registry);
-  processCssString(userCss, registry);
+  processCssString(tailwindCss, styleRegistry);
+  processCssString(userCss, styleRegistry);
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  const tree = Array.from(doc.body.children).map((child) =>
-    processNode(child as HTMLElement, 'root', 0, registry)
+
+  const tree = Array.from(doc.body.children).map((child, i) =>
+    processNode(
+      child as HTMLElement,
+      'root',
+      i,
+      styleRegistry,
+      editableRegistry
+    )
   );
 
-  const payload = {
-    css: registry.getCompiledCss(),
-    viewportCss: registry.generateViewportCss(),
+  logger.log(
+    `Pipeline Complete. Registered Assets: ${Object.keys(editableRegistry).length}`
+  );
+  logger.groupEnd();
+
+  const finalPayload = {
+    css: styleRegistry.getCompiledCss(),
+    viewportCss: styleRegistry.generateViewportCss(),
     tree,
+    editableElements: editableRegistry,
   };
-  logger.log('--- Pipeline Complete ---');
-  return payload;
+
+  logger.group('--- FINAL HTML-AST PAYLOAD ---');
+  logger.log('Assets in Registry:', Object.keys(editableRegistry).length);
+  logger.log('Registry Content:', editableRegistry);
+  logger.log('Tree Structure:', tree);
+  logger.groupEnd();
+
+  return finalPayload;
 }
 
 function processCssString(css: string, registry: StyleRegistry) {
@@ -219,7 +308,6 @@ function processCssString(css: string, registry: StyleRegistry) {
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
   document.head.appendChild(styleEl);
-
   try {
     const sheet = styleEl.sheet;
     if (!sheet) return;
@@ -253,21 +341,40 @@ function processNode(
   el: HTMLElement,
   path: string,
   index: number,
-  registry: StyleRegistry
+  registry: StyleRegistry,
+  editableRegistry: Record<string, EditableElementMetadata>
 ): HtmlAstNode {
   const tagName = el.tagName.toLowerCase();
-  const isEditable = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li'].includes(
-    tagName
-  );
-  const isIdentifiable = ['a', 'button', 'img'].includes(tagName);
+  const isTextEditable = [
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'li',
+  ].includes(tagName);
+
+  logger.group(`processNode: <${tagName}> at ${path}-${index}`);
+
+  const metadataCheck = extractMetadataFromNode(el, 'temp-id', registry);
+  const isIdentifiableAsset = !!metadataCheck;
 
   const id =
-    isEditable || isIdentifiable
+    isTextEditable || isIdentifiableAsset
       ? `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`
       : undefined;
 
-  const attrs: Record<string, string> = {};
+  if (id && isIdentifiableAsset) {
+    const finalMetadata = extractMetadataFromNode(el, id, registry);
+    if (finalMetadata) {
+      editableRegistry[id] = finalMetadata;
+      logger.log(`[processNode] Registered Managed Asset: ${id}`);
+    }
+  }
 
+  const attrs: Record<string, string> = {};
   if (el.hasAttributes()) {
     for (const attr of Array.from(el.attributes)) {
       if (attr.name === 'style') {
@@ -284,23 +391,28 @@ function processNode(
     }
   }
 
-  const children: HtmlAstNode[] = el.childNodes.length
-    ? Array.from(el.childNodes)
-        .map((child, i) => {
-          if (child.nodeType === Node.ELEMENT_NODE)
-            return processNode(child as HTMLElement, id || path, i, registry);
-          if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
-            return {
-              tag: 'text',
-              text: child.textContent,
-              id: isEditable ? `ast-${hashPath(`${id}-text-${i}`)}` : undefined,
-            };
-          }
-          return null;
-        })
-        .filter((n): n is HtmlAstNode => n !== null)
-    : [];
+  const children: HtmlAstNode[] = Array.from(el.childNodes)
+    .map((child, i) => {
+      if (child.nodeType === Node.ELEMENT_NODE)
+        return processNode(
+          child as HTMLElement,
+          id || path,
+          i,
+          registry,
+          editableRegistry
+        );
+      if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) {
+        return {
+          tag: 'text',
+          text: child.textContent,
+          id: isTextEditable ? `ast-${hashPath(`${id}-text-${i}`)}` : undefined,
+        };
+      }
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
 
+  logger.groupEnd();
   return { tag: tagName, attrs, children, id };
 }
 
@@ -311,8 +423,82 @@ function hashPath(str: string): string {
   return (hash >>> 0).toString(16);
 }
 
+export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
+  logger.group('rehydrateChildrenFromHtml');
+  const editableRegistry: Record<string, EditableElementMetadata> = {};
+
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  const nodes = Array.from(div.childNodes)
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE)
+        return processRehydratedNode(child as HTMLElement, editableRegistry);
+      if (child.nodeType === Node.TEXT_NODE && child.textContent)
+        return { tag: 'text', text: child.textContent };
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  logger.log(
+    `Rehydration Complete. Assets synced: ${Object.keys(editableRegistry).length}`
+  );
+  logger.groupEnd();
+  return nodes;
+}
+
+function processRehydratedNode(
+  el: HTMLElement,
+  editableRegistry: Record<string, EditableElementMetadata>
+): HtmlAstNode {
+  const tagName = el.tagName.toLowerCase();
+  const id = el.getAttribute('data-ast-id') || undefined;
+  logger.group(
+    `processRehydratedNode: <${tagName}> (Identity: ${id || 'none'})`
+  );
+
+  if (id) {
+    const metadata = extractMetadataFromNode(el, id);
+    if (metadata) {
+      editableRegistry[id] = metadata;
+      logger.log(`[Rehydrate] Restored identity: ${id}`);
+    }
+  } else {
+    const capabilityMeta = extractMetadataFromNode(
+      el,
+      `rehydrated-${ulid().toLowerCase()}`
+    );
+    if (capabilityMeta) {
+      editableRegistry[capabilityMeta.astId] = capabilityMeta;
+      logger.log(
+        `[Rehydrate] Identity Found via Capability: ${capabilityMeta.astId}`
+      );
+    }
+  }
+
+  const attrs: Record<string, string> = {};
+  if (el.hasAttributes()) {
+    for (const attr of Array.from(el.attributes)) {
+      if (['data-ast-id', 'contenteditable'].includes(attr.name)) continue;
+      attrs[attr.name] = attr.value;
+    }
+  }
+
+  const children: HtmlAstNode[] = Array.from(el.childNodes)
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE)
+        return processRehydratedNode(child as HTMLElement, editableRegistry);
+      if (child.nodeType === Node.TEXT_NODE && child.textContent)
+        return { tag: 'text', text: child.textContent };
+      return null;
+    })
+    .filter((n): n is HtmlAstNode => n !== null);
+
+  logger.groupEnd();
+  return { tag: tagName, attrs, children, id };
+}
+
 export function extractTextFromAst(tree: HtmlAstNode[]): string {
-  // Tags that naturally create a visual block/break
   const blockTags = new Set([
     'p',
     'h1',
@@ -338,129 +524,20 @@ export function extractTextFromAst(tree: HtmlAstNode[]): string {
     'dt',
     'dd',
   ]);
-
-  // Tags that represent distinct data cells/slots
-  const cellTags = new Set(['td', 'th']);
-
   function traverse(nodes: HtmlAstNode[]): string {
     return nodes
       .map((node) => {
-        if (node.tag === 'text') {
-          // Normalize internal whitespace of the text node to single spaces
-          return node.text?.replace(/\s+/g, ' ') || '';
-        }
-
+        if (node.tag === 'text') return node.text?.replace(/\s+/g, ' ') || '';
         if (node.tag === 'br') return '\n';
-        if (node.tag === 'hr') return '\n---\n';
-
         const childText = node.children ? traverse(node.children) : '';
-
-        if (blockTags.has(node.tag)) {
-          // Ensure block tags break the line
-          return `\n${childText}\n`;
-        }
-
-        if (cellTags.has(node.tag)) {
-          // Ensure table cells have separation (using a pipe helps the AI see structure)
-          return ` ${childText} | `;
-        }
-
-        // Inline elements (span, b, i, a) flow together naturally
-        return childText;
+        return blockTags.has(node.tag) ? `\n${childText}\n` : childText;
       })
-      .join(''); // Join with empty string; specific tags provide their own spacing
+      .join('');
   }
-
   return traverse(tree)
-    .replace(/[ \t]+/g, ' ') // Collapse multiple spaces/tabs
-    .replace(/ \|\n/g, '\n') // Clean up trailing pipes at end of rows
-    .replace(/\n\s+/g, '\n') // Clean start of lines
-    .replace(/\s+\n/g, '\n') // Clean end of lines
-    .replace(/\n+/g, '\n') // Collapse multiple newlines into one
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s+/g, '\n')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n+/g, '\n')
     .trim();
-}
-
-export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
-  if (VERBOSE) {
-    console.log(
-      '[HTML-AST] Rehydrating HTML fragment:',
-      html.substring(0, 100) + (html.length > 100 ? '...' : '')
-    );
-  }
-
-  const div = document.createElement('div');
-  div.innerHTML = html;
-
-  if (VERBOSE) {
-    console.log('[HTML-AST] DOM parsed child nodes:', div.childNodes.length);
-  }
-
-  const nodes = Array.from(div.childNodes)
-    .map((child) => {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        return processRehydratedNode(child as HTMLElement);
-      }
-      if (child.nodeType === Node.TEXT_NODE && child.textContent) {
-        return {
-          tag: 'text',
-          text: child.textContent,
-        };
-      }
-      return null;
-    })
-    .filter((n): n is HtmlAstNode => n !== null);
-
-  if (VERBOSE) {
-    console.log(
-      '[HTML-AST] Rehydration complete. Resulting AST nodes:',
-      nodes.length
-    );
-  }
-
-  return nodes;
-}
-
-function processRehydratedNode(el: HTMLElement): HtmlAstNode {
-  const existingId = el.getAttribute('data-ast-id');
-  const id = existingId || undefined;
-
-  if (VERBOSE && existingId) {
-    console.log(`[HTML-AST] Preserving identity for <${el.tagName}>: ${id}`);
-  }
-
-  const attrs: Record<string, string> = {};
-  if (el.hasAttributes()) {
-    for (const attr of Array.from(el.attributes)) {
-      if (attr.name === 'data-ast-id') continue;
-      if (attr.name === 'contenteditable') continue;
-      attrs[attr.name] = attr.value;
-    }
-  }
-
-  const children: HtmlAstNode[] = Array.from(el.childNodes)
-    .map((child) => {
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        return processRehydratedNode(child as HTMLElement);
-      }
-      if (child.nodeType === Node.TEXT_NODE && child.textContent) {
-        return {
-          tag: 'text',
-          text: child.textContent,
-        };
-      }
-      return null;
-    })
-    .filter((n): n is HtmlAstNode => n !== null);
-
-  const node: HtmlAstNode = {
-    tag: el.tagName.toLowerCase(),
-    attrs,
-    children,
-  };
-
-  if (id) {
-    node.id = id;
-  }
-
-  return node;
 }

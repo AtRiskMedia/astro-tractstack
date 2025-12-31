@@ -301,11 +301,11 @@ export interface TractStackNode extends BaseNode {
 
 export interface PaneFragmentNode extends BaseNode {
   type:
-  | 'markdown'
-  | 'visual-break'
-  | 'background-image'
-  | 'artpack-image'
-  | 'grid-layout';
+    | 'markdown'
+    | 'visual-break'
+    | 'background-image'
+    | 'artpack-image'
+    | 'grid-layout';
   hiddenViewportMobile?: boolean;
   hiddenViewportTablet?: boolean;
   hiddenViewportDesktop?: boolean;
