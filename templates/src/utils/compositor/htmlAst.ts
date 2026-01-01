@@ -170,6 +170,7 @@ class StyleRegistry {
   registerInlineStyle(declaration: string): string {
     const cleanDecl = declaration.trim();
     const hash = `t8k-${this.hashString(cleanDecl + 'inline')}`;
+    this.hashToOriginal.set(hash, { className: hash, suffix: '' });
     this.cssBuffer.push({ hash, suffix: '', body: cleanDecl });
     return hash;
   }

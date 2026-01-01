@@ -45,13 +45,13 @@ const storykeepToolModes = [
     key: 'move' as const,
     Icon: ArrowsUpDownIcon,
     title: 'Move',
-    description: 'Keyboard accessible re-order',
+    description: 'Re-order panes or elements',
   },
   {
     key: 'designLibrary' as const,
     Icon: SparklesIcon,
     title: 'Design Library',
-    description: 'Save pane to design library',
+    description: 'Design Tools',
   },
   {
     key: 'debug' as const,

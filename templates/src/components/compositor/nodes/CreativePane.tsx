@@ -39,12 +39,12 @@ export const CreativePane = ({
   const htmlContent = previews[nodeId];
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
     const fetchPreview = async () => {
       if (!htmlAst?.tree) return;
-
       setLoading(true);
       setError(null);
-
       try {
         const tenantId =
           (window as any).TRACTSTACK_CONFIG?.tenantId ||
@@ -67,6 +67,7 @@ export const CreativePane = ({
               title: 'Editor Preview',
               tree: htmlAst.tree,
             }),
+            signal,
           }
         );
 
@@ -78,16 +79,27 @@ export const CreativePane = ({
         }
 
         const html = await response.text();
-        updatePreview(nodeId, html);
-      } catch (err) {
+
+        if (!signal.aborted) {
+          updatePreview(nodeId, html);
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+
         console.error(`CreativePane fetch failed for ${nodeId}:`, err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setLoading(false);
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchPreview();
+
+    return () => {
+      controller.abort();
+    };
   }, [htmlAst?.tree, nodeId]);
 
   useEffect(() => {
