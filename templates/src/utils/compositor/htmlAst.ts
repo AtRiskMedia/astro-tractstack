@@ -272,14 +272,8 @@ export async function htmlToHtmlAst(
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  const tree = Array.from(doc.body.children).map((child, i) =>
-    processNode(
-      child as HTMLElement,
-      'root',
-      i,
-      styleRegistry,
-      editableRegistry
-    )
+  const tree = Array.from(doc.body.children).map((child) =>
+    processNode(child as HTMLElement, styleRegistry, editableRegistry)
   );
 
   logger.log(
@@ -335,13 +329,6 @@ function processCssString(css: string, registry: StyleRegistry) {
   } finally {
     document.head.removeChild(styleEl);
   }
-}
-
-function hashPath(str: string): string {
-  let hash = 5381,
-    i = str.length;
-  while (i) hash = (hash * 33) ^ str.charCodeAt(--i);
-  return (hash >>> 0).toString(16);
 }
 
 export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
@@ -419,12 +406,11 @@ export function extractTextFromAst(tree: HtmlAstNode[]): string {
  */
 function processNode(
   el: HTMLElement,
-  path: string,
-  index: number,
   registry: StyleRegistry,
   editableRegistry: Record<string, EditableElementMetadata>
 ): HtmlAstNode {
   const tagName = el.tagName.toLowerCase();
+
   const isTextEditable = [
     'p',
     'h1',
@@ -436,13 +422,15 @@ function processNode(
     'li',
   ].includes(tagName);
 
-  const metadataCheck = extractMetadataFromNode(el, 'temp-id', registry);
+  const metadataCheck = extractMetadataFromNode(el, 'temp', registry);
   const isIdentifiableAsset = !!metadataCheck;
 
-  const id =
-    isTextEditable || isIdentifiableAsset
-      ? `ast-${hashPath(`${path}-${index}-${el.tagName}`)}`
-      : undefined;
+  const existingId = el.getAttribute('data-ast-id');
+  let id: string | undefined = existingId || undefined;
+
+  if (!id && (isTextEditable || isIdentifiableAsset)) {
+    id = `ast-${ulid().toLowerCase()}`;
+  }
 
   if (id && isIdentifiableAsset) {
     const finalMetadata = extractMetadataFromNode(el, id, registry);
@@ -480,24 +468,17 @@ function processNode(
   }
 
   const children: HtmlAstNode[] = Array.from(el.childNodes)
-    .map((child, i) => {
-      if (child.nodeType === Node.ELEMENT_NODE)
-        return processNode(
-          child as HTMLElement,
-          id || path,
-          i,
-          registry,
-          editableRegistry
-        );
+    .map((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        return processNode(child as HTMLElement, registry, editableRegistry);
+      }
       if (child.nodeType === Node.TEXT_NODE) {
         const cleanedText = child.textContent?.replace(/\n/g, '').trim();
         if (cleanedText) {
           return {
             tag: 'text',
             text: cleanedText,
-            id: isTextEditable
-              ? `ast-${hashPath(`${id}-text-${i}`)}`
-              : undefined,
+            id: isTextEditable ? `ast-${ulid().toLowerCase()}` : undefined,
           };
         }
       }

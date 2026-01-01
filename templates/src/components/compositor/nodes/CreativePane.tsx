@@ -1,6 +1,7 @@
 import {
   useEffect,
   useState,
+  useRef,
   type MouseEvent,
   type FocusEvent,
   type KeyboardEvent,
@@ -32,6 +33,7 @@ export const CreativePane = ({
   const { value: viewportKey } = useStore(viewportKeyStore);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const activeViewport = viewportMap[viewportKey];
   const htmlContent = previews[nodeId];
@@ -88,6 +90,78 @@ export const CreativePane = ({
     fetchPreview();
   }, [htmlAst?.tree, nodeId]);
 
+  useEffect(() => {
+    const ctx = getCtx();
+    const unsubscribe = ctx.toolModeValStore.subscribe((state) => {
+      const container = contentRef.current;
+      if (!container) return;
+
+      const editables = container.querySelectorAll('[data-ast-id]');
+
+      if (state.value === 'styles') {
+        editables.forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          if (htmlEl.isContentEditable) return;
+          htmlEl.style.outline = '2px dotted #06b6d4';
+          htmlEl.style.outlineOffset = '2px';
+          htmlEl.style.cursor = 'pointer';
+
+          const astId = htmlEl.getAttribute('data-ast-id');
+          if (!astId) return;
+
+          const existingIcon = container.querySelector(
+            `[data-proxy-for="${astId}"]`
+          );
+          if (existingIcon) return;
+
+          const icon = document.createElement('div');
+          icon.setAttribute('data-proxy-for', astId);
+          icon.style.position = 'absolute';
+          icon.style.zIndex = '100';
+          icon.style.width = '24px';
+          icon.style.height = '24px';
+          icon.style.backgroundColor = '#06b6d4';
+          icon.style.borderRadius = '9999px';
+          icon.style.display = 'flex';
+          icon.style.alignItems = 'center';
+          icon.style.justifyContent = 'center';
+          icon.style.color = 'white';
+          icon.style.fontSize = '12px';
+          icon.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
+          icon.innerHTML = '✎';
+
+          const rect = htmlEl.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          icon.style.top = `${rect.top - containerRect.top - 12}px`;
+          icon.style.left = `${rect.left - containerRect.left - 12}px`;
+
+          icon.onmouseenter = () => {
+            htmlEl.style.outline = '3px solid #06b6d4';
+          };
+          icon.onmouseleave = () => {
+            htmlEl.style.outline = '2px dotted #06b6d4';
+          };
+          icon.onclick = (e) => {
+            e.stopPropagation();
+            console.log(`[Asset Deck] UI Triggered for Node: ${astId}`);
+          };
+
+          container.appendChild(icon);
+        });
+      } else {
+        editables.forEach((el) => {
+          (el as HTMLElement).style.outline = '';
+          (el as HTMLElement).style.outlineOffset = '';
+          (el as HTMLElement).style.cursor = '';
+        });
+        const icons = container.querySelectorAll('[data-proxy-for]');
+        icons.forEach((icon) => icon.remove());
+      }
+    });
+
+    return () => unsubscribe();
+  }, [htmlContent]);
+
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const astId = target.closest('[data-ast-id]')?.getAttribute('data-ast-id');
@@ -97,26 +171,18 @@ export const CreativePane = ({
     if (!astId) return;
 
     if (isProtected) {
-      console.log(
-        `[HUD] PROTECTED MODE (GLASS ON) | NODE: ${astId} | MODE: ${mode}`
-      );
-      // Events still bubble to this wrapper through the glass
+      console.log(`[HUD] PROTECTED MODE | NODE: ${astId} | MODE: ${mode}`);
     } else if (mode === 'styles') {
       e.preventDefault();
       console.log(
-        `[HUD] STYLES MODE | NODE: ${astId} | Focus Blocked | TAG: ${target.tagName}`
+        `[HUD] STYLES MODE | NODE: ${astId} | TAG: ${target.tagName}`
       );
     } else if (mode === 'text') {
-      console.log(
-        `[HUD] TEXT MODE | NODE: ${astId} | Focus Allowed | TAG: ${target.tagName}`
-      );
-    } else {
-      console.log(`[HUD] IGNORE | Mode: ${mode} | Node: ${astId}`);
+      console.log(`[HUD] TEXT MODE | NODE: ${astId} | TAG: ${target.tagName}`);
     }
 
     if (target.tagName === 'A') {
       e.preventDefault();
-      console.log(`[HUD] LINK NEUTERED: ${astId}`);
     }
   };
 
@@ -129,9 +195,6 @@ export const CreativePane = ({
       const target = e.target as HTMLElement;
       if (target.isContentEditable) {
         e.preventDefault();
-        console.log(
-          `[HUD] ENTER PRESSED: Committing changes for ${target.getAttribute('data-ast-id')}`
-        );
         target.blur();
       }
     }
@@ -146,17 +209,8 @@ export const CreativePane = ({
     const astId = target.getAttribute('data-ast-id');
 
     if (astId && target.isContentEditable) {
-      // Capture the full structure (innerHTML) to preserve nested elements
-      // and their existing IDs (e.g. links/spans)
       const content = target.innerHTML;
-      // Execute the transplant in the store
       ctx.updateCreativePane(nodeId, astId, content);
-
-      console.log('[HUD] SAVE COMMITTED:', {
-        id: astId,
-        paneId: nodeId,
-        contentLength: content.length,
-      });
     }
   };
 
@@ -186,6 +240,7 @@ export const CreativePane = ({
     <>
       <style dangerouslySetInnerHTML={{ __html: activeCss }} />
       <div
+        ref={contentRef}
         onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
