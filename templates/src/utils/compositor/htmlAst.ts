@@ -5,7 +5,7 @@ import type {
   EditableElementMetadata,
 } from '@/types/compositorTypes';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 const logger = {
   log: (...args: any[]) => VERBOSE && console.log('[htmlAst]', ...args),

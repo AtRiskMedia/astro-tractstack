@@ -2,7 +2,6 @@
 import Layout from '@/layouts/Layout.astro';
 import CodeHook from '@/custom/CodeHook.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import { handleFailedResponse } from '@/utils/backend';
 import { getFullContentMap } from '@/stores/analytics';
 import { getOrSetSessionId } from '@/lib/session';
 import { getStoryData } from '@/lib/storyData';
@@ -23,10 +22,10 @@ if (slug && (slug.startsWith('images/') || slug.startsWith('media/'))) {
 }
 
 const lookup = slug || '';
-const sessionId = await getOrSetSessionId(Astro, tenantId);
 
-let storyData;
+let storyData, sessionId;
 try {
+  sessionId = await getOrSetSessionId(Astro, tenantId);
   storyData = await getStoryData(Astro, lookup, sessionId, tenantId);
 } catch (error) {
   if (error instanceof Response && error.status === 404) {

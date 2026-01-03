@@ -27,14 +27,93 @@ if (!window.TractStackApp) {
 
     initialize(config) {
       log('Initializing with config from first page load.', config);
+
+      // 1. Capture the existing local session BEFORE we potentially overwrite it
+      // This is the "Memory" the Healer uses.
+      const localSessionId = localStorage.getItem('tractstack_session_id');
+
       this.config = config;
-      if (config.sessionId && !this.eventSource) {
+
+      // 2. Pass the captured local ID into the reconciliation logic
+      this.reconcileAndStart(localSessionId);
+    },
+
+    async reconcileAndStart(lsSession) {
+      const ssrSession = this.config.sessionId;
+
+      // Check for Split-Brain (LocalStorage has an ID that doesn't match what Astro sent)
+      if (lsSession && lsSession !== ssrSession) {
+        log(
+          'Session mismatch detected (Split-Brain). Attempting reconciliation.',
+          {
+            local: lsSession,
+            server: ssrSession,
+          }
+        );
+
+        try {
+          const response = await fetch(
+            `${this.config.backendUrl}/api/v1/auth/visit`,
+            {
+              method: 'POST',
+              headers: {
+                'X-Tenant-ID': this.config.tenantId,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ sessionId: lsSession }),
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            log('Reconciliation successful. Switching to local session.', data);
+
+            // This function handles updating Cookies AND LocalStorage
+            this.updateSession(data.sessionId, data.fingerprint);
+            return; // EXIT HERE so we don't overwrite with the server session below
+          } else {
+            log(
+              'Reconciliation failed (session likely expired). Adopting server session.'
+            );
+          }
+        } catch (e) {
+          logError('Reconciliation network error.', e);
+        }
+      }
+
+      // 3. Finalize state: Persist the "Winner" to LocalStorage
+      // This runs if:
+      // A) There was no mismatch (Clean Start) -> Seeds the storage
+      // B) Reconciliation failed -> Resets storage to new Server ID
+      if (ssrSession) {
+        localStorage.setItem('tractstack_session_id', ssrSession);
+      }
+
+      if (this.config.sessionId && !this.eventSource) {
         this.startSSE();
       } else {
         log(
           'SSE connection not started: missing sessionId or already connected.'
         );
       }
+    },
+
+    updateSession(sessionId, fingerprintId) {
+      document.cookie = `tractstack_session_id=${sessionId}; path=/; SameSite=Lax; max-age=86400`;
+      if (fingerprintId) {
+        document.cookie = `tractstack_fingerprint=${fingerprintId}; path=/; SameSite=Lax; max-age=31536000`;
+      }
+
+      this.config.sessionId = sessionId;
+      if (fingerprintId) this.config.fingerprintId = fingerprintId;
+
+      localStorage.setItem('tractstack_session_id', sessionId);
+
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+      }
+      this.startSSE();
     },
 
     updateConfig(newConfig) {
