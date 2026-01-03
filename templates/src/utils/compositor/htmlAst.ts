@@ -248,7 +248,6 @@ export async function htmlToHtmlAst(
   html: string,
   userCss: string
 ): Promise<CreativePanePayload> {
-  logger.group('--- Pipeline Start: htmlToHtmlAst ---');
   const styleRegistry = new StyleRegistry();
   const editableRegistry: Record<string, EditableElementMetadata> = {};
 
@@ -277,25 +276,12 @@ export async function htmlToHtmlAst(
     processNode(child as HTMLElement, styleRegistry, editableRegistry)
   );
 
-  logger.log(
-    `Pipeline Complete. Registered Assets: ${Object.keys(editableRegistry).length}`
-  );
-  logger.groupEnd();
-
-  const finalPayload = {
+  return {
     css: styleRegistry.getCompiledCss(),
     viewportCss: styleRegistry.generateViewportCss(),
     tree,
     editableElements: editableRegistry,
   };
-
-  logger.group('--- FINAL HTML-AST PAYLOAD ---');
-  logger.log('Assets in Registry:', Object.keys(editableRegistry).length);
-  logger.log('Registry Content:', editableRegistry);
-  logger.log('Tree Structure:', tree);
-  logger.groupEnd();
-
-  return finalPayload;
 }
 
 function processCssString(css: string, registry: StyleRegistry) {
@@ -553,4 +539,125 @@ function processRehydratedNode(
     .filter((n): n is HtmlAstNode => n !== null);
 
   return { tag: tagName, attrs, children, id };
+}
+
+/**
+ * Serializes the AST back to a raw HTML string to feed the pipeline.
+ * Preserves data-ast-id to maintain node identity during regeneration.
+ */
+function serializeAstToHtml(nodes: HtmlAstNode[]): string {
+  const voidTags = new Set([
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+  ]);
+
+  return nodes
+    .map((node) => {
+      if (node.tag === 'text') return node.text || '';
+
+      const attrs = Object.entries(node.attrs || {})
+        .map(([key, value]) => `${key}="${value}"`)
+        .join(' ');
+
+      // Crucial: Inject the ID back so the pipeline re-claims it
+      const idAttr = node.id ? `data-ast-id="${node.id}"` : '';
+      const space = attrs || idAttr ? ' ' : '';
+      const combinedAttrs = [idAttr, attrs].filter(Boolean).join(' ');
+
+      const openTag = `<${node.tag}${space}${combinedAttrs}>`;
+
+      if (voidTags.has(node.tag)) return openTag;
+
+      const children = node.children ? serializeAstToHtml(node.children) : '';
+      return `${openTag}${children}</${node.tag}>`;
+    })
+    .join('');
+}
+
+/**
+ * atomic update logic for Creative Panes.
+ * 1. Patches the AST (for src/href/callback).
+ * 2. Patches the CSS (for background images).
+ * 3. Re-runs the pipeline to generate fresh viewport CSS and registry.
+ */
+export async function regenerateCreativePane(
+  originalPayload: CreativePanePayload,
+  astId: string,
+  updates: Partial<EditableElementMetadata>
+): Promise<CreativePanePayload> {
+  const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+  const tree = deepClone(originalPayload.tree);
+  let css = originalPayload.css;
+
+  const findAndPatchNode = (nodes: HtmlAstNode[]): HtmlAstNode | null => {
+    for (const node of nodes) {
+      if (node.id === astId) return node;
+      if (node.children) {
+        const found = findAndPatchNode(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const targetNode = findAndPatchNode(tree);
+
+  if (targetNode) {
+    if (!targetNode.attrs) targetNode.attrs = {};
+
+    if (updates.src && updates.tagName === 'img') {
+      targetNode.attrs.src = updates.src;
+      if (updates.srcSet) targetNode.attrs.srcset = updates.srcSet;
+    }
+    if (updates.alt) {
+      targetNode.attrs.alt = updates.alt;
+    }
+    if (updates.href && updates.tagName === 'a') {
+      targetNode.attrs.href = updates.href;
+    }
+    if (updates.buttonPayload?.callbackPayload) {
+      targetNode.attrs['data-callback'] = updates.buttonPayload.callbackPayload;
+    }
+
+    if (updates.isCssBackground && updates.src) {
+      const classes = (targetNode.attrs.class || '').split(/\s+/);
+      for (const cls of classes) {
+        const ruleRegex = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
+        const match = css.match(ruleRegex);
+
+        if (match && match[0].includes('background-image:')) {
+          const newRule = match[0].replace(
+            /url\(["']?(.*?)["']?\)/,
+            `url('${updates.src}')`
+          );
+          css = css.replace(match[0], newRule);
+          break;
+        }
+      }
+    }
+  }
+
+  const html = serializeAstToHtml(tree);
+  const newPayload = await htmlToHtmlAst(html, css);
+
+  if (newPayload.editableElements[astId]) {
+    newPayload.editableElements[astId] = {
+      ...newPayload.editableElements[astId],
+      ...updates,
+    };
+  }
+
+  return newPayload;
 }

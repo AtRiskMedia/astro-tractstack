@@ -15,6 +15,7 @@ interface ActionBuilderFieldProps {
   label?: string;
   error?: string;
   slug?: string;
+  restriction?: 'navigation' | 'action';
 }
 
 const parseActionLisp = (
@@ -42,6 +43,7 @@ export default function ActionBuilderField({
   label = 'Action',
   error,
   slug,
+  restriction,
 }: ActionBuilderFieldProps) {
   const [command, setCommand] = useState<ActionCommand>('goto');
   const [params, setParams] = useState('');
@@ -109,6 +111,8 @@ export default function ActionBuilderField({
   };
 
   const handleCommandChange = (newCommand: ActionCommand) => {
+    if (restriction === 'navigation' && newCommand !== 'goto') return;
+    if (restriction === 'action' && newCommand === 'goto') return;
     setCommand(newCommand);
     setParams('');
   };
@@ -183,11 +187,17 @@ export default function ActionBuilderField({
           onChange={(e) => handleCommandChange(e.target.value as ActionCommand)}
           className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-700 focus:ring-cyan-700"
         >
-          {Object.entries(ACTION_COMMANDS).map(([key, data]) => (
-            <option key={key} value={key}>
-              {data.name}
-            </option>
-          ))}
+          {Object.entries(ACTION_COMMANDS)
+            .filter(([key]) => {
+              if (restriction === 'navigation') return key === 'goto';
+              if (restriction === 'action') return key !== 'goto';
+              return true;
+            })
+            .map(([key, data]) => (
+              <option key={key} value={key}>
+                {data.name}
+              </option>
+            ))}
         </select>
         <p className="mt-1 text-sm text-gray-500">
           {ACTION_COMMANDS[command]?.description}

@@ -12,7 +12,10 @@ export async function createBackendSession(
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-  if (VERBOSE) console.log(`[session.ts] createBackendSession called for tenant: ${tenantId}`);
+  if (VERBOSE)
+    console.log(
+      `[session.ts] createBackendSession called for tenant: ${tenantId}`
+    );
 
   try {
     const response = await fetch(`${goBackend}/api/v1/auth/visit`, {
@@ -34,7 +37,8 @@ export async function createBackendSession(
     }
 
     const result = await response.json();
-    if (VERBOSE) console.log(`[session.ts] createBackendSession success:`, result);
+    if (VERBOSE)
+      console.log(`[session.ts] createBackendSession success:`, result);
 
     if (!result.sessionId) {
       console.error('Backend did not return a sessionId on warming', result);
@@ -67,14 +71,23 @@ export async function getOrSetSessionId(
   let sessionId = astro.cookies.get('tractstack_session_id')?.value;
   const fingerprintId = astro.cookies.get('tractstack_fingerprint')?.value;
 
-  if (VERBOSE) console.log(`[session.ts] getOrSetSessionId - Cookies Found:`, { sessionId, fingerprintId });
+  if (VERBOSE)
+    console.log(`[session.ts] getOrSetSessionId - Cookies Found:`, {
+      sessionId,
+      fingerprintId,
+    });
 
   if (sessionId) {
     // Validate session exists in backend before using it
     // We pass fingerprintId to allow the backend to restore the session from DB if RAM is empty
-    const isValid = await validateSessionWithBackend(sessionId, tenantId, fingerprintId);
+    const isValid = await validateSessionWithBackend(
+      sessionId,
+      tenantId,
+      fingerprintId
+    );
 
-    if (VERBOSE) console.log(`[session.ts] Session Validation Result:`, isValid);
+    if (VERBOSE)
+      console.log(`[session.ts] Session Validation Result:`, isValid);
 
     if (!isValid) {
       console.warn(`Session ${sessionId} invalid, creating new session`);
@@ -83,7 +96,8 @@ export async function getOrSetSessionId(
   }
 
   if (!sessionId) {
-    if (VERBOSE) console.log(`[session.ts] No valid session found. Creating new one...`);
+    if (VERBOSE)
+      console.log(`[session.ts] No valid session found. Creating new one...`);
 
     // Call backend to generate collision-free session ID AND warm session
     const sessionData = await createBackendSession(tenantId);
@@ -107,7 +121,11 @@ export async function getOrSetSessionId(
         maxAge: 60 * 60 * 24 * 365, // 1 year persistence
       });
     }
-    if (VERBOSE) console.log(`[session.ts] New Cookies Set:`, { sessionId, fingerprintId: sessionData.fingerprintId });
+    if (VERBOSE)
+      console.log(`[session.ts] New Cookies Set:`, {
+        sessionId,
+        fingerprintId: sessionData.fingerprintId,
+      });
   }
 
   return sessionId;
@@ -125,7 +143,11 @@ async function validateSessionWithBackend(
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
-  if (VERBOSE) console.log(`[session.ts] Validating session with backend...`, { sessionId, fingerprintId });
+  if (VERBOSE)
+    console.log(`[session.ts] Validating session with backend...`, {
+      sessionId,
+      fingerprintId,
+    });
 
   try {
     const response = await fetch(`${goBackend}/api/v1/auth/visit`, {
@@ -136,12 +158,16 @@ async function validateSessionWithBackend(
       },
       body: JSON.stringify({
         sessionId: sessionId,
-        fingerprintId: fingerprintId // Explicitly pass for restoration (fixes SSR Cookie Gap)
+        fingerprintId: fingerprintId, // Explicitly pass for restoration (fixes SSR Cookie Gap)
       }),
     });
 
     if (!response.ok) {
-      if (VERBOSE) console.log(`[session.ts] Validation returned non-200 status:`, response.status);
+      if (VERBOSE)
+        console.log(
+          `[session.ts] Validation returned non-200 status:`,
+          response.status
+        );
       return false;
     }
 

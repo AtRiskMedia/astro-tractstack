@@ -9,7 +9,10 @@ import allowInsert from '@/utils/compositor/allowInsert';
 import { reservedSlugs } from '@/constants';
 import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
 import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
-import { rehydrateChildrenFromHtml } from '@/utils/compositor/htmlAst';
+import {
+  rehydrateChildrenFromHtml,
+  regenerateCreativePane,
+} from '@/utils/compositor/htmlAst';
 import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
 import {
   hasButtonPayload,
@@ -20,6 +23,8 @@ import {
   toTag,
 } from '@/utils/compositor/typeGuards';
 import { startLoadingAnimation } from '@/utils/helpers';
+import { lispLexer } from '@/utils/actions/lispLexer';
+import { preParseAction } from '@/utils/actions/preParse_Action';
 import { settingsPanelStore } from '@/stores/storykeep';
 import {
   PaneAddMode,
@@ -27,6 +32,7 @@ import {
   ContextPaneMode,
 } from '@/types/compositorTypes';
 import type {
+  EditableElementMetadata,
   PanelState,
   BaseNode,
   FlatNode,
@@ -641,6 +647,58 @@ export class NodesContext {
     this.notifyNode(paneId);
     this.notifyNode('root');
     this.showSaveBypass.set(true);
+  }
+
+  async updateCreativeAsset(
+    paneId: string,
+    astId: string,
+    updates: Partial<EditableElementMetadata>
+  ) {
+    const allNodes = new Map(this.allNodes.get());
+    const originalPane = allNodes.get(paneId);
+
+    if (!originalPane || originalPane.nodeType !== 'Pane') return;
+
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+    if (!paneNode.htmlAst) return;
+
+    if (updates.tagName === 'a' && updates.buttonPayload?.callbackPayload) {
+      try {
+        const config = (window as any).TRACTSTACK_CONFIG || {};
+        const lexed = lispLexer(updates.buttonPayload.callbackPayload);
+
+        const resolvedHref = preParseAction(
+          lexed,
+          paneNode.slug,
+          !!paneNode.isContextPane,
+          config
+        );
+
+        if (resolvedHref) {
+          updates.href = resolvedHref;
+        }
+      } catch (e) {
+        console.warn('[Nodes] Failed to resolve href from ActionLisp:', e);
+      }
+    }
+
+    let newHtmlAst = await regenerateCreativePane(
+      paneNode.htmlAst,
+      astId,
+      updates
+    );
+
+    if (newHtmlAst.editableElements[astId]) {
+      newHtmlAst.editableElements[astId] = {
+        ...newHtmlAst.editableElements[astId],
+        ...updates,
+      };
+    }
+
+    paneNode.htmlAst = newHtmlAst;
+    paneNode.isChanged = true;
+
+    this.modifyNodes([paneNode]);
   }
 
   updateCreativePane(paneId: string, containerId: string, htmlContent: string) {

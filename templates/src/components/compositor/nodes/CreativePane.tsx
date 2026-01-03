@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { useStore } from '@nanostores/react';
 import { renderedPreviews, updatePreview } from '@/stores/previews';
-import { viewportKeyStore } from '@/stores/storykeep';
+import { settingsPanelStore, viewportKeyStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import type { CreativePanePayload } from '@/types/compositorTypes';
 
@@ -100,7 +100,7 @@ export const CreativePane = ({
     return () => {
       controller.abort();
     };
-  }, [htmlAst?.tree, nodeId]);
+  }, [htmlAst?.css, htmlAst?.tree, nodeId]);
 
   useEffect(() => {
     const ctx = getCtx();
@@ -129,7 +129,7 @@ export const CreativePane = ({
           const icon = document.createElement('div');
           icon.setAttribute('data-proxy-for', astId);
           icon.style.position = 'absolute';
-          icon.style.zIndex = '100';
+          icon.style.zIndex = '1003';
           icon.style.width = '24px';
           icon.style.height = '24px';
           icon.style.backgroundColor = '#06b6d4';
@@ -140,6 +140,7 @@ export const CreativePane = ({
           icon.style.color = 'white';
           icon.style.fontSize = '12px';
           icon.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
+          icon.style.cursor = 'pointer';
           icon.innerHTML = '✎';
 
           const rect = htmlEl.getBoundingClientRect();
@@ -152,10 +153,6 @@ export const CreativePane = ({
           };
           icon.onmouseleave = () => {
             htmlEl.style.outline = '2px dotted #06b6d4';
-          };
-          icon.onclick = (e) => {
-            e.stopPropagation();
-            console.log(`[Asset Deck] UI Triggered for Node: ${astId}`);
           };
 
           container.appendChild(icon);
@@ -176,21 +173,40 @@ export const CreativePane = ({
 
   const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    const astId = target.closest('[data-ast-id]')?.getAttribute('data-ast-id');
+    // Look for data-ast-id on the clicked element OR data-proxy-for on the icon
+    const astId =
+      target.closest('[data-ast-id]')?.getAttribute('data-ast-id') ||
+      target.getAttribute('data-proxy-for');
+
     const ctx = getCtx();
     const mode = ctx.toolModeValStore.get().value;
 
     if (!astId) return;
 
-    if (isProtected) {
-      console.log(`[HUD] PROTECTED MODE | NODE: ${astId} | MODE: ${mode}`);
-    } else if (mode === 'styles') {
+    if (mode === 'styles') {
       e.preventDefault();
-      console.log(
-        `[HUD] STYLES MODE | NODE: ${astId} | TAG: ${target.tagName}`
-      );
-    } else if (mode === 'text') {
-      console.log(`[HUD] TEXT MODE | NODE: ${astId} | TAG: ${target.tagName}`);
+      const meta = htmlAst.editableElements?.[astId];
+      if (meta) {
+        let action = '';
+        if (meta.isCssBackground) {
+          action = 'style-creative-bg';
+        } else if (meta.tagName === 'img') {
+          action = 'style-creative-img';
+        } else if (meta.tagName === 'a') {
+          action = 'style-creative-link';
+        } else if (meta.tagName === 'button') {
+          action = 'style-creative-btn';
+        }
+
+        if (action) {
+          settingsPanelStore.set({
+            action,
+            nodeId,
+            childId: astId,
+            expanded: true,
+          });
+        }
+      }
     }
 
     if (target.tagName === 'A') {

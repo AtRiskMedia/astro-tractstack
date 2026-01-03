@@ -1484,6 +1484,18 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/panels/CreativeImagePanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/CreativeImagePanel.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/panels/CreativeLinkPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/CreativeLinkPanel.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/panels/StyleWordCarouselPanel.tsx'
       ),
       dest: 'src/components/edit/panels/StyleWordCarouselPanel.tsx',

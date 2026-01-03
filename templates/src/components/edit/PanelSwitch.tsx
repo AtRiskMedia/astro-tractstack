@@ -6,6 +6,8 @@ import {
   isGridLayoutNode,
   isMarkdownPaneFragmentNode,
 } from '@/utils/compositor/typeGuards';
+import CreativeImagePanel from './panels/CreativeImagePanel';
+import CreativeLinkPanel from './panels/CreativeLinkPanel';
 import StyleBreakPanel from './panels/StyleBreakPanel';
 import StyleParentPanel from './panels/StyleParentPanel';
 import StyleParentAddPanel from './panels/StyleParentPanel_add';
@@ -574,6 +576,34 @@ const PanelSwitch = ({
             availableCodeHooks={availableCodeHooks}
           />
         );
+      break;
+
+    case 'style-creative-img':
+      if (paneNode && signal.childId)
+        return (
+          <CreativeImagePanel
+            node={paneNode}
+            childId={signal.childId}
+            mode="img"
+          />
+        );
+      break;
+
+    case 'style-creative-bg':
+      if (paneNode && signal.childId)
+        return (
+          <CreativeImagePanel
+            node={paneNode}
+            childId={signal.childId}
+            mode="bg"
+          />
+        );
+      break;
+
+    case 'style-creative-link':
+    case 'style-creative-btn':
+      if (paneNode && signal.childId)
+        return <CreativeLinkPanel node={paneNode} childId={signal.childId} />;
       break;
 
     default:
