@@ -116,7 +116,6 @@ export const CreativePane = ({
           if (htmlEl.isContentEditable) return;
           htmlEl.style.outline = '2px dotted #06b6d4';
           htmlEl.style.outlineOffset = '2px';
-          htmlEl.style.cursor = 'pointer';
 
           const astId = htmlEl.getAttribute('data-ast-id');
           if (!astId) return;
@@ -154,6 +153,30 @@ export const CreativePane = ({
           icon.onmouseleave = () => {
             htmlEl.style.outline = '2px dotted #06b6d4';
           };
+          icon.onclick = () => {
+            const meta = htmlAst.editableElements?.[astId];
+            if (meta) {
+              let action = '';
+              if (meta.isCssBackground) {
+                action = 'style-creative-bg';
+              } else if (meta.tagName === 'img') {
+                action = 'style-creative-img';
+              } else if (meta.tagName === 'a') {
+                action = 'style-creative-link';
+              } else if (meta.tagName === 'button') {
+                action = 'style-creative-btn';
+              }
+
+              if (action) {
+                settingsPanelStore.set({
+                  action,
+                  nodeId,
+                  childId: astId,
+                  expanded: true,
+                });
+              }
+            }
+          };
 
           container.appendChild(icon);
         });
@@ -170,49 +193,6 @@ export const CreativePane = ({
 
     return () => unsubscribe();
   }, [htmlContent]);
-
-  const handleMouseDown = (e: MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement;
-    // Look for data-ast-id on the clicked element OR data-proxy-for on the icon
-    const astId =
-      target.closest('[data-ast-id]')?.getAttribute('data-ast-id') ||
-      target.getAttribute('data-proxy-for');
-
-    const ctx = getCtx();
-    const mode = ctx.toolModeValStore.get().value;
-
-    if (!astId) return;
-
-    if (mode === 'styles') {
-      e.preventDefault();
-      const meta = htmlAst.editableElements?.[astId];
-      if (meta) {
-        let action = '';
-        if (meta.isCssBackground) {
-          action = 'style-creative-bg';
-        } else if (meta.tagName === 'img') {
-          action = 'style-creative-img';
-        } else if (meta.tagName === 'a') {
-          action = 'style-creative-link';
-        } else if (meta.tagName === 'button') {
-          action = 'style-creative-btn';
-        }
-
-        if (action) {
-          settingsPanelStore.set({
-            action,
-            nodeId,
-            childId: astId,
-            expanded: true,
-          });
-        }
-      }
-    }
-
-    if (target.tagName === 'A') {
-      e.preventDefault();
-    }
-  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const ctx = getCtx();
@@ -269,7 +249,6 @@ export const CreativePane = ({
       <style dangerouslySetInnerHTML={{ __html: activeCss }} />
       <div
         ref={contentRef}
-        onMouseDown={handleMouseDown}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
         className="creative-pane-wrapper relative h-full w-full"
