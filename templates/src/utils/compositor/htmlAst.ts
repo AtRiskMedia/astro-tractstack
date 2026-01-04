@@ -512,8 +512,16 @@ function processNode(
   if (el.hasAttributes()) {
     for (const attr of Array.from(el.attributes)) {
       if (attr.name === 'style') {
-        const hash = registry.registerInlineStyle(attr.value);
-        attrs['class'] = `${attrs['class'] || ''} ${hash}`.trim();
+        if (
+          attr.value.includes('url("data:') ||
+          attr.value.includes("url('data:") ||
+          attr.value.includes('url(data:')
+        ) {
+          attrs['style'] = attr.value;
+        } else {
+          const hash = registry.registerInlineStyle(attr.value);
+          attrs['class'] = `${attrs['class'] || ''} ${hash}`.trim();
+        }
       } else if (attr.name === 'class') {
         const tokens = attr.value
           .split(/\s+/)
@@ -650,9 +658,13 @@ export async function regenerateCreativePane(
     if (!targetNode.attrs) targetNode.attrs = {};
 
     // 1. Identity Persistence (Uploaded Files)
-    if (updates.fileId) targetNode.attrs['data-file-id'] = updates.fileId;
-    if (updates.fileId === undefined && updates.src === '')
-      delete targetNode.attrs['data-file-id']; // Clear if removed
+    // FIX: If updates.fileId is present, use it.
+    // If NOT present but src IS updating, we must clear the old ID to prevent "Ghost IDs".
+    if (updates.fileId) {
+      targetNode.attrs['data-file-id'] = updates.fileId;
+    } else if (updates.src !== undefined) {
+      delete targetNode.attrs['data-file-id'];
+    }
 
     // 2. Identity Persistence (Artpack)
     if (updates.collection) {
@@ -690,18 +702,31 @@ export async function regenerateCreativePane(
     }
 
     if (updates.isCssBackground && updates.src) {
-      const classes = (targetNode.attrs.class || '').split(/\s+/);
-      for (const cls of classes) {
-        const ruleRegex = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
-        const match = css.match(ruleRegex);
+      const isBase64 = updates.src.startsWith('data:');
 
-        if (match && match[0].includes('background-image:')) {
-          const newRule = match[0].replace(
-            /url\(["']?(.*?)["']?\)/,
-            `url('${updates.src}')`
-          );
-          css = css.replace(match[0], newRule);
-          break;
+      if (isBase64) {
+        targetNode.attrs['style'] = `background-image: url('${updates.src}');`;
+      } else {
+        if (
+          targetNode.attrs['style'] &&
+          targetNode.attrs['style'].includes('background-image')
+        ) {
+          delete targetNode.attrs['style'];
+        }
+
+        const classes = (targetNode.attrs.class || '').split(/\s+/);
+        for (const cls of classes) {
+          const ruleRegex = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
+          const match = css.match(ruleRegex);
+
+          if (match && match[0].includes('background-image:')) {
+            const newRule = match[0].replace(
+              /url\(["']?(.*?)["']?\)/,
+              `url('${updates.src}')`
+            );
+            css = css.replace(match[0], newRule);
+            break;
+          }
         }
       }
     }
@@ -710,6 +735,24 @@ export async function regenerateCreativePane(
   const html = serializeAstToHtml(tree);
   const newPayload = await htmlToHtmlAst(html, css);
 
+  if (originalPayload.editableElements) {
+    for (const [id, originalMeta] of Object.entries(
+      originalPayload.editableElements
+    )) {
+      if (newPayload.editableElements[id]) {
+        // Carry over base64Data if it exists in the old state and the node still exists
+        if (originalMeta.base64Data) {
+          newPayload.editableElements[id].base64Data = originalMeta.base64Data;
+        }
+        // Preserve fileId if it was somehow lost in translation (safety net)
+        if (originalMeta.fileId && !newPayload.editableElements[id].fileId) {
+          newPayload.editableElements[id].fileId = originalMeta.fileId;
+        }
+      }
+    }
+  }
+
+  // Apply the specific updates for the target node
   if (newPayload.editableElements[astId]) {
     newPayload.editableElements[astId] = {
       ...newPayload.editableElements[astId],
@@ -718,4 +761,73 @@ export async function regenerateCreativePane(
   }
 
   return newPayload;
+}
+
+export async function scanAndReplaceBase64(
+  payload: CreativePanePayload,
+  uploadFn: (
+    base64: string
+  ) => Promise<{ fileId: string; src: string; srcSet?: string }>
+): Promise<CreativePanePayload> {
+  logger.group('scanAndReplaceBase64');
+  let currentPayload = JSON.parse(
+    JSON.stringify(payload)
+  ) as CreativePanePayload;
+  const elements = currentPayload.editableElements || {};
+  let modifiedCount = 0;
+
+  for (const [astId, meta] of Object.entries(elements)) {
+    let dataToUpload = meta.base64Data;
+    if (!dataToUpload && meta.src && meta.src.startsWith('data:')) {
+      logger.log(
+        `[Base64] Recovering metadata-less base64 from src for ${astId}`
+      );
+      dataToUpload = meta.src;
+    }
+
+    if (dataToUpload) {
+      logger.log(`[Base64] Found pending upload for element ${astId}`);
+      try {
+        const result = await uploadFn(dataToUpload);
+        logger.log(
+          `[Base64] Upload successful for ${astId}. FileID: ${result.fileId}`
+        );
+
+        currentPayload = await regenerateCreativePane(currentPayload, astId, {
+          src: result.src,
+          srcSet: result.srcSet,
+          fileId: result.fileId,
+          base64Data: undefined,
+          tagName: meta.tagName,
+          isCssBackground: meta.isCssBackground,
+        });
+        modifiedCount++;
+      } catch (err) {
+        logger.error(`[Base64] Failed to upload asset for ${astId}`, err);
+      }
+    }
+  }
+
+  logger.log(`Scan complete. Modified ${modifiedCount} elements.`);
+  logger.groupEnd();
+  return currentPayload;
+}
+
+export function extractFileIdsFromAst(payload: CreativePanePayload): string[] {
+  if (VERBOSE) logger.group('extractFileIdsFromAst');
+  const fileIds = new Set<string>();
+  const elements = payload.editableElements || {};
+
+  Object.values(elements).forEach((meta) => {
+    if (meta.fileId) {
+      fileIds.add(meta.fileId);
+    }
+  });
+
+  const results = Array.from(fileIds);
+  if (VERBOSE) {
+    logger.log(`Found ${results.length} unique file IDs:`, results);
+    logger.groupEnd();
+  }
+  return results;
 }

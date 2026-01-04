@@ -12,6 +12,7 @@ import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
 import {
   rehydrateChildrenFromHtml,
   regenerateCreativePane,
+  extractFileIdsFromAst,
 } from '@/utils/compositor/htmlAst';
 import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
 import {
@@ -2701,7 +2702,15 @@ export class NodesContext {
   getPaneImageFileIds(paneId: string): string[] {
     const paneNode = this.allNodes.get().get(paneId);
     if (!paneNode || paneNode.nodeType !== 'Pane') return [];
+    const pane = paneNode as PaneNode;
 
+    // 1. Extract from Creative AST (if present)
+    let creativeFileIds: string[] = [];
+    if (pane.htmlAst) {
+      creativeFileIds = extractFileIdsFromAst(pane.htmlAst);
+    }
+
+    // 2. Extract from Standard Nodes (TagElement, BgPane)
     const allNodes = this.getNodesRecursively(paneNode);
 
     const embeddedFileIds = allNodes
@@ -2728,7 +2737,10 @@ export class NodesContext {
       .map((node) => node.fileId)
       .filter((id): id is string => id !== undefined);
 
-    return [...embeddedFileIds, ...bgFileIds];
+    // 3. Merge unique IDs
+    return Array.from(
+      new Set([...embeddedFileIds, ...bgFileIds, ...creativeFileIds])
+    );
   }
 
   getPaneImagesMap(): Record<string, string[]> {

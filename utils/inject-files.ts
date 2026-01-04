@@ -670,6 +670,10 @@ export async function injectTemplateFiles(
     },
     // Compositor utils
     {
+      src: resolve('../templates/src/utils/compositor/savePipeline.ts'),
+      dest: 'src/utils/compositor/savePipeline.ts',
+    },
+    {
       src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),
       dest: 'src/utils/compositor/aiPaneParser.ts',
     },
