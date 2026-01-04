@@ -251,12 +251,12 @@ export const AiLibraryCopyStep = ({
         <div>
           <h3 className="font-bold text-gray-800">Customize Design</h3>
           <p className="text-xs text-gray-500">
-            Selected: <span className="font-semibold">{entry.title}</span>
+            Selected: <span className="font-bold">{entry.title}</span>
           </p>
         </div>
         <button
           onClick={onBack}
-          className="text-xs font-medium text-gray-500 hover:text-gray-700"
+          className="text-xs text-gray-500 hover:text-gray-700"
         >
           Change Design
         </button>

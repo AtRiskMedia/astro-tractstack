@@ -231,7 +231,8 @@ function scheduleNextPoll(tenantId: string): void {
   const elapsed = Date.now() - state.startTime;
   if (elapsed >= MAX_POLLING_DURATION) {
     console.warn(
-      `Orphan analysis polling stopped: Maximum duration (${MAX_POLLING_DURATION / 1000
+      `Orphan analysis polling stopped: Maximum duration (${
+        MAX_POLLING_DURATION / 1000
       }s) exceeded for tenant ${tenantId}`
     );
     handlePollingFailure(tenantId, 'Polling timeout exceeded');

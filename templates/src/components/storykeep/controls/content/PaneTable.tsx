@@ -24,7 +24,7 @@ interface PanePreviewItem {
   snapshot?: SnapshotData;
 }
 
-const ITEMS_PER_PAGE = 4;
+const ITEMS_PER_PAGE = 6;
 
 const DeletingModal = ({ count }: { count: number }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -172,13 +172,13 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-4">
-            <div className="text-sm font-medium text-gray-700">
+            <div className="text-sm text-gray-700">
               {selectedIds.size} of {filteredPanes.length} Selected
             </div>
             {selectedIds.size > 0 && (
               <button
                 onClick={handleClearSelection}
-                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
               >
                 <XMarkIcon className="h-3 w-3" />
                 Clear
@@ -207,7 +207,7 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleSelectAllUnused}
-            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 shadow-sm hover:bg-gray-50"
             title={`Select all ${unusedCount} unused panes`}
           >
             <CheckCircleIcon className="h-4 w-4 text-green-600" />
@@ -229,12 +229,12 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
 
       {previews.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-white py-12">
-          <p className="font-medium text-gray-500">
+          <p className="text-gray-500">
             No panes found matching the current filter.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-6 p-2 xl:grid-cols-4">
+        <div className="flex flex-wrap items-start justify-start gap-4 p-2">
           {visiblePreviews.map((item) => {
             const orphan = isOrphan(item.pane.id);
             const isSelected = selectedIds.has(item.pane.id);
@@ -242,7 +242,7 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
             return (
               <div
                 key={item.pane.id}
-                className={`relative flex flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${
+                className={`relative flex min-w-72 flex-1 basis-1/4 flex-col rounded-lg border-2 bg-white shadow-sm transition-all ${
                   isSelected
                     ? 'border-cyan-600 ring-2 ring-cyan-100'
                     : 'border-transparent hover:border-gray-300'
@@ -250,38 +250,33 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
               >
                 <div className="absolute right-2 top-2 z-10">
                   {orphan ? (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-md transition-transform hover:scale-110">
                       <input
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelection(item.pane.id)}
-                        className="h-5 w-5 cursor-pointer rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                       />
                     </div>
                   ) : (
                     <div
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 shadow-md"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 shadow-md"
                       title="This pane is in use and cannot be deleted"
                     >
-                      <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                      <LockClosedIcon className="h-3.5 w-3.5 text-gray-400" />
                     </div>
                   )}
                 </div>
 
-                <div
-                  className="relative w-full overflow-hidden rounded-t-lg bg-gray-50"
-                  style={{
-                    ...(!item.snapshot ? { minHeight: '150px' } : {}),
-                  }}
-                >
+                <div className="relative w-full overflow-hidden rounded-t-lg bg-gray-50">
                   {fragmentsLoading && !fragments[item.pane.id] && (
-                    <div className="flex h-full items-center justify-center text-gray-400">
+                    <div className="flex h-24 items-center justify-center text-gray-400">
                       <span className="text-xs">Loading...</span>
                     </div>
                   )}
 
                   {errors[item.pane.id] && (
-                    <div className="flex h-full items-center justify-center text-red-400">
+                    <div className="flex h-24 items-center justify-center text-red-400">
                       <span className="text-xs">Preview Error</span>
                     </div>
                   )}
@@ -289,39 +284,41 @@ const PaneTable = ({ fullContentMap, onRefresh }: PaneTableProps) => {
                   {fragments[item.pane.id] &&
                     !item.snapshot &&
                     !errors[item.pane.id] && (
-                      <PaneSnapshotGenerator
-                        id={`table-${item.pane.id}`}
-                        htmlString={fragments[item.pane.id]}
-                        onComplete={handleSnapshotComplete}
-                        outputWidth={400}
-                      />
+                      <div className="max-h-32 overflow-hidden">
+                        <PaneSnapshotGenerator
+                          id={`table-${item.pane.id}`}
+                          htmlString={fragments[item.pane.id]}
+                          onComplete={handleSnapshotComplete}
+                          outputWidth={400}
+                        />
+                      </div>
                     )}
 
                   {item.snapshot && (
                     <img
                       src={item.snapshot.imageData}
                       alt={item.pane.title}
-                      className="w-full object-cover"
+                      className="max-h-32 w-full object-cover object-top"
                     />
                   )}
                 </div>
 
-                <div className="bg-gray-50 p-3">
+                <div className="bg-gray-50 p-2">
                   <h4
-                    className="truncate text-sm font-bold text-gray-900"
+                    className="truncate text-xs font-bold text-gray-900"
                     title={item.pane.title}
                   >
                     {item.pane.title}
                   </h4>
-                  <div className="mt-1 flex items-center justify-between">
+                  <div className="mt-0.5 flex items-center justify-between">
                     <span
-                      className="truncate font-mono text-xs text-gray-500"
+                      className="truncate font-mono text-base text-gray-500"
                       title={item.pane.slug}
                     >
                       /{item.pane.slug}
                     </span>
                     {!orphan && (
-                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                      <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-base text-green-800">
                         In Use
                       </span>
                     )}

@@ -287,7 +287,7 @@ const AddPaneNewPanel = ({
       <div className="mt-4 flex justify-center border-t border-gray-100 pt-4">
         <button
           onClick={() => setParentMode(PaneAddMode.DEFAULT, false)}
-          className="text-sm font-medium text-gray-500 hover:text-gray-700"
+          className="text-sm text-gray-500 hover:text-gray-700"
         >
           Cancel
         </button>
