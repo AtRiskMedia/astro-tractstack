@@ -109,6 +109,8 @@ const CreativeImagePanel = ({
       alt: params.altDescription || altDescription,
       isCssBackground: mode === 'bg',
       tagName: mode === 'img' ? 'img' : assetMeta.tagName,
+      collection: params.collection,
+      image: params.image,
     });
   };
 
@@ -168,6 +170,8 @@ const CreativeImagePanel = ({
       srcSet,
       fileId: undefined,
       altDescription: alt,
+      collection: collection,
+      image: image,
     });
     setAltDescription(alt);
     setIsArtpackModalOpen(false);

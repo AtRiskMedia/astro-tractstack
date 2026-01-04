@@ -85,6 +85,8 @@ export interface EditableElementMetadata {
   href?: string;
   buttonPayload?: CreativeButtonPayload;
   isCssBackground?: boolean;
+  collection?: string;
+  image?: string;
 }
 
 export interface CreativePanePayload {

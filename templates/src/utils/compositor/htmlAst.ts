@@ -14,109 +14,6 @@ const logger = {
   groupEnd: () => VERBOSE && console.groupEnd(),
 };
 
-/**
- * Scanner: Detects Assets based on Tags or Background Image URLs.
- */
-function extractMetadataFromNode(
-  el: HTMLElement,
-  astId: string,
-  registry?: StyleRegistry
-): EditableElementMetadata | null {
-  logger.group(`extractMetadataFromNode Trace: ${astId}`);
-  const tagName = el.tagName.toLowerCase();
-  const classList = Array.from(el.classList);
-  logger.log(`Target: <${tagName}> | Classes:`, classList);
-
-  // 1. Tag-based Assets
-  if (tagName === 'img') {
-    const imgEl = el as HTMLImageElement;
-    const meta = {
-      astId,
-      tagName,
-      src: imgEl.getAttribute('src') || '',
-      srcSet: imgEl.getAttribute('srcset') || undefined,
-      alt: imgEl.getAttribute('alt') || '',
-    };
-    logger.log(`[Discovery] MATCH: <img> tag`, meta);
-    logger.groupEnd();
-    return meta;
-  }
-
-  if (tagName === 'a') {
-    const anchorEl = el as HTMLAnchorElement;
-    const meta = {
-      astId,
-      tagName,
-      href: anchorEl.getAttribute('href') || '',
-    };
-    logger.log(`[Discovery] MATCH: <a> tag`, meta);
-    logger.groupEnd();
-    return meta;
-  }
-
-  if (tagName === 'button') {
-    const callback = el.getAttribute('data-callback');
-    const meta = {
-      astId,
-      tagName,
-      buttonPayload: {
-        callbackPayload: callback || '',
-        isExternalUrl: el.getAttribute('data-external') === 'true',
-      },
-    };
-    logger.log(`[Discovery] MATCH: <button> tag`, meta);
-    logger.groupEnd();
-    return meta;
-  }
-
-  // 2. Background Image Detection (URL only)
-  let bgImageUrl = '';
-
-  // Check Inline Style
-  const inlineBg = el.style.backgroundImage;
-  if (inlineBg && inlineBg !== 'none') {
-    const match = inlineBg.match(/url\(["']?(.*?)["']?\)/);
-    if (match) {
-      bgImageUrl = match[1];
-      logger.log(`[Discovery] Found inline background-image: ${bgImageUrl}`);
-    }
-  }
-
-  // Check Registry for class-based background image URLs
-  if (!bgImageUrl && registry) {
-    for (const cls of classList) {
-      const ruleBody = registry.getRuleBody(cls);
-      if (ruleBody) {
-        const urlMatch = ruleBody.match(
-          /background-image:\s*url\(["']?(.*?)["']?\)/
-        );
-        if (urlMatch) {
-          bgImageUrl = urlMatch[1];
-          logger.log(
-            `[Discovery] SUCCESS: Found background image in class "${cls}": ${bgImageUrl}`
-          );
-          break;
-        }
-      }
-    }
-  }
-
-  if (bgImageUrl) {
-    const meta = {
-      astId,
-      tagName,
-      src: bgImageUrl,
-      isCssBackground: true,
-    };
-    logger.groupEnd();
-    return meta;
-  }
-
-  logger.log(`[Discovery] REJECTED: No managed capabilities found.`);
-  logger.groupEnd();
-  return null;
-}
-
 class StyleRegistry {
   private rules = new Map<string, string>();
   private classMap = new Map<string, Set<string>>();
@@ -387,6 +284,173 @@ export function extractTextFromAst(tree: HtmlAstNode[]): string {
 }
 
 /**
+ * Serializes the AST back to a raw HTML string to feed the pipeline.
+ * Preserves data-ast-id to maintain node identity during regeneration.
+ */
+function serializeAstToHtml(nodes: HtmlAstNode[]): string {
+  const voidTags = new Set([
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
+  ]);
+
+  return nodes
+    .map((node) => {
+      if (node.tag === 'text') return node.text || '';
+
+      const attrs = Object.entries(node.attrs || {})
+        .map(([key, value]) => `${key}="${value}"`)
+        .join(' ');
+
+      // Crucial: Inject the ID back so the pipeline re-claims it
+      const idAttr = node.id ? `data-ast-id="${node.id}"` : '';
+      const space = attrs || idAttr ? ' ' : '';
+      const combinedAttrs = [idAttr, attrs].filter(Boolean).join(' ');
+
+      const openTag = `<${node.tag}${space}${combinedAttrs}>`;
+
+      if (voidTags.has(node.tag)) return openTag;
+
+      const children = node.children ? serializeAstToHtml(node.children) : '';
+      return `${openTag}${children}</${node.tag}>`;
+    })
+    .join('');
+}
+
+/**
+ * Scanner: Detects Assets based on Tags or Background Image URLs.
+ */
+function extractMetadataFromNode(
+  el: HTMLElement,
+  astId: string,
+  registry?: StyleRegistry
+): EditableElementMetadata | null {
+  logger.group(`extractMetadataFromNode Trace: ${astId}`);
+  const tagName = el.tagName.toLowerCase();
+  const classList = Array.from(el.classList);
+  logger.log(`Target: <${tagName}> | Classes:`, classList);
+
+  // Helper to extract common identity attributes
+  const getIdentity = () => ({
+    fileId: el.getAttribute('data-file-id') || undefined,
+    collection: el.getAttribute('data-collection') || undefined,
+    image: el.getAttribute('data-image') || undefined,
+  });
+
+  // 1. Tag-based Assets
+  if (tagName === 'img') {
+    const imgEl = el as HTMLImageElement;
+    const meta: EditableElementMetadata = {
+      astId,
+      tagName,
+      src: imgEl.getAttribute('src') || '',
+      srcSet: imgEl.getAttribute('srcset') || undefined,
+      alt: imgEl.getAttribute('alt') || '',
+      ...getIdentity(),
+    };
+    logger.log(`[Discovery] MATCH: <img> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  if (tagName === 'a') {
+    const anchorEl = el as HTMLAnchorElement;
+    const meta: EditableElementMetadata = {
+      astId,
+      tagName,
+      href: anchorEl.getAttribute('href') || '',
+      // Links can now carry button-like payloads (e.g. video triggers)
+      buttonPayload: {
+        callbackPayload: el.getAttribute('data-callback') || '',
+        isExternalUrl: el.getAttribute('data-external') === 'true',
+        bunnyPayload: el.getAttribute('data-bunny-payload')
+          ? JSON.parse(el.getAttribute('data-bunny-payload')!)
+          : undefined,
+      },
+    };
+    logger.log(`[Discovery] MATCH: <a> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  if (tagName === 'button') {
+    const meta: EditableElementMetadata = {
+      astId,
+      tagName,
+      buttonPayload: {
+        callbackPayload: el.getAttribute('data-callback') || '',
+        isExternalUrl: el.getAttribute('data-external') === 'true',
+        bunnyPayload: el.getAttribute('data-bunny-payload')
+          ? JSON.parse(el.getAttribute('data-bunny-payload')!)
+          : undefined,
+      },
+    };
+    logger.log(`[Discovery] MATCH: <button> tag`, meta);
+    logger.groupEnd();
+    return meta;
+  }
+
+  // 2. Background Image Detection (URL only)
+  let bgImageUrl = '';
+
+  // Check Inline Style
+  const inlineBg = el.style.backgroundImage;
+  if (inlineBg && inlineBg !== 'none') {
+    const match = inlineBg.match(/url\(["']?(.*?)["']?\)/);
+    if (match) {
+      bgImageUrl = match[1];
+      logger.log(`[Discovery] Found inline background-image: ${bgImageUrl}`);
+    }
+  }
+
+  // Check Registry for class-based background image URLs
+  if (!bgImageUrl && registry) {
+    for (const cls of classList) {
+      const ruleBody = registry.getRuleBody(cls);
+      if (ruleBody) {
+        const urlMatch = ruleBody.match(
+          /background-image:\s*url\(["']?(.*?)["']?\)/
+        );
+        if (urlMatch) {
+          bgImageUrl = urlMatch[1];
+          logger.log(
+            `[Discovery] SUCCESS: Found background image in class "${cls}": ${bgImageUrl}`
+          );
+          break;
+        }
+      }
+    }
+  }
+
+  if (bgImageUrl) {
+    const meta: EditableElementMetadata = {
+      astId,
+      tagName,
+      src: bgImageUrl,
+      isCssBackground: true,
+      ...getIdentity(),
+    };
+    logger.groupEnd();
+    return meta;
+  }
+
+  logger.log(`[Discovery] REJECTED: No managed capabilities found.`);
+  logger.groupEnd();
+  return null;
+}
+
+/**
  * processNode: The primary entry point for converting a live DOM element into an AST node.
  * Strictly whitelists allowed attributes and sanitizes text content to prevent
  * "sloppy" storage and ephemeral attribute leakage.
@@ -436,6 +500,13 @@ function processNode(
     'type',
     'value',
     'placeholder',
+    // Expanded whitelist for persistence
+    'data-file-id',
+    'data-collection',
+    'data-image',
+    'data-callback',
+    'data-external',
+    'data-bunny-payload',
   ];
 
   if (el.hasAttributes()) {
@@ -514,6 +585,12 @@ function processRehydratedNode(
     'type',
     'value',
     'placeholder',
+    'data-file-id',
+    'data-collection',
+    'data-image',
+    'data-callback',
+    'data-external',
+    'data-bunny-payload',
   ];
 
   if (el.hasAttributes()) {
@@ -539,51 +616,6 @@ function processRehydratedNode(
     .filter((n): n is HtmlAstNode => n !== null);
 
   return { tag: tagName, attrs, children, id };
-}
-
-/**
- * Serializes the AST back to a raw HTML string to feed the pipeline.
- * Preserves data-ast-id to maintain node identity during regeneration.
- */
-function serializeAstToHtml(nodes: HtmlAstNode[]): string {
-  const voidTags = new Set([
-    'area',
-    'base',
-    'br',
-    'col',
-    'embed',
-    'hr',
-    'img',
-    'input',
-    'link',
-    'meta',
-    'param',
-    'source',
-    'track',
-    'wbr',
-  ]);
-
-  return nodes
-    .map((node) => {
-      if (node.tag === 'text') return node.text || '';
-
-      const attrs = Object.entries(node.attrs || {})
-        .map(([key, value]) => `${key}="${value}"`)
-        .join(' ');
-
-      // Crucial: Inject the ID back so the pipeline re-claims it
-      const idAttr = node.id ? `data-ast-id="${node.id}"` : '';
-      const space = attrs || idAttr ? ' ' : '';
-      const combinedAttrs = [idAttr, attrs].filter(Boolean).join(' ');
-
-      const openTag = `<${node.tag}${space}${combinedAttrs}>`;
-
-      if (voidTags.has(node.tag)) return openTag;
-
-      const children = node.children ? serializeAstToHtml(node.children) : '';
-      return `${openTag}${children}</${node.tag}>`;
-    })
-    .join('');
 }
 
 /**
@@ -617,6 +649,23 @@ export async function regenerateCreativePane(
   if (targetNode) {
     if (!targetNode.attrs) targetNode.attrs = {};
 
+    // 1. Identity Persistence (Uploaded Files)
+    if (updates.fileId) targetNode.attrs['data-file-id'] = updates.fileId;
+    if (updates.fileId === undefined && updates.src === '')
+      delete targetNode.attrs['data-file-id']; // Clear if removed
+
+    // 2. Identity Persistence (Artpack)
+    if (updates.collection) {
+      targetNode.attrs['data-collection'] = updates.collection;
+    } else if (updates.collection === null) {
+      delete targetNode.attrs['data-collection'];
+    }
+    if (updates.image) {
+      targetNode.attrs['data-image'] = updates.image;
+    } else if (updates.image === null) {
+      delete targetNode.attrs['data-image'];
+    }
+
     if (updates.src && updates.tagName === 'img') {
       targetNode.attrs.src = updates.src;
       if (updates.srcSet) targetNode.attrs.srcset = updates.srcSet;
@@ -627,8 +676,17 @@ export async function regenerateCreativePane(
     if (updates.href && updates.tagName === 'a') {
       targetNode.attrs.href = updates.href;
     }
-    if (updates.buttonPayload?.callbackPayload) {
-      targetNode.attrs['data-callback'] = updates.buttonPayload.callbackPayload;
+
+    // 3. Button Payload Persistence (Buttons & Links)
+    if (updates.buttonPayload) {
+      const { callbackPayload, isExternalUrl, bunnyPayload } =
+        updates.buttonPayload;
+
+      if (callbackPayload) targetNode.attrs['data-callback'] = callbackPayload;
+      if (isExternalUrl !== undefined)
+        targetNode.attrs['data-external'] = String(isExternalUrl);
+      if (bunnyPayload)
+        targetNode.attrs['data-bunny-payload'] = JSON.stringify(bunnyPayload);
     }
 
     if (updates.isCssBackground && updates.src) {
