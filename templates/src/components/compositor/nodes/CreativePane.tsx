@@ -2,7 +2,6 @@ import {
   useEffect,
   useState,
   useRef,
-  type MouseEvent,
   type FocusEvent,
   type KeyboardEvent,
 } from 'react';
@@ -110,7 +109,7 @@ export const CreativePane = ({
 
       const editables = container.querySelectorAll('[data-ast-id]');
 
-      if (state.value === 'styles') {
+      if (state.value === 'text') {
         editables.forEach((el) => {
           const htmlEl = el as HTMLElement;
           if (htmlEl.isContentEditable) return;

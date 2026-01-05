@@ -63,7 +63,6 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps, WidgetProps } from '@/types/nodeProps';
 import type { CSSProperties } from 'react';
-import { selectionStore } from '@/stores/selection';
 import type { SelectionRange, SelectionStoreState } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
@@ -351,15 +350,6 @@ export class NodesContext {
 
     // click handler based on toolModeVal
     switch (toolModeVal) {
-      case `styles`:
-        const selection = selectionStore.get();
-        if (!selection.isActive)
-          handleClickEventDefault(
-            node,
-            dblClick,
-            this.clickedParentLayer.get()
-          );
-        break;
       case `text`:
         if (
           dblClick &&
@@ -367,7 +357,6 @@ export class NodesContext {
           'tagName' in node &&
           (node.tagName === 'a' || node.tagName === 'button')
         ) {
-          this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(
             node,
             dblClick,
@@ -375,17 +364,12 @@ export class NodesContext {
           );
         }
         if (dblClick && ![`Markdown`].includes(node.nodeType)) {
-          this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(
             node,
             dblClick,
             this.clickedParentLayer.get()
           );
         }
-        break;
-      case `eraser`:
-        this.handleEraseEvent(node.id);
-        this.deleteNode(node.id);
         break;
       default:
     }
@@ -2118,9 +2102,7 @@ export class NodesContext {
         });
         break;
     }
-    if ([`p`, `h2`, `h3`, `h4`, `li`].includes(tagName))
-      this.toolModeValStore.set({ value: 'text' });
-    else this.toolModeValStore.set({ value: 'styles' });
+    this.toolModeValStore.set({ value: 'text' });
     this.notifyNode('root');
   }
 

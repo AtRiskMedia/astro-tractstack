@@ -15,6 +15,8 @@ export const NodeImg = (props: NodeProps) => {
         viewportKeyStore.get().value
       )}
       alt={node.alt}
+      data-node-id={props.nodeId}
+      data-tag="img"
       onClick={(e) => {
         getCtx(props).setClickedNodeId(props.nodeId);
         e.stopPropagation();

@@ -169,11 +169,9 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
       ) : (
         <button
           onClick={(e) => {
-            if (toolModeVal !== `eraser`) {
-              e.stopPropagation();
-              settingsPanelStore.set(null);
-              setShowInsertOptions(true);
-            }
+            e.stopPropagation();
+            settingsPanelStore.set(null);
+            setShowInsertOptions(true);
           }}
           className="group w-full rounded-lg border-2 border-dashed border-cyan-500 bg-cyan-50 p-6 transition-colors hover:bg-cyan-100 dark:border-cyan-600 dark:bg-cyan-900 dark:hover:bg-cyan-800"
         >

@@ -32,14 +32,6 @@ export const pendingHomePageSlugStore = atom<string | null>(null);
 export const saasModalOpenStore = atom<boolean>(false);
 export const sandboxTokenStore = atom<string | null>(null);
 
-export type ToolModeVal =
-  | 'styles'
-  | 'text'
-  | 'insert'
-  | 'eraser'
-  | 'move'
-  | 'debug';
-
 export type ToolAddMode =
   | 'p'
   | 'h2'

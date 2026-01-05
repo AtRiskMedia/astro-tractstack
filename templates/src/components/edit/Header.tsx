@@ -234,14 +234,12 @@ const StoryKeepHeader = ({
         )}
 
         {shouldShowSave && (
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-            <button
-              onClick={handleSave}
-              className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
-            >
-              Save
-            </button>
-          </div>
+          <button
+            onClick={handleSave}
+            className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
+          >
+            Save
+          </button>
         )}
       </div>
 

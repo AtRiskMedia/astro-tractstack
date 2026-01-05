@@ -96,8 +96,10 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/Node.tsx',
     },
     {
-      src: resolve('../templates/src/components/compositor/NodeWithGuid.tsx'),
-      dest: 'src/components/compositor/NodeWithGuid.tsx',
+      src: resolve(
+        '../templates/src/components/compositor/tools/NodeOverlay.tsx'
+      ),
+      dest: 'src/components/compositor/tools/NodeOverlay.tsx',
     },
     {
       src: resolve(
@@ -119,12 +121,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/GridLayout_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/GridLayout_eraser.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/GhostInsertBlock.tsx'
       ),
       dest: 'src/components/compositor/nodes/GhostInsertBlock.tsx',
@@ -141,24 +137,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_eraser.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_DesignLibrary.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_DesignLibrary.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_layout.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_layout.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/codehooks/SandboxRegisterForm.tsx'
       ),
       dest: 'src/components/codehooks/SandboxRegisterForm.tsx',
@@ -166,12 +144,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/compositor/nodes/Markdown.tsx'),
       dest: 'src/components/compositor/nodes/Markdown.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Markdown_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Markdown_eraser.tsx',
     },
     {
       src: resolve(
@@ -203,24 +175,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/tagElements/NodeText.tsx'
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeText.tsx',
@@ -239,21 +193,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeA_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeA_eraser.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/tagElements/NodeButton.tsx'
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeButton.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx',
     },
     {
       src: resolve(

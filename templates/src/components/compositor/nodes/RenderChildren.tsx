@@ -1,6 +1,6 @@
 // templates/src/components/compositor/nodes/RenderChildren.tsx
 
-import Node from '../Node';
+import { Node } from '../Node';
 import type { NodeProps } from '@/types/nodeProps';
 import type { CompositorProps } from '../Compositor';
 

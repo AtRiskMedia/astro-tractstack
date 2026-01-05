@@ -6,14 +6,7 @@ import { getCtx } from '@/stores/nodes';
 import { pendingHomePageSlugStore } from '@/stores/storykeep';
 import { startLoadingAnimation } from '@/utils/helpers';
 import { executeSavePipeline } from '@/utils/compositor/savePipeline';
-import type {
-  FlatNode,
-  BaseNode,
-  PaneNode,
-  StoryFragmentNode,
-  MarkdownPaneFragmentNode,
-  GridLayoutNode,
-} from '@/types/compositorTypes';
+import type { PaneNode, StoryFragmentNode } from '@/types/compositorTypes';
 
 type SaveStage =
   | 'PREPARING'
@@ -126,7 +119,6 @@ export default function SaveModal({
   const addDebugMessage = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setDebugMessages((prev) => [...prev, `${timestamp}: ${message}`]);
-    console.log(`${timestamp}: ${message}`);
   };
 
   useEffect(() => {

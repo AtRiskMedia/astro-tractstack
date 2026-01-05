@@ -55,6 +55,7 @@ const PanelSwitch = ({
   onTitleChange,
 }: SettingsPanelProps) => {
   const signal = useStore(settingsPanelStore);
+  console.log(signal);
 
   useEffect(() => {
     if (signal?.action && onTitleChange) {

@@ -32,7 +32,7 @@ const callAskLemurAPI = async (
     input_text: context,
     final_model: '',
     temperature: 0.5,
-    max_tokens: 4000,
+    max_tokens: 6000,
   };
 
   let resultData: any;

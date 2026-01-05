@@ -24,6 +24,8 @@ import { RenderChildren } from '../RenderChildren';
 import {
   processRichTextToNodes,
   getTemplateNode,
+  isAddressableNode,
+  canEditText,
 } from '@/utils/compositor/nodesHelper';
 import { cloneDeep, classNames } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
@@ -39,9 +41,9 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
   const ctx = getCtx(props);
   const settingsPanel = useStore(settingsPanelStore);
-  const toolMode = useStore(ctx.toolModeValStore).value;
-  const Tag =
-    ctx.toolModeValStore.get().value === `debug` ? `div` : props.tagName;
+  const Tag = ['em', 'strong', 'a', 'button', 'img'].includes(props.tagName)
+    ? props.tagName
+    : 'div';
 
   if (props.tagName === 'span') {
     const node = ctx.allNodes.get().get(props.nodeId);
@@ -71,7 +73,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
   const children = ctx.getChildNodeIDs(nodeId);
   const isEditableMode = ctx.toolModeValStore.get().value === 'text';
-  const supportsEditing = !['ol', 'ul'].includes(props.tagName);
+  const supportsEditing = canEditText(node, ctx);
   const isPlaceholder = node?.isPlaceholder === true;
   const isEmpty = elementRef.current?.textContent?.trim() === '';
 
@@ -258,8 +260,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
   // For formatting nodes <em> and <strong> and <span>
   if (['em', 'strong', 'span'].includes(props.tagName)) {
-    const isEditorActive = ['styles', 'text'].includes(toolModeVal);
-    const isEditorEnabled = toolModeVal === 'styles';
+    const isEditorActive = toolModeVal === 'text';
+    const isEditorEnabled = toolModeVal === 'text';
     const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -300,6 +302,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           }
         },
         'data-node-id': nodeId,
+        'data-tag': props.tagName,
         tabIndex: isEditableMode ? -1 : undefined,
         style: {
           position: isEditorActive ? 'relative' : undefined,
@@ -373,6 +376,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           }
         },
         'data-node-id': nodeId,
+        'data-tag': props.tagName,
         tabIndex: isEditableMode ? -1 : undefined,
       },
       <RenderChildren children={children} nodeProps={props} />
@@ -380,7 +384,13 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   }
 
   const startEditing = () => {
-    if (!isEditableMode || !supportsEditing || editState === 'editing') return;
+    if (
+      !isEditableMode ||
+      !supportsEditing ||
+      editState === 'editing' ||
+      !canEditText(node, ctx)
+    )
+      return;
 
     originalContentRef.current = elementRef.current?.innerHTML || '';
     setEditState('editing');
@@ -395,13 +405,32 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   };
 
   const saveAndExit = () => {
+    console.log(`[DEBUG] saveAndExit triggered for nodeId: ${nodeId}`, {
+      editState,
+      toolMode: toolModeVal,
+      hasSettingsPanel: !!settingsPanel,
+      activeSignal: settingsPanel?.action,
+    });
     if (editState !== 'editing') return;
-
-    // Use an in-memory element to safely parse and strip UI chrome from the content.
     const tempDiv = document.createElement('div');
+    console.log(`[DEBUG] Raw HTML before sanitization:`, tempDiv.innerHTML);
     tempDiv.innerHTML = elementRef.current?.innerHTML || '';
-    tempDiv.querySelectorAll('[data-attr="exclude"]');
+    const chromeElements = tempDiv.querySelectorAll(
+      '.compositor-chrome, [data-attr="exclude"]'
+    );
+    chromeElements.forEach((el) => el.remove());
+    const wrappers = tempDiv.querySelectorAll(
+      '.compositor-wrapper, [data-node-overlay]'
+    );
+    wrappers.forEach((el) => {
+      while (el.firstChild) {
+        el.parentNode?.insertBefore(el.firstChild, el);
+      }
+      el.remove();
+    });
+
     const currentContent = tempDiv.innerHTML;
+    console.log(`[DEBUG] Sanitized HTML sent to Parser:`, currentContent);
 
     if (currentContent !== originalContentRef.current) {
       try {
@@ -688,8 +717,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClick = (e: MouseEvent) => {
-    if (toolModeVal === 'styles') {
-      console.log(`skipping handleClick on purpose`);
+    if (!canEditText(node, ctx)) {
       return;
     }
     if (
@@ -709,6 +737,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
     // Delay single-click behavior to see if double-click follows
     clickTimeoutRef.current = setTimeout(() => {
+      if (!isAddressableNode(node, ctx)) return;
       if (isEditableMode && supportsEditing && editState === 'viewing') {
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
@@ -788,11 +817,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   if (settingsPanel?.nodeId === nodeId) {
     outlineClasses +=
       ' outline-4 outline-dotted outline-orange-400 outline-offset-2';
-  } else if (toolMode === 'styles') {
-    outlineClasses += ' hover:outline hover:outline-2 hover:outline-black';
-    if (['span', 'strong', 'em'].includes(props.tagName)) {
-      outlineClasses += ' outline outline-1 outline-dotted outline-black';
-    }
   }
   const editingClasses =
     editState === 'editing'
@@ -821,6 +845,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           },
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,
+          'data-tag': props.tagName,
         },
         <RenderChildren
           children={children}

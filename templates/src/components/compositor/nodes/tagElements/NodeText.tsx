@@ -14,7 +14,7 @@ export const NodeText = (props: NodeProps) => {
 
   const text = node.copy || '';
 
-  if (toolModeVal === 'styles' && props.isSelectableText) {
+  if (toolModeVal === 'text' && props.isSelectableText) {
     let charOffset = 0;
     const wordSpans = text.split(/(\s+)/).map((segment, index) => {
       const startOffset = charOffset;

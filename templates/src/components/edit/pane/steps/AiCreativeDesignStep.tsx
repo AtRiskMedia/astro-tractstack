@@ -92,7 +92,7 @@ export const AiCreativeDesignStep = ({
         context: systemPrompt,
         expectJson: false,
         isSandboxMode,
-        maxTokens: 4000,
+        maxTokens: 6000,
         temperature: 0.5,
       });
 

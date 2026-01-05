@@ -18,12 +18,6 @@ import { selectionStore, resetSelectionStore } from '@/stores/selection';
 
 const storykeepToolModes = [
   {
-    key: 'styles' as const,
-    Icon: PaintBrushIcon,
-    title: 'Styles',
-    description: 'Click to edit styles',
-  },
-  {
     key: 'text' as const,
     Icon: PencilSquareIcon,
     title: 'Write',
@@ -34,30 +28,6 @@ const storykeepToolModes = [
     Icon: PlusIcon,
     title: 'Add',
     description: 'Add new element, e.g. paragraph or image',
-  },
-  {
-    key: 'eraser' as const,
-    Icon: TrashIcon,
-    title: 'Eraser',
-    description: 'Erase any element(s)',
-  },
-  {
-    key: 'move' as const,
-    Icon: ArrowsUpDownIcon,
-    title: 'Move',
-    description: 'Re-order panes or elements',
-  },
-  {
-    key: 'designLibrary' as const,
-    Icon: SparklesIcon,
-    title: 'Design Library',
-    description: 'Design Tools',
-  },
-  {
-    key: 'debug' as const,
-    Icon: BugAntIcon,
-    title: 'Debug Mode',
-    description: 'Toggle node tree id reveal',
   },
 ] as const;
 

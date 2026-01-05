@@ -527,7 +527,7 @@ const StyleParentPanel = ({
         <div className="space-y-3 border-t border-gray-200 pt-4">
           <button
             onClick={() => {
-              ctx.toolModeValStore.set({ value: 'styles' });
+              ctx.toolModeValStore.set({ value: 'text' });
               selectionStore.setKey('paneToRestyleId', paneNode.id);
               selectionStore.setKey('isAiRestyleModalOpen', true);
             }}

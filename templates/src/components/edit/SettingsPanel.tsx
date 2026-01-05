@@ -14,9 +14,8 @@ const SettingsPanel = ({ availableCodeHooks }: SettingsPanelProps) => {
   const signal = useStore(settingsPanelStore);
   const ctx = getCtx();
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
-  const isLinkInsertSignal = signal?.action === 'style-link';
-  const shouldShow =
-    toolModeVal === 'styles' || (toolModeVal === 'text' && isLinkInsertSignal);
+  //const isLinkInsertSignal = signal?.action === 'style-link';
+  const shouldShow = signal !== null && toolModeVal !== 'insert';
 
   if (!shouldShow || !signal) {
     return null;

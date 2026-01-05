@@ -22,7 +22,7 @@ import {
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
 import { stopLoadingAnimation } from '@/utils/helpers';
-import Node from './Node';
+import { Node } from './Node';
 import { ARTPACKS } from '@/constants/brandThemes';
 import {
   selectionStore,
@@ -355,7 +355,7 @@ export const Compositor = (props: CompositorProps) => {
     const unsubscribeToolMode = getCtx(props).toolModeValStore.subscribe(
       (mode) => {
         if (VERBOSE) console.log(LOG_PREFIX + 'Tool mode changed:', mode.value);
-        if (mode.value !== 'styles') {
+        if (mode.value !== 'insert') {
           if (VERBOSE)
             console.log(
               LOG_PREFIX + 'Exited styles mode, resetting selection store.'
