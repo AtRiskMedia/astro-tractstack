@@ -675,9 +675,14 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     const relatedTarget = e.relatedTarget as HTMLElement | null;
     if (VERBOSE)
       console.log(`[NodeBasicTag] Blur event, relatedTarget:`, e.relatedTarget);
+
+    // Check if the focus moved to the Settings Panel or Toolbar
+    const isSettingsControl = relatedTarget?.closest('#settingsControls');
+
     if (
       relatedTarget?.hasAttribute('data-tab-indicator') ||
-      (relatedTarget && elementRef.current?.contains(relatedTarget))
+      (relatedTarget && elementRef.current?.contains(relatedTarget)) ||
+      isSettingsControl
     ) {
       return;
     }

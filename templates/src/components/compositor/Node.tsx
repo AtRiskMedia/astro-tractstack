@@ -181,6 +181,10 @@ export const Node = memo((props: NodeProps) => {
     element = <GridLayout {...props} />;
   } else if (node.nodeType === 'TagElement') {
     const flatNode = node as FlatNode;
+
+    // Calculate display mode early so we can pass it to the element
+    const displayMode = getNodeDisplayMode(node, viewport, ctx);
+
     switch (flatNode.tagName) {
       case 'text':
         element = <NodeText {...props} />;
@@ -212,6 +216,7 @@ export const Node = memo((props: NodeProps) => {
           <NodeBasicTag
             {...props}
             tagName={flatNode.tagName as keyof JSX.IntrinsicElements}
+            style={{ display: displayMode }}
           />
         );
         break;
