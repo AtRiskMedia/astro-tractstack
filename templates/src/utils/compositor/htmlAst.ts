@@ -5,7 +5,7 @@ import type {
   EditableElementMetadata,
 } from '@/types/compositorTypes';
 
-const VERBOSE = false;
+const VERBOSE = true;
 
 const logger = {
   log: (...args: any[]) => VERBOSE && console.log('[htmlAst]', ...args),
@@ -15,129 +15,34 @@ const logger = {
 };
 
 class StyleRegistry {
-  private rules = new Map<string, string>();
-  private classMap = new Map<string, Set<string>>();
-  private hashToOriginal = new Map<
-    string,
-    { className: string; suffix: string }
-  >();
+  private classMap: Record<string, string>;
+  private ruleMap: Record<string, string>;
 
-  public cssBuffer: { hash: string; suffix: string; body: string }[] = [];
-  public mediaBuckets: {
-    minWidth: number;
-    hash: string;
-    suffix: string;
-    body: string;
-  }[] = [];
-
-  registerRule(selector: string, body: string, bucketWidth?: number) {
-    if (selector.startsWith('.')) {
-      const match = selector.match(/^\.((?:[^\\:]|\\.)+)(.*)$/);
-      if (match) {
-        const rawClassNameEscaped = match[1];
-        const suffix = match[2] || '';
-        const classNameKey = rawClassNameEscaped.replace(/\\/g, '');
-        const cleanDecl = body.trim();
-
-        // Store rule for lookup by className during the walk
-        this.rules.set(classNameKey, cleanDecl);
-
-        const hash = `t8k-${this.hashString(cleanDecl + classNameKey + suffix)}`;
-        if (!this.classMap.has(classNameKey))
-          this.classMap.set(classNameKey, new Set());
-        this.classMap.get(classNameKey)?.add(hash);
-        this.hashToOriginal.set(hash, { className: classNameKey, suffix });
-
-        const ruleObj = { hash, suffix, body: cleanDecl };
-        if (bucketWidth !== undefined) {
-          this.mediaBuckets.push({ minWidth: bucketWidth, ...ruleObj });
-        } else {
-          this.cssBuffer.push(ruleObj);
-        }
-        return hash;
-      }
-    }
-    return null;
-  }
-
-  getRuleBody(className: string): string | undefined {
-    return this.rules.get(className);
-  }
-
-  registerInlineStyle(declaration: string): string {
-    const cleanDecl = declaration.trim();
-    const hash = `t8k-${this.hashString(cleanDecl + 'inline')}`;
-    this.hashToOriginal.set(hash, { className: hash, suffix: '' });
-    this.cssBuffer.push({ hash, suffix: '', body: cleanDecl });
-    return hash;
+  constructor(
+    classMap: Record<string, string>,
+    ruleMap: Record<string, string>
+  ) {
+    this.classMap = classMap;
+    this.ruleMap = ruleMap;
   }
 
   lookupClass(className: string): string {
-    const hashes = this.classMap.get(className);
-    return hashes ? Array.from(hashes).join(' ') : className;
+    return this.classMap[className] || className;
   }
 
-  getCompiledCss(): string {
-    const base = this.cssBuffer
-      .map((r) => `.${r.hash}${r.suffix} { ${r.body} }`)
-      .join('\n');
-    const bucketGroups = Array.from(
-      new Set(this.mediaBuckets.map((b) => b.minWidth))
-    )
-      .sort((a, b) => a - b)
-      .map((width) => {
-        const rules = this.mediaBuckets
-          .filter((b) => b.minWidth === width)
-          .map((r) => `.${r.hash}${r.suffix} { ${r.body} }`)
-          .join('\n');
-        return `@media (min-width: ${width}px) { ${rules} }`;
-      })
-      .join('\n');
-    return `${base}\n${bucketGroups}`;
-  }
+  getRuleBody(className: string): string | undefined {
+    const hashString = this.classMap[className];
+    if (!hashString) return undefined;
 
-  generateViewportCss(): { xs: string; md: string; xl: string } {
-    const createSnapshot = (targetBreakPoint: number) => {
-      const winners = new Map<string, string>();
-      this.cssBuffer.forEach((rule) => {
-        const info = this.hashToOriginal.get(rule.hash);
-        if (info) winners.set(`${info.className}${info.suffix}`, rule.hash);
-      });
-      this.mediaBuckets
-        .filter((b) => b.minWidth <= targetBreakPoint)
-        .sort((a, b) => a.minWidth - b.minWidth)
-        .forEach((rule) => {
-          const info = this.hashToOriginal.get(rule.hash);
-          if (info) winners.set(`${info.className}${info.suffix}`, rule.hash);
-        });
-      const output: string[] = [];
-      const winnerHashes = new Set(winners.values());
-      const allCandidateRules = [
-        ...this.cssBuffer,
-        ...this.mediaBuckets.filter((b) => b.minWidth <= targetBreakPoint),
-      ];
-      allCandidateRules.forEach((rule) => {
-        if (winnerHashes.has(rule.hash)) {
-          output.push(`.${rule.hash}${rule.suffix} { ${rule.body} }`);
-          winnerHashes.delete(rule.hash);
-        }
-      });
-      return output
-        .join('\n')
-        .replace(/(\d*\.?\d+)(vw|vh)/gi, (m, n) => `${n}%`);
-    };
-    return {
-      xs: createSnapshot(0),
-      md: createSnapshot(801),
-      xl: createSnapshot(1367),
-    };
-  }
+    const hashes = hashString.split(/\s+/);
 
-  private hashString(str: string): string {
-    let hash = 5381,
-      i = str.length;
-    while (i) hash = (hash * 33) ^ str.charCodeAt(--i);
-    return (hash >>> 0).toString(16);
+    for (const hash of hashes) {
+      if (this.ruleMap[hash]) {
+        return this.ruleMap[hash];
+      }
+    }
+
+    return undefined;
   }
 }
 
@@ -145,74 +50,61 @@ export async function htmlToHtmlAst(
   html: string,
   userCss: string
 ): Promise<CreativePanePayload> {
-  const styleRegistry = new StyleRegistry();
-  const editableRegistry: Record<string, EditableElementMetadata> = {};
+  logger.group(`htmlToHtmlAst Trace:`);
+  logger.log('Input HTML:', html);
+  let apiResult = {
+    css: '',
+    viewportCss: { xs: '', md: '', xl: '' },
+    classMap: {} as Record<string, string>,
+    ruleMap: {} as Record<string, string>,
+  };
 
-  let tailwindCss = '';
   try {
     const res = await fetch('/api/css', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ html }),
+      body: JSON.stringify({ html, css: userCss }),
     });
+
     if (res.ok) {
       const data = await res.json();
-      if (data.success) tailwindCss = data.css;
+      if (data.success) {
+        apiResult = {
+          css: data.css,
+          viewportCss: data.viewportCss,
+          classMap: data.classMap,
+          ruleMap: data.ruleMap,
+        };
+      }
+    } else {
+      logger.error('CSS API Error:', res.status, res.statusText);
     }
   } catch (e) {
     logger.error('Tailwind API Fetch Failed', e);
   }
 
-  processCssString(tailwindCss, styleRegistry);
-  processCssString(userCss, styleRegistry);
+  // Initialize the registry with the maps provided by the server
+  const styleRegistry = new StyleRegistry(
+    apiResult.classMap,
+    apiResult.ruleMap
+  );
+  const editableRegistry: Record<string, EditableElementMetadata> = {};
 
+  // Parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
+  // Walk the DOM to build the tree, applying hashes via the registry
   const tree = Array.from(doc.body.children).map((child) =>
     processNode(child as HTMLElement, styleRegistry, editableRegistry)
   );
 
   return {
-    css: styleRegistry.getCompiledCss(),
-    viewportCss: styleRegistry.generateViewportCss(),
+    css: apiResult.css,
+    viewportCss: apiResult.viewportCss,
     tree,
     editableElements: editableRegistry,
   };
-}
-
-function processCssString(css: string, registry: StyleRegistry) {
-  if (!css.trim()) return;
-  const styleEl = document.createElement('style');
-  styleEl.textContent = css;
-  document.head.appendChild(styleEl);
-  try {
-    const sheet = styleEl.sheet;
-    if (!sheet) return;
-    Array.from(sheet.cssRules).forEach((rule) => {
-      if (rule instanceof CSSStyleRule) {
-        rule.selectorText
-          .split(',')
-          .forEach((sel) =>
-            registry.registerRule(sel.trim(), rule.style.cssText)
-          );
-      } else if (rule instanceof CSSMediaRule) {
-        const match = rule.conditionText.match(/min-width:\s*(\d+)px/);
-        const width = match ? parseInt(match[1], 10) : undefined;
-        Array.from(rule.cssRules).forEach((inner) => {
-          if (inner instanceof CSSStyleRule) {
-            inner.selectorText
-              .split(',')
-              .forEach((sel) =>
-                registry.registerRule(sel.trim(), inner.style.cssText, width)
-              );
-          }
-        });
-      }
-    });
-  } finally {
-    document.head.removeChild(styleEl);
-  }
 }
 
 export function rehydrateChildrenFromHtml(html: string): HtmlAstNode[] {
@@ -492,6 +384,7 @@ function processNode(
 
   const attrs: Record<string, string> = {};
   const allowedAttributes = [
+    'style',
     'src',
     'srcset',
     'alt',
@@ -500,7 +393,6 @@ function processNode(
     'type',
     'value',
     'placeholder',
-    // Expanded whitelist for persistence
     'data-file-id',
     'data-collection',
     'data-image',
@@ -511,23 +403,18 @@ function processNode(
 
   if (el.hasAttributes()) {
     for (const attr of Array.from(el.attributes)) {
-      if (attr.name === 'style') {
-        if (
-          attr.value.includes('url("data:') ||
-          attr.value.includes("url('data:") ||
-          attr.value.includes('url(data:')
-        ) {
-          attrs['style'] = attr.value;
-        } else {
-          const hash = registry.registerInlineStyle(attr.value);
-          attrs['class'] = `${attrs['class'] || ''} ${hash}`.trim();
-        }
-      } else if (attr.name === 'class') {
+      if (attr.name === 'class') {
         const tokens = attr.value
           .split(/\s+/)
           .flatMap((c) => registry.lookupClass(c).split(/\s+/));
         attrs['class'] = Array.from(new Set(tokens.filter(Boolean))).join(' ');
       } else if (allowedAttributes.includes(attr.name)) {
+        logger.log(
+          `Keeping attribute on <${tagName}>:`,
+          attr.name,
+          '=',
+          attr.value
+        );
         attrs[attr.name] = attr.value;
       }
     }
@@ -658,8 +545,6 @@ export async function regenerateCreativePane(
     if (!targetNode.attrs) targetNode.attrs = {};
 
     // 1. Identity Persistence (Uploaded Files)
-    // FIX: If updates.fileId is present, use it.
-    // If NOT present but src IS updating, we must clear the old ID to prevent "Ghost IDs".
     if (updates.fileId) {
       targetNode.attrs['data-file-id'] = updates.fileId;
     } else if (updates.src !== undefined) {
@@ -701,34 +586,23 @@ export async function regenerateCreativePane(
         targetNode.attrs['data-bunny-payload'] = JSON.stringify(bunnyPayload);
     }
 
+    // 4. Background Image Persistence (The Fix)
     if (updates.isCssBackground && updates.src) {
-      const isBase64 = updates.src.startsWith('data:');
+      // Always use inline style for user-edited background images.
+      // This is robust, handles override specificity automatically,
+      // and avoids the complexity of patching hashed CSS rules.
+      let currentStyle = targetNode.attrs['style'] || '';
 
-      if (isBase64) {
-        targetNode.attrs['style'] = `background-image: url('${updates.src}');`;
-      } else {
-        if (
-          targetNode.attrs['style'] &&
-          targetNode.attrs['style'].includes('background-image')
-        ) {
-          delete targetNode.attrs['style'];
-        }
+      // Remove existing background-image property if present to avoid duplicates
+      currentStyle = currentStyle
+        .replace(/background-image:\s*url\([^)]+\);?/gi, '')
+        .trim();
 
-        const classes = (targetNode.attrs.class || '').split(/\s+/);
-        for (const cls of classes) {
-          const ruleRegex = new RegExp(`\\.${cls}\\s*\\{[^}]*\\}`, 'g');
-          const match = css.match(ruleRegex);
-
-          if (match && match[0].includes('background-image:')) {
-            const newRule = match[0].replace(
-              /url\(["']?(.*?)["']?\)/,
-              `url('${updates.src}')`
-            );
-            css = css.replace(match[0], newRule);
-            break;
-          }
-        }
-      }
+      // Append the new background image
+      const newBgRule = `background-image: url('${updates.src}');`;
+      targetNode.attrs['style'] = currentStyle
+        ? `${currentStyle} ${newBgRule}`
+        : newBgRule;
     }
   }
 
@@ -740,11 +614,9 @@ export async function regenerateCreativePane(
       originalPayload.editableElements
     )) {
       if (newPayload.editableElements[id]) {
-        // Carry over base64Data if it exists in the old state and the node still exists
         if (originalMeta.base64Data) {
           newPayload.editableElements[id].base64Data = originalMeta.base64Data;
         }
-        // Preserve fileId if it was somehow lost in translation (safety net)
         if (originalMeta.fileId && !newPayload.editableElements[id].fileId) {
           newPayload.editableElements[id].fileId = originalMeta.fileId;
         }
@@ -752,7 +624,6 @@ export async function regenerateCreativePane(
     }
   }
 
-  // Apply the specific updates for the target node
   if (newPayload.editableElements[astId]) {
     newPayload.editableElements[astId] = {
       ...newPayload.editableElements[astId],

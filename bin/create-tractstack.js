@@ -365,7 +365,10 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     console.log(kleur.green('✅ Visualization dependencies installed'));
 
     // Install additional dependencies
-    execSync(`${addCommand} path-to-regexp@^8.0.0`, { stdio: 'inherit' });
+    execSync(
+      `${addCommand} path-to-regexp@^8.0.0 postcss postcss-selector-parser`,
+      { stdio: 'inherit' }
+    );
     console.log(kleur.green('✅ Additional dependencies installed'));
 
     // Install dev dependencies
@@ -379,7 +382,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.26.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0`
+        `${addCommand} react@^18.3.1 react-dom@^18.3.1 @astrojs/react@^4.0.0 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.26.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
       )
     );
     console.log(
