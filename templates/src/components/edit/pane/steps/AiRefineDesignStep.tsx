@@ -28,11 +28,12 @@ export const AiRefineDesignStep = ({
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [reviewMode, setReviewMode] = useState(false);
 
-  // SEPARATE STATE: Raw for saving, Preview for display
-  const [rawAiOutput, setRawAiOutput] = useState<string>('');
+  const [reviewMode, setReviewMode] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string>('');
+  const [pendingTemplate, setPendingTemplate] = useState<TemplatePane | null>(
+    null
+  );
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -52,7 +53,7 @@ export const AiRefineDesignStep = ({
       userPrompt = userPrompt.replace('{{CSS_INPUT}}', initialCss);
       userPrompt = userPrompt.replace('{{HTML_INPUT}}', initialHtml);
 
-      // 1. Get RAW output from AI (contains <button>)
+      // 1. Get RAW output from AI
       const resultHtml = await callAskLemurAPI({
         prompt: userPrompt,
         context: systemPrompt,
@@ -62,65 +63,11 @@ export const AiRefineDesignStep = ({
         temperature: 0.5,
       });
 
-      // 2. Store RAW output for handleAccept
-      setRawAiOutput(resultHtml);
+      // 2. Generate AST immediately
+      const htmlAst = await htmlToHtmlAst(resultHtml, '');
 
-      // 3. Generate AST from RAW output to send to preview endpoint
-      const tempAst = await htmlToHtmlAst(resultHtml, '');
-
-      const tenantId =
-        (window as any).TRACTSTACK_CONFIG?.tenantId ||
-        import.meta.env.PUBLIC_TENANTID ||
-        'default';
-
-      const goBackend =
-        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-
-      // 4. Send AST to backend to get SAFE/Sanitized HTML
-      const response = await fetch(
-        `${goBackend}/api/v1/fragments/ast-preview`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Tenant-ID': tenantId,
-          },
-          body: JSON.stringify({
-            id: 'temp-refine-preview',
-            title: 'Refine Preview',
-            tree: tempAst.tree,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(
-          text || `Preview generation failed: ${response.status}`
-        );
-      }
-
-      const safeHtml = await response.text();
-
-      // 5. Store SAFE HTML for display
-      setPreviewHtml(safeHtml);
-      setReviewMode(true);
-    } catch (err: any) {
-      console.error('Refine Generation Error:', err);
-      setError(err.message || 'Failed to refine design.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleAccept = async () => {
-    try {
-      setIsGenerating(true);
-
-      // CRITICAL: Generate AST from the RAW AI output, not the sanitized preview
-      const htmlAst = await htmlToHtmlAst(rawAiOutput, '');
-
-      const template: TemplatePane = {
+      // 3. Construct the candidate TemplatePane
+      const candidateTemplate: TemplatePane = {
         id: '',
         nodeType: 'Pane',
         parentId: '',
@@ -140,26 +87,70 @@ export const AiRefineDesignStep = ({
         },
       };
 
-      onUpdatePane(template);
-      onSuccess();
+      const tenantId =
+        (window as any).TRACTSTACK_CONFIG?.tenantId ||
+        import.meta.env.PUBLIC_TENANTID ||
+        'default';
+
+      const goBackend =
+        import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+      // 4. Send AST to backend to get SAFE/Sanitized HTML for preview
+      const response = await fetch(
+        `${goBackend}/api/v1/fragments/ast-preview`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': tenantId,
+          },
+          body: JSON.stringify({
+            id: 'temp-refine-preview',
+            title: 'Refine Preview',
+            tree: htmlAst.tree,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(
+          text || `Preview generation failed: ${response.status}`
+        );
+      }
+
+      const safeHtml = await response.text();
+
+      // 5. Store SAFE HTML for display and valid Template for acceptance
+      setPendingTemplate(candidateTemplate);
+      setPreviewHtml(safeHtml);
+      setReviewMode(true);
     } catch (err: any) {
-      console.error('AST Compilation Error:', err);
-      setError('Failed to compile the new design.');
+      console.error('Refine Generation Error:', err);
+      setError(err.message || 'Failed to refine design.');
+    } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleAccept = () => {
+    if (pendingTemplate) {
+      onUpdatePane(pendingTemplate);
+      onSuccess();
     }
   };
 
   const handleCancel = () => {
     setReviewMode(false);
+    setPendingTemplate(null);
     setPreviewHtml('');
-    setRawAiOutput('');
     onBack();
   };
 
   const handleRedo = () => {
     setReviewMode(false);
+    setPendingTemplate(null);
     setPreviewHtml('');
-    setRawAiOutput('');
   };
 
   if (isGenerating) {
@@ -205,6 +196,11 @@ export const AiRefineDesignStep = ({
           </button>
         </div>
 
+        <style
+          dangerouslySetInnerHTML={{
+            __html: pendingTemplate?.htmlAst?.css || '',
+          }}
+        />
         <div
           className="w-full flex-1 overflow-y-auto rounded-md border bg-gray-50 p-4"
           dangerouslySetInnerHTML={{ __html: previewHtml }}
