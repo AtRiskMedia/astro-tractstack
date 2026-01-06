@@ -108,6 +108,7 @@ export const AiRefineDesignStep = ({
             id: 'temp-refine-preview',
             title: 'Refine Preview',
             tree: htmlAst.tree,
+            simulateFrontend: true,
           }),
         }
       );

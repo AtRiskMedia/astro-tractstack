@@ -138,6 +138,7 @@ export const AiCreativeDesignStep = ({
             id: 'preview-temp',
             title: 'Editor Preview',
             tree: htmlAst.tree,
+            simulateFrontend: true,
           }),
         }
       );
