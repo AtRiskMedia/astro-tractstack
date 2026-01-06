@@ -26,13 +26,17 @@ import {
   getTemplateNode,
   isAddressableNode,
   canEditText,
+  getNodeDisplayMode,
 } from '@/utils/compositor/nodesHelper';
 import { cloneDeep, classNames } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
-export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
+export type NodeTagProps = NodeProps & {
+  tagName: keyof JSX.IntrinsicElements;
+  style?: any;
+};
 
 type EditState = 'viewing' | 'editing';
 const VERBOSE = false;
@@ -76,6 +80,11 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const supportsEditing = canEditText(node, ctx);
   const isPlaceholder = node?.isPlaceholder === true;
   const isEmpty = elementRef.current?.textContent?.trim() === '';
+  const displayMode = getNodeDisplayMode(
+    node,
+    viewportKeyStore.get().value,
+    ctx
+  );
 
   // Auto-enter edit mode for new placeholder nodes
   useEffect(() => {
@@ -307,6 +316,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         style: {
           position: isEditorActive ? 'relative' : undefined,
           outlineOffset: '1px',
+          display: displayMode,
         },
       },
       [
@@ -842,6 +852,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           style: {
             cursor: isEditableMode && supportsEditing ? 'text' : 'default',
             minHeight: isPlaceholder ? '1.5em' : undefined,
+            display: displayMode,
           },
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,

@@ -2049,8 +2049,20 @@ export async function injectTemplateFiles(
       dest: 'public/icons/image.svg',
     },
     {
-      src: resolve('../templates/icons/text.svg'),
-      dest: 'public/icons/text.svg',
+      src: resolve('../templates/icons/link.svg'),
+      dest: 'public/icons/link.svg',
+    },
+    {
+      src: resolve('../templates/icons/p.svg'),
+      dest: 'public/icons/p.svg',
+    },
+    {
+      src: resolve('../templates/icons/li.svg'),
+      dest: 'public/icons/li.svg',
+    },
+    {
+      src: resolve('../templates/icons/code.svg'),
+      dest: 'public/icons/code.svg',
     },
 
     // Social Icons

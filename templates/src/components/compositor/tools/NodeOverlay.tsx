@@ -3,7 +3,6 @@ import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
-import ClipboardDocumentIcon from '@heroicons/react/24/outline/ClipboardDocumentIcon';
 import { getCtx } from '@/stores/nodes';
 import { settingsPanelStore } from '@/stores/storykeep';
 import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
@@ -17,6 +16,16 @@ interface NodeOverlayProps extends NodeProps {
   displayMode: 'block' | 'inline-block';
   isTopLevel: boolean;
 }
+
+const getIconForTag = (tagName?: string): string | null => {
+  const t = tagName?.toLowerCase() || '';
+  if (['h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'code'].includes(t)) {
+    return `/icons/${t}.svg`;
+  }
+  if (t === 'img' || t === 'image') return '/icons/image.svg';
+  if (t === 'a' || t === 'button') return '/icons/link.svg';
+  return null;
+};
 
 export const NodeOverlay = ({
   nodeId,
@@ -73,10 +82,12 @@ export const NodeOverlay = ({
       ? ctx.allowInsert(nodeId, toolAddMode || 'p')
       : { allowInsertBefore: false, allowInsertAfter: false };
 
+  const iconSrc = getIconForTag(node.tagName);
+
   return (
     <div
       className={classNames(
-        'compositor-wrapper group relative transition-all duration-200', // Added class identifier
+        'compositor-wrapper group relative transition-all duration-200',
         zIndexClass,
         toolMode === 'text' ? outlineClass : ''
       )}
@@ -88,7 +99,7 @@ export const NodeOverlay = ({
       {/* Text Mode: Tool Cart */}
       {toolMode === 'text' && (
         <div
-          className="compositor-chrome absolute flex gap-1 opacity-10 transition-opacity duration-200 group-hover:opacity-100" // Added class identifier
+          className="compositor-chrome absolute flex gap-1 opacity-10 transition-opacity duration-200 group-hover:opacity-100"
           style={{
             top: '-24px',
             right: 0,
@@ -97,15 +108,20 @@ export const NodeOverlay = ({
           onClick={(e) => e.stopPropagation()}
           data-attr="exclude"
         >
-          {import.meta.env.DEV && (
-            <button
-              onClick={handleCopyIdClick}
-              className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-600 text-white shadow-md hover:scale-110 hover:bg-gray-800"
-              title={`Copy ID: ${nodeId}`}
-            >
-              <ClipboardDocumentIcon className="h-3 w-3" />
-            </button>
-          )}
+          {/* ID Button: bg-gray-100, rectangle (h-6 matches others), w-auto for icon width */}
+          <button
+            onClick={handleCopyIdClick}
+            className="flex h-6 w-auto min-w-[1.5rem] items-center justify-center bg-gray-100 px-1 text-gray-600 shadow-md hover:scale-110 hover:bg-gray-200"
+            title={`Copy ID: ${nodeId}`}
+          >
+            {iconSrc && (
+              <img
+                src={iconSrc}
+                alt={node.tagName || 'node'}
+                className="h-3.5 w-auto"
+              />
+            )}
+          </button>
 
           <button
             onClick={handleEditClick}
@@ -128,7 +144,7 @@ export const NodeOverlay = ({
       {/* Insert Mode: Split Drop Zones */}
       {toolMode === 'insert' && (
         <div
-          className="compositor-chrome absolute inset-0 z-50 flex flex-col" // Added class identifier
+          className="compositor-chrome absolute inset-0 z-50 flex flex-col"
           data-attr="exclude"
         >
           {/* Top / Before Zone */}
@@ -145,8 +161,13 @@ export const NodeOverlay = ({
               canInsert.allowInsertBefore && handleInsert('before', e)
             }
           >
-            {hoverZone === 'before' && canInsert.allowInsertBefore && (
-              <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform">
+            {canInsert.allowInsertBefore && (
+              <div
+                className={classNames(
+                  'absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform transition-opacity duration-200',
+                  hoverZone === 'before' ? 'opacity-100' : 'opacity-40'
+                )}
+              >
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
                   <PlusIcon className="h-3.5 w-3.5" />
                 </div>
@@ -168,8 +189,13 @@ export const NodeOverlay = ({
               canInsert.allowInsertAfter && handleInsert('after', e)
             }
           >
-            {hoverZone === 'after' && canInsert.allowInsertAfter && (
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform">
+            {canInsert.allowInsertAfter && (
+              <div
+                className={classNames(
+                  'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform transition-opacity duration-200',
+                  hoverZone === 'after' ? 'opacity-100' : 'opacity-40'
+                )}
+              >
                 <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm">
                   <PlusIcon className="h-3.5 w-3.5" />
                 </div>
