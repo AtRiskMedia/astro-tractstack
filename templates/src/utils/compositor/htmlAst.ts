@@ -5,7 +5,7 @@ import type {
   EditableElementMetadata,
 } from '@/types/compositorTypes';
 
-const VERBOSE = true;
+const VERBOSE = false;
 
 const logger = {
   log: (...args: any[]) => VERBOSE && console.log('[htmlAst]', ...args),
@@ -426,7 +426,7 @@ function processNode(
         return processNode(child as HTMLElement, registry, editableRegistry);
       }
       if (child.nodeType === Node.TEXT_NODE) {
-        const cleanedText = child.textContent?.replace(/\n/g, '').trim();
+        const cleanedText = child.textContent?.replace(/\s+/g, ' ');
         if (cleanedText) {
           return {
             tag: 'text',
@@ -501,7 +501,7 @@ function processRehydratedNode(
       if (child.nodeType === Node.ELEMENT_NODE)
         return processRehydratedNode(child as HTMLElement, editableRegistry);
       if (child.nodeType === Node.TEXT_NODE) {
-        const cleanedText = child.textContent?.replace(/\n/g, '').trim();
+        const cleanedText = child.textContent?.replace(/\s+/g, ' ');
         if (cleanedText) {
           return { tag: 'text', text: cleanedText };
         }
