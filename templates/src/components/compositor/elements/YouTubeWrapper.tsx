@@ -15,7 +15,7 @@ export const YouTubeWrapper = ({
       <iframe
         src={`https://www.youtube.com/embed/${embedCode}`}
         title={title}
-        className="absolute inset-0 w-full h-full border-0"
+        className="absolute inset-0 h-full w-full border-0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
