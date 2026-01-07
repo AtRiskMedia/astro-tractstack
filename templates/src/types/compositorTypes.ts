@@ -19,6 +19,7 @@ export const toolAddModes = [
   'interactiveDisclosure',
   'identify',
   'toggle',
+  'span',
   //"aside",
 ] as const;
 export type ToolAddMode = (typeof toolAddModes)[number];
@@ -183,7 +184,8 @@ export type Tag =
   | 'belief'
   | 'identify'
   | 'toggle'
-  | 'code';
+  | 'code'
+  | 'span';
 
 export const tagTitles: Record<Tag, string> = {
   p: 'Paragraph',
@@ -205,6 +207,7 @@ export const tagTitles: Record<Tag, string> = {
   belief: 'Belief Select Widget',
   toggle: 'Belief Toggle Widget',
   identify: 'Identify As Widget',
+  span: 'Creative Span',
 };
 
 export type NodeType =

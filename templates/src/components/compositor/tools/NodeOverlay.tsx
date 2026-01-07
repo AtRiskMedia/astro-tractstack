@@ -112,7 +112,7 @@ export const NodeOverlay = ({
           <button
             onClick={handleCopyIdClick}
             className="flex h-6 w-auto min-w-[1.5rem] items-center justify-center bg-gray-100 px-1 text-gray-600 shadow-md hover:scale-110 hover:bg-gray-200"
-            title={`Copy ID: ${nodeId}`}
+            title={`${node.tagName}: ${nodeId}`}
           >
             {iconSrc && (
               <img
@@ -142,7 +142,7 @@ export const NodeOverlay = ({
       )}
 
       {/* Insert Mode: Split Drop Zones */}
-      {toolMode === 'insert' && (
+      {toolMode === 'insert' && toolAddMode !== `span` && (
         <div
           className="compositor-chrome absolute inset-0 z-50 flex flex-col"
           data-attr="exclude"

@@ -213,6 +213,7 @@ export const Node = memo((props: NodeProps) => {
           <NodeBasicTag
             {...props}
             tagName={flatNode.tagName as keyof JSX.IntrinsicElements}
+            isSelectableText={true}
           />
         );
         break;

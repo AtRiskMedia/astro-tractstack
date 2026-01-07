@@ -72,6 +72,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const cursorPositionRef = useRef<{ node: Node; offset: number } | null>(null);
 
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
+  const toolAddMode = useStore(ctx.toolAddModeStore).value;
 
   // Get node data
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
@@ -854,6 +855,10 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           onClick: handleClick,
           onDoubleClick: handleDoubleClick,
           style: {
+            userSelect:
+              toolModeVal === 'insert' && toolAddMode === 'span'
+                ? 'none'
+                : undefined,
             cursor: isEditableMode && supportsEditing ? 'text' : 'default',
             minHeight: isPlaceholder ? '1.5em' : undefined,
             display: isInline ? 'inline-block' : undefined,

@@ -16,6 +16,8 @@ const allowInsert = (
     case 'ol':
       {
         switch (tagNameNew) {
+          case 'span':
+            return false;
           case 'bunny':
           case 'yt':
           case 'interactiveDisclosure':

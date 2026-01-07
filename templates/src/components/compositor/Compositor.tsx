@@ -352,6 +352,12 @@ export const Compositor = (props: CompositorProps) => {
       }
     );
 
+    const unsubscribeToolAddMode = getCtx(props).toolAddModeStore.subscribe(
+      (mode) => {
+        if (mode.value !== 'span') resetSelectionStore();
+      }
+    );
+
     const unsubscribeToolMode = getCtx(props).toolModeValStore.subscribe(
       (mode) => {
         if (VERBOSE) console.log(LOG_PREFIX + 'Tool mode changed:', mode.value);
@@ -384,6 +390,7 @@ export const Compositor = (props: CompositorProps) => {
         console.log(LOG_PREFIX + 'Compositor unmounting, cleaning up...');
       unsubscribe();
       unsubscribeToolMode();
+      unsubscribeToolAddMode();
       stopLoadingAnimation();
       // Ensure listeners are removed on unmount
       window.removeEventListener('mousemove', handleDragMove);
@@ -417,6 +424,8 @@ export const Compositor = (props: CompositorProps) => {
           'span'
         );
         if (newSpanNodeId) {
+          ctx.toolModeValStore.set({ value: 'text' });
+          ctx.toolAddModeStore.set({ value: 'p' });
           settingsPanelStore.set({
             action: 'style-element',
             nodeId: newSpanNodeId,
