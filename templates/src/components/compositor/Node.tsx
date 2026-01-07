@@ -182,9 +182,6 @@ export const Node = memo((props: NodeProps) => {
   } else if (node.nodeType === 'TagElement') {
     const flatNode = node as FlatNode;
 
-    // Calculate display mode early so we can pass it to the element
-    const displayMode = getNodeDisplayMode(node, viewport, ctx);
-
     switch (flatNode.tagName) {
       case 'text':
         element = <NodeText {...props} />;
@@ -216,7 +213,6 @@ export const Node = memo((props: NodeProps) => {
           <NodeBasicTag
             {...props}
             tagName={flatNode.tagName as keyof JSX.IntrinsicElements}
-            style={{ display: displayMode }}
           />
         );
         break;
@@ -225,11 +221,11 @@ export const Node = memo((props: NodeProps) => {
 
   // 3. Apply Overlay if addressable
   if (element && isAddressableNode(node, ctx)) {
-    const displayMode = getNodeDisplayMode(node, viewport, ctx);
+    const isInline = getNodeDisplayMode(node, viewport, ctx);
     const isTopLevel = isTopLevelBlockNode(node, ctx);
 
     return (
-      <NodeOverlay displayMode={displayMode} isTopLevel={isTopLevel} {...props}>
+      <NodeOverlay isInline={isInline} isTopLevel={isTopLevel} {...props}>
         {element}
       </NodeOverlay>
     );

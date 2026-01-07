@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
@@ -12,9 +12,9 @@ import type { NodeProps } from '@/types/nodeProps';
 import type { FlatNode } from '@/types/compositorTypes';
 
 interface NodeOverlayProps extends NodeProps {
-  children: React.ReactNode;
-  displayMode: 'block' | 'inline-block';
+  children: ReactNode;
   isTopLevel: boolean;
+  isInline?: boolean;
 }
 
 const getIconForTag = (tagName?: string): string | null => {
@@ -30,8 +30,8 @@ const getIconForTag = (tagName?: string): string | null => {
 export const NodeOverlay = ({
   nodeId,
   children,
-  displayMode,
   isTopLevel,
+  isInline,
   ...props
 }: NodeOverlayProps) => {
   const ctx = getCtx({ nodeId, ...props });
@@ -91,7 +91,7 @@ export const NodeOverlay = ({
         zIndexClass,
         toolMode === 'text' ? outlineClass : ''
       )}
-      style={{ display: displayMode }}
+      style={isInline ? { display: 'inline-block' } : {}}
       data-node-overlay={nodeId}
     >
       {children}

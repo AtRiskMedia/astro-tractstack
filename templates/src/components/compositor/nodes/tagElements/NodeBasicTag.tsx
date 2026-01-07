@@ -80,11 +80,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const supportsEditing = canEditText(node, ctx);
   const isPlaceholder = node?.isPlaceholder === true;
   const isEmpty = elementRef.current?.textContent?.trim() === '';
-  const displayMode = getNodeDisplayMode(
-    node,
-    viewportKeyStore.get().value,
-    ctx
-  );
+  const isInline = getNodeDisplayMode(node, viewportKeyStore.get().value, ctx);
 
   // Auto-enter edit mode for new placeholder nodes
   useEffect(() => {
@@ -316,7 +312,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         style: {
           position: isEditorActive ? 'relative' : undefined,
           outlineOffset: '1px',
-          display: displayMode,
+          display: isInline ? 'inline-block' : undefined,
         },
       },
       [
@@ -415,15 +411,17 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   };
 
   const saveAndExit = () => {
-    console.log(`[DEBUG] saveAndExit triggered for nodeId: ${nodeId}`, {
-      editState,
-      toolMode: toolModeVal,
-      hasSettingsPanel: !!settingsPanel,
-      activeSignal: settingsPanel?.action,
-    });
+    if (VERBOSE)
+      console.log(`[DEBUG] saveAndExit triggered for nodeId: ${nodeId}`, {
+        editState,
+        toolMode: toolModeVal,
+        hasSettingsPanel: !!settingsPanel,
+        activeSignal: settingsPanel?.action,
+      });
     if (editState !== 'editing') return;
     const tempDiv = document.createElement('div');
-    console.log(`[DEBUG] Raw HTML before sanitization:`, tempDiv.innerHTML);
+    if (VERBOSE)
+      console.log(`[DEBUG] Raw HTML before sanitization:`, tempDiv.innerHTML);
     tempDiv.innerHTML = elementRef.current?.innerHTML || '';
     const chromeElements = tempDiv.querySelectorAll(
       '.compositor-chrome, [data-attr="exclude"]'
@@ -440,7 +438,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     });
 
     const currentContent = tempDiv.innerHTML;
-    console.log(`[DEBUG] Sanitized HTML sent to Parser:`, currentContent);
+    if (VERBOSE)
+      console.log(`[DEBUG] Sanitized HTML sent to Parser:`, currentContent);
 
     if (currentContent !== originalContentRef.current) {
       try {
@@ -857,7 +856,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           style: {
             cursor: isEditableMode && supportsEditing ? 'text' : 'default',
             minHeight: isPlaceholder ? '1.5em' : undefined,
-            display: displayMode,
+            display: isInline ? 'inline-block' : undefined,
           },
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,

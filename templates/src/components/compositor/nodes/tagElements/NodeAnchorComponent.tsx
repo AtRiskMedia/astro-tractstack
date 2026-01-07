@@ -216,7 +216,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
           data-node-id={nodeId}
           data-tag="a"
           style={{
-            display: 'inline',
             cursor: isEditMode ? 'text' : 'pointer',
           }}
         >
@@ -241,7 +240,6 @@ export const NodeAnchorComponent = (props: NodeProps, tagName: string) => {
           data-node-id={nodeId}
           data-tag="button"
           style={{
-            display: 'inline',
             cursor: isEditMode ? 'text' : 'crosshair',
           }}
         >

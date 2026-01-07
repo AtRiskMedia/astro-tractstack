@@ -31,7 +31,6 @@ import type {
   GridLayoutNode,
   PaneNode,
 } from '@/types/compositorTypes';
-import type { NodeTagProps } from '@/types/nodeProps';
 
 export const getTemplateNode = (value: ToolAddMode): TemplateNode => {
   let templateNode: TemplateNode;
@@ -836,68 +835,103 @@ export const getNodeDisplayMode = (
   node: BaseNode | FlatNode,
   viewport: ViewportKey,
   ctx: NodesContext
-): 'block' | 'inline-block' => {
+): boolean => {
   const flatNode = node as FlatNode;
+  const tagName = flatNode.tagName || '';
 
   // 1. Check Overrides (Highest Priority)
+  // If the user manually added a class, we respect it immediately.
   if (flatNode.overrideClasses) {
     const [_, mobile, tablet, desktop] = processClassesForViewports(
       { mobile: {}, tablet: {}, desktop: {} },
       flatNode.overrideClasses,
       1
     );
+    const active =
+      viewport === 'mobile'
+        ? mobile[0]
+        : viewport === 'tablet'
+          ? tablet[0]
+          : desktop[0];
 
-    let activeClasses: string[] = [];
-    if (viewport === 'mobile') activeClasses = mobile;
-    else if (viewport === 'tablet') activeClasses = tablet;
-    else activeClasses = desktop;
+    // If explicit inline, force inline
+    if (active.includes('inline-block') || active.includes('inline-'))
+      return true;
 
-    const classString = activeClasses.join(' ');
-    if (classString.includes('inline-block')) return 'inline-block';
-    if (classString.includes('inline')) return 'inline-block'; // Map inline to inline-block for overlay wrapper
-    if (classString.includes('block')) return 'block';
-    if (classString.includes('flex')) return 'block';
-    if (classString.includes('grid')) return 'block';
+    // If explicit layout (flex, grid, block), force NOT inline (let the class work)
+    if (
+      active.includes('block') ||
+      active.includes('flex') ||
+      active.includes('grid')
+    )
+      return false;
   }
 
-  // 2. Check Default Classes (Parent-provided)
-  // Logic mirrored from getNodeClasses to find the source of defaults
-  const markdownParentId = ctx.getClosestNodeTypeFromId(node.id, 'Markdown');
-  if (markdownParentId) {
-    let styleSourceNode = ctx.allNodes
-      .get()
-      .get(markdownParentId) as MarkdownPaneFragmentNode;
-    let styles = styleSourceNode?.defaultClasses?.[flatNode.tagName];
+  // 2. PARENT CONTEXT CHECK
+  // If the parent is a layout container (Flex/Grid), this node is an Item.
+  // It should NOT be forced to inline-block. It should default to block (div).
+  if (node.parentId) {
+    const parent = ctx.allNodes.get().get(node.parentId) as any;
+    if (parent) {
+      // Check Parent's Extracted Classes (defaults + overrides)
+      const extracted = extractClassesFromNodes([parent]).join(' ');
 
-    // Fallback to Grid grandparent if needed
-    if (
-      (!styles || Object.keys(styles.mobile).length === 0) &&
-      styleSourceNode?.parentId
-    ) {
-      const grandparent = ctx.allNodes.get().get(styleSourceNode.parentId);
-      if (grandparent && isGridLayoutNode(grandparent)) {
-        styles = (grandparent as GridLayoutNode).defaultClasses?.[
-          flatNode.tagName
-        ];
+      // Also check Parent's Explicit Overrides directly for current viewport
+      let parentActiveOverrides = '';
+      if (parent.overrideClasses) {
+        const [_, pMob, pTab, pDesk] = processClassesForViewports(
+          { mobile: {}, tablet: {}, desktop: {} },
+          parent.overrideClasses,
+          1
+        );
+        parentActiveOverrides =
+          viewport === 'mobile'
+            ? pMob[0]
+            : viewport === 'tablet'
+              ? pTab[0]
+              : pDesk[0];
+      }
+
+      const combinedParentClasses = `${extracted} ${parentActiveOverrides}`;
+
+      // If parent is Flex or Grid, we are an Item. Return FALSE to avoid inline-block.
+      if (
+        combinedParentClasses.includes('flex') ||
+        combinedParentClasses.includes('grid') ||
+        combinedParentClasses.includes('gap-')
+      ) {
+        return false;
       }
     }
+  }
 
+  // 3. Check Default Classes (Theme Defaults)
+  const markdownParentId = ctx.getClosestNodeTypeFromId(node.id, 'Markdown');
+  if (markdownParentId) {
+    const styleSourceNode = ctx.allNodes.get().get(markdownParentId) as any;
+    const styles = styleSourceNode?.defaultClasses?.[tagName];
     if (styles) {
-      // We only care if defaults explicitly set display.
-      // Simplification: Check mobile/base default.
       const defaultClassStr = Object.values(styles.mobile || {})
         .flat()
         .join(' ');
-      if (defaultClassStr.includes('inline-block')) return 'inline-block';
-      if (defaultClassStr.includes('inline')) return 'inline-block';
+
+      if (defaultClassStr.includes('inline')) {
+        return true;
+      }
     }
   }
 
-  // 3. Tag Default (Lowest Priority)
+  // 4. Tag Default (Lowest Priority)
+  // Standard HTML behavior
   const inlineTags = ['a', 'span', 'img', 'button', 'strong', 'em', 'code'];
-  if (inlineTags.includes(flatNode.tagName)) {
-    return 'inline-block';
+  if (inlineTags.includes(tagName)) {
+    // Exception: Top level blocks (direct children of Markdown roots) usually stack
+    if (isTopLevelBlockNode(node, ctx)) {
+      return false;
+    }
+    return true;
   }
 
-  return 'block';
+  // Default to Block (False)
+  return false;
 };

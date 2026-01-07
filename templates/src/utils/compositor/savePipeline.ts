@@ -386,8 +386,16 @@ export async function executeSavePipeline(
     );
 
     const cookingUpdates: BaseNode[] = [];
+    const nodesToCookMap = new Map<string, BaseNode>();
 
-    allDirtyNodes.forEach((liveNode) => {
+    dirtyPanes.forEach((pane) => {
+      const subtree = ctx.getNodesRecursively(pane);
+      subtree.forEach((node) => {
+        nodesToCookMap.set(node.id, node);
+      });
+    });
+
+    nodesToCookMap.forEach((liveNode) => {
       try {
         let updatedNode: BaseNode | null = null;
 

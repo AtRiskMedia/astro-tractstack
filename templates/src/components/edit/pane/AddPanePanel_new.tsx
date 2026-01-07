@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import DocumentPlusIcon from '@heroicons/react/24/outline/DocumentPlusIcon';
 import SwatchIcon from '@heroicons/react/24/outline/SwatchIcon';
 import SquaresPlusIcon from '@heroicons/react/24/outline/SquaresPlusIcon';
 import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
@@ -57,9 +56,6 @@ const AddPaneNewPanel = ({
   const isTemplate = useStore(ctx.isTemplate);
 
   const [step, setStep] = useState<Step>('initial');
-  const [initialChoice, setInitialChoice] = useState<InitialChoice | null>(
-    null
-  );
   const [layoutChoice, setLayoutChoice] = useState<LayoutChoice>('standard');
   const [error, setError] = useState<string | null>(null);
   const [selectedLibraryEntry, setSelectedLibraryEntry] =
@@ -69,7 +65,6 @@ const AddPaneNewPanel = ({
     choice: InitialChoice,
     layout?: LayoutChoice
   ) => {
-    setInitialChoice(choice);
     setError(null);
 
     if (choice === 'blank') {
@@ -181,119 +176,139 @@ const AddPaneNewPanel = ({
     setStep('library-copy');
   };
 
-  const renderInitialStep = () => (
-    <div className="space-y-4 p-4">
-      <div className="mb-6 text-center">
-        <h3 className="text-lg font-bold text-gray-800">
-          How would you like to build this pane?
-        </h3>
-        <p className="text-sm text-gray-500">
-          Choose a starting point for your content.
+  const renderInitialStep = () => {
+    const designLibraryButton = !isTemplate && (
+      <button
+        key="library"
+        onClick={() => handleInitialChoice('library')}
+        className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-cyan-500 hover:shadow-md"
+      >
+        <div className="mb-3 rounded-full bg-cyan-50 p-3 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700">
+          <SwatchIcon className="h-8 w-8" />
+        </div>
+        <h4 className="text-base font-bold text-gray-800">Design Library</h4>
+        <p className="mt-1 text-center text-xs text-gray-500">
+          Browse pre-built templates and saved designs.
         </p>
-      </div>
+      </button>
+    );
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {!isTemplate && (
-          <button
-            onClick={() => handleInitialChoice('library')}
-            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-cyan-500 hover:shadow-md"
-          >
-            <div className="mb-3 rounded-full bg-cyan-50 p-3 text-cyan-600 group-hover:bg-cyan-100 group-hover:text-cyan-700">
-              <SwatchIcon className="h-8 w-8" />
-            </div>
-            <h4 className="text-base font-bold text-gray-800">
-              Design Library
-            </h4>
-            <p className="mt-1 text-center text-xs text-gray-500">
-              Browse pre-built templates and saved designs.
+    const standardLayoutButton = hasAssemblyAI && (
+      <button
+        key="standard"
+        onClick={() => handleInitialChoice('ai', 'standard')}
+        className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
+      >
+        <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
+          Design with AI
+        </div>
+        <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
+          <DocumentIcon className="h-8 w-8" />
+        </div>
+        <h4 className="text-base font-bold text-gray-800">Standard Layout</h4>
+        <p className="mt-1 text-center text-xs text-gray-500">
+          Single column flow. Perfect for articles and intros.
+        </p>
+      </button>
+    );
+
+    const gridLayoutButton = hasAssemblyAI && (
+      <button
+        key="grid"
+        onClick={() => handleInitialChoice('ai', 'grid')}
+        className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
+      >
+        <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
+          Design with AI
+        </div>
+        <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
+          <SquaresPlusIcon className="h-8 w-8" />
+        </div>
+        <h4 className="text-base font-bold text-gray-800">Two-Column Grid</h4>
+        <p className="mt-1 text-center text-xs text-gray-500">
+          Split content. Great for features and comparisons.
+        </p>
+      </button>
+    );
+
+    const creativeDesignButton = hasAssemblyAI && (
+      <button
+        key="creative"
+        onClick={() => handleInitialChoice('ai', 'creative')}
+        className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-pink-500 hover:shadow-md"
+      >
+        <div className="text-md absolute right-3 top-3 rounded-full bg-pink-100 px-2 py-0.5 font-bold text-pink-700">
+          Design with AI
+        </div>
+        <div className="mb-3 rounded-full bg-pink-50 p-3 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700">
+          <PaintBrushIcon className="h-8 w-8" />
+        </div>
+        <h4 className="text-base font-bold text-gray-800">Creative Design</h4>
+        <p className="mt-1 text-center text-xs text-gray-500">
+          Free-form HTML/CSS generation. Unique layouts.
+        </p>
+      </button>
+    );
+
+    const buttonList = first
+      ? [
+          creativeDesignButton,
+          gridLayoutButton,
+          designLibraryButton,
+          standardLayoutButton,
+        ]
+      : [
+          standardLayoutButton,
+          designLibraryButton,
+          creativeDesignButton,
+          gridLayoutButton,
+        ];
+
+    return (
+      <div className="space-y-4 p-4">
+        {!hasAssemblyAI && (
+          <div className="rounded-lg border-l-4 border-blue-400 bg-blue-50 p-4 shadow-sm">
+            <p className="text-sm text-blue-800">
+              Tract Stack uses AssemblyAI AskLemur service to generate designs,
+              describe content, and streamline the management of your site. We
+              strongly recommend enabling these features. See{' '}
+              <a
+                href="https://freewebpress.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline"
+              >
+                https://freewebpress.org
+              </a>{' '}
+              for detailed instructions.
             </p>
-          </button>
-        )}
-
-        {hasAssemblyAI && (
-          <button
-            onClick={() => handleInitialChoice('ai', 'standard')}
-            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
-          >
-            <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
-              Design with AI
-            </div>
-            <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
-              <DocumentIcon className="h-8 w-8" />
-            </div>
-            <h4 className="text-base font-bold text-gray-800">
-              Standard Layout
-            </h4>
-            <p className="mt-1 text-center text-xs text-gray-500">
-              Single column flow. Perfect for articles and intros.
-            </p>
-          </button>
-        )}
-
-        {hasAssemblyAI && (
-          <button
-            onClick={() => handleInitialChoice('ai', 'grid')}
-            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-purple-500 hover:shadow-md"
-          >
-            <div className="text-md absolute right-3 top-3 rounded-full bg-purple-100 px-2 py-0.5 font-bold text-purple-700">
-              Design with AI
-            </div>
-            <div className="mb-3 rounded-full bg-purple-50 p-3 text-purple-600 group-hover:bg-purple-100 group-hover:text-purple-700">
-              <SquaresPlusIcon className="h-8 w-8" />
-            </div>
-            <h4 className="text-base font-bold text-gray-800">
-              Two-Column Grid
-            </h4>
-            <p className="mt-1 text-center text-xs text-gray-500">
-              Split content. Great for features and comparisons.
-            </p>
-          </button>
-        )}
-
-        {hasAssemblyAI && (
-          <button
-            onClick={() => handleInitialChoice('ai', 'creative')}
-            className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-pink-500 hover:shadow-md"
-          >
-            <div className="text-md absolute right-3 top-3 rounded-full bg-pink-100 px-2 py-0.5 font-bold text-pink-700">
-              Design with AI
-            </div>
-            <div className="mb-3 rounded-full bg-pink-50 p-3 text-pink-600 group-hover:bg-pink-100 group-hover:text-pink-700">
-              <PaintBrushIcon className="h-8 w-8" />
-            </div>
-            <h4 className="text-base font-bold text-gray-800">
-              Creative Design
-            </h4>
-            <p className="mt-1 text-center text-xs text-gray-500">
-              Free-form HTML/CSS generation. Unique layouts.
-            </p>
-          </button>
-        )}
-
-        <button
-          onClick={() => handleInitialChoice('blank')}
-          className="group relative flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-gray-400 hover:shadow-md"
-        >
-          <div className="mb-3 rounded-full bg-gray-50 p-3 text-gray-600 group-hover:bg-gray-100 group-hover:text-gray-700">
-            <DocumentPlusIcon className="h-8 w-8" />
           </div>
-          <h4 className="text-base font-bold text-gray-800">Blank Slate</h4>
-          <p className="mt-1 text-center text-xs text-gray-500">
-            Start from scratch with an empty pane.
-          </p>
-        </button>
-      </div>
+        )}
 
-      <div className="mt-4 flex justify-center border-t border-gray-100 pt-4">
-        <button
-          onClick={() => setParentMode(PaneAddMode.DEFAULT, false)}
-          className="text-sm text-gray-500 hover:text-gray-700"
-        >
-          Cancel
-        </button>
+        <div className="mb-6 text-center">
+          <h3 className="text-lg font-bold text-gray-800">
+            How would you like to build this pane?
+          </h3>
+          <p className="text-sm text-gray-500">
+            Choose a starting point for your content.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {buttonList}
+        </div>
+
+        <div className="mt-4 flex justify-center border-t border-gray-100 pt-4">
+          <button
+            onClick={() => handleBlankSlate()}
+            className="text-sm text-gray-500 underline transition-colors hover:text-gray-800"
+          >
+            Blank Slate
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderError = () => (
     <div className="space-y-4 rounded-lg bg-red-50 p-6 text-center">
