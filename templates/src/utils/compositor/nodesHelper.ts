@@ -923,7 +923,7 @@ export const getNodeDisplayMode = (
 
   // 4. Tag Default (Lowest Priority)
   // Standard HTML behavior
-  const inlineTags = ['a', 'span', 'img', 'button', 'strong', 'em', 'code'];
+  const inlineTags = ['a', 'span', 'img', 'button', 'strong', 'em'];
   if (inlineTags.includes(tagName)) {
     // Exception: Top level blocks (direct children of Markdown roots) usually stack
     if (isTopLevelBlockNode(node, ctx)) {

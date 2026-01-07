@@ -7,15 +7,26 @@ export const YouTubeWrapper = ({
 }) => {
   return (
     <div
-      className="relative w-full min-w-80"
       style={{
-        paddingBottom: '56.25%', // Maintains 16:9 aspect ratio
+        position: 'relative',
+        width: '100%',
+        maxWidth: '100%',
+        height: '0',
+        paddingBottom: '56.25%',
+        margin: '0 auto',
       }}
     >
       <iframe
         src={`https://www.youtube.com/embed/${embedCode}`}
         title={title}
-        className="absolute inset-0 h-full w-full border-0"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none',
+        }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
