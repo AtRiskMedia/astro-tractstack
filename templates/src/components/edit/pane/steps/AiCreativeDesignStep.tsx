@@ -184,7 +184,7 @@ export const AiCreativeDesignStep = ({
 
   if (isGenerating) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 p-8">
+      <div className="flex min-h-96 flex-col items-center justify-center space-y-4 p-8">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
         <div className="text-center">
           <p className="font-bold text-gray-900">Generating Design...</p>

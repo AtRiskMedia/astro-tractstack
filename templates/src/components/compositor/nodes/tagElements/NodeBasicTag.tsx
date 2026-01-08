@@ -77,7 +77,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   // Get node data
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
   const children = ctx.getChildNodeIDs(nodeId);
-  const isEditableMode = ctx.toolModeValStore.get().value === 'text';
+  const isEditableMode = toolModeVal === 'text';
   const supportsEditing = canEditText(node, ctx);
   const isPlaceholder = node?.isPlaceholder === true;
   const isEmpty = elementRef.current?.textContent?.trim() === '';
@@ -266,8 +266,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
   // For formatting nodes <em> and <strong> and <span>
   if (['em', 'strong', 'span'].includes(props.tagName)) {
-    const isEditorActive = toolModeVal === 'text';
-    const isEditorEnabled = toolModeVal === 'text';
     const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -311,31 +309,32 @@ export const NodeBasicTag = (props: NodeTagProps) => {
         'data-tag': props.tagName,
         tabIndex: isEditableMode ? -1 : undefined,
         style: {
-          position: isEditorActive ? 'relative' : undefined,
+          position: 'relative',
           outlineOffset: '1px',
           display: isInline ? 'inline-block' : undefined,
         },
       },
       [
         <RenderChildren key="children" children={children} nodeProps={props} />,
-        isEditorEnabled && (
-          <span
-            key={`toolbar-${nodeId}`}
-            className="absolute z-10 flex select-none gap-x-1"
-            data-attr="exclude"
-            style={{ top: '-0.9rem', left: '0' }}
-          >
-            {props.tagName === 'span' && (
-              <button
-                type="button"
-                onClick={handleStyleClick}
-                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 bg-opacity-90 text-blue-700 shadow-sm hover:bg-blue-300 focus:outline-none"
-                aria-label="Style selection"
-                data-attr="exclude"
-              >
-                <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
-              </button>
-            )}
+        <span
+          key={`toolbar-${nodeId}`}
+          className="absolute z-10 flex select-none gap-x-1"
+          data-attr="exclude"
+          style={{ top: '-0.9rem', left: '0' }}
+        >
+          {props.tagName === 'span' && toolModeVal === `text` && (
+            <button
+              type="button"
+              onClick={handleStyleClick}
+              className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 bg-opacity-90 text-blue-700 shadow-sm hover:bg-blue-300 focus:outline-none"
+              aria-label="Style this"
+              title="Style this"
+              data-attr="exclude"
+            >
+              <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
+            </button>
+          )}
+          {props.tagName === 'span' && toolModeVal === `insert` && (
             <button
               type="button"
               onClick={handleWordCarouselClick}
@@ -345,7 +344,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
                   ? 'bg-green-100 text-green-700 hover:bg-green-300'
                   : 'bg-gray-100 bg-opacity-90 text-gray-700 hover:bg-gray-300'
               )}
-              aria-label="Edit Carousel"
+              aria-label="Word Carousel"
+              title="Word Carousel"
               data-attr="exclude"
             >
               <ChatBubbleBottomCenterTextIcon
@@ -353,17 +353,20 @@ export const NodeBasicTag = (props: NodeTagProps) => {
                 data-attr="exclude"
               />
             </button>
+          )}
+          {props.tagName === 'span' && toolModeVal === `text` && (
             <button
               type="button"
               onClick={handleUnwrapClick}
               className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 bg-opacity-90 text-gray-700 shadow-sm hover:bg-gray-300 focus:outline-none"
               aria-label="Remove formatting"
+              title="Remove formatting"
               data-attr="exclude"
             >
               <XMarkIcon className="h-3.5 w-3.5" data-attr="exclude" />
             </button>
-          </span>
-        ),
+          )}
+        </span>,
       ]
     );
   }

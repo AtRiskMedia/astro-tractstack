@@ -108,10 +108,9 @@ export const NodeOverlay = ({
           onClick={(e) => e.stopPropagation()}
           data-attr="exclude"
         >
-          {/* ID Button: bg-gray-100, rectangle (h-6 matches others), w-auto for icon width */}
           <button
             onClick={handleCopyIdClick}
-            className="flex h-6 w-auto min-w-[1.5rem] items-center justify-center bg-gray-100 px-1 text-gray-600 shadow-md hover:scale-110 hover:bg-gray-200"
+            className="flex h-6 w-auto min-w-px cursor-help items-center justify-center px-1"
             title={`${node.tagName}: ${nodeId}`}
           >
             {iconSrc && (

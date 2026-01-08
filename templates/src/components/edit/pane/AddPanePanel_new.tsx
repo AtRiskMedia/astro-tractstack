@@ -285,12 +285,15 @@ const AddPaneNewPanel = ({
           </div>
         )}
 
-        <div className="mb-6 text-center">
+        <div className="mx-auto mb-6 max-w-xl text-center">
           <h3 className="text-lg font-bold text-gray-800">
-            How would you like to build this pane?
+            Don't publish a page. Stack your story.
           </h3>
           <p className="text-sm text-gray-500">
-            Choose a starting point for your content.
+            A static page is a wall of text. A Smart Tract is a series of beats.
+            Build one Pane at a time and give each one a single job. Every Pane
+            acts as a listening device—telling you exactly when your audience
+            leans in, and when they drift away.
           </p>
         </div>
 

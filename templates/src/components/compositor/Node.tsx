@@ -23,6 +23,7 @@ import { NodeImg } from './nodes/tagElements/NodeImg';
 import { NodeA } from './nodes/tagElements/NodeA';
 import { NodeButton } from './nodes/tagElements/NodeButton';
 import { NodeText } from './nodes/tagElements/NodeText';
+import { BgPaneWrapper } from './nodes/BgPaneWrapper';
 import AddPanePanel from '@/components/edit/pane/AddPanePanel';
 import ConfigPanePanel from '@/components/edit/pane/ConfigPanePanel';
 import StoryFragmentConfigPanel from '@/components/edit/storyfragment/StoryFragmentConfigPanel';
@@ -175,7 +176,9 @@ export const Node = memo((props: NodeProps) => {
     );
   }
   // 2. Content Types
-  else if (node.nodeType === 'Markdown') {
+  else if (node.nodeType === 'BgPane') {
+    element = <BgPaneWrapper {...props} />;
+  } else if (node.nodeType === 'Markdown') {
     element = <Markdown {...props} />;
   } else if (isGridLayoutNode(node)) {
     element = <GridLayout {...props} />;
