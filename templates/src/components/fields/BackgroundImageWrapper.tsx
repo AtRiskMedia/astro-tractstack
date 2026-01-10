@@ -17,6 +17,7 @@ import { isArtpackImageNode } from '@/utils/compositor/typeGuards';
 
 export interface BackgroundImageWrapperProps {
   paneId: string;
+  isGrid: boolean;
 }
 
 const CheckIcon = () => (
@@ -49,7 +50,10 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
+const BackgroundImageWrapper = ({
+  paneId,
+  isGrid,
+}: BackgroundImageWrapperProps) => {
   const ctx = getCtx();
   const allNodes = useStore(ctx.allNodes);
   const $artpacks = useStore(hasArtpacksStore);
@@ -113,13 +117,15 @@ const BackgroundImageWrapper = ({ paneId }: BackgroundImageWrapperProps) => {
   const position = bgNode?.position || 'background';
   const size = bgNode?.size || 'equal';
 
-  const positionOptions = [
-    { label: 'Background', value: 'background' },
-    { label: 'Left', value: 'left' },
-    { label: 'Right', value: 'right' },
-    { label: 'Left Bleed', value: 'leftBleed' },
-    { label: 'Right Bleed', value: 'rightBleed' },
-  ];
+  const positionOptions = isGrid
+    ? [{ label: 'Background', value: 'background' }]
+    : [
+        { label: 'Background', value: 'background' },
+        { label: 'Left', value: 'left' },
+        { label: 'Right', value: 'right' },
+        { label: 'Left Bleed', value: 'leftBleed' },
+        { label: 'Right Bleed', value: 'rightBleed' },
+      ];
 
   const collection = useMemo(
     () =>

@@ -9,6 +9,7 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import { getCtx } from '@/stores/nodes';
 import { cloneDeep } from '@/utils/helpers';
+import { settingsPanelStore } from '@/stores/storykeep';
 import type {
   ImageFileNode,
   BgImageNode,
@@ -166,6 +167,13 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     ctx.modifyNodes([updatedPaneNode]);
     setBgImageNode(updatedBgNode);
     setLocalAltDescription(updatedBgNode.alt || '');
+    const currentSignal = settingsPanelStore.get();
+    if (currentSignal) {
+      settingsPanelStore.set({
+        ...currentSignal,
+        editLock: Date.now(),
+      });
+    }
     onUpdate();
     ctx.notifyNode('root');
   };

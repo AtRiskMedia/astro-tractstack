@@ -111,6 +111,7 @@ export type SettingsPanelSignal = {
   nodeId: string;
   childId?: string;
   layer?: number;
+  view?: string;
   className?: string;
   minimized?: boolean;
   expanded?: boolean;
@@ -607,6 +608,7 @@ export type ParentBasePanelProps = {
   parentNode?: FlatNode | PaneNode;
   config?: BrandConfig | null;
   layer?: number;
+  view?: string;
   className?: string;
   childId?: string;
   availableCodeHooks?: string[];

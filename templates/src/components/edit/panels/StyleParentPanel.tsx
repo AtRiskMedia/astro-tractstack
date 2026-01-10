@@ -58,14 +58,27 @@ const StyleParentPanel = ({
   node: initialNode,
   parentNode: paneNode,
   layer,
+  view,
 }: ParentBasePanelProps) => {
-  const [currentView, setCurrentView] = useState<PanelView>('summary');
+  // Local state for view is removed; derived from props instead
+  const currentView = (view as PanelView) || 'summary';
   const [currentLayer, setCurrentLayer] = useState<number>(layer || 1);
   const [styleTargets, setStyleTargets] = useState<StyleableTarget[]>([]);
   const [selectedTargetIndex, setSelectedTargetIndex] = useState(0);
 
   const ctx = getCtx();
   const { isAiRestyleModalOpen } = useStore(selectionStore);
+
+  // Helper to update the view in the store
+  const setView = (newView: PanelView) => {
+    const current = settingsPanelStore.get();
+    if (current) {
+      settingsPanelStore.set({
+        ...current,
+        view: newView,
+      });
+    }
+  };
 
   useEffect(() => {
     if (
@@ -127,8 +140,6 @@ const StyleParentPanel = ({
     } else {
       setSelectedTargetIndex(0);
     }
-
-    setCurrentView('summary');
   }, [initialNode, ctx, paneNode]);
 
   useEffect(() => {
@@ -175,6 +186,8 @@ const StyleParentPanel = ({
         ...currentSettings,
         nodeId: newTarget.id,
         action: 'style-parent',
+        // Reset view to summary when switching targets unless specified otherwise
+        view: 'summary',
       });
     }
   };
@@ -213,6 +226,7 @@ const StyleParentPanel = ({
       action,
       ...extraProps,
       targetProperty: targetProperty,
+      view,
       expanded: true,
     });
   };
@@ -277,7 +291,7 @@ const StyleParentPanel = ({
 
   const BackButton = () => (
     <button
-      onClick={() => setCurrentView('summary')}
+      onClick={() => setView('summary')}
       className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-black"
     >
       <ArrowUturnLeftIcon className="h-4 w-4" />
@@ -319,6 +333,11 @@ const StyleParentPanel = ({
           'type' in n &&
           (n.type === 'background-image' || n.type === 'artpack-image')
       ) as (BgImageNode | ArtpackImageNode) | undefined;
+    const preventGrid =
+      !!bgNode &&
+      ['left', 'right', 'leftBleed', 'rightBleed'].includes(
+        bgNode.position || ''
+      );
     let bgSummary = 'None';
     if (bgNode) {
       if (isArtpackImageNode(bgNode)) bgSummary = `Artpack: ${bgNode.image}`;
@@ -365,7 +384,7 @@ const StyleParentPanel = ({
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">{wrapperSummary}</span>
                 <button
-                  onClick={() => setCurrentView('wrapperStyles')}
+                  onClick={() => setView('wrapperStyles')}
                   className="rounded bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700 hover:bg-gray-200"
                 >
                   Edit
@@ -379,7 +398,7 @@ const StyleParentPanel = ({
                   {bgSummary}
                 </span>
                 <button
-                  onClick={() => setCurrentView('backgroundImage')}
+                  onClick={() => setView('backgroundImage')}
                   className="rounded bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700 hover:bg-gray-200"
                 >
                   Edit
@@ -436,7 +455,7 @@ const StyleParentPanel = ({
             </div>
           )}
 
-        {selectedTargetIndex === 0 && (
+        {!preventGrid && selectedTargetIndex === 0 && (
           <div className="space-y-3 border-t border-gray-200 pt-4">
             <h3 className="text-sm font-bold uppercase text-gray-500">
               Layout
@@ -574,14 +593,14 @@ const StyleParentPanel = ({
                     className={`min-w-8 rounded-md px-3 py-1.5 text-sm font-bold transition-colors ${
                       currentLayer === num
                         ? 'bg-myblue text-white shadow-sm'
-                        : 'bg-white text-mydarkgrey hover:bg-mydarkgrey/10 hover:text-black'
+                        : 'bg-white text-mydarkgrey hover:bg-mydarkgrey hover:bg-opacity-10 hover:text-black'
                     }`}
                     onClick={() => setCurrentLayer(num)}
                   >
                     {num}
                   </button>
                   <button
-                    className="rounded border border-dashed border-mydarkgrey/30 p-1 text-xs text-mydarkgrey transition-colors hover:bg-white/50 hover:text-black"
+                    className="rounded border border-dashed border-mydarkgrey border-opacity-30 p-1 text-xs text-mydarkgrey transition-colors hover:bg-white/50 hover:text-black"
                     title="Add Layer Here"
                     onClick={() =>
                       handleLayerAdd(
@@ -596,58 +615,63 @@ const StyleParentPanel = ({
               ))}
           </div>
         </div>
-        {hasNoClasses ? (
-          <div>
-            <em>No styles for this layer.</em>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(currentClasses.mobile).map(([className]) => (
-              <SelectedTailwindClass
-                key={className}
-                name={className}
-                values={{
-                  mobile: currentClasses.mobile[className],
-                  tablet: currentClasses.tablet?.[className],
-                  desktop: currentClasses.desktop?.[className],
-                }}
-                onRemove={handleClickRemove}
-                onUpdate={handleClickUpdate}
-              />
-            ))}
-          </div>
+        {layerCount > 0 && (
+          <>
+            {hasNoClasses ? (
+              <div>
+                <em>No styles for this layer.</em>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(currentClasses.mobile).map(([className]) => (
+                  <SelectedTailwindClass
+                    key={className}
+                    name={className}
+                    values={{
+                      mobile: currentClasses.mobile[className],
+                      tablet: currentClasses.tablet?.[className],
+                      desktop: currentClasses.desktop?.[className],
+                    }}
+                    onRemove={handleClickRemove}
+                    onUpdate={handleClickUpdate}
+                  />
+                ))}
+              </div>
+            )}
+            <div>
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
+                <li>
+                  <em>Actions:</em>
+                </li>
+                <li>
+                  <button
+                    onClick={handleClickAdd}
+                    className="font-bold text-myblue underline hover:text-black"
+                  >
+                    Add Style
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={handleClickDeleteLayer}
+                    className="font-bold text-myblue underline hover:text-black"
+                  >
+                    Delete Layer
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </>
         )}
-        <div>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-mydarkgrey">
-            <li>
-              <em>Actions:</em>
-            </li>
-            <li>
-              <button
-                onClick={handleClickAdd}
-                className="font-bold text-myblue underline hover:text-black"
-              >
-                Add Style
-              </button>
-            </li>
-            <li>
-              <button
-                onClick={handleClickDeleteLayer}
-                className="font-bold text-myblue underline hover:text-black"
-              >
-                Delete Layer
-              </button>
-            </li>
-          </ul>
-        </div>
       </div>
     );
   };
 
+  const isGrid = isGridLayoutNode(initialNode);
   const renderBackgroundImageVIew = () => (
     <div className="space-y-4">
       <BackButton />
-      <BackgroundImageWrapper paneId={paneNode.id} />
+      <BackgroundImageWrapper paneId={paneNode.id} isGrid={isGrid} />
     </div>
   );
 

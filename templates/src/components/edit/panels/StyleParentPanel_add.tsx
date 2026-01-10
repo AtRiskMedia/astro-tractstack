@@ -64,9 +64,8 @@ interface StyleOption {
 
 type StyleableNode = MarkdownPaneFragmentNode | GridLayoutNode;
 
-// This custom prop is passed via the settingsPanelStore signal.
 type CustomPanelProps = ParentBasePanelProps & {
-  targetProperty: 'parentClasses' | 'gridClasses';
+  targetProperty: 'parentClasses' | 'gridClasses' | undefined;
 };
 
 const StyleParentPanelAdd = ({
@@ -83,6 +82,7 @@ const StyleParentPanelAdd = ({
   const styleableNode = node as StyleableNode | null;
 
   if (
+    !targetProperty ||
     !styleableNode ||
     (!isMarkdownPaneFragmentNode(styleableNode) &&
       !isGridLayoutNode(styleableNode))
@@ -187,6 +187,7 @@ const StyleParentPanelAdd = ({
     settingsPanelStore.set({
       nodeId: styleableNode.id,
       layer: layer,
+      view: settingsPanelStore.get()?.view,
       action: 'style-parent',
       expanded: true,
     });

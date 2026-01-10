@@ -9,7 +9,7 @@ import SwatchIcon from '@heroicons/react/24/outline/SwatchIcon';
 import ChevronUpDownIcon from '@heroicons/react/24/outline/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { getCtx } from '@/stores/nodes';
-import { hasArtpacksStore } from '@/stores/storykeep';
+import { hasArtpacksStore, settingsPanelStore } from '@/stores/storykeep';
 import { cloneDeep } from '@/utils/helpers';
 import type { ArtpackImageNode, PaneNode } from '@/types/compositorTypes';
 
@@ -157,7 +157,15 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
     ctx.modifyNodes([updatedPaneNode]);
     setArtpackNode(updatedArtNode);
     setIsModalOpen(false);
+    const currentSignal = settingsPanelStore.get();
+    if (currentSignal) {
+      settingsPanelStore.set({
+        ...currentSignal,
+        editLock: Date.now(),
+      });
+    }
     onUpdate();
+    ctx.notifyNode('root');
   };
 
   const handleRemoveImage = () => {
@@ -429,7 +437,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
                       <label className="mb-2 block text-sm font-bold text-mydarkgrey">
                         Select Image from {selectedCollection}
                       </label>
-                      <div className="grid grid-cols-2 gap-4 p-2 md:grid-cols-3 md:grid-cols-4">
+                      <div className="grid grid-cols-2 gap-4 p-2 md:grid-cols-3">
                         {availableImages.map((image) => (
                           <div
                             key={image}

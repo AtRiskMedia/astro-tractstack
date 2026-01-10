@@ -43,6 +43,7 @@ import type {
   FlatNode,
   GridLayoutNode,
   MarkdownPaneFragmentNode,
+  SettingsPanelSignal,
 } from '@/types/compositorTypes';
 
 interface SettingsPanelProps {
@@ -111,6 +112,7 @@ const PanelSwitch = ({
             node={markdownNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       else if (gridLayoutNode && paneNode)
@@ -119,6 +121,7 @@ const PanelSwitch = ({
             node={gridLayoutNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       break;
@@ -129,7 +132,8 @@ const PanelSwitch = ({
           <StyleParentAddPanel
             node={markdownNode}
             layer={signal.layer || 0}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       else if (gridLayoutNode)
@@ -137,7 +141,8 @@ const PanelSwitch = ({
           <StyleParentAddPanel
             node={gridLayoutNode}
             layer={signal.layer || 0}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -155,7 +160,8 @@ const PanelSwitch = ({
             node={clickedNode}
             layer={signal.layer || 0}
             className={signal.className}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -173,7 +179,8 @@ const PanelSwitch = ({
             node={clickedNode}
             layer={signal.layer || 0}
             className={signal.className}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -185,6 +192,7 @@ const PanelSwitch = ({
           <StyleParentDeleteLayerPanel
             node={markdownNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       break;
