@@ -1,4 +1,4 @@
-import { useState, type MouseEvent, type ReactNode } from 'react';
+import { useState, useRef, useEffect, type MouseEvent, type ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
@@ -39,6 +39,15 @@ export const NodeOverlay = ({
   const toolAddMode = useStore(ctx.toolAddModeStore).value;
   const settingsPanel = useStore(settingsPanelStore);
   const [hoverZone, setHoverZone] = useState<'before' | 'after' | null>(null);
+
+  // put a contentEditable={false} component inside a tree that inherits contentEditable={true}.
+  const chromeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (chromeRef.current) {
+      chromeRef.current.contentEditable = 'false';
+    }
+  });
 
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
   if (!node) return <>{children}</>;
@@ -99,6 +108,7 @@ export const NodeOverlay = ({
       {/* Text Mode: Tool Cart */}
       {toolMode === 'text' && (
         <div
+          ref={chromeRef}
           className="compositor-chrome absolute flex gap-1 opacity-10 transition-opacity duration-200 group-hover:opacity-100"
           style={{
             top: '-24px',
