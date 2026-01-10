@@ -103,6 +103,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/compositor/tools/PaneOverlay.tsx'
+      ),
+      dest: 'src/components/compositor/tools/PaneOverlay.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/compositor/nodes/RenderChildren.tsx'
       ),
       dest: 'src/components/compositor/nodes/RenderChildren.tsx',

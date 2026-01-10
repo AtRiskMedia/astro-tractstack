@@ -7,6 +7,7 @@ import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
 import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
 import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
+import { PaneOverlay } from '@/components/compositor/tools/PaneOverlay';
 import type {
   PaneNode,
   BgImageNode,
@@ -164,7 +165,8 @@ const Pane = memo(
     }, [props.nodeId]);
 
     return (
-      <div id={getPaneId()} className="pane">
+      <div id={getPaneId()} className="pane group relative">
+        <PaneOverlay {...props} hasBackground={!!bgNode} />
         <div
           id={getCtx(props).getNodeSlug(props.nodeId)}
           className={useFlexLayout ? '' : wrapperClasses}

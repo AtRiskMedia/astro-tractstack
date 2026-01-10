@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react';
 import { getCtx } from '@/stores/nodes';
 import { RenderChildren } from './RenderChildren';
 import { isGridLayoutNode } from '@/utils/compositor/typeGuards';
+import { PaneOverlay } from '@/components/compositor/tools/PaneOverlay';
 import type { NodeProps } from '@/types/nodeProps';
 import type { ParentClassesPayload } from '@/types/compositorTypes';
 import { viewportKeyStore, settingsPanelStore } from '@/stores/storykeep';
@@ -108,17 +109,18 @@ export const GridLayout = (props: NodeProps) => {
             getCtx(props).setClickedNodeId(props.nodeId, true);
             e.stopPropagation();
           }}
-          className={getCtx(props).getNodeClasses(
+          className={`${getCtx(props).getNodeClasses(
             props.nodeId,
             currentViewport,
             i - 1
-          )}
+          )} group relative`}
           style={
             i === parentClassesLength
               ? { position: 'relative', zIndex: 10 }
               : undefined
           }
         >
+          <PaneOverlay {...props} layer={i} />
           {nodesToRender}
         </div>
       );

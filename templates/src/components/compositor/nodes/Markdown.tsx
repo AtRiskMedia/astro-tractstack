@@ -3,7 +3,9 @@ import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import { RenderChildren } from './RenderChildren';
 import { GhostInsertBlock } from './GhostInsertBlock';
+import { PaneOverlay } from '@/components/compositor/tools/PaneOverlay';
 import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
+import { isGridLayoutNode } from '@/utils/compositor/typeGuards';
 import type { NodeProps } from '@/types/nodeProps';
 import type {
   MarkdownPaneFragmentNode,
@@ -35,6 +37,11 @@ export const Markdown = (props: NodeProps) => {
 
   if (!node) return null;
 
+  // Context Check: Are we inside a Grid?
+  const allNodes = ctx.allNodes.get();
+  const parentNode = node.parentId ? allNodes.get(node.parentId) : null;
+  const isGridChild = parentNode ? isGridLayoutNode(parentNode) : false;
+
   let isHidden = false;
   switch (currentViewport) {
     case 'mobile':
@@ -65,7 +72,6 @@ export const Markdown = (props: NodeProps) => {
     );
   }
 
-  const allNodes = ctx.allNodes.get();
   const parentPaneId = ctx.getClosestNodeTypeFromId(id, 'Pane');
   const bgNode = parentPaneId
     ? (() => {
@@ -185,7 +191,11 @@ export const Markdown = (props: NodeProps) => {
     </>
   );
 
+  // Conditional Layer Rendering:
+  // If we are NOT in a grid (standard Pane mode), we render the parentClasses loop.
+  // If we ARE in a grid, we skip this (the grid handles the outer layers, we handle the column style).
   if (
+    !isGridChild &&
     'parentClasses' in node &&
     (node.parentClasses as ParentClassesPayload)?.length > 0
   ) {
@@ -210,13 +220,14 @@ export const Markdown = (props: NodeProps) => {
             ctx.setClickedNodeId(props.nodeId, true);
             e.stopPropagation();
           }}
-          className={ctx.getNodeClasses(id, currentViewport, i - 1)}
+          className={`${ctx.getNodeClasses(id, currentViewport, i - 1)} group relative`}
           style={
             i === parentClassesLength
               ? { position: 'relative', zIndex: 10 }
               : undefined
           }
         >
+          <PaneOverlay {...props} layer={i} />
           {nodesToRender}
         </div>
       );
@@ -224,7 +235,11 @@ export const Markdown = (props: NodeProps) => {
   }
 
   return (
-    <div className={gridClassName} style={{ position: 'relative', zIndex: 10 }}>
+    <div
+      className={`${gridClassName} group relative`}
+      style={{ position: 'relative', zIndex: 10 }}
+    >
+      <PaneOverlay {...props} isColumn={isGridChild} />
       {nodesToRender}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useStore } from '@nanostores/react';
 import { Portal } from '@ark-ui/react';
 import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
@@ -7,10 +7,7 @@ import ArrowUturnLeftIcon from '@heroicons/react/24/outline/ArrowUturnLeftIcon';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import { selectionStore } from '@/stores/selection';
-import {
-  settingsPanelStore,
-  stylePanelTargetMemoryStore,
-} from '@/stores/storykeep';
+import { settingsPanelStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import {
   isMarkdownPaneFragmentNode,
@@ -60,39 +57,18 @@ const StyleParentPanel = ({
   layer,
   view,
 }: ParentBasePanelProps) => {
-  // Local state for view is removed; derived from props instead
+  const signal = useStore(settingsPanelStore);
   const currentView = (view as PanelView) || 'summary';
-  const [currentLayer, setCurrentLayer] = useState<number>(layer || 1);
-  const [styleTargets, setStyleTargets] = useState<StyleableTarget[]>([]);
-  const [selectedTargetIndex, setSelectedTargetIndex] = useState(0);
-
+  const activeLayer = layer || 1;
   const ctx = getCtx();
   const { isAiRestyleModalOpen } = useStore(selectionStore);
 
-  // Helper to update the view in the store
-  const setView = (newView: PanelView) => {
-    const current = settingsPanelStore.get();
-    if (current) {
-      settingsPanelStore.set({
-        ...current,
-        view: newView,
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (
-      !initialNode ||
-      !(
-        isMarkdownPaneFragmentNode(initialNode) || isGridLayoutNode(initialNode)
-      ) ||
-      !paneNode ||
-      !isPaneNode(paneNode)
-    ) {
-      return;
-    }
+  // 1. Build the list of available targets (Outer Container + Columns)
+  const styleTargets = useMemo(() => {
+    if (!initialNode || !paneNode) return [];
 
     let effectiveNode = initialNode;
+    // Find the parent grid if we are currently looking at a column
     if (isMarkdownPaneFragmentNode(initialNode) && initialNode.parentId) {
       const parent = ctx.allNodes.get().get(initialNode.parentId);
       if (parent && isGridLayoutNode(parent)) {
@@ -125,36 +101,17 @@ const StyleParentPanel = ({
         });
       });
     }
+    return targets;
+  }, [initialNode, paneNode, ctx]);
 
-    setStyleTargets(targets);
-
-    const rememberedIndex = stylePanelTargetMemoryStore.get().get(paneNode.id);
-
-    if (rememberedIndex != null && rememberedIndex < targets.length) {
-      setSelectedTargetIndex(rememberedIndex);
-    } else if (initialNode.id !== effectiveNode.id) {
-      // If opened on a child column, find and select it in the list
-      const index = targets.findIndex((t) => t.id === initialNode.id);
-      if (index !== -1) setSelectedTargetIndex(index);
-      else setSelectedTargetIndex(0);
-    } else {
-      setSelectedTargetIndex(0);
-    }
-  }, [initialNode, ctx, paneNode]);
-
-  useEffect(() => {
-    setCurrentLayer(layer || 1);
-  }, [layer]);
-
-  useEffect(() => {
-    if (paneNode?.id) {
-      const newMemory = new Map(stylePanelTargetMemoryStore.get());
-      newMemory.set(paneNode.id, selectedTargetIndex);
-      stylePanelTargetMemoryStore.set(newMemory);
-    }
-  }, [selectedTargetIndex, paneNode?.id]);
+  // 2. Identify active index based on global signal nodeId (Source of Truth)
+  const selectedTargetIndex = useMemo(() => {
+    const idx = styleTargets.findIndex((t) => t.id === signal?.nodeId);
+    return idx === -1 ? 0 : idx;
+  }, [styleTargets, signal?.nodeId]);
 
   const selectedTarget = styleTargets[selectedTargetIndex];
+
   if (!selectedTarget || !paneNode || !isPaneNode(paneNode)) {
     return null;
   }
@@ -166,6 +123,7 @@ const StyleParentPanel = ({
     targetProperty,
   } = selectedTarget;
 
+  // 3. Navigation updates the global store directly
   const handleNavigation = (direction: 'prev' | 'next') => {
     const len = styleTargets.length;
     if (len < 2) return;
@@ -175,26 +133,20 @@ const StyleParentPanel = ({
         ? (selectedTargetIndex + 1) % len
         : (selectedTargetIndex - 1 + len) % len;
 
-    setSelectedTargetIndex(newIndex);
-
-    // Dispatch Signal to move the Orange Outline
     const newTarget = styleTargets[newIndex];
-    const currentSettings = settingsPanelStore.get();
 
-    if (currentSettings && newTarget) {
-      settingsPanelStore.set({
-        ...currentSettings,
-        nodeId: newTarget.id,
-        action: 'style-parent',
-        // Reset view to summary when switching targets unless specified otherwise
-        view: 'summary',
-      });
-    }
+    settingsPanelStore.set({
+      ...signal!,
+      nodeId: newTarget.id,
+      action: 'style-parent',
+      view: 'summary', // Reset view to summary when switching physical nodes
+      targetProperty: newTarget.targetProperty,
+      expanded: true,
+    });
   };
 
   const handleLayerAdd = (position: 'before' | 'after', layerNum: number) => {
     const targetNode = cloneDeep(selectedTargetNode);
-
     const emptyLayer = { mobile: {}, tablet: {}, desktop: {} };
     let newParentClasses = [...(targetNode.parentClasses || [])];
     const insertIndex = position === 'before' ? layerNum - 1 : layerNum;
@@ -214,7 +166,9 @@ const StyleParentPanel = ({
     ]);
 
     const newLayer = position === 'before' ? layerNum : layerNum + 1;
-    setCurrentLayer(newLayer);
+    if (signal) {
+      settingsPanelStore.set({ ...signal, layer: newLayer });
+    }
   };
 
   const dispatchToSubPanel = (
@@ -222,6 +176,7 @@ const StyleParentPanel = ({
     extraProps: Record<string, any> = {}
   ) => {
     settingsPanelStore.set({
+      ...signal!,
       nodeId: selectedTargetId,
       action,
       ...extraProps,
@@ -246,22 +201,22 @@ const StyleParentPanel = ({
   };
 
   const handleClickDeleteLayer = () => {
-    dispatchToSubPanel('style-parent-delete-layer', { layer: currentLayer });
+    dispatchToSubPanel('style-parent-delete-layer', { layer: activeLayer });
   };
   const handleClickRemove = (name: string) => {
     dispatchToSubPanel('style-parent-remove', {
-      layer: currentLayer,
+      layer: activeLayer,
       className: name,
     });
   };
   const handleClickUpdate = (name: string) => {
     dispatchToSubPanel('style-parent-update', {
-      layer: currentLayer,
+      layer: activeLayer,
       className: name,
     });
   };
   const handleClickAdd = () => {
-    dispatchToSubPanel('style-parent-add', { layer: currentLayer });
+    dispatchToSubPanel('style-parent-add', { layer: activeLayer });
   };
 
   const handleColorChange = (color: string) => {
@@ -287,6 +242,15 @@ const StyleParentPanel = ({
     updatedNode.isChanged = true;
     ctx.modifyNodes([updatedNode]);
     ctx.notifyNode('root');
+  };
+
+  const setView = (newView: PanelView) => {
+    if (signal) {
+      settingsPanelStore.set({
+        ...signal,
+        view: newView,
+      });
+    }
   };
 
   const BackButton = () => (
@@ -322,8 +286,7 @@ const StyleParentPanel = ({
   );
 
   const renderSummaryView = () => {
-    if (!initialNode) return null;
-    const isGrid = isGridLayoutNode(initialNode);
+    const isGrid = isGridLayoutNode(selectedTargetNode);
     const childNodeIds = ctx.getChildNodeIDs(paneNode.id);
     const bgNode = childNodeIds
       .map((id) => ctx.allNodes.get().get(id))
@@ -333,11 +296,13 @@ const StyleParentPanel = ({
           'type' in n &&
           (n.type === 'background-image' || n.type === 'artpack-image')
       ) as (BgImageNode | ArtpackImageNode) | undefined;
+
     const preventGrid =
       !!bgNode &&
       ['left', 'right', 'leftBleed', 'rightBleed'].includes(
         bgNode.position || ''
       );
+
     let bgSummary = 'None';
     if (bgNode) {
       if (isArtpackImageNode(bgNode)) bgSummary = `Artpack: ${bgNode.image}`;
@@ -462,7 +427,7 @@ const StyleParentPanel = ({
             </h3>
             {!isGrid ? (
               <button
-                onClick={() => convertToGrid(initialNode.id)}
+                onClick={() => initialNode && convertToGrid(initialNode.id)}
                 className="w-full rounded bg-cyan-600 px-4 py-2 text-sm font-bold text-white hover:bg-cyan-700"
               >
                 Convert to Grid Layout
@@ -503,13 +468,13 @@ const StyleParentPanel = ({
                   </div>
                 )}
                 <button
-                  onClick={() => revertFromGrid(initialNode.id)}
+                  onClick={() => initialNode && revertFromGrid(initialNode.id)}
                   className="w-full rounded bg-gray-200 px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-300"
                 >
                   Revert to Standard Pane
                 </button>
                 <button
-                  onClick={() => addColumn(initialNode.id)}
+                  onClick={() => initialNode && addColumn(initialNode.id)}
                   className="w-full rounded border border-dashed border-gray-400 bg-transparent px-4 py-2 text-sm font-bold text-gray-700 hover:border-gray-600 hover:bg-gray-50"
                 >
                   Add Column
@@ -563,7 +528,7 @@ const StyleParentPanel = ({
   const renderWrapperStylesView = () => {
     const layerCount = selectedTargetNode.parentClasses?.length || 0;
     const currentClasses = selectedTargetNode.parentClasses?.[
-      currentLayer - 1
+      activeLayer - 1
     ] || { mobile: {}, tablet: {}, desktop: {} };
     const hasNoClasses = !Object.values(currentClasses).some(
       (breakpoint) => Object.keys(breakpoint).length > 0
@@ -591,11 +556,14 @@ const StyleParentPanel = ({
                 >
                   <button
                     className={`min-w-8 rounded-md px-3 py-1.5 text-sm font-bold transition-colors ${
-                      currentLayer === num
+                      activeLayer === num
                         ? 'bg-myblue text-white shadow-sm'
                         : 'bg-white text-mydarkgrey hover:bg-mydarkgrey hover:bg-opacity-10 hover:text-black'
                     }`}
-                    onClick={() => setCurrentLayer(num)}
+                    onClick={() => {
+                      if (signal)
+                        settingsPanelStore.set({ ...signal, layer: num });
+                    }}
                   >
                     {num}
                   </button>
@@ -615,7 +583,7 @@ const StyleParentPanel = ({
               ))}
           </div>
         </div>
-        {layerCount > 0 && (
+        {layerCount > 0 && activeLayer <= layerCount && (
           <>
             {hasNoClasses ? (
               <div>
@@ -667,7 +635,7 @@ const StyleParentPanel = ({
     );
   };
 
-  const isGrid = isGridLayoutNode(initialNode);
+  const isGrid = isGridLayoutNode(selectedTargetNode);
   const renderBackgroundImageVIew = () => (
     <div className="space-y-4">
       <BackButton />
