@@ -21,7 +21,7 @@ import {
   sandboxTokenStore,
 } from '@/stores/storykeep';
 import { getCtx, ROOT_NODE_NAME, type NodesContext } from '@/stores/nodes';
-import { stopLoadingAnimation } from '@/utils/helpers';
+import { resolveCollisions, stopLoadingAnimation } from '@/utils/helpers';
 import { Node } from './Node';
 import { ARTPACKS } from '@/constants/brandThemes';
 import {
@@ -289,6 +289,15 @@ export const Compositor = (props: CompositorProps) => {
   };
 
   useEffect(() => {
+    window.addEventListener('resize', resolveCollisions);
+    return () => window.removeEventListener('resize', resolveCollisions);
+  }, []);
+
+  useEffect(() => {
+    resolveCollisions();
+  });
+
+  useEffect(() => {
     if (viewportModeStore.get() === 'auto') {
       setViewportMode('auto');
     }
@@ -489,12 +498,10 @@ export const Compositor = (props: CompositorProps) => {
     >
       {/* Loading indicator */}
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="flex items-center space-x-2 text-gray-600">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
-            <span>{initialized ? 'Updating...' : 'Compositing page...'}</span>
-          </div>
-        </div>
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ zIndex: '1007' }}
+        ></div>
       )}
 
       {/* Selection drag box */}

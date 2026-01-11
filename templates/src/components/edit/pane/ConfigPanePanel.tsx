@@ -160,7 +160,7 @@ const ConfigPanePanel = ({
       className="border-t border-dotted border-mylightgrey bg-myoffwhite"
       style={bgColorStyles}
     >
-      <div className="group w-full rounded-t-md px-1.5 pb-6 pt-1.5">
+      <div className="group w-full rounded-t-md px-1.5 py-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <div className={`flex flex-wrap gap-2 transition-opacity`}>
             {paneNode.isDecorative ? (

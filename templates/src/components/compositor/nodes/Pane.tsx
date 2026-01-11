@@ -100,7 +100,7 @@ const Pane = memo(
       return () => unsubscribeViewport();
     }, []);
 
-    const wrapperClasses = `grid ${getCtx(props).getNodeClasses(props.nodeId, currentViewport)}`;
+    const wrapperClasses = `grid pt-6 ${getCtx(props).getNodeClasses(props.nodeId, currentViewport)}`;
 
     const contentClasses = 'relative w-full h-auto justify-self-start';
     const contentStyles: CSSProperties = {

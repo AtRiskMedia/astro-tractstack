@@ -54,7 +54,7 @@ export const PaneOverlay = (props: PaneOverlayProps) => {
 
   return (
     <div
-      className="compositor-chrome absolute flex gap-1 opacity-10 transition-opacity duration-200 group-hover:opacity-100"
+      className="pane-overlay compositor-chrome absolute flex gap-1 opacity-10 transition-opacity duration-200 group-hover:opacity-100"
       style={{
         top: '-24px',
         right: 0,
@@ -62,6 +62,8 @@ export const PaneOverlay = (props: PaneOverlayProps) => {
       }}
       onClick={(e) => e.stopPropagation()}
       data-attr="exclude"
+      data-node-id={nodeId}
+      data-layer={layer}
     >
       {hasBackground && (
         <button
@@ -80,7 +82,7 @@ export const PaneOverlay = (props: PaneOverlayProps) => {
       {layer && (
         <button
           onClick={handleLayerClick}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md hover:scale-110 hover:bg-cyan-600"
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white shadow-md hover:scale-110 hover:bg-purple-600"
           title={`Edit Layer ${layer}`}
         >
           <PencilSquareIcon className="h-3.5 w-3.5" />
@@ -90,7 +92,7 @@ export const PaneOverlay = (props: PaneOverlayProps) => {
       {isColumn && (
         <button
           onClick={handleColumnClick}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md hover:scale-110 hover:bg-cyan-600"
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white shadow-md hover:scale-110 hover:bg-purple-600"
           title="Edit Column Styles"
         >
           <PencilSquareIcon className="h-3.5 w-3.5" />

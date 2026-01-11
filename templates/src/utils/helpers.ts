@@ -435,3 +435,104 @@ export function getSettingsPanelTitle(action: string): string {
       return 'Settings';
   }
 }
+
+export const resolveCollisions = () => {
+  const paneEls = Array.from(
+    document.querySelectorAll<HTMLElement>('.pane-overlay')
+  );
+  const nodeEls = Array.from(
+    document.querySelectorAll<HTMLElement>('.node-overlay')
+  );
+
+  // 1. Reset Panes to natural state to get accurate measurements
+  paneEls.forEach((el) => (el.style.transform = ''));
+
+  if (paneEls.length === 0) return;
+
+  const paneItems = paneEls.map((el) => ({
+    el,
+    rect: el.getBoundingClientRect(),
+    layer: parseInt(el.getAttribute('data-layer') || '1', 10),
+    x: 0,
+    y: 0,
+  }));
+
+  const nodeRects = nodeEls.map((el) => el.getBoundingClientRect());
+
+  // 2. Y-Axis Logic: Pane vs. Node Collision (Move UP)
+  paneItems.forEach((pane) => {
+    let maxOverlapY = 0;
+
+    for (const nodeRect of nodeRects) {
+      // Check AABB intersection
+      const intersects =
+        pane.rect.left < nodeRect.right &&
+        pane.rect.right > nodeRect.left &&
+        pane.rect.top < nodeRect.bottom &&
+        pane.rect.bottom > nodeRect.top;
+
+      if (intersects) {
+        // Calculate intersection height
+        const overlap =
+          Math.min(pane.rect.bottom, nodeRect.bottom) -
+          Math.max(pane.rect.top, nodeRect.top);
+        if (overlap > maxOverlapY) {
+          maxOverlapY = overlap;
+        }
+      }
+    }
+
+    if (maxOverlapY > 0) {
+      // Move up by overlap + buffer, capped at 48px
+      const shift = Math.min(maxOverlapY + 2, 48);
+      pane.y = -shift;
+    }
+  });
+
+  // 3. X-Axis Logic: Pane vs. Pane Collision (Move LEFT)
+  // Sort by physical top position to find vertical clusters
+  paneItems.sort((a, b) => a.rect.top - b.rect.top);
+
+  const clusters: (typeof paneItems)[] = [];
+  if (paneItems.length > 0) {
+    let currentCluster = [paneItems[0]];
+    for (let i = 1; i < paneItems.length; i++) {
+      const current = paneItems[i];
+      const prev = currentCluster[currentCluster.length - 1];
+
+      // Check if they occupy the same vertical space (with small buffer)
+      const isOverlappingY =
+        current.rect.top < prev.rect.bottom - 4 &&
+        current.rect.bottom > prev.rect.top + 4;
+
+      if (isOverlappingY) {
+        currentCluster.push(current);
+      } else {
+        clusters.push(currentCluster);
+        currentCluster = [current];
+      }
+    }
+    clusters.push(currentCluster);
+  }
+
+  // Apply X-shifts to clusters
+  clusters.forEach((cluster) => {
+    if (cluster.length > 1) {
+      // Sort by Layer ID (Layer 1 stays right, Layer 2 moves left, etc.)
+      cluster.sort((a, b) => a.layer - b.layer);
+
+      cluster.forEach((item, index) => {
+        if (index > 0) {
+          item.x = -(index * 32); // Shift left 32px per layer index
+        }
+      });
+    }
+  });
+
+  // 4. Apply Final Transforms
+  paneItems.forEach((item) => {
+    if (item.x !== 0 || item.y !== 0) {
+      item.el.style.transform = `translate(${item.x}px, ${item.y}px)`;
+    }
+  });
+};
