@@ -7,7 +7,12 @@ import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
 import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
 import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
-import type { BgImageNode, ArtpackImageNode } from '@/types/compositorTypes';
+import { PaneOverlay } from '@/components/compositor/tools/PaneOverlay';
+import type {
+  PaneNode,
+  BgImageNode,
+  ArtpackImageNode,
+} from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
 const TARGETS = [
@@ -95,7 +100,7 @@ const Pane = memo(
       return () => unsubscribeViewport();
     }, []);
 
-    const wrapperClasses = `grid ${getCtx(props).getNodeClasses(props.nodeId, currentViewport)}`;
+    const wrapperClasses = `grid pt-6 ${getCtx(props).getNodeClasses(props.nodeId, currentViewport)}`;
 
     const contentClasses = 'relative w-full h-auto justify-self-start';
     const contentStyles: CSSProperties = {
@@ -119,6 +124,8 @@ const Pane = memo(
 
     // Get background node if it exists
     const allNodes = getCtx(props).allNodes.get();
+    const getPaneId = () => `pane-${props.nodeId}`;
+
     const bgNode = children
       .map((id) => allNodes.get(id))
       .find(
@@ -143,8 +150,6 @@ const Pane = memo(
           ? 'flex-row-reverse'
           : 'flex-row';
 
-    const getPaneId = () => `pane-${props.nodeId}`;
-
     const handleNotification = () => {
       const newChildren = [...getCtx(props).getChildNodeIDs(props.nodeId)];
       setChildren(newChildren); // Fresh copy
@@ -160,7 +165,8 @@ const Pane = memo(
     }, [props.nodeId]);
 
     return (
-      <div id={getPaneId()} className="pane">
+      <div id={getPaneId()} className="pane group relative">
+        <PaneOverlay {...props} hasBackground={!!bgNode} />
         <div
           id={getCtx(props).getNodeSlug(props.nodeId)}
           className={useFlexLayout ? '' : wrapperClasses}

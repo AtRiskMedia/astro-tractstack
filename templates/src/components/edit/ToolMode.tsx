@@ -3,7 +3,7 @@ import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
+import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
@@ -18,12 +18,6 @@ import { selectionStore, resetSelectionStore } from '@/stores/selection';
 
 const storykeepToolModes = [
   {
-    key: 'styles' as const,
-    Icon: PaintBrushIcon,
-    title: 'Styles',
-    description: 'Click to edit styles',
-  },
-  {
     key: 'text' as const,
     Icon: PencilSquareIcon,
     title: 'Write',
@@ -34,30 +28,6 @@ const storykeepToolModes = [
     Icon: PlusIcon,
     title: 'Add',
     description: 'Add new element, e.g. paragraph or image',
-  },
-  {
-    key: 'eraser' as const,
-    Icon: TrashIcon,
-    title: 'Eraser',
-    description: 'Erase any element(s)',
-  },
-  {
-    key: 'move' as const,
-    Icon: ArrowsUpDownIcon,
-    title: 'Move',
-    description: 'Keyboard accessible re-order',
-  },
-  {
-    key: 'designLibrary' as const,
-    Icon: ArrowPathRoundedSquareIcon,
-    title: 'Design Library',
-    description: 'Save pane to design library',
-  },
-  {
-    key: 'debug' as const,
-    Icon: BugAntIcon,
-    title: 'Debug Mode',
-    description: 'Toggle node tree id reveal',
   },
 ] as const;
 

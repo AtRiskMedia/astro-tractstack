@@ -142,6 +142,7 @@ export const toolAddModes = [
   'identify',
   'toggle',
   'interactiveDisclosure',
+  'span',
   //"aside",
 ] as const;
 
@@ -161,6 +162,7 @@ export const toolAddModeTitles: Record<ToolAddMode, string> = {
   identify: 'Identity As',
   toggle: 'Toggle Belief',
   interactiveDisclosure: 'Interactive Disclosure',
+  span: 'Creative Span',
   //aside: "Aside Text",
 };
 
@@ -177,6 +179,7 @@ export const toolAddModesIcons: Record<ToolAddMode, string> = {
   toggle: '',
   belief: '',
   interactiveDisclosure: '',
+  span: '',
   //aside: "",
 };
 

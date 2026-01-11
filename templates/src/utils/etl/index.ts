@@ -1,3 +1,5 @@
+import type { CreativePanePayload } from '@/types/compositorTypes';
+
 export interface BackendSavePayload {
   id: string;
   title: string;
@@ -23,6 +25,7 @@ export interface OptionsPayload {
   heldBeliefs?: any;
   withheldBeliefs?: any;
   codeHookPayload?: object;
+  htmlAst?: CreativePanePayload;
 
   // Flattened nodes array - ALL child nodes in flat structure
   nodes: Array<{

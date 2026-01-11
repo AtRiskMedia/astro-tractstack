@@ -22,7 +22,7 @@ function hashString(str: string): string {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return hash.toString(36);
 }
@@ -37,7 +37,7 @@ export const PaneSnapshotGenerator = ({
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    if (!htmlString || isGenerating) return;
+    if (!htmlString) return;
 
     const cacheKey = `${id}-${hashString(htmlString)}-${outputWidth}`;
     if (snapshotCache.has(cacheKey)) {
@@ -81,7 +81,6 @@ export const PaneSnapshotGenerator = ({
         const brandColors =
           brandConfigStore.get()?.BRAND_COLOURS?.split(',') || [];
 
-        // Get all existing CSS links from current document
         const existingCssLinks = Array.from(
           document.querySelectorAll('link[rel="stylesheet"]')
         )
@@ -131,7 +130,6 @@ export const PaneSnapshotGenerator = ({
         (iframeDoc as any).write(fullHtml);
         iframeDoc.close();
 
-        // Wait for CSS to load
         await new Promise((resolve) => {
           if (iframeDoc.readyState === 'complete') {
             resolve(void 0);
@@ -140,7 +138,6 @@ export const PaneSnapshotGenerator = ({
           }
         });
 
-        // Additional wait for rendering
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         const iframeBody = iframeDoc.body;
@@ -195,16 +192,21 @@ export const PaneSnapshotGenerator = ({
         onComplete(id, snapshotData);
       } catch (error) {
         console.error(`Snapshot generation failed for ${id}:`, error);
-        onError?.(id, error instanceof Error ? error.message : 'Unknown error');
+
+        const fallbackData: SnapshotData = {
+          imageData: '/static.jpg',
+          height: 300,
+        };
+        snapshotCache.set(cacheKey, fallbackData);
+        onComplete(id, fallbackData);
       } finally {
         setIsGenerating(false);
       }
     };
 
     generateSnapshot();
-  }, [id, htmlString, isGenerating, onComplete, onError, outputWidth]);
+  }, [id, htmlString, onComplete, onError, outputWidth]);
 
-  // Show spinner while generating
   if (isGenerating) {
     return (
       <div className="flex h-24 items-center justify-center">

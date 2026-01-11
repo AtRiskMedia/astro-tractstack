@@ -108,7 +108,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
   );
 
   const ElementButtons = () => (
-    <div className="sm:grid-cols-3 grid grid-cols-2 gap-2 p-2">
+    <div className="grid grid-cols-2 gap-2 p-2 md:grid-cols-3">
       {$toolAddModes
         .filter((mode) => !['p', 'h2', 'h3', 'h4'].includes(mode))
         .filter((mode) => allowedModes.includes(mode as ToolAddMode))
@@ -169,11 +169,9 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
       ) : (
         <button
           onClick={(e) => {
-            if (toolModeVal !== `eraser`) {
-              e.stopPropagation();
-              settingsPanelStore.set(null);
-              setShowInsertOptions(true);
-            }
+            e.stopPropagation();
+            settingsPanelStore.set(null);
+            setShowInsertOptions(true);
           }}
           className="group w-full rounded-lg border-2 border-dashed border-cyan-500 bg-cyan-50 p-6 transition-colors hover:bg-cyan-100 dark:border-cyan-600 dark:bg-cyan-900 dark:hover:bg-cyan-800"
         >

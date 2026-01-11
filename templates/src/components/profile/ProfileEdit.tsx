@@ -294,7 +294,7 @@ export const ProfileEdit = ({ onSuccess, onError }: ProfileEditProps) => {
 
                   <Portal>
                     <Select.Positioner>
-                      <Select.Content className="sm:text-sm relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <Select.Content className="relative z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none md:text-sm">
                         {contactPersona.map((item) => (
                           <Select.Item
                             key={item.id}

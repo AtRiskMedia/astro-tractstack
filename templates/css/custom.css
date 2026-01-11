@@ -43,3 +43,8 @@ body {
 @media (prefers-reduced-motion) {
   scroll-behavior: auto;
 }
+
+/* Force lite-youtube to fill the container, overriding the 720px library limit */
+lite-youtube {
+  max-width: 100% !important; 
+}

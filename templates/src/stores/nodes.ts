@@ -9,6 +9,11 @@ import allowInsert from '@/utils/compositor/allowInsert';
 import { reservedSlugs } from '@/constants';
 import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
 import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
+import {
+  rehydrateChildrenFromHtml,
+  regenerateCreativePane,
+  extractFileIdsFromAst,
+} from '@/utils/compositor/htmlAst';
 import { MarkdownGenerator } from '@/utils/compositor/nodesMarkdownGenerator';
 import {
   hasButtonPayload,
@@ -19,6 +24,8 @@ import {
   toTag,
 } from '@/utils/compositor/typeGuards';
 import { startLoadingAnimation } from '@/utils/helpers';
+import { lispLexer } from '@/utils/actions/lispLexer';
+import { preParseAction } from '@/utils/actions/preParse_Action';
 import { settingsPanelStore } from '@/stores/storykeep';
 import {
   PaneAddMode,
@@ -26,6 +33,7 @@ import {
   ContextPaneMode,
 } from '@/types/compositorTypes';
 import type {
+  EditableElementMetadata,
   PanelState,
   BaseNode,
   FlatNode,
@@ -55,7 +63,6 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps, WidgetProps } from '@/types/nodeProps';
 import type { CSSProperties } from 'react';
-import { selectionStore } from '@/stores/selection';
 import type { SelectionRange, SelectionStoreState } from '@/stores/selection';
 import type { CompositorProps } from '@/components/compositor/Compositor';
 
@@ -83,6 +90,7 @@ export class NodesContext {
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
   impressionNodes = atom<Set<ImpressionNode>>(new Set<ImpressionNode>());
   parentNodes = atom<Map<string, string[]>>(new Map<string, string[]>());
+  showSaveBypass = atom<boolean>(false);
   hasTitle = atom<boolean>(false);
   hasPanes = atom<boolean>(false);
   isTemplate = atom<boolean>(false);
@@ -342,15 +350,6 @@ export class NodesContext {
 
     // click handler based on toolModeVal
     switch (toolModeVal) {
-      case `styles`:
-        const selection = selectionStore.get();
-        if (!selection.isActive)
-          handleClickEventDefault(
-            node,
-            dblClick,
-            this.clickedParentLayer.get()
-          );
-        break;
       case `text`:
         if (
           dblClick &&
@@ -358,7 +357,6 @@ export class NodesContext {
           'tagName' in node &&
           (node.tagName === 'a' || node.tagName === 'button')
         ) {
-          this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(
             node,
             dblClick,
@@ -366,17 +364,12 @@ export class NodesContext {
           );
         }
         if (dblClick && ![`Markdown`].includes(node.nodeType)) {
-          this.toolModeValStore.set({ value: 'styles' });
           handleClickEventDefault(
             node,
             dblClick,
             this.clickedParentLayer.get()
           );
         }
-        break;
-      case `eraser`:
-        this.handleEraseEvent(node.id);
-        this.deleteNode(node.id);
         break;
       default:
     }
@@ -562,34 +555,38 @@ export class NodesContext {
 
   applyShellToPane(paneId: string, template: TemplatePane) {
     const allNodes = new Map(this.allNodes.get());
-    const paneNode = allNodes.get(paneId) as PaneNode;
-    if (!paneNode) return;
+    const originalPane = allNodes.get(paneId);
+    if (!originalPane) return;
+
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+    paneNode.isChanged = true;
 
     if (template.bgColour) {
       paneNode.bgColour = template.bgColour;
-      paneNode.isChanged = true;
     }
+    if (template.htmlAst) {
+      paneNode.htmlAst = template.htmlAst;
+    }
+
+    allNodes.set(paneId, paneNode);
 
     const childrenIds = this.getChildNodeIDs(paneId);
 
-    const gridLayoutNode = childrenIds
+    const gridNodeRaw = childrenIds
       .map((id) => allNodes.get(id))
-      .find((n) => n?.nodeType === 'GridLayoutNode') as
-      | GridLayoutNode
-      | undefined;
+      .find((n) => n?.nodeType === 'GridLayoutNode');
 
-    const markdownNodes = childrenIds
-      .map((id) => allNodes.get(id))
-      .filter((n) => n?.nodeType === 'Markdown') as MarkdownPaneFragmentNode[];
+    if (gridNodeRaw && template.gridLayout) {
+      const gridLayoutNode = cloneDeep(gridNodeRaw) as GridLayoutNode;
+      gridLayoutNode.isChanged = true;
 
-    if (gridLayoutNode && template.gridLayout) {
       if (template.gridLayout.parentClasses) {
         gridLayoutNode.parentClasses = template.gridLayout.parentClasses;
       }
       if (template.gridLayout.defaultClasses) {
         gridLayoutNode.defaultClasses = template.gridLayout.defaultClasses;
       }
-      gridLayoutNode.isChanged = true;
+      allNodes.set(gridLayoutNode.id, gridLayoutNode);
 
       if (
         template.gridLayout.nodes &&
@@ -599,30 +596,134 @@ export class NodesContext {
 
         columnIds.forEach((colId, index) => {
           const templateCol = template.gridLayout!.nodes![index];
-          if (templateCol && templateCol.gridClasses) {
-            const liveColNode = allNodes.get(colId) as MarkdownPaneFragmentNode;
-            if (liveColNode) {
-              liveColNode.gridClasses = templateCol.gridClasses;
-              liveColNode.isChanged = true;
-            }
+          const colNodeRaw = allNodes.get(colId);
+          if (templateCol && colNodeRaw) {
+            const liveColNode = cloneDeep(
+              colNodeRaw
+            ) as MarkdownPaneFragmentNode;
+            liveColNode.gridClasses = templateCol.gridClasses;
+            liveColNode.isChanged = true;
+            allNodes.set(colId, liveColNode);
           }
         });
       }
-    } else if (markdownNodes.length > 0 && template.markdown) {
-      const primaryMarkdown = markdownNodes[0];
+    } else {
+      const markdownNodes = childrenIds
+        .map((id) => allNodes.get(id))
+        .filter(
+          (n) => n?.nodeType === 'Markdown'
+        ) as MarkdownPaneFragmentNode[];
 
-      if (template.markdown.parentClasses) {
-        primaryMarkdown.parentClasses = template.markdown.parentClasses;
+      if (markdownNodes.length > 0 && template.markdown) {
+        const primaryMarkdown = cloneDeep(markdownNodes[0]);
+        primaryMarkdown.isChanged = true;
+
+        if (template.markdown.parentClasses) {
+          primaryMarkdown.parentClasses = template.markdown.parentClasses;
+        }
+        if (template.markdown.defaultClasses) {
+          primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
+        }
+        allNodes.set(primaryMarkdown.id, primaryMarkdown);
       }
-      if (template.markdown.defaultClasses) {
-        primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
-      }
-      primaryMarkdown.isChanged = true;
     }
 
     this.allNodes.set(allNodes);
     this.notifyNode(paneId);
     this.notifyNode('root');
+    this.showSaveBypass.set(true);
+  }
+
+  async updateCreativeAsset(
+    paneId: string,
+    astId: string,
+    updates: Partial<EditableElementMetadata>
+  ) {
+    const allNodes = new Map(this.allNodes.get());
+    const originalPane = allNodes.get(paneId);
+
+    if (!originalPane || originalPane.nodeType !== 'Pane') return;
+
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+    if (!paneNode.htmlAst) return;
+
+    if (updates.tagName === 'a' && updates.buttonPayload?.callbackPayload) {
+      try {
+        const config = (window as any).TRACTSTACK_CONFIG || {};
+        const lexed = lispLexer(updates.buttonPayload.callbackPayload);
+
+        const resolvedHref = preParseAction(
+          lexed,
+          paneNode.slug,
+          !!paneNode.isContextPane,
+          config
+        );
+
+        if (resolvedHref) {
+          updates.href = resolvedHref;
+        }
+      } catch (e) {
+        console.warn('[Nodes] Failed to resolve href from ActionLisp:', e);
+      }
+    }
+
+    let newHtmlAst = await regenerateCreativePane(
+      paneNode.htmlAst,
+      astId,
+      updates
+    );
+
+    if (newHtmlAst.editableElements[astId]) {
+      newHtmlAst.editableElements[astId] = {
+        ...newHtmlAst.editableElements[astId],
+        ...updates,
+      };
+    }
+
+    paneNode.htmlAst = newHtmlAst;
+    paneNode.isChanged = true;
+
+    this.modifyNodes([paneNode]);
+  }
+
+  updateCreativePane(paneId: string, containerId: string, htmlContent: string) {
+    const allNodes = new Map(this.allNodes.get());
+    const originalPane = allNodes.get(paneId);
+
+    // 1. Validation and Clone (matching applyShellToPane pattern)
+    if (!originalPane || originalPane.nodeType !== 'Pane') return;
+
+    // Deep clone ensures we don't mutate state outside the atom update
+    const paneNode = cloneDeep(originalPane) as PaneNode;
+
+    // Guard: Ensure we are in HTML mode
+    if (!('htmlAst' in paneNode) || !paneNode.htmlAst) return;
+
+    // 2. Logic: Rehydrate and Patch
+    const newChildren = rehydrateChildrenFromHtml(htmlContent);
+
+    // Recursive patcher to find the container in the cloned tree
+    const patchNode = (nodes: any[]): boolean => {
+      for (const node of nodes) {
+        if (node.id === containerId) {
+          node.children = newChildren;
+          return true;
+        }
+        if (node.children && node.children.length > 0) {
+          if (patchNode(node.children)) return true;
+        }
+      }
+      return false;
+    };
+
+    // 3. Commit
+    if (patchNode(paneNode.htmlAst.tree)) {
+      paneNode.isChanged = true;
+      allNodes.set(paneId, paneNode);
+      this.allNodes.set(allNodes);
+      this.notifyNode(paneId);
+      this.showSaveBypass.set(true);
+    }
   }
 
   /**
@@ -2001,9 +2102,7 @@ export class NodesContext {
         });
         break;
     }
-    if ([`p`, `h2`, `h3`, `h4`, `li`].includes(tagName))
-      this.toolModeValStore.set({ value: 'text' });
-    else this.toolModeValStore.set({ value: 'styles' });
+    this.toolModeValStore.set({ value: 'text' });
     this.notifyNode('root');
   }
 
@@ -2585,7 +2684,15 @@ export class NodesContext {
   getPaneImageFileIds(paneId: string): string[] {
     const paneNode = this.allNodes.get().get(paneId);
     if (!paneNode || paneNode.nodeType !== 'Pane') return [];
+    const pane = paneNode as PaneNode;
 
+    // 1. Extract from Creative AST (if present)
+    let creativeFileIds: string[] = [];
+    if (pane.htmlAst) {
+      creativeFileIds = extractFileIdsFromAst(pane.htmlAst);
+    }
+
+    // 2. Extract from Standard Nodes (TagElement, BgPane)
     const allNodes = this.getNodesRecursively(paneNode);
 
     const embeddedFileIds = allNodes
@@ -2612,7 +2719,10 @@ export class NodesContext {
       .map((node) => node.fileId)
       .filter((id): id is string => id !== undefined);
 
-    return [...embeddedFileIds, ...bgFileIds];
+    // 3. Merge unique IDs
+    return Array.from(
+      new Set([...embeddedFileIds, ...bgFileIds, ...creativeFileIds])
+    );
   }
 
   getPaneImagesMap(): Record<string, string[]> {
@@ -3193,6 +3303,11 @@ export class NodesContext {
     paneTemplate: TemplatePane,
     newPaneId: string
   ): BaseNode[] {
+    if (paneTemplate.htmlAst) {
+      // No nodes when in htmlAst mode
+      return [];
+    }
+
     let allNodes: BaseNode[] = [];
 
     // 1. Process Markdown Content
@@ -3350,8 +3465,6 @@ export class NodesContext {
         };
         allNodes.push(bgPaneNode);
       }
-      // This helper only processes nodes, it doesn't modify the paneTemplate.
-      // The deletion of `duplicatedPane.bgPane` will remain in `addTemplatePane`.
     }
 
     return allNodes;

@@ -47,7 +47,7 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
         <h2 className="mb-4 text-xl font-bold text-gray-900">
           Content Overview
         </h2>
-        <div className="sm:grid-cols-4 lg:grid-cols-8 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-8">
           <div className="text-center">
             <div className="text-2xl font-bold text-cyan-600">
               {contentStats.storyfragments}
@@ -89,7 +89,7 @@ const ContentSummary = ({ fullContentMap }: ContentSummaryProps) => {
       {/* Quick Actions */}
       <div className="rounded-lg bg-white p-6 shadow">
         <h2 className="mb-4 text-xl font-bold text-gray-900">Quick Actions</h2>
-        <div className="sm:grid-cols-4 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <a
             href="/create/edit"
             className="rounded-lg border-2 border-dashed border-gray-300 p-4 text-center hover:border-cyan-500 hover:text-cyan-600"

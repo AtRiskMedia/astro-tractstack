@@ -24,13 +24,19 @@ import { RenderChildren } from '../RenderChildren';
 import {
   processRichTextToNodes,
   getTemplateNode,
+  isAddressableNode,
+  canEditText,
+  getNodeDisplayMode,
 } from '@/utils/compositor/nodesHelper';
 import { cloneDeep, classNames } from '@/utils/helpers';
 import { PatchOp } from '@/stores/nodesHistory';
 import type { FlatNode, PaneNode } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
-export type NodeTagProps = NodeProps & { tagName: keyof JSX.IntrinsicElements };
+export type NodeTagProps = NodeProps & {
+  tagName: keyof JSX.IntrinsicElements;
+  style?: any;
+};
 
 type EditState = 'viewing' | 'editing';
 const VERBOSE = false;
@@ -39,9 +45,9 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const nodeId = props.nodeId;
   const ctx = getCtx(props);
   const settingsPanel = useStore(settingsPanelStore);
-  const toolMode = useStore(ctx.toolModeValStore).value;
-  const Tag =
-    ctx.toolModeValStore.get().value === `debug` ? `div` : props.tagName;
+  const Tag = ['em', 'strong', 'a', 'button', 'img'].includes(props.tagName)
+    ? props.tagName
+    : 'div';
 
   if (props.tagName === 'span') {
     const node = ctx.allNodes.get().get(props.nodeId);
@@ -66,14 +72,16 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const cursorPositionRef = useRef<{ node: Node; offset: number } | null>(null);
 
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
+  const toolAddMode = useStore(ctx.toolAddModeStore).value;
 
   // Get node data
   const node = ctx.allNodes.get().get(nodeId) as FlatNode;
   const children = ctx.getChildNodeIDs(nodeId);
-  const isEditableMode = ctx.toolModeValStore.get().value === 'text';
-  const supportsEditing = !['ol', 'ul'].includes(props.tagName);
+  const isEditableMode = toolModeVal === 'text';
+  const supportsEditing = canEditText(node, ctx);
   const isPlaceholder = node?.isPlaceholder === true;
   const isEmpty = elementRef.current?.textContent?.trim() === '';
+  const isInline = getNodeDisplayMode(node, viewportKeyStore.get().value, ctx);
 
   // Auto-enter edit mode for new placeholder nodes
   useEffect(() => {
@@ -258,8 +266,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
   // For formatting nodes <em> and <strong> and <span>
   if (['em', 'strong', 'span'].includes(props.tagName)) {
-    const isEditorActive = ['styles', 'text'].includes(toolModeVal);
-    const isEditorEnabled = toolModeVal === 'styles';
     const handleStyleClick = (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
@@ -300,32 +306,35 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           }
         },
         'data-node-id': nodeId,
+        'data-tag': props.tagName,
         tabIndex: isEditableMode ? -1 : undefined,
         style: {
-          position: isEditorActive ? 'relative' : undefined,
+          position: 'relative',
           outlineOffset: '1px',
+          display: isInline ? 'inline-block' : undefined,
         },
       },
       [
         <RenderChildren key="children" children={children} nodeProps={props} />,
-        isEditorEnabled && (
-          <span
-            key={`toolbar-${nodeId}`}
-            className="absolute z-10 flex select-none gap-x-1"
-            data-attr="exclude"
-            style={{ top: '-0.9rem', left: '0' }}
-          >
-            {props.tagName === 'span' && (
-              <button
-                type="button"
-                onClick={handleStyleClick}
-                className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 bg-opacity-90 text-blue-700 shadow-sm hover:bg-blue-300 focus:outline-none"
-                aria-label="Style selection"
-                data-attr="exclude"
-              >
-                <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
-              </button>
-            )}
+        <span
+          key={`toolbar-${nodeId}`}
+          className="absolute z-10 flex select-none gap-x-1"
+          data-attr="exclude"
+          style={{ top: '-0.9rem', left: '0' }}
+        >
+          {props.tagName === 'span' && toolModeVal === `text` && (
+            <button
+              type="button"
+              onClick={handleStyleClick}
+              className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 bg-opacity-90 text-blue-700 shadow-sm hover:bg-blue-300 focus:outline-none"
+              aria-label="Style this"
+              title="Style this"
+              data-attr="exclude"
+            >
+              <PaintBrushIcon className="h-3 w-3" data-attr="exclude" />
+            </button>
+          )}
+          {props.tagName === 'span' && toolModeVal === `insert` && (
             <button
               type="button"
               onClick={handleWordCarouselClick}
@@ -335,7 +344,8 @@ export const NodeBasicTag = (props: NodeTagProps) => {
                   ? 'bg-green-100 text-green-700 hover:bg-green-300'
                   : 'bg-gray-100 bg-opacity-90 text-gray-700 hover:bg-gray-300'
               )}
-              aria-label="Edit Carousel"
+              aria-label="Word Carousel"
+              title="Word Carousel"
               data-attr="exclude"
             >
               <ChatBubbleBottomCenterTextIcon
@@ -343,17 +353,20 @@ export const NodeBasicTag = (props: NodeTagProps) => {
                 data-attr="exclude"
               />
             </button>
+          )}
+          {props.tagName === 'span' && toolModeVal === `text` && (
             <button
               type="button"
               onClick={handleUnwrapClick}
               className="flex h-4 w-4 items-center justify-center rounded-full bg-gray-100 bg-opacity-90 text-gray-700 shadow-sm hover:bg-gray-300 focus:outline-none"
               aria-label="Remove formatting"
+              title="Remove formatting"
               data-attr="exclude"
             >
               <XMarkIcon className="h-3.5 w-3.5" data-attr="exclude" />
             </button>
-          </span>
-        ),
+          )}
+        </span>,
       ]
     );
   }
@@ -373,6 +386,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           }
         },
         'data-node-id': nodeId,
+        'data-tag': props.tagName,
         tabIndex: isEditableMode ? -1 : undefined,
       },
       <RenderChildren children={children} nodeProps={props} />
@@ -380,7 +394,13 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   }
 
   const startEditing = () => {
-    if (!isEditableMode || !supportsEditing || editState === 'editing') return;
+    if (
+      !isEditableMode ||
+      !supportsEditing ||
+      editState === 'editing' ||
+      !canEditText(node, ctx)
+    )
+      return;
 
     originalContentRef.current = elementRef.current?.innerHTML || '';
     setEditState('editing');
@@ -395,13 +415,35 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   };
 
   const saveAndExit = () => {
+    if (VERBOSE)
+      console.log(`[DEBUG] saveAndExit triggered for nodeId: ${nodeId}`, {
+        editState,
+        toolMode: toolModeVal,
+        hasSettingsPanel: !!settingsPanel,
+        activeSignal: settingsPanel?.action,
+      });
     if (editState !== 'editing') return;
-
-    // Use an in-memory element to safely parse and strip UI chrome from the content.
     const tempDiv = document.createElement('div');
+    if (VERBOSE)
+      console.log(`[DEBUG] Raw HTML before sanitization:`, tempDiv.innerHTML);
     tempDiv.innerHTML = elementRef.current?.innerHTML || '';
-    tempDiv.querySelectorAll('[data-attr="exclude"]');
+    const chromeElements = tempDiv.querySelectorAll(
+      '.compositor-chrome, [data-attr="exclude"]'
+    );
+    chromeElements.forEach((el) => el.remove());
+    const wrappers = tempDiv.querySelectorAll(
+      '.compositor-wrapper, [data-node-overlay]'
+    );
+    wrappers.forEach((el) => {
+      while (el.firstChild) {
+        el.parentNode?.insertBefore(el.firstChild, el);
+      }
+      el.remove();
+    });
+
     const currentContent = tempDiv.innerHTML;
+    if (VERBOSE)
+      console.log(`[DEBUG] Sanitized HTML sent to Parser:`, currentContent);
 
     if (currentContent !== originalContentRef.current) {
       try {
@@ -636,9 +678,14 @@ export const NodeBasicTag = (props: NodeTagProps) => {
     const relatedTarget = e.relatedTarget as HTMLElement | null;
     if (VERBOSE)
       console.log(`[NodeBasicTag] Blur event, relatedTarget:`, e.relatedTarget);
+
+    // Check if the focus moved to the Settings Panel or Toolbar
+    const isSettingsControl = relatedTarget?.closest('#settingsControls');
+
     if (
       relatedTarget?.hasAttribute('data-tab-indicator') ||
-      (relatedTarget && elementRef.current?.contains(relatedTarget))
+      (relatedTarget && elementRef.current?.contains(relatedTarget)) ||
+      isSettingsControl
     ) {
       return;
     }
@@ -688,8 +735,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleClick = (e: MouseEvent) => {
-    if (toolModeVal === 'styles') {
-      console.log(`skipping handleClick on purpose`);
+    if (!canEditText(node, ctx)) {
       return;
     }
     if (
@@ -709,6 +755,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
 
     // Delay single-click behavior to see if double-click follows
     clickTimeoutRef.current = setTimeout(() => {
+      if (!isAddressableNode(node, ctx)) return;
       if (isEditableMode && supportsEditing && editState === 'viewing') {
         const selection = window.getSelection();
         if (selection && selection.rangeCount > 0) {
@@ -788,11 +835,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
   if (settingsPanel?.nodeId === nodeId) {
     outlineClasses +=
       ' outline-4 outline-dotted outline-orange-400 outline-offset-2';
-  } else if (toolMode === 'styles') {
-    outlineClasses += ' hover:outline hover:outline-2 hover:outline-black';
-    if (['span', 'strong', 'em'].includes(props.tagName)) {
-      outlineClasses += ' outline outline-1 outline-dotted outline-black';
-    }
   }
   const editingClasses =
     editState === 'editing'
@@ -816,11 +858,17 @@ export const NodeBasicTag = (props: NodeTagProps) => {
           onClick: handleClick,
           onDoubleClick: handleDoubleClick,
           style: {
+            userSelect:
+              toolModeVal === 'insert' && toolAddMode === 'span'
+                ? 'none'
+                : undefined,
             cursor: isEditableMode && supportsEditing ? 'text' : 'default',
             minHeight: isPlaceholder ? '1.5em' : undefined,
+            display: isInline ? 'inline-block' : undefined,
           },
           'data-node-id': nodeId,
           'data-placeholder': isPlaceholder,
+          'data-tag': props.tagName,
         },
         <RenderChildren
           children={children}

@@ -10,8 +10,10 @@ export const YouTubeWrapper = ({
       style={{
         position: 'relative',
         width: '100%',
+        maxWidth: '100%',
         height: '0',
         paddingBottom: '56.25%',
+        margin: '0 auto',
       }}
     >
       <iframe

@@ -6,6 +6,8 @@ import {
   isGridLayoutNode,
   isMarkdownPaneFragmentNode,
 } from '@/utils/compositor/typeGuards';
+import CreativeImagePanel from './panels/CreativeImagePanel';
+import CreativeLinkPanel from './panels/CreativeLinkPanel';
 import StyleBreakPanel from './panels/StyleBreakPanel';
 import StyleParentPanel from './panels/StyleParentPanel';
 import StyleParentAddPanel from './panels/StyleParentPanel_add';
@@ -41,6 +43,7 @@ import type {
   FlatNode,
   GridLayoutNode,
   MarkdownPaneFragmentNode,
+  SettingsPanelSignal,
 } from '@/types/compositorTypes';
 
 interface SettingsPanelProps {
@@ -109,6 +112,7 @@ const PanelSwitch = ({
             node={markdownNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       else if (gridLayoutNode && paneNode)
@@ -117,6 +121,7 @@ const PanelSwitch = ({
             node={gridLayoutNode}
             parentNode={paneNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       break;
@@ -127,7 +132,8 @@ const PanelSwitch = ({
           <StyleParentAddPanel
             node={markdownNode}
             layer={signal.layer || 0}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       else if (gridLayoutNode)
@@ -135,7 +141,8 @@ const PanelSwitch = ({
           <StyleParentAddPanel
             node={gridLayoutNode}
             layer={signal.layer || 0}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -153,7 +160,8 @@ const PanelSwitch = ({
             node={clickedNode}
             layer={signal.layer || 0}
             className={signal.className}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -171,7 +179,8 @@ const PanelSwitch = ({
             node={clickedNode}
             layer={signal.layer || 0}
             className={signal.className}
-            targetProperty={(signal as any).targetProperty}
+            targetProperty={(signal as SettingsPanelSignal).targetProperty}
+            view={signal.view}
           />
         );
       break;
@@ -183,6 +192,7 @@ const PanelSwitch = ({
           <StyleParentDeleteLayerPanel
             node={markdownNode}
             layer={signal.layer || 0}
+            view={signal.view}
           />
         );
       break;
@@ -574,6 +584,34 @@ const PanelSwitch = ({
             availableCodeHooks={availableCodeHooks}
           />
         );
+      break;
+
+    case 'style-creative-img':
+      if (paneNode && signal.childId)
+        return (
+          <CreativeImagePanel
+            node={paneNode}
+            childId={signal.childId}
+            mode="img"
+          />
+        );
+      break;
+
+    case 'style-creative-bg':
+      if (paneNode && signal.childId)
+        return (
+          <CreativeImagePanel
+            node={paneNode}
+            childId={signal.childId}
+            mode="bg"
+          />
+        );
+      break;
+
+    case 'style-creative-link':
+    case 'style-creative-btn':
+      if (paneNode && signal.childId)
+        return <CreativeLinkPanel node={paneNode} childId={signal.childId} />;
       break;
 
     default:

@@ -4,15 +4,7 @@ export type LispToken = string | number | LispToken[];
 
 export type ViewportKey = 'mobile' | 'tablet' | 'desktop' | 'auto';
 export type ViewportAuto = 'mobile' | 'tablet' | 'desktop';
-export type ToolModeVal =
-  | 'styles'
-  | 'text'
-  | 'insert'
-  | 'eraser'
-  | 'move'
-  | 'layout'
-  | 'designLibrary'
-  | 'debug';
+export type ToolModeVal = 'text' | 'insert';
 
 export const toolAddModes = [
   'p',
@@ -27,6 +19,7 @@ export const toolAddModes = [
   'interactiveDisclosure',
   'identify',
   'toggle',
+  'span',
   //"aside",
 ] as const;
 export type ToolAddMode = (typeof toolAddModes)[number];
@@ -55,6 +48,51 @@ export enum PaneConfigMode {
   CODEHOOK = 'CODEHOOK',
 }
 
+export interface HtmlAstNode {
+  tag: string;
+  attrs?: Record<string, string>;
+  children?: HtmlAstNode[];
+  text?: string;
+  id?: string;
+}
+
+export type CreativeButtonPayload = {
+  callbackPayload: string;
+  isExternalUrl?: boolean;
+  bunnyPayload?: {
+    t: string;
+    videoId: string | null;
+    slug?: string;
+    isContext?: boolean;
+  };
+};
+
+export interface EditableElementMetadata {
+  astId: string;
+  tagName: string;
+  src?: string;
+  srcSet?: string;
+  fileId?: string;
+  base64Data?: string;
+  alt?: string;
+  href?: string;
+  buttonPayload?: CreativeButtonPayload;
+  isCssBackground?: boolean;
+  collection?: string;
+  image?: string;
+}
+
+export interface CreativePanePayload {
+  css: string;
+  viewportCss: {
+    xs: string;
+    md: string;
+    xl: string;
+  };
+  tree: HtmlAstNode[];
+  editableElements: Record<string, EditableElementMetadata>;
+}
+
 export enum StoryFragmentMode {
   DEFAULT = 'DEFAULT',
   SLUG = 'SLUG',
@@ -73,6 +111,7 @@ export type SettingsPanelSignal = {
   nodeId: string;
   childId?: string;
   layer?: number;
+  view?: string;
   className?: string;
   minimized?: boolean;
   expanded?: boolean;
@@ -146,7 +185,8 @@ export type Tag =
   | 'belief'
   | 'identify'
   | 'toggle'
-  | 'code';
+  | 'code'
+  | 'span';
 
 export const tagTitles: Record<Tag, string> = {
   p: 'Paragraph',
@@ -168,6 +208,7 @@ export const tagTitles: Record<Tag, string> = {
   belief: 'Belief Select Widget',
   toggle: 'Belief Toggle Widget',
   identify: 'Identify As Widget',
+  span: 'Creative Span',
 };
 
 export type NodeType =
@@ -232,6 +273,7 @@ export interface PaneNode extends BaseNode {
   codeHookPayload?: {
     [key: string]: string;
   };
+  htmlAst?: CreativePanePayload;
   heldBeliefs?: BeliefDatum;
   withheldBeliefs?: BeliefDatum;
 }
@@ -566,6 +608,7 @@ export type ParentBasePanelProps = {
   parentNode?: FlatNode | PaneNode;
   config?: BrandConfig | null;
   layer?: number;
+  view?: string;
   className?: string;
   childId?: string;
   availableCodeHooks?: string[];

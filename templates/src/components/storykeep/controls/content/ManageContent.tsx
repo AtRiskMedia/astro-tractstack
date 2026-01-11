@@ -11,6 +11,7 @@ import { getBeliefById } from '@/utils/api/beliefConfig';
 import { getResource } from '@/utils/api/resourceConfig';
 import ContentSummary from './ContentSummary';
 import StoryFragmentTable from './StoryFragmentTable';
+import PaneTable from './PaneTable';
 import MenuTable from './MenuTable';
 import MenuForm from './MenuForm';
 import BeliefTable from './BeliefTable';
@@ -45,7 +46,7 @@ const staticContentManagementTabs: ContentManagementTab[] = [
   { id: 'menus', name: 'Menus' },
   { id: 'resources', name: 'Resources' },
   { id: 'beliefs', name: 'Beliefs' },
-  //{ id: 'panes', name: 'Panes' },
+  { id: 'panes', name: 'Panes' },
   //{ id: 'epinets', name: 'Epinets' },
   //{ id: 'files', name: 'Files' },
 ];
@@ -313,11 +314,10 @@ const ManageContent = ({
 
       case 'panes':
         return (
-          <div className="rounded-lg bg-white p-8 text-center shadow">
-            <div className="text-lg text-gray-600">
-              Panes management - Coming soon
-            </div>
-          </div>
+          <PaneTable
+            fullContentMap={currentContentMap}
+            onRefresh={refreshData}
+          />
         );
 
       case 'menus':

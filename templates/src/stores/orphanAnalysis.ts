@@ -1,4 +1,4 @@
-import { atom } from 'nanostores';
+import { atom, computed } from 'nanostores';
 
 export interface OrphanAnalysisData {
   storyFragments: Record<string, string[]>;
@@ -39,35 +39,11 @@ const defaultOrphanState: OrphanAnalysisState = {
   lastFetched: null,
 };
 
-const createOrphanAnalysisStore = () => {
-  const store = {
-    get: () => {
-      const tenantId = getCurrentTenantId();
-      return tenantOrphanAnalysis.get()[tenantId] || defaultOrphanState;
-    },
-
-    subscribe: (callback: (value: OrphanAnalysisState) => void) => {
-      const tenantId = getCurrentTenantId();
-      return tenantOrphanAnalysis.subscribe((analysis) => {
-        callback(analysis[tenantId] || defaultOrphanState);
-      });
-    },
-    lc: 0,
-    listen: function (callback: any) {
-      return this.subscribe(callback);
-    },
-    notify: function () {},
-    off: function () {},
-    get value() {
-      return this.get();
-    },
-    set: function () {}, // Orphan store is read-only for components
-  };
-
-  return store;
-};
-
-export const orphanAnalysisStore = createOrphanAnalysisStore();
+// Computed store that slices the state for the current tenant
+export const orphanAnalysisStore = computed(tenantOrphanAnalysis, (states) => {
+  const tenantId = getCurrentTenantId();
+  return states[tenantId] || defaultOrphanState;
+});
 
 function updateTenantState(
   tenantId: string,

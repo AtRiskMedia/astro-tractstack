@@ -274,7 +274,7 @@ const StyleWidgetPanel = ({
   };
 
   const handleWidgetConfig = () => {
-    getCtx().toolModeValStore.set({ value: 'styles' });
+    getCtx().toolModeValStore.set({ value: 'text' });
     settingsPanelStore.set({
       action: `style-code-config`,
       nodeId: node.id,

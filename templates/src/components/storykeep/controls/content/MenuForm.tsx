@@ -212,7 +212,7 @@ export default function MenuForm({
                   </div>
                 </div>
 
-                <div className="sm:grid-cols-2 grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <StringInput
                     label="Link Name"
                     value={link.name}

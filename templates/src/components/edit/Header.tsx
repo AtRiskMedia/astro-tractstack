@@ -12,6 +12,7 @@ import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTria
 import {
   viewportModeStore,
   setViewportMode,
+  viewportKeyStore,
   settingsPanelStore,
   pendingHomePageSlugStore,
   saasModalOpenStore,
@@ -33,6 +34,7 @@ const StoryKeepHeader = ({
   const viewport = useStore(viewportModeStore);
   const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
   const ctx = getCtx();
+  const showSaveBypass = useStore(ctx.showSaveBypass);
   const hasTitle = useStore(ctx.hasTitle);
   const hasPanes = useStore(ctx.hasPanes);
   const [canUndo, setCanUndo] = useState(false);
@@ -47,6 +49,25 @@ const StoryKeepHeader = ({
     ctx.history.headIndex.listen(updateUndoRedo);
     ctx.history.history.listen(updateUndoRedo);
   }, [ctx.history]);
+
+  useEffect(() => {
+    if (viewport !== 'auto') return;
+
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width >= 1368) {
+        viewportKeyStore.setKey('value', 'desktop');
+      } else if (width >= 801) {
+        viewportKeyStore.setKey('value', 'tablet');
+      } else {
+        viewportKeyStore.setKey('value', 'mobile');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewport]);
 
   const handleSave = () => {
     if (isSandboxMode) {
@@ -103,7 +124,7 @@ const StoryKeepHeader = ({
   ];
 
   // Show save button if there are undo changes OR pending home page change
-  const shouldShowSave = canUndo || pendingHomePageSlug;
+  const shouldShowSave = canUndo || pendingHomePageSlug || showSaveBypass;
 
   if (!hasTitle && !hasPanes) return null;
 
@@ -172,15 +193,53 @@ const StoryKeepHeader = ({
           </div>
         )}
 
+        {import.meta.env.DEV && (
+          <button
+            onClick={() => {
+              const allNodesMap = ctx.allNodes.get();
+              const allNodesArray = Array.from(allNodesMap.values());
+
+              console.group('Dev Mode: Full Nodes Context Inspection');
+              console.log('Total Nodes in Store:', allNodesArray.length);
+              console.log('Full Nodes Map:', allNodesMap);
+
+              // Specifically audit Creative Panes for large htmlAst payloads
+              // Using type guards/property checks to handle the BaseNode vs PaneNode distinction
+              const creativePanes = allNodesArray.filter(
+                (n) => n.nodeType === 'Pane' && 'htmlAst' in n
+              );
+
+              if (creativePanes.length > 0) {
+                console.group('Creative Panes Detail (htmlAst Audit)');
+                creativePanes.forEach((pane) => {
+                  // Guarding slug access since it is not on BaseNode
+                  const nodeSlug =
+                    'slug' in pane ? (pane as any).slug : 'NO_SLUG';
+
+                  console.log(`Pane ID: ${pane.id} | Slug: ${nodeSlug}`, {
+                    editableElements: (pane as any).htmlAst?.editableElements,
+                    tree: (pane as any).htmlAst?.tree,
+                    css: (pane as any).htmlAst?.css,
+                  });
+                });
+                console.groupEnd();
+              }
+
+              console.groupEnd();
+            }}
+            className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
+          >
+            Inspect
+          </button>
+        )}
+
         {shouldShowSave && (
-          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
-            <button
-              onClick={handleSave}
-              className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
-            >
-              Save
-            </button>
-          </div>
+          <button
+            onClick={handleSave}
+            className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
+          >
+            Save
+          </button>
         )}
       </div>
 

@@ -607,7 +607,7 @@ const EpinetDurationSelector = ({
                             : 'Select date range'}
                         </button>
                         {isDatePickerOpen && (
-                          <div className="sm:w-auto absolute z-10 mt-1 w-full rounded-md bg-white p-2 shadow-lg">
+                          <div className="absolute z-10 mt-1 w-full rounded-md bg-white p-2 shadow-lg md:w-auto">
                             <div className="mb-2 flex flex-wrap justify-between gap-2">
                               <button
                                 className="rounded-md p-1 text-sm hover:bg-gray-100"
@@ -642,7 +642,7 @@ const EpinetDurationSelector = ({
                                 End date: {formatDateDisplay(endDate)}
                               </p>
                             </div>
-                            <div className="sm:flex-row flex flex-col gap-4">
+                            <div className="flex flex-col gap-4 md:flex-row">
                               <div className="flex-1">
                                 <label
                                   htmlFor="start-date"
@@ -884,7 +884,7 @@ const EpinetDurationSelector = ({
           className={`fixed bottom-0 left-0 right-0 z-50 transform pr-12 transition-all duration-300 ease-in-out ${isAnimating ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
         >
           <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
-          <div className="sm:px-6 lg:px-8 relative mx-auto max-w-7xl px-4 py-4">
+          <div className="relative mx-auto max-w-7xl px-4 py-4 md:px-6 xl:px-8">
             <div
               className={`flex items-center justify-between rounded-lg border px-6 py-4 shadow-lg ${styling.bgColor} ${styling.borderColor}`}
             >

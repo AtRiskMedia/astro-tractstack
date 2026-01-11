@@ -56,7 +56,7 @@ const EnumSelect = ({
           'block w-fit min-w-48 rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset',
           error ? 'ring-red-300 focus:ring-red-500' : 'focus:ring-cyan-600',
           disabled ? 'cursor-not-allowed bg-gray-50 text-gray-500' : 'bg-white',
-          'sm:text-sm sm:leading-6'
+          'md:text-sm md:leading-6'
         )}
       >
         {(allowEmpty || !value) && (

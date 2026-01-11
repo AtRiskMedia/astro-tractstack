@@ -96,8 +96,16 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/Node.tsx',
     },
     {
-      src: resolve('../templates/src/components/compositor/NodeWithGuid.tsx'),
-      dest: 'src/components/compositor/NodeWithGuid.tsx',
+      src: resolve(
+        '../templates/src/components/compositor/tools/NodeOverlay.tsx'
+      ),
+      dest: 'src/components/compositor/tools/NodeOverlay.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/compositor/tools/PaneOverlay.tsx'
+      ),
+      dest: 'src/components/compositor/tools/PaneOverlay.tsx',
     },
     {
       src: resolve(
@@ -107,15 +115,15 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/GridLayout.tsx'
+        '../templates/src/components/compositor/nodes/CreativePane.tsx'
       ),
-      dest: 'src/components/compositor/nodes/GridLayout.tsx',
+      dest: 'src/components/compositor/nodes/CreativePane.tsx',
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/GridLayout_eraser.tsx'
+        '../templates/src/components/compositor/nodes/GridLayout.tsx'
       ),
-      dest: 'src/components/compositor/nodes/GridLayout_eraser.tsx',
+      dest: 'src/components/compositor/nodes/GridLayout.tsx',
     },
     {
       src: resolve(
@@ -135,24 +143,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_eraser.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_DesignLibrary.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_DesignLibrary.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Pane_layout.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Pane_layout.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/codehooks/SandboxRegisterForm.tsx'
       ),
       dest: 'src/components/codehooks/SandboxRegisterForm.tsx',
@@ -160,12 +150,6 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/compositor/nodes/Markdown.tsx'),
       dest: 'src/components/compositor/nodes/Markdown.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/Markdown_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/Markdown_eraser.tsx',
     },
     {
       src: resolve(
@@ -197,24 +181,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_insert.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_eraser.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeBasicTag_settings.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/tagElements/NodeText.tsx'
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeText.tsx',
@@ -233,21 +199,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeA_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeA_eraser.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/compositor/nodes/tagElements/NodeButton.tsx'
       ),
       dest: 'src/components/compositor/nodes/tagElements/NodeButton.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx'
-      ),
-      dest: 'src/components/compositor/nodes/tagElements/NodeButton_eraser.tsx',
     },
     {
       src: resolve(
@@ -485,6 +439,30 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/edit/pane/steps/AiCreativeDesignStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiCreativeDesignStep.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/pane/steps/AiStandardDesignStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiStandardDesignStep.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/pane/steps/AiLibraryCopyStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiLibraryCopyStep.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/pane/steps/AiRefineDesignStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/AiRefineDesignStep.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/edit/pane/steps/DesignLibraryStep.tsx'
       ),
       dest: 'src/components/edit/pane/steps/DesignLibraryStep.tsx',
@@ -500,6 +478,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/edit/pane/steps/DirectInjectStep.tsx'
       ),
       dest: 'src/components/edit/pane/steps/DirectInjectStep.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/pane/steps/CreativeInjectStep.tsx'
+      ),
+      dest: 'src/components/edit/pane/steps/CreativeInjectStep.tsx',
     },
     {
       src: resolve(
@@ -634,8 +618,20 @@ export async function injectTemplateFiles(
     },
     // Compositor utils
     {
+      src: resolve('../templates/src/utils/compositor/savePipeline.ts'),
+      dest: 'src/utils/compositor/savePipeline.ts',
+    },
+    {
       src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),
       dest: 'src/utils/compositor/aiPaneParser.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/compositor/aiGeneration.ts'),
+      dest: 'src/utils/compositor/aiGeneration.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/compositor/htmlAst.ts'),
+      dest: 'src/utils/compositor/htmlAst.ts',
     },
     {
       src: resolve(
@@ -714,6 +710,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/stores/storykeep.ts'),
       dest: 'src/stores/storykeep.ts',
+    },
+    {
+      src: resolve('../templates/src/stores/previews.ts'),
+      dest: 'src/stores/previews.ts',
     },
     {
       src: resolve('../templates/src/stores/analytics.ts'),
@@ -889,6 +889,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/api/tailwind.ts',
     },
     {
+      src: resolve('../templates/src/pages/api/css.ts'),
+      dest: 'src/pages/api/css.ts',
+    },
+    {
       src: resolve('../templates/src/pages/api/sandbox.ts'),
       dest: 'src/pages/api/sandbox.ts',
     },
@@ -958,6 +962,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/search/SearchResults.tsx'),
       dest: 'src/components/search/SearchResults.tsx',
+    },
+    {
+      src: resolve('../templates/src/hooks/usePaneFragments.ts'),
+      dest: 'src/hooks/usePaneFragments.ts',
     },
     {
       src: resolve('../templates/src/hooks/useSearch.ts'),
@@ -1185,6 +1193,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/controls/content/StoryFragmentTable.tsx'
       ),
       dest: 'src/components/storykeep/controls/content/StoryFragmentTable.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/controls/content/PaneTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/PaneTable.tsx',
     },
     {
       src: resolve(
@@ -1419,6 +1433,18 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/edit/state/StylesMemory.tsx'),
       dest: 'src/components/edit/state/StylesMemory.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/panels/CreativeImagePanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/CreativeImagePanel.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/edit/panels/CreativeLinkPanel.tsx'
+      ),
+      dest: 'src/components/edit/panels/CreativeLinkPanel.tsx',
     },
     {
       src: resolve(
@@ -2029,8 +2055,20 @@ export async function injectTemplateFiles(
       dest: 'public/icons/image.svg',
     },
     {
-      src: resolve('../templates/icons/text.svg'),
-      dest: 'public/icons/text.svg',
+      src: resolve('../templates/icons/link.svg'),
+      dest: 'public/icons/link.svg',
+    },
+    {
+      src: resolve('../templates/icons/p.svg'),
+      dest: 'public/icons/p.svg',
+    },
+    {
+      src: resolve('../templates/icons/li.svg'),
+      dest: 'public/icons/li.svg',
+    },
+    {
+      src: resolve('../templates/icons/code.svg'),
+      dest: 'public/icons/code.svg',
     },
 
     // Social Icons

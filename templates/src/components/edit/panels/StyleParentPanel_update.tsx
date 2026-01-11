@@ -24,7 +24,7 @@ type ViewportValues = {
 };
 
 type CustomPanelProps = ParentBasePanelProps & {
-  targetProperty: 'parentClasses' | 'gridClasses';
+  targetProperty: 'parentClasses' | 'gridClasses' | undefined;
 };
 
 const StyleParentPanelUpdate = ({
@@ -38,6 +38,7 @@ const StyleParentPanelUpdate = ({
   const config = brandConfigStore.get();
 
   if (
+    !targetProperty ||
     !styleableNode ||
     (!isMarkdownPaneFragmentNode(styleableNode) &&
       !isGridLayoutNode(styleableNode)) ||
@@ -100,6 +101,7 @@ const StyleParentPanelUpdate = ({
     settingsPanelStore.set({
       nodeId: styleableNode.id,
       layer: layer,
+      view: settingsPanelStore.get()?.view,
       action: 'style-parent',
       expanded: true,
     });

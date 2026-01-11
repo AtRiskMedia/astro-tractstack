@@ -78,6 +78,12 @@ importers:
       player.js:
         specifier: ^0.1.0
         version: 0.1.0
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      postcss-selector-parser:
+        specifier: ^7.1.1
+        version: 7.1.1
       prettier:
         specifier: 3.7.4
         version: 3.7.4
@@ -4468,6 +4474,13 @@ packages:
       }
     engines: { node: '>=4' }
 
+  postcss-selector-parser@7.1.1:
+    resolution:
+      {
+        integrity: sha512-orRsuYpJVw8LdAwqqLykBj9ecS5/cRHlI5+nvTo8LcCKmzDmqVORXtOIYEEQuL9D4BxtA1lm5isAqzQZCoQ6Eg==,
+      }
+    engines: { node: '>=4' }
+
   postcss-value-parser@4.2.0:
     resolution:
       {
@@ -8756,6 +8769,11 @@ snapshots:
       postcss-selector-parser: 6.1.2
 
   postcss-selector-parser@6.1.2:
+    dependencies:
+      cssesc: 3.0.0
+      util-deprecate: 1.0.2
+
+  postcss-selector-parser@7.1.1:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2

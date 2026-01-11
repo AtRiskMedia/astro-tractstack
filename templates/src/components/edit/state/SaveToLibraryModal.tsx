@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { CheckIcon } from '@heroicons/react/20/solid';
+import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { savePaneToLibrary } from '@/utils/compositor/designLibraryHelper';
 import { convertToBackendFormat } from '@/utils/api/brandHelpers';
 import StringInput from '@/components/form/StringInput';
@@ -165,7 +165,7 @@ export function SaveToLibraryModal({
               id="category-select"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="sm:text-sm mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500"
+              className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-cyan-500 focus:outline-none focus:ring-cyan-500 md:text-sm"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>

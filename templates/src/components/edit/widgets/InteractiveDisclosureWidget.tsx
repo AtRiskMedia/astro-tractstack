@@ -621,7 +621,7 @@ export default function InteractiveDisclosureWidget({
                         <h3 className="font-bold text-gray-800">
                           Widget Styles
                         </h3>
-                        <div className="sm:grid-cols-3 grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                           <div>
                             <ColorPickerCombo
                               title="Background Color"

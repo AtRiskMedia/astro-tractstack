@@ -1,16 +1,29 @@
-import { useState, useEffect, type SetStateAction, type Dispatch } from 'react';
+import {
+  useState,
+  useEffect,
+  type SetStateAction,
+  type Dispatch,
+  type MouseEvent,
+} from 'react';
 import { useStore } from '@nanostores/react';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
-import ArrowDownIcon from '@heroicons/react/24/outline/ArrowDownIcon';
-import ArrowUpIcon from '@heroicons/react/24/outline/ArrowUpIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
+import ArchiveBoxArrowDownIcon from '@heroicons/react/24/outline/ArchiveBoxArrowDownIcon';
+import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
+import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
+import SparklesIcon from '@heroicons/react/24/solid/SparklesIcon';
 import {
   isContextPaneNode,
   hasBeliefPayload,
 } from '@/utils/compositor/typeGuards';
 import { settingsPanelStore, fullContentMapStore } from '@/stores/storykeep';
+import { selectionStore } from '@/stores/selection';
 import { getCtx } from '@/stores/nodes';
+import { copyPaneToClipboard } from '@/utils/compositor/designLibraryHelper';
+import { SaveToLibraryModal } from '@/components/edit/state/SaveToLibraryModal';
+import { RestylePaneModal } from '@/components/edit/pane/RestylePaneModal';
+import { AiRestylePaneModal } from '@/components/edit/pane/AiRestylePaneModal';
 import PaneTitlePanel from './PanePanel_title';
 import PaneMagicPathPanel from './PanePanel_path';
 import PaneImpressionPanel from './PanePanel_impression';
@@ -18,18 +31,23 @@ import { PaneConfigMode, type PaneNode } from '@/types/compositorTypes';
 
 interface ConfigPanePanelProps {
   nodeId: string;
+  isHtmlAstPane: boolean;
+  isSandboxMode?: boolean;
 }
 
-const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
+const ConfigPanePanel = ({
+  nodeId,
+  isHtmlAstPane,
+  isSandboxMode,
+}: ConfigPanePanelProps) => {
   const ctx = getCtx();
   const isTemplate = useStore(ctx.isTemplate);
   const bgColorStyles = ctx.getNodeCSSPropertiesStyles(nodeId);
   const activePaneMode = useStore(ctx.activePaneMode);
-  const toolMode = useStore(ctx.toolModeValStore);
-  const reorderMode = toolMode.value === `move`;
   const isActiveMode =
     activePaneMode.panel === 'settings' && activePaneMode.paneId === nodeId;
   const $contentMap = useStore(fullContentMapStore);
+  const { isRestyleModalOpen, isAiRestyleModalOpen } = useStore(selectionStore);
 
   const allNodes = ctx.allNodes.get();
   const paneNode = allNodes.get(nodeId) as PaneNode;
@@ -49,6 +67,9 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
       : PaneConfigMode.DEFAULT
   );
 
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [wasCopied, setWasCopied] = useState(false);
+
   useEffect(() => {
     if (isActiveMode && activePaneMode.mode) {
       setMode(activePaneMode.mode as PaneConfigMode);
@@ -65,7 +86,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
   };
 
   const handleCodeHookConfig = () => {
-    ctx.toolModeValStore.set({ value: 'styles' });
+    ctx.toolModeValStore.set({ value: 'text' });
     settingsPanelStore.set({
       action: 'setup-codehook',
       nodeId: nodeId,
@@ -75,7 +96,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
 
   const handleEditStyles = () => {
     ctx.closeAllPanels();
-    ctx.toolModeValStore.set({ value: 'styles' });
+    ctx.toolModeValStore.set({ value: 'text' });
     if (paneNode.isDecorative) {
       const childNodeIds = ctx.getChildNodeIDs(nodeId);
       const bgPaneId = childNodeIds.find((id) => {
@@ -99,6 +120,33 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
     }
   };
 
+  // Design Library Handlers
+  const handleRestyleClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    selectionStore.setKey('paneToRestyleId', nodeId);
+    selectionStore.setKey('isRestyleModalOpen', true);
+  };
+
+  const handleAiRestyleClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    selectionStore.setKey('paneToRestyleId', nodeId);
+    selectionStore.setKey('isAiRestyleModalOpen', true);
+  };
+
+  const handleSaveClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    setIsSaveModalOpen(true);
+  };
+
+  const handleCopyToClipboard = async (e: MouseEvent) => {
+    e.stopPropagation();
+    const success = await copyPaneToClipboard(nodeId);
+    if (success) {
+      setWasCopied(true);
+      setTimeout(() => setWasCopied(false), 2000);
+    }
+  };
+
   if (mode === PaneConfigMode.TITLE) {
     return <PaneTitlePanel nodeId={nodeId} setMode={setSaveMode} />;
   } else if (mode === PaneConfigMode.PATH) {
@@ -112,8 +160,8 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
       className="border-t border-dotted border-mylightgrey bg-myoffwhite"
       style={bgColorStyles}
     >
-      <div className="group w-full rounded-t-md px-1.5 pb-0.5 pt-1.5">
-        <div className="flex flex-wrap gap-2">
+      <div className="group w-full rounded-t-md px-1.5 py-1.5">
+        <div className="flex flex-wrap items-center gap-2">
           <div className={`flex flex-wrap gap-2 transition-opacity`}>
             {paneNode.isDecorative ? (
               <>
@@ -142,24 +190,26 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                         ID
                       </button>
                     )}
-                    <button
-                      onClick={() => setSaveMode(PaneConfigMode.IMPRESSION)}
-                      className={buttonClass}
-                    >
-                      {impressionNodes.length ? (
-                        <>
-                          <CheckIcon className="inline h-4 w-4" />
-                          {` `}
-                          <span className="font-bold">Has Impression</span>
-                        </>
-                      ) : (
-                        <>
-                          <XMarkIcon className="inline h-4 w-4" />
-                          {` `}
-                          <span>No Impression</span>
-                        </>
-                      )}
-                    </button>
+                    {!isHtmlAstPane && (
+                      <button
+                        onClick={() => setSaveMode(PaneConfigMode.IMPRESSION)}
+                        className={buttonClass}
+                      >
+                        {impressionNodes.length ? (
+                          <>
+                            <CheckIcon className="inline h-4 w-4" />
+                            {` `}
+                            <span className="font-bold">Has Impression</span>
+                          </>
+                        ) : (
+                          <>
+                            <XMarkIcon className="inline h-4 w-4" />
+                            {` `}
+                            <span>No Impression</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </>
                 )}
                 {isCodeHook && (
@@ -170,7 +220,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                     Configure Code Hook
                   </button>
                 )}
-                {!isCodeHook && (
+                {!isCodeHook && !isHtmlAstPane && (
                   <button onClick={handleEditStyles} className={buttonClass}>
                     <PaintBrushIcon className="inline h-4 w-4" />
                     {` `}
@@ -179,7 +229,7 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                 )}
               </>
             )}
-            {!isContextPane && !isTemplate && (
+            {!isContextPane && !isTemplate && !isHtmlAstPane && (
               <button
                 onClick={() => setSaveMode(PaneConfigMode.PATH)}
                 className={buttonClass}
@@ -199,29 +249,67 @@ const ConfigPanePanel = ({ nodeId }: ConfigPanePanelProps) => {
                 )}
               </button>
             )}
-            {reorderMode && (
-              <div className="space-x-2">
-                <button
-                  title="Move pane up"
-                  onClick={() => getCtx().moveNode(nodeId, 'after')}
-                >
-                  <div className="inline-flex items-center rounded-b-md bg-gray-200 px-2 py-1 text-sm text-gray-800">
-                    <ArrowDownIcon className="mr-1 h-4 w-4" />
-                  </div>
-                </button>
-                <button
-                  title="Move pane down"
-                  onClick={() => getCtx().moveNode(nodeId, 'before')}
-                >
-                  <div className="inline-flex items-center rounded-b-md bg-gray-200 px-2 py-1 text-sm text-gray-800">
-                    <ArrowUpIcon className="mr-1 h-4 w-4" />
-                  </div>
-                </button>
-              </div>
+          </div>
+
+          {/* Design Library Tools (Right Aligned) */}
+          <div className="ml-auto flex items-center gap-2 border-l border-gray-300 pl-2">
+            {!isHtmlAstPane && !isSandboxMode && (
+              <button
+                title="Save Pane to Design Library"
+                onClick={handleSaveClick}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-600 p-1 shadow-sm hover:bg-cyan-700"
+              >
+                <ArchiveBoxArrowDownIcon className="h-4 w-4 text-white" />
+              </button>
+            )}
+
+            <button
+              title={isHtmlAstPane ? 'Re-Style' : 'Re-Color'}
+              onClick={handleAiRestyleClick}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-600 p-1 shadow-sm hover:bg-purple-700"
+            >
+              <SparklesIcon className="h-3.5 w-3.5 text-white" />
+            </button>
+
+            {!isHtmlAstPane && (
+              <button
+                title="Restyle Pane from Design Library"
+                onClick={handleRestyleClick}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 p-1 shadow-sm hover:bg-blue-700"
+              >
+                <ArrowPathRoundedSquareIcon className="h-4 w-4 text-white" />
+              </button>
+            )}
+            {import.meta.env.DEV && (
+              <button
+                title="Copy Pane Design to Clipboard"
+                onClick={handleCopyToClipboard}
+                className={`flex h-7 w-7 items-center justify-center rounded-full p-1 shadow-sm transition-colors ${
+                  wasCopied ? 'bg-green-500' : 'bg-gray-600 hover:bg-gray-700'
+                }`}
+              >
+                {wasCopied ? (
+                  <CheckIcon className="h-4 w-4 text-white" />
+                ) : (
+                  <ArrowDownTrayIcon className="h-4 w-4 text-white" />
+                )}
+              </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {isSaveModalOpen && (
+        <SaveToLibraryModal
+          paneId={nodeId}
+          onClose={() => setIsSaveModalOpen(false)}
+        />
+      )}
+      {isRestyleModalOpen && <RestylePaneModal />}
+      {isAiRestyleModalOpen && (
+        <AiRestylePaneModal isSandboxMode={isSandboxMode} />
+      )}
     </div>
   );
 };

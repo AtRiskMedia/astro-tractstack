@@ -6,11 +6,14 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import { getCtx } from '@/stores/nodes';
 import { selectionStore } from '@/stores/selection';
+import { renderedPreviews } from '@/stores/previews';
 import { sandboxTokenStore } from '@/stores/storykeep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
+import { AiRefineDesignStep } from './steps/AiRefineDesignStep';
 import prompts from '@/constants/prompts.json';
 import { TractStackAPI } from '@/utils/api';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import type { PaneNode, TemplatePane } from '@/types/compositorTypes';
 
 const callAskLemurAPI = async (
   prompt: string,
@@ -29,7 +32,7 @@ const callAskLemurAPI = async (
     input_text: context,
     final_model: '',
     temperature: 0.5,
-    max_tokens: 2000,
+    max_tokens: 6000,
   };
 
   let resultData: any;
@@ -82,22 +85,34 @@ export const AiRestylePaneModal = ({
 }: AiRestylePaneModalProps) => {
   const ctx = getCtx();
   const { isAiRestyleModalOpen, paneToRestyleId } = useStore(selectionStore);
+  const previews = useStore(renderedPreviews);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
     baseColor: '',
     accentColor: '',
     theme: 'Light',
-    additionalNotes: '',
   });
+
+  const node = paneToRestyleId
+    ? (ctx.allNodes.get().get(paneToRestyleId) as PaneNode)
+    : null;
+  const isCreative = !!node?.htmlAst;
 
   const handleClose = () => {
     if (loading) return;
     selectionStore.setKey('isAiRestyleModalOpen', false);
     selectionStore.setKey('paneToRestyleId', null);
     setError(null);
+    setAdditionalNotes('');
+  };
+
+  const handleCreativeUpdate = (template: TemplatePane) => {
+    if (!paneToRestyleId) return;
+    ctx.applyShellToPane(paneToRestyleId, template);
   };
 
   const handleGenerate = async () => {
@@ -124,8 +139,7 @@ export const AiRestylePaneModal = ({
         designInput += ` Base around **${aiDesignConfig.baseColor}**.`;
       if (aiDesignConfig.accentColor)
         designInput += ` Accent with **${aiDesignConfig.accentColor}**.`;
-      if (aiDesignConfig.additionalNotes)
-        designInput += ` Notes: "${aiDesignConfig.additionalNotes}"`;
+      if (additionalNotes) designInput += ` Notes: "${additionalNotes}"`;
 
       const shellPromptKey = promptConfig.prompts.shell as keyof typeof prompts;
       const shellPromptDetails = prompts[shellPromptKey] as any;
@@ -168,11 +182,11 @@ export const AiRestylePaneModal = ({
     >
       <Dialog.Backdrop className="fixed inset-0 z-103 bg-black bg-opacity-75" />
       <Dialog.Positioner className="fixed inset-0 z-104 flex items-center justify-center p-4">
-        <Dialog.Content className="flex max-w-2xl flex-col rounded-lg bg-white shadow-2xl">
+        <Dialog.Content className="flex w-full max-w-7xl flex-col rounded-lg bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b p-4">
             <h3 className="flex items-center gap-2 text-lg font-bold">
               <SparklesIcon className="h-5 w-5 text-purple-600" />
-              Re-Color Pane
+              {isCreative ? 'Refine Creative Pane' : 'Re-Color Pane'}
             </h3>
             <button
               onClick={handleClose}
@@ -183,49 +197,85 @@ export const AiRestylePaneModal = ({
             </button>
           </div>
 
-          <form className="p-6" onSubmit={(e) => e.preventDefault()}>
-            <div className={loading ? 'pointer-events-none opacity-50' : ''}>
-              <AiDesignStep
-                designConfig={aiDesignConfig}
-                onDesignConfigChange={setAiDesignConfig}
+          {isCreative ? (
+            <div className="overflow-y-auto" style={{ maxHeight: `80vh` }}>
+              <AiRefineDesignStep
+                onBack={handleClose}
+                onSuccess={handleClose}
+                onUpdatePane={handleCreativeUpdate}
+                isSandboxMode={isSandboxMode}
+                initialHtml={
+                  paneToRestyleId ? previews[paneToRestyleId] || '' : ''
+                }
+                initialCss={node?.htmlAst?.css || ''}
               />
             </div>
+          ) : (
+            <form className="p-6" onSubmit={(e) => e.preventDefault()}>
+              <div className={loading ? 'pointer-events-none opacity-50' : ''}>
+                <AiDesignStep
+                  designConfig={aiDesignConfig}
+                  onDesignConfigChange={setAiDesignConfig}
+                />
 
-            {error && (
-              <div className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
+                <div className="mt-6">
+                  <label
+                    htmlFor="restyle-notes"
+                    className="block text-base font-bold text-gray-800"
+                  >
+                    Additional Design Notes (Optional)
+                  </label>
+                  <p className="mb-2 mt-1 text-sm text-gray-500">
+                    Add specific requests like "use rounded corners", "add
+                    subtle texture".
+                  </p>
+                  <textarea
+                    id="restyle-notes"
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    placeholder="Enter additional notes..."
+                    rows={3}
+                    className="block w-full rounded-md border-gray-300 p-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="mt-8 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={loading}
-                className="rounded-lg px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-bold text-white shadow transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-75"
-              >
-                {loading ? (
-                  <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <SparklesIcon className="h-5 w-5" />
-                    Apply Re-Color
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {error && (
+                <div className="mt-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={loading}
+                  className="rounded-lg px-4 py-2 font-bold text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={loading}
+                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-2 font-bold text-white shadow transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-75"
+                >
+                  {loading ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <SparklesIcon className="h-5 w-5" />
+                      Apply Re-Color
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
         </Dialog.Content>
       </Dialog.Positioner>
     </Dialog.Root>

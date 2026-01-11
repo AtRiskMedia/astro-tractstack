@@ -21,6 +21,8 @@ export interface ImageParams {
   srcSet?: string;
   altDescription: string;
   base64Data?: string;
+  collection?: string | null;
+  image?: string | null;
 }
 
 interface ImageUploadProps {
@@ -144,6 +146,8 @@ export const ImageUpload = ({
         src: selected.src,
         srcSet: selected.srcSet,
         altDescription: selected.altDescription || missingAlt,
+        collection: null,
+        image: null,
       });
 
       // Update the node for existing files
@@ -192,6 +196,8 @@ export const ImageUpload = ({
         fileId: ulid(),
         src: base64, // Use base64 as src for immediate display
         altDescription: defaultAlt,
+        collection: null,
+        image: null,
       });
 
       // Update the node with base64Data

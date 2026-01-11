@@ -15,12 +15,15 @@ import {
 } from './TemplateNodes';
 import { getCtx, NodesContext } from '@/stores/nodes';
 import { settingsPanelStore } from '@/stores/storykeep';
+import { regexpHook } from '@/constants';
 import { PatchOp } from '@/stores/nodesHistory';
 import { cloneDeep } from '@/utils/helpers';
-import { isPaneNode } from './typeGuards';
+import { isPaneNode, isGridLayoutNode } from './typeGuards';
+import { processClassesForViewports } from '@/utils/compositor/reduceNodesClassNames';
 import type {
   BaseNode,
   FlatNode,
+  ViewportKey,
   StoryFragmentNode,
   TemplateNode,
   ToolAddMode,
@@ -28,7 +31,6 @@ import type {
   GridLayoutNode,
   PaneNode,
 } from '@/types/compositorTypes';
-import type { NodeTagProps } from '@/types/nodeProps';
 
 export const getTemplateNode = (value: ToolAddMode): TemplateNode => {
   let templateNode: TemplateNode;
@@ -74,19 +76,48 @@ export const getTemplateNode = (value: ToolAddMode): TemplateNode => {
   return templateNode;
 };
 
-const forbiddenEditTags = new Set<string>(['em', 'strong', 'ol', 'ul']);
+export const canEditText = (
+  node: BaseNode | FlatNode,
+  ctx: NodesContext
+): boolean => {
+  if (!node || node.nodeType !== 'TagElement') return false;
 
-export const canEditText = (props: NodeTagProps): boolean => {
-  const nodeId = props.nodeId;
+  const flatNode = node as FlatNode;
+  const tagName = flatNode.tagName;
 
-  const self = getCtx(props).allNodes.get().get(nodeId) as FlatNode;
-  if (self.tagName === 'a') return false;
+  // 1. Explicitly forbid structural containers
+  if (tagName === 'ul' || tagName === 'ol') {
+    return false;
+  }
 
-  const parentIsButton = getCtx(props).getParentNodeByTagNames(nodeId, ['a']);
-  if (parentIsButton?.length > 0) return false;
+  // 2. Surgical LI check:
+  // Only allow text editing if it is a standard text list item.
+  if (tagName === 'li') {
+    const childIds = ctx.getChildNodeIDs(node.id);
 
-  if (forbiddenEditTags.has(props.tagName as string)) return false;
-  return true;
+    // If it contains an image or code widget, it is NOT a text editor.
+    const hasComplexContent = childIds.some((id) => {
+      const child = ctx.allNodes.get().get(id) as FlatNode;
+      return child && ['img', 'code'].includes(child.tagName);
+    });
+
+    return !hasComplexContent;
+  }
+
+  // 3. Allowed text-editing tags
+  const editableTags = [
+    'p',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'a',
+    'button',
+    'span',
+  ];
+
+  return editableTags.includes(tagName);
 };
 
 export function parseMarkdownToNodes(
@@ -133,113 +164,58 @@ export function parseMarkdownToNodes(
 
 function extractNodesFromDOM(
   element: HTMLElement,
-  parentId: string
+  parentId: string,
+  onInsertSignal?: (tagName: string, nodeId: string) => void
 ): FlatNode[] {
-  const result: FlatNode[] = [];
+  const results: FlatNode[] = [];
 
-  // Process each child node
   Array.from(element.childNodes).forEach((child) => {
     if (child.nodeType === Node.TEXT_NODE) {
-      // Handle text nodes - preserve text content but strip zero-width spaces
-      let text = child.textContent;
-
-      // Only skip if null or undefined, but keep empty strings and whitespace
-      if (text !== null && text !== undefined) {
-        // Remove zero-width spaces
-        text = text.replace(/\u200B/g, '');
-        if (text.trim() === '') {
-          return;
-        }
-        result.push({
+      const text = child.textContent || '';
+      const sanitizedText = text.replace(/\u200B/g, '');
+      if (sanitizedText) {
+        results.push({
           id: ulid(),
-          parentId,
           nodeType: 'TagElement',
           tagName: 'text',
-          copy: text,
+          parentId,
+          copy: sanitizedText,
         } as FlatNode);
       }
     } else if (child.nodeType === Node.ELEMENT_NODE) {
       const elem = child as HTMLElement;
-      const tagName = elem.tagName.toLowerCase();
+      const tagName =
+        elem.getAttribute('data-tag') || elem.tagName.toLowerCase();
 
-      // Skip any remaining space marker spans
-      if (
-        tagName === 'span' &&
-        (elem.classList.contains('space-marker') ||
-          elem.getAttribute('style')?.includes('font-size: 0px'))
-      ) {
-        return;
-      }
+      const originalId = elem.getAttribute('data-node-id');
+      const nodeId = originalId || ulid();
 
-      // Create node for this element
-      const nodeId = ulid();
       const node: FlatNode = {
         id: nodeId,
-        parentId,
         nodeType: 'TagElement',
         tagName,
-      };
+        parentId,
+      } as FlatNode;
 
-      // Handle special attributes for different tags
       if (tagName === 'a') {
-        // Process anchor tags
-        node.href =
-          (elem as HTMLAnchorElement).getAttribute('href') || undefined;
-
-        // Save classes for the link
-        const className = elem.getAttribute('class');
-        if (className) {
-          node.elementCss = className;
-        }
-
-        // Update attribute name for editable links
-        if (
-          elem.hasAttribute('data-space-protected') ||
-          elem.hasAttribute('data-editable-link')
-        ) {
-          (node as any)['data-editable-link'] = 'true';
-        }
-      } else if (tagName === 'button') {
-        // Process button tags - preserve all attributes
-        const className = elem.getAttribute('class');
-        if (className) {
-          node.elementCss = className;
-        }
-
-        // Update attribute name for editable buttons
-        if (
-          elem.hasAttribute('data-space-protected') ||
-          elem.hasAttribute('data-editable-button')
-        ) {
-          (node as any)['data-editable-button'] = 'true';
-        }
-
-        // Copy all data attributes
-        Array.from(elem.attributes).forEach((attr) => {
-          if (
-            attr.name.startsWith('data-') &&
-            attr.name !== 'data-space-protected' &&
-            attr.name !== 'data-editable-button'
-          ) {
-            (node as any)[attr.name] = attr.value;
-          }
-        });
-      } else if (tagName === 'img') {
-        // Process image tags
-        node.src = (elem as HTMLImageElement).getAttribute('src') || undefined;
-        node.alt = (elem as HTMLImageElement).getAttribute('alt') || undefined;
+        node.href = elem.getAttribute('href') || '#';
       }
 
-      // Add this node
-      result.push(node);
+      if (tagName === 'img') {
+        node.src = elem.getAttribute('src') || '';
+        node.alt = elem.getAttribute('alt') || '';
+      }
 
-      // Process children recursively with the new nodeId as parent
-      const childNodes = extractNodesFromDOM(elem, nodeId);
-      result.push(...childNodes);
+      results.push(node);
+
+      const childNodes = extractNodesFromDOM(elem, nodeId, onInsertSignal);
+      if (childNodes.length > 0) {
+        results.push(...childNodes);
+      }
     }
   });
 
-  return result;
+  return results;
 }
 
 export function findLinkDestinationInHtml(html: string): string | null {
@@ -359,25 +335,29 @@ export function processRichTextToNodes(
 
   if (parsedNodes.length === 0) return [];
 
-  // Process each node to restore interactive element properties
+  // Create a map for O(1) identity lookup
+  const originalNodesMap = new Map(originalNodes.map((n) => [n.id, n]));
+
   parsedNodes.forEach((node) => {
-    if (['a', 'button', 'span'].includes(node.tagName)) {
-      const matchingOriginalNode = findMatchingNode(node, originalNodes);
+    if (['a', 'button', 'span', 'img'].includes(node.tagName)) {
+      const matchingOriginalNode = originalNodesMap.get(node.id);
+
       if (matchingOriginalNode) {
+        // Re-hydrate the node with its payloads
         if (['a', 'button'].includes(node.tagName)) {
-          if (matchingOriginalNode.href) {
-            node.href = matchingOriginalNode.href;
-          }
+          if (matchingOriginalNode.href) node.href = matchingOriginalNode.href;
           node.buttonPayload = matchingOriginalNode.buttonPayload;
         } else if (node.tagName === 'span') {
           node.elementCss = matchingOriginalNode.elementCss;
           node.overrideClasses = matchingOriginalNode.overrideClasses;
-          if (matchingOriginalNode.wordCarouselPayload) {
-            node.wordCarouselPayload = matchingOriginalNode.wordCarouselPayload;
-          }
+          node.wordCarouselPayload = matchingOriginalNode.wordCarouselPayload;
+        } else if (node.tagName === 'img') {
+          // Keep original src/alt if the DOM didn't change them
+          if (matchingOriginalNode.src) node.src = matchingOriginalNode.src;
+          if (matchingOriginalNode.alt) node.alt = matchingOriginalNode.alt;
         }
       } else if (onInsertSignal) {
-        // New interactive element detected, trigger insert signal
+        // Truly a new node (e.g. from a paste)
         onInsertSignal(node.tagName, node.id);
       }
     }
@@ -756,3 +736,202 @@ export function addColumn(gridLayoutId: string) {
 
   redoLogic();
 }
+
+export function parseCodeHook(node: BaseNode | FlatNode) {
+  if ('codeHookParams' in node && Array.isArray(node.codeHookParams)) {
+    const hookMatch = node.copy?.match(regexpHook);
+
+    if (!hookMatch) return null;
+
+    return {
+      hook: hookMatch[1],
+      value1: node.codeHookParams[0] || null,
+      value2: node.codeHookParams[1] || null,
+      value3: node.codeHookParams[2] || '',
+    };
+  }
+
+  // Legacy/Children check fallback
+  if ('children' in node && Array.isArray((node as any).children)) {
+    const firstChild = (node as any).children[0];
+    if (!firstChild?.value) return null;
+
+    const regexpValues = /((?:[^\\|]+|\\\|?)+)/g;
+    const hookMatch = firstChild.value.match(regexpHook);
+
+    if (!hookMatch) return null;
+
+    const hook = hookMatch[1];
+    const hookValuesRaw = hookMatch[2].match(regexpValues);
+
+    return {
+      hook,
+      value1: hookValuesRaw?.[0] || null,
+      value2: hookValuesRaw?.[1] || null,
+      value3: hookValuesRaw?.[2] || '',
+    };
+  }
+
+  return null;
+}
+
+export const isAddressableNode = (
+  node: BaseNode | FlatNode,
+  ctx?: NodesContext
+): boolean => {
+  if (!node || node.nodeType !== 'TagElement') {
+    return false;
+  }
+
+  const flatNode = node as FlatNode;
+  const tagName = flatNode.tagName;
+
+  if (tagName === 'ul' || tagName === 'ol') {
+    return false;
+  }
+
+  // Handle LI: Only addressable if it is a text-item.
+  // If it contains an img or code widget, it is a transparent container.
+  if (tagName === 'li') {
+    if (!ctx) return false;
+
+    const childIds = ctx.getChildNodeIDs(node.id);
+    const hasComplexContent = childIds.some((id) => {
+      const child = ctx.allNodes.get().get(id) as FlatNode;
+      return child && ['img', 'code'].includes(child.tagName);
+    });
+
+    return !hasComplexContent;
+  }
+
+  const addressableTags = [
+    'p',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'img',
+    'a',
+    'button',
+    'code',
+  ];
+
+  return addressableTags.includes(tagName);
+};
+
+export const isTopLevelBlockNode = (
+  node: BaseNode | FlatNode,
+  ctx: NodesContext
+): boolean => {
+  if (!node.parentId) return false;
+  const parent = ctx.allNodes.get().get(node.parentId);
+  if (!parent) return false;
+
+  return parent.nodeType === 'Markdown' || isGridLayoutNode(parent);
+};
+
+export const getNodeDisplayMode = (
+  node: BaseNode | FlatNode,
+  viewport: ViewportKey,
+  ctx: NodesContext
+): boolean => {
+  const flatNode = node as FlatNode;
+  const tagName = flatNode.tagName || '';
+
+  // 1. Check Overrides (Highest Priority)
+  // If the user manually added a class, we respect it immediately.
+  if (flatNode.overrideClasses) {
+    const [_, mobile, tablet, desktop] = processClassesForViewports(
+      { mobile: {}, tablet: {}, desktop: {} },
+      flatNode.overrideClasses,
+      1
+    );
+    const active =
+      viewport === 'mobile'
+        ? mobile[0]
+        : viewport === 'tablet'
+          ? tablet[0]
+          : desktop[0];
+
+    // If explicit inline, force inline
+    if (active.includes('inline-block') || active.includes('inline-'))
+      return true;
+
+    // If explicit layout (flex, grid, block), force NOT inline (let the class work)
+    if (
+      active.includes('block') ||
+      active.includes('flex') ||
+      active.includes('grid')
+    )
+      return false;
+  }
+
+  // 2. PARENT CONTEXT CHECK
+  // If the parent is a layout container (Flex/Grid), this node is an Item.
+  // It should NOT be forced to inline-block. It should default to block (div).
+  if (node.parentId) {
+    const parent = ctx.allNodes.get().get(node.parentId) as any;
+    if (parent) {
+      // Check Parent's Extracted Classes (defaults + overrides)
+      const extracted = extractClassesFromNodes([parent]).join(' ');
+
+      // Also check Parent's Explicit Overrides directly for current viewport
+      let parentActiveOverrides = '';
+      if (parent.overrideClasses) {
+        const [_, pMob, pTab, pDesk] = processClassesForViewports(
+          { mobile: {}, tablet: {}, desktop: {} },
+          parent.overrideClasses,
+          1
+        );
+        parentActiveOverrides =
+          viewport === 'mobile'
+            ? pMob[0]
+            : viewport === 'tablet'
+              ? pTab[0]
+              : pDesk[0];
+      }
+
+      const combinedParentClasses = `${extracted} ${parentActiveOverrides}`;
+
+      // If parent is Flex or Grid, we are an Item. Return FALSE to avoid inline-block.
+      if (
+        combinedParentClasses.includes('flex') ||
+        combinedParentClasses.includes('grid') ||
+        combinedParentClasses.includes('gap-')
+      ) {
+        return false;
+      }
+    }
+  }
+
+  // 3. Check Default Classes (Theme Defaults)
+  const markdownParentId = ctx.getClosestNodeTypeFromId(node.id, 'Markdown');
+  if (markdownParentId) {
+    const styleSourceNode = ctx.allNodes.get().get(markdownParentId) as any;
+    const styles = styleSourceNode?.defaultClasses?.[tagName];
+    if (styles) {
+      const defaultClassStr = Object.values(styles.mobile || {})
+        .flat()
+        .join(' ');
+
+      if (defaultClassStr.includes('inline')) {
+        return true;
+      }
+    }
+  }
+
+  // 4. Tag Default (Lowest Priority)
+  // Standard HTML behavior
+  const inlineTags = ['a', 'span', 'img', 'button', 'strong', 'em'];
+  if (inlineTags.includes(tagName)) {
+    // Exception: Top level blocks (direct children of Markdown roots) usually stack
+    if (isTopLevelBlockNode(node, ctx)) {
+      return false;
+    }
+    return true;
+  }
+
+  // Default to Block (False)
+  return false;
+};

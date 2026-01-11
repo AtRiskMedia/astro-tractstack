@@ -6,7 +6,6 @@ export interface AiDesignConfig {
   baseColor: string;
   accentColor: string;
   theme: string;
-  additionalNotes: string;
 }
 
 interface AiDesignStepProps {
@@ -78,7 +77,7 @@ export const AiDesignStep = ({
         </div>
       </div>
 
-      <div className="sm:grid-cols-2 grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <ColorPickerCombo
             title="Base Color (Optional)"
@@ -122,27 +121,6 @@ export const AiDesignStep = ({
             </div>
           ))}
         </div>
-      </div>
-
-      <div>
-        <label
-          htmlFor={`${idPrefix}additional-notes`}
-          className="block text-base font-bold text-gray-800"
-        >
-          Additional Design Notes (Optional)
-        </label>
-        <p className="mb-2 mt-1 text-sm text-gray-500">
-          Add specific requests like "use rounded corners", "add subtle
-          texture".
-        </p>
-        <textarea
-          id={`${idPrefix}additional-notes`}
-          value={designConfig.additionalNotes}
-          onChange={(e) => updateField('additionalNotes', e.target.value)}
-          placeholder="Enter additional notes..."
-          rows={3}
-          className="sm:text-sm block w-full rounded-md border-gray-300 p-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-        />
       </div>
     </div>
   );
