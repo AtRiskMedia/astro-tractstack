@@ -88,6 +88,7 @@ const PanelVisibilityWrapper = ({
       data-panel-type={panelType}
       data-node-id={nodeId}
       data-active={isActive}
+      className="pt-6"
     >
       {children}
     </div>
