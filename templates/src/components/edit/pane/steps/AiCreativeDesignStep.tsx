@@ -92,8 +92,8 @@ export const AiCreativeDesignStep = ({
         context: systemPrompt,
         expectJson: false,
         isSandboxMode,
-        maxTokens: 6000,
         temperature: 0.5,
+        maxTokens: 20000,
       });
 
       const htmlAst = await htmlToHtmlAst(rawHtml, '');

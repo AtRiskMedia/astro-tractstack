@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Astro integration for TractStack - the free web press by At Risk Media",
   "type": "module",
   "main": "dist/index.js",

@@ -5,11 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-#### [2.1.4] - 2025-12-?
+#### [2.2.1] - 2026-1-12
+
+- Adjusted token allowance
+
+#### [2.2.0] - 2026-1-11
 
 ### Added
 
-- HTML AST panes (branch: creative; under development)
+- Creative HTML AST panes
+
+### Updated
+
+- Major upgrade on editor UI/UX
 
 #### [2.1.3] - 2025-12-23
 

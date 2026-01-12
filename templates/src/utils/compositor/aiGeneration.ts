@@ -15,7 +15,7 @@ export const callAskLemurAPI = async ({
   context,
   expectJson,
   isSandboxMode,
-  maxTokens = 2000,
+  maxTokens = 5000,
   temperature = 0.5,
 }: AiGenerationOptions): Promise<string> => {
   const tenantId =

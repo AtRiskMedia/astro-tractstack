@@ -59,8 +59,8 @@ export const AiRefineDesignStep = ({
         context: systemPrompt,
         expectJson: false,
         isSandboxMode,
-        maxTokens: 4000,
         temperature: 0.5,
+        maxTokens: 8000,
       });
 
       // 2. Generate AST immediately
