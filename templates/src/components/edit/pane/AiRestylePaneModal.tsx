@@ -7,74 +7,12 @@ import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import { getCtx } from '@/stores/nodes';
 import { selectionStore } from '@/stores/selection';
 import { renderedPreviews } from '@/stores/previews';
-import { sandboxTokenStore } from '@/stores/storykeep';
 import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
 import { AiRefineDesignStep } from './steps/AiRefineDesignStep';
 import prompts from '@/constants/prompts.json';
-import { TractStackAPI } from '@/utils/api';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
 import type { PaneNode, TemplatePane } from '@/types/compositorTypes';
-
-const callAskLemurAPI = async (
-  prompt: string,
-  context: string,
-  expectJson: boolean,
-  isSandboxMode: boolean
-): Promise<string> => {
-  const tenantId =
-    (window as any).TRACTSTACK_CONFIG?.tenantId ||
-    import.meta.env.PUBLIC_TENANTID ||
-    'default';
-  const api = new TractStackAPI(tenantId);
-
-  const requestBody = {
-    prompt,
-    input_text: context,
-    final_model: '',
-    temperature: 0.5,
-    max_tokens: 10000,
-  };
-
-  let resultData: any;
-
-  if (isSandboxMode) {
-    const token = sandboxTokenStore.get();
-    const response = await fetch(`/api/sandbox`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-ID': tenantId,
-        'X-Sandbox-Token': token || '',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Sandbox API failed: ${response.status} ${errorText}`);
-    }
-
-    const json = await response.json();
-    if (!json.success) {
-      throw new Error(json.error || 'Sandbox generation failed');
-    }
-    resultData = json.data;
-  } else {
-    const response = await api.post('/api/v1/aai/askLemur', requestBody);
-    if (!response.success || !response.data?.response) {
-      throw new Error(response.error || 'AI generation failed');
-    }
-    resultData = response.data;
-  }
-
-  let raw = resultData.response;
-  if (typeof raw === 'string') {
-    if (raw.startsWith('```json')) raw = raw.slice(7, -3).trim();
-  }
-  if (expectJson && typeof raw === 'object') return JSON.stringify(raw);
-  return raw;
-};
 
 interface AiRestylePaneModalProps {
   isSandboxMode?: boolean;
@@ -149,12 +87,12 @@ export const AiRestylePaneModal = ({
         .replace('{{COPY_INPUT}}', 'A generic content section')
         .replace('{{LAYOUT_TYPE}}', 'Text Only');
 
-      const resultStr = await callAskLemurAPI(
-        formattedPrompt,
-        shellPromptDetails.system || '',
-        true,
-        isSandboxMode
-      );
+      const resultStr = await callAskLemurAPI({
+        prompt: formattedPrompt,
+        context: shellPromptDetails.system || '',
+        expectJson: true,
+        isSandboxMode,
+      });
 
       let dummyCopy: string | string[] = '';
       if (isGrid) {

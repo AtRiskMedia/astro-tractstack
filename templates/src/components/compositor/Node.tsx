@@ -162,6 +162,7 @@ export const Node = memo((props: NodeProps) => {
           <ConfigPanePanel
             nodeId={props.nodeId}
             isHtmlAstPane={isHtmlAstPane}
+            isSandboxMode={props.isSandboxMode || false}
           />
           <PanelVisibilityWrapper
             nodeId={props.nodeId}
