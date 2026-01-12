@@ -203,12 +203,9 @@ const StoryKeepHeader = ({
               console.log('Total Nodes in Store:', allNodesArray.length);
               console.log('Full Nodes Map:', allNodesMap);
 
-              // Specifically audit Creative Panes for large htmlAst payloads
-              // Using type guards/property checks to handle the BaseNode vs PaneNode distinction
               const creativePanes = allNodesArray.filter(
                 (n) => n.nodeType === 'Pane' && 'htmlAst' in n
               );
-
               if (creativePanes.length > 0) {
                 console.group('Creative Panes Detail (htmlAst Audit)');
                 creativePanes.forEach((pane) => {
@@ -229,7 +226,7 @@ const StoryKeepHeader = ({
             }}
             className="rounded-md bg-myblue px-3.5 py-1.5 font-action font-bold text-white hover:bg-myorange"
           >
-            Inspect
+            Nodes Dump
           </button>
         )}
 
