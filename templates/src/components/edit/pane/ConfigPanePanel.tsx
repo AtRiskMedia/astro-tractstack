@@ -252,7 +252,7 @@ const ConfigPanePanel = ({
           </div>
 
           {/* Design Library Tools (Right Aligned) */}
-          <div className="ml-auto flex items-center gap-2 border-l border-gray-300 pl-2">
+          <div className="ml-auto flex items-center gap-2 border-l border-gray-300 px-2">
             {!isHtmlAstPane && !isSandboxMode && (
               <button
                 title="Save Pane to Design Library"

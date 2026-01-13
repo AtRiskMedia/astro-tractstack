@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - major overhaul on undo stack
+- clean-up on html sent to ai restyle
 - Ensure sandbox mode works for gen AI
 
 #### [2.2.1] - 2026-1-12

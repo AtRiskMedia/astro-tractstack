@@ -4,7 +4,7 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import prompts from '@/constants/prompts.json';
-import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
+import { htmlToHtmlAst, cleanHtml } from '@/utils/compositor/htmlAst';
 import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
 import type { TemplatePane } from '@/types/compositorTypes';
 
@@ -25,7 +25,6 @@ export const AiRefineDesignStep = ({
   initialHtml,
   initialCss,
 }: AiRefineDesignStepProps) => {
-  console.log(initialHtml, initialCss);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +51,7 @@ export const AiRefineDesignStep = ({
 
       userPrompt = userPrompt.replace('{{DESIGN_NOTES}}', prompt);
       userPrompt = userPrompt.replace('{{CSS_INPUT}}', initialCss);
-      userPrompt = userPrompt.replace('{{HTML_INPUT}}', initialHtml);
+      userPrompt = userPrompt.replace('{{HTML_INPUT}}', cleanHtml(initialHtml));
 
       // 1. Get RAW output from AI
       const resultHtml = await callAskLemurAPI({

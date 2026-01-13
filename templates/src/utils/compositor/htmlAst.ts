@@ -785,3 +785,27 @@ export function markdownToHtml(markdown: string): string {
 
   return html;
 }
+
+/**
+ * Sanitizes HTML for AI processing or other non-editor contexts.
+ * Strips editor-specific guards, metadata, and heavy base64 data.
+ */
+export function cleanHtml(html: string): string {
+  if (!html) return '';
+
+  return (
+    html
+      // 1. Revert Base64 images to static placeholder to save tokens and avoid confusion
+      .replace(/src="data:[^"]*"/g, 'src="/static.jpg"')
+      // 2. Remove Content Editable attribute
+      .replace(/contenteditable="true"/g, '')
+      .replace(/contenteditable="false"/g, '')
+      // 3. Remove Editor Interaction Guards
+      .replace(/onclick="return false;"/g, '')
+      .replace(/style="pointer-events: none;"/g, '')
+      // 4. Remove Internal Upload Metadata
+      .replace(/data-file-id="[^"]*"/g, '')
+      // 5. Clean up resulting double spaces
+      .replace(/\s{2,}/g, ' ')
+  );
+}
