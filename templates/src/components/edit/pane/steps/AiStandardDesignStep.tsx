@@ -1,7 +1,11 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import prompts from '@/constants/prompts.json';
-import { parseAiPane } from '@/utils/compositor/aiPaneParser';
+import {
+  parseAiPane,
+  createDefaultShell,
+} from '@/utils/compositor/aiPaneParser';
 import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
+import { markdownToHtml } from '@/utils/compositor/htmlAst';
 import { CopyInputStep, type CopyMode } from './CopyInputStep';
 import { AiDesignStep, type AiDesignConfig } from './AiDesignStep';
 import BooleanToggle from '@/components/form/BooleanToggle';
@@ -43,10 +47,13 @@ export const AiStandardDesignStep = ({
   const [col1Copy, setCol1Copy] = useState('');
   const [col2Copy, setCol2Copy] = useState('');
 
+  // Prompts State
   const [masterShellSystem, setMasterShellSystem] = useState('');
   const [masterShellUser, setMasterShellUser] = useState('');
   const [masterCopySystem, setMasterCopySystem] = useState('');
   const [masterCopyUser, setMasterCopyUser] = useState('');
+  const [masterStyleSystem, setMasterStyleSystem] = useState('');
+  const [masterStyleUser, setMasterStyleUser] = useState('');
 
   const [aiDesignConfig, setAiDesignConfig] = useState<AiDesignConfig>({
     harmony: 'Analogous',
@@ -75,6 +82,7 @@ export const AiStandardDesignStep = ({
     }
   }, [promptOptions, selectedPromptId]);
 
+  // Load Prompt Templates
   useEffect(() => {
     if (!selectedPromptId) return;
 
@@ -85,8 +93,11 @@ export const AiStandardDesignStep = ({
 
     const promptKey = activeConfig.prompts.copy;
     const shellKey = activeConfig.prompts.shell;
+    const styleKey = activeConfig.prompts.style; // New: Load style prompt key
+
     const copyPromptGroup = (prompts as any)[promptKey];
     const shellPromptGroup = (prompts as any)[shellKey];
+    const stylePromptGroup = (prompts as any)[styleKey];
 
     if (shellPromptGroup) {
       setMasterShellSystem(shellPromptGroup.system || '');
@@ -95,6 +106,10 @@ export const AiStandardDesignStep = ({
     if (copyPromptGroup) {
       setMasterCopySystem(copyPromptGroup.system || '');
       setMasterCopyUser(copyPromptGroup.user_template || '');
+    }
+    if (stylePromptGroup) {
+      setMasterStyleSystem(stylePromptGroup.system || '');
+      setMasterStyleUser(stylePromptGroup.user_template || '');
     }
 
     if (!copyPromptGroup) return;
@@ -126,71 +141,137 @@ export const AiStandardDesignStep = ({
       );
       if (!activeConfig) throw new Error('Selected prompt type not found.');
 
-      let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
-      if (aiDesignConfig.baseColor)
-        designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
-      if (aiDesignConfig.accentColor)
-        designInput += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
-      if (additionalNotes)
-        designInput += ` Refine with these notes: "${additionalNotes}"`;
-
       const layoutType = 'Text Only';
       const promptMap = prompts as any;
 
-      const injectTopic = (text: string) => {
-        return text.replace('{{TOPIC}}', topic.trim());
-      };
+      // --- 1. Shell Generation ---
+      let shellResult = '';
 
-      let formattedShellPrompt = masterShellUser
-        .replace('{{DESIGN_INPUT}}', designInput)
-        .replace('{{LAYOUT_TYPE}}', layoutType);
+      if (isAiStyling) {
+        // AI Path: Generate Shell via AskLemur
+        let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
+        if (aiDesignConfig.baseColor)
+          designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
+        if (aiDesignConfig.accentColor)
+          designInput += ` Use **${aiDesignConfig.accentColor}** as an accent color.`;
+        if (additionalNotes)
+          designInput += ` Refine with these notes: "${additionalNotes}"`;
 
-      if (layoutChoice === 'grid') {
-        const finalOverallPrompt = injectTopic(overallPrompt);
-        formattedShellPrompt = formattedShellPrompt.replace(
-          '{{COPY_INPUT}}',
-          finalOverallPrompt
-        );
-      }
+        const injectTopic = (text: string) => {
+          return text.replace('{{TOPIC}}', topic.trim());
+        };
 
-      const shellResult = await callAskLemurAPI({
-        prompt: formattedShellPrompt,
-        context: masterShellSystem,
-        expectJson: true,
-        isSandboxMode,
-      });
-
-      if (layoutChoice === 'standard') {
-        const copyInputContent =
-          copyMode === 'prompt' ? injectTopic(promptValue) : copyValue;
-
-        const formattedCopyPrompt = masterCopyUser
-          .replace('{{COPY_INPUT}}', copyInputContent)
+        let formattedShellPrompt = masterShellUser
           .replace('{{DESIGN_INPUT}}', designInput)
-          .replace('{{LAYOUT_TYPE}}', layoutType)
-          .replace('{{SHELL_JSON}}', shellResult);
+          .replace('{{LAYOUT_TYPE}}', layoutType);
 
-        const copyResult = await callAskLemurAPI({
-          prompt: formattedCopyPrompt,
-          context: masterCopySystem,
-          expectJson: false,
+        if (layoutChoice === 'grid') {
+          const finalOverallPrompt = injectTopic(overallPrompt);
+          formattedShellPrompt = formattedShellPrompt.replace(
+            '{{COPY_INPUT}}',
+            finalOverallPrompt
+          );
+        }
+
+        shellResult = await callAskLemurAPI({
+          prompt: formattedShellPrompt,
+          context: masterShellSystem,
+          expectJson: true,
           isSandboxMode,
         });
+      } else {
+        // No AI Path: Use Default Shell
+        shellResult = JSON.stringify(createDefaultShell(layoutChoice));
+      }
 
-        const finalPane = parseAiPane(shellResult, copyResult, layoutType);
+      const designInputForCopy = isAiStyling
+        ? `Using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme.`
+        : 'Use the provided default classes.';
+
+      // --- 2. Content Generation ---
+      if (layoutChoice === 'standard') {
+        let finalHtml = '';
+
+        if (copyMode === 'prompt') {
+          // A. Prompt Mode: AI writes copy
+          const injectTopic = (text: string) =>
+            text.replace('{{TOPIC}}', topic.trim());
+          const copyInputContent = injectTopic(promptValue);
+
+          const formattedCopyPrompt = masterCopyUser
+            .replace('{{COPY_INPUT}}', copyInputContent)
+            .replace('{{DESIGN_INPUT}}', designInputForCopy)
+            .replace('{{LAYOUT_TYPE}}', layoutType)
+            .replace('{{SHELL_JSON}}', shellResult);
+
+          finalHtml = await callAskLemurAPI({
+            prompt: formattedCopyPrompt,
+            context: masterCopySystem,
+            expectJson: false,
+            isSandboxMode,
+          });
+        } else {
+          // B. Raw Mode: User provided markdown
+          if (isAiStyling) {
+            // Style with AI: Use the 'style' prompt to format markdown
+            const formattedStylePrompt = masterStyleUser
+              .replace('{{SHELL_JSON}}', shellResult)
+              .replace('{{COPY_INPUT}}', copyValue);
+
+            finalHtml = await callAskLemurAPI({
+              prompt: formattedStylePrompt,
+              context: masterStyleSystem,
+              expectJson: false,
+              isSandboxMode,
+            });
+          } else {
+            // No AI: Local conversion
+            finalHtml = markdownToHtml(copyValue);
+          }
+        }
+
+        const finalPane = parseAiPane(shellResult, finalHtml, layoutType);
         onCreatePane(finalPane);
       } else if (layoutChoice === 'grid') {
+        // --- Grid Layout Path ---
         if (copyMode === 'raw') {
+          // B. Raw Mode (Grid)
           const rawContents = [col1Copy, col2Copy];
-          const finalPane = parseAiPane(shellResult, rawContents, layoutType);
+          let finalContents: string[] = [];
+
+          if (isAiStyling) {
+            // Style with AI: Loop through columns and style each
+            for (const content of rawContents) {
+              const formattedStylePrompt = masterStyleUser
+                .replace('{{SHELL_JSON}}', shellResult)
+                .replace('{{COPY_INPUT}}', content);
+
+              const styledHtml = await callAskLemurAPI({
+                prompt: formattedStylePrompt,
+                context: masterStyleSystem,
+                expectJson: false,
+                isSandboxMode,
+              });
+              finalContents.push(styledHtml);
+            }
+          } else {
+            // No AI: Local conversion
+            finalContents = rawContents.map(markdownToHtml);
+          }
+
+          const finalPane = parseAiPane(shellResult, finalContents, layoutType);
           onCreatePane(finalPane);
         } else {
+          // A. Prompt Mode (Grid): AI writes copy
           const copyPromptKey = activeConfig.prompts.copy;
           const copyPromptDetails = promptMap[copyPromptKey];
           const preset =
             copyPromptDetails.presets?.[activeConfig.variants[0]] ||
             copyPromptDetails.presets?.heroDefault;
           const copyResults: string[] = [];
+
+          const injectTopic = (text: string) =>
+            text.replace('{{TOPIC}}', topic.trim());
 
           const promptsToRun = [
             { prompt: promptValueCol1, presetKey: 'left' as ColumnPresetKey },
@@ -204,7 +285,7 @@ export const AiStandardDesignStep = ({
               .replace('{{SHELL_JSON}}', shellResult)
               .replace('{{COPY_INPUT}}', injectTopic(overallPrompt))
               .replace('{{COLUMN_PROMPT}}', item.prompt)
-              .replace('{{DESIGN_INPUT}}', designInput)
+              .replace('{{DESIGN_INPUT}}', designInputForCopy)
               .replace('{{LAYOUT_TYPE}}', layoutType)
               .replace('{{COLUMN_EXAMPLE}}', columnPreset.example);
 
@@ -245,16 +326,25 @@ export const AiStandardDesignStep = ({
     masterShellSystem,
     masterCopyUser,
     masterCopySystem,
+    masterStyleUser,
+    masterStyleSystem,
     topic,
+    isAiStyling, // Added dependency
   ]);
 
   if (isGenerating) {
     return (
       <div className="flex min-h-96 flex-col items-center justify-center space-y-4 p-6">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-cyan-600"></div>
-        <p className="text-sm text-gray-600">Generating Design & Content...</p>
+        <p className="text-sm text-gray-600">
+          {isAiStyling
+            ? 'Generating Design & Content...'
+            : 'Processing Content...'}
+        </p>
         <p className="text-xs text-gray-500">
-          Creating a unique layout from scratch.
+          {isAiStyling
+            ? 'Creating a unique layout from scratch.'
+            : 'Applying standard formatting.'}
         </p>
       </div>
     );
@@ -301,42 +391,45 @@ export const AiStandardDesignStep = ({
         masterCopyUser={masterCopyUser}
         setMasterCopyUser={setMasterCopyUser}
       >
-        <div className="border-t pt-4">
-          <div>
-            <label
-              htmlFor="dashboard-notes"
-              className="block text-sm font-bold text-gray-700"
-            >
-              Design Notes
-            </label>
-            <textarea
-              id="dashboard-notes"
-              rows={2}
-              className="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-              placeholder="e.g. Clean, minimal, high contrast..."
-              value={additionalNotes}
-              onChange={(e) => setAdditionalNotes(e.target.value)}
-            />
-          </div>
-
-          <div className="my-4 flex items-center">
-            <BooleanToggle
-              label="Customize Colors"
-              value={showColors}
-              onChange={setShowColors}
-              size="sm"
-            />
-          </div>
-
-          {showColors && (
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-              <AiDesignStep
-                designConfig={aiDesignConfig}
-                onDesignConfigChange={setAiDesignConfig}
+        {/* Style config is only relevant if AI Styling is ON */}
+        {isAiStyling && (
+          <div className="border-t pt-4">
+            <div>
+              <label
+                htmlFor="dashboard-notes"
+                className="block text-sm font-bold text-gray-700"
+              >
+                Design Notes
+              </label>
+              <textarea
+                id="dashboard-notes"
+                rows={2}
+                className="mt-1 block w-full rounded-md border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                placeholder="e.g. Clean, minimal, high contrast..."
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
               />
             </div>
-          )}
-        </div>
+
+            <div className="my-4 flex items-center">
+              <BooleanToggle
+                label="Customize Colors"
+                value={showColors}
+                onChange={setShowColors}
+                size="sm"
+              />
+            </div>
+
+            {showColors && (
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                <AiDesignStep
+                  designConfig={aiDesignConfig}
+                  onDesignConfigChange={setAiDesignConfig}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </CopyInputStep>
 
       {error && (
@@ -363,7 +456,7 @@ export const AiStandardDesignStep = ({
           }
           className="rounded-md bg-cyan-600 px-6 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
-          ✨ Generate Pane
+          {isAiStyling ? '✨ Generate Pane' : 'Create Pane'}
         </button>
       </div>
     </div>

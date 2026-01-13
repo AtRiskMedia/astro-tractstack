@@ -158,7 +158,6 @@ export const ImageUpload = ({
         if (selected.srcSet) updatedNode.srcSet = selected.srcSet;
         updatedNode.alt = selected.altDescription || missingAlt;
         delete updatedNode.base64Data; // Remove base64Data for existing files
-        updatedNode.isChanged = true;
         ctx.modifyNodes([updatedNode]);
       }
     }
@@ -206,7 +205,6 @@ export const ImageUpload = ({
         ((updatedNode.fileId = ulid()), (updatedNode.src = base64)); // Set src to base64 for immediate display
         updatedNode.base64Data = base64;
         updatedNode.alt = defaultAlt;
-        updatedNode.isChanged = true;
         ctx.modifyNodes([updatedNode]);
       }
     } catch (err) {
@@ -226,7 +224,6 @@ export const ImageUpload = ({
       updatedNode.src = '/static.jpg';
       updatedNode.alt =
         "This is a placeholder for an image that hasn't yet been uploaded";
-      updatedNode.isChanged = true;
       ctx.modifyNodes([updatedNode]);
     }
     setCurrentImage('/static.jpg');

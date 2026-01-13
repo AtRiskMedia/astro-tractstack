@@ -114,6 +114,7 @@ const AddPaneBreakPanel = ({
   useEffect(() => {
     const newPreviews = filteredVariants.map((variant, index: number) => {
       const ctx = new NodesContext();
+      ctx.isTemplate.set(true);
       ctx.addNode(createEmptyStorykeep('tmp'));
       const template = templateCategory.getTemplatesByVariant(variant)[0];
       ctx.addTemplatePane('tmp', template);

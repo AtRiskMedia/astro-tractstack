@@ -150,7 +150,6 @@ const StoryFragmentConfigPanel = ({
     const ctx = getCtx();
     const updatedNode: StoryFragmentNode = {
       ...cloneDeep(storyfragmentNode),
-      isChanged: true,
     };
 
     if (!tempBgColor) {

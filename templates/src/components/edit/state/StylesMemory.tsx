@@ -179,10 +179,7 @@ export const StylesMemory = ({ node, parentNode }: StylesMemoryProps) => {
         if (typeof memoryState.bgColour === 'string') {
           updatedParent.bgColour = memoryState.bgColour;
         }
-        ctx.modifyNodes([
-          { ...updatedNode, isChanged: true },
-          { ...updatedParent, isChanged: true },
-        ]);
+        ctx.modifyNodes([{ ...updatedNode }, { ...updatedParent }]);
         break;
       }
       case 'button': {
@@ -198,7 +195,7 @@ export const StylesMemory = ({ node, parentNode }: StylesMemoryProps) => {
           buttonHoverClasses: cloneDeep(buttonStyles.buttonHoverClasses),
         };
 
-        ctx.modifyNodes([{ ...updatedNode, isChanged: true }]);
+        ctx.modifyNodes([{ ...updatedNode }]);
         const currentSignal = settingsPanelStore.get();
         if (currentSignal) {
           settingsPanelStore.set({ ...currentSignal });
@@ -224,10 +221,7 @@ export const StylesMemory = ({ node, parentNode }: StylesMemoryProps) => {
         updatedParent.defaultClasses[node.tagName] = cloneDeep(memoryStyles);
         delete updatedNode.overrideClasses;
 
-        ctx.modifyNodes([
-          { ...updatedParent, isChanged: true },
-          { ...updatedNode, isChanged: true },
-        ]);
+        ctx.modifyNodes([{ ...updatedParent }, { ...updatedNode }]);
         const currentSignal = settingsPanelStore.get();
         if (currentSignal) {
           settingsPanelStore.set({ ...currentSignal });

@@ -57,7 +57,7 @@ const PaneSlugPanel = ({ nodeId, setMode }: PaneSlugPanelProps) => {
     if (slug.length >= 3) {
       // Only update if meets minimum length
       const ctx = getCtx();
-      const updatedNode = { ...cloneDeep(paneNode), slug, isChanged: true };
+      const updatedNode = { ...cloneDeep(paneNode), slug };
       ctx.modifyNodes([updatedNode]);
     }
   };

@@ -256,7 +256,7 @@ const StyleLinkPanel = ({ node }: BasePanelProps) => {
       callbackPayload: linkNode.buttonPayload?.callbackPayload || '',
     };
 
-    ctx.modifyNodes([{ ...linkNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...linkNode }]);
 
     settingsPanelStore.set({
       action: 'style-link',

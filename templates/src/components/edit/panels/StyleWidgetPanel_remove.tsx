@@ -108,10 +108,7 @@ const StyleWidgetRemovePanel = ({
         delete targetNode.overrideClasses;
       }
     }
-    ctx.modifyNodes([
-      { ...targetNode, isChanged: true },
-      { ...deepParentClone, isChanged: true },
-    ]);
+    ctx.modifyNodes([{ ...targetNode }, { ...deepParentClone }]);
     resetStore();
   };
 

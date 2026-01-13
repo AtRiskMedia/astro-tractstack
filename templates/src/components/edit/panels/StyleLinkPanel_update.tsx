@@ -73,7 +73,7 @@ const StyleLinkUpdatePanel = ({ node, className }: BasePanelProps) => {
         };
       }
       setValue(newValue);
-      ctx.modifyNodes([{ ...linkNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...linkNode }]);
     },
     [node, className, isHoverMode]
   );

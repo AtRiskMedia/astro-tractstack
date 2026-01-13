@@ -86,7 +86,6 @@ const BackgroundImageWrapper = ({
     if (color) updatedPaneNode.bgColour = color;
     else if (typeof updatedPaneNode.bgColour === `string` && !color)
       delete updatedPaneNode.bgColour;
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
   };
 
@@ -96,9 +95,7 @@ const BackgroundImageWrapper = ({
     if (!bgNode) return;
     const updatedBgNode = cloneDeep(bgNode);
     updatedBgNode.position = newPosition;
-    updatedBgNode.isChanged = true;
     const updatedPaneNode = cloneDeep(allNodes.get(paneId) as PaneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedBgNode, updatedPaneNode]);
     onUpdate();
   };
@@ -107,9 +104,7 @@ const BackgroundImageWrapper = ({
     if (!bgNode) return;
     const updatedBgNode = cloneDeep(bgNode);
     updatedBgNode.size = newSize;
-    updatedBgNode.isChanged = true;
     const updatedPaneNode = cloneDeep(allNodes.get(paneId) as PaneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedBgNode, updatedPaneNode]);
     onUpdate();
   };

@@ -159,11 +159,9 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
       objectFit,
       position: bgImageNode?.position || 'background',
       size: bgImageNode?.size || 'equal',
-      isChanged: true,
     };
     ctx.addNode(updatedBgNode);
     const updatedPaneNode = cloneDeep(paneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
     setBgImageNode(updatedBgNode);
     setLocalAltDescription(updatedBgNode.alt || '');
@@ -175,7 +173,6 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
       });
     }
     onUpdate();
-    ctx.notifyNode('root');
   };
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -217,16 +214,13 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
         objectFit,
         position: bgImageNode?.position || 'background',
         size: bgImageNode?.size || 'equal',
-        isChanged: true,
       };
       ctx.addNode(updatedBgNode);
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedPaneNode]);
       setBgImageNode(updatedBgNode);
       setLocalAltDescription(defaultAlt);
       onUpdate();
-      ctx.notifyNode('root');
     } catch (err) {
       setImageError('Failed to process image');
       console.error('[BackgroundImage] Error:', err);
@@ -239,21 +233,17 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     if (!bgImageNode) return;
     ctx.deleteNode(bgImageNode.id);
     const updatedPaneNode = cloneDeep(paneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
     setBgImageNode(null);
     setLocalAltDescription('');
     onUpdate();
-    ctx.notifyNode('root');
   };
 
   const handleAltDescriptionBlur = () => {
     if (bgImageNode && localAltDescription !== bgImageNode.alt) {
       const updatedBgNode = cloneDeep(bgImageNode);
       updatedBgNode.alt = localAltDescription;
-      updatedBgNode.isChanged = true;
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedBgNode, updatedPaneNode]);
     }
   };
@@ -265,9 +255,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
     if (bgImageNode) {
       const updatedBgNode = cloneDeep(bgImageNode);
       updatedBgNode.objectFit = newObjectFit;
-      updatedBgNode.isChanged = true;
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedBgNode, updatedPaneNode]);
     }
   };
@@ -282,9 +270,7 @@ const BackgroundImage = ({ paneId, onUpdate }: BackgroundImageProps) => {
       if (viewport === 'mobile') updatedBgNode.hiddenViewportMobile = hidden;
       if (viewport === 'tablet') updatedBgNode.hiddenViewportTablet = hidden;
       if (viewport === 'desktop') updatedBgNode.hiddenViewportDesktop = hidden;
-      updatedBgNode.isChanged = true;
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedBgNode, updatedPaneNode]);
     }
   };

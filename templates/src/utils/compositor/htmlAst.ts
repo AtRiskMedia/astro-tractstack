@@ -562,10 +562,13 @@ export async function regenerateCreativePane(
     } else if (updates.image === null) {
       delete targetNode.attrs['data-image'];
     }
-
     if (updates.src && updates.tagName === 'img') {
       targetNode.attrs.src = updates.src;
-      if (updates.srcSet) targetNode.attrs.srcset = updates.srcSet;
+      if (updates.srcSet) {
+        targetNode.attrs.srcset = updates.srcSet;
+      } else {
+        delete targetNode.attrs.srcset;
+      }
     }
     if (updates.alt) {
       targetNode.attrs.alt = updates.alt;
@@ -701,4 +704,84 @@ export function extractFileIdsFromAst(payload: CreativePanePayload): string[] {
     logger.groupEnd();
   }
   return results;
+}
+
+/**
+ * Simple Markdown to HTML converter.
+ * Handles:
+ * - Headers (## through ######)
+ * - Unordered lists (- item)
+ * - Bold (**text**)
+ * - Italic (*text*)
+ * - Links ([text](url))
+ * - Paragraphs (everything else)
+ */
+export function markdownToHtml(markdown: string): string {
+  const lines = markdown.split('\n');
+  let html = '';
+  let inList = false;
+
+  const parseInline = (text: string): string => {
+    return (
+      text
+        // Bold: **text**
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // Italic: *text*
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // Link: [text](url)
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    );
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Skip empty lines, but close list if open
+    if (!trimmed) {
+      if (inList) {
+        html += '</ul>';
+        inList = false;
+      }
+      continue;
+    }
+
+    // Headers (## to ######) - Note: Ignoring # (h1) as per standard rules
+    const headerMatch = trimmed.match(/^(#{2,6})\s+(.*)$/);
+    if (headerMatch) {
+      if (inList) {
+        html += '</ul>';
+        inList = false;
+      }
+      const level = headerMatch[1].length;
+      const content = parseInline(headerMatch[2]);
+      html += `<h${level}>${content}</h${level}>`;
+      continue;
+    }
+
+    // Unordered Lists (- item)
+    const listMatch = trimmed.match(/^-\s+(.*)$/);
+    if (listMatch) {
+      if (!inList) {
+        html += '<ul>';
+        inList = true;
+      }
+      const content = parseInline(listMatch[1]);
+      html += `<li>${content}</li>`;
+      continue;
+    }
+
+    // Paragraphs (default block)
+    if (inList) {
+      html += '</ul>';
+      inList = false;
+    }
+    html += `<p>${parseInline(trimmed)}</p>`;
+  }
+
+  // Close any remaining open list
+  if (inList) {
+    html += '</ul>';
+  }
+
+  return html;
 }

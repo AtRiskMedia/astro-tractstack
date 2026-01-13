@@ -57,7 +57,6 @@ const ContextPaneTitlePanel = ({
         ...paneNode,
         title,
         ...(newSlug ? { slug: newSlug } : {}),
-        isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
     }

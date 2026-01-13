@@ -104,10 +104,7 @@ const StyleBreakPanel = ({ node, parentNode }: BasePanelProps) => {
       }
     });
 
-    const updatedNodes = [
-      { ...breakNode, isChanged: true },
-      { ...paneNode, isChanged: true },
-    ];
+    const updatedNodes = [{ ...breakNode }, { ...paneNode }];
     ctx.modifyNodes(updatedNodes);
   }, [settings, node, parentNode, ctx, allNodes]);
 

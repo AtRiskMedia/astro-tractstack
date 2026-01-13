@@ -109,10 +109,7 @@ const StyleImageRemovePanel = ({
       }
     }
 
-    ctx.modifyNodes([
-      { ...targetNode, isChanged: true },
-      { ...parentNodeClone, isChanged: true },
-    ]);
+    ctx.modifyNodes([{ ...targetNode }, { ...parentNodeClone }]);
     resetStore();
   };
 

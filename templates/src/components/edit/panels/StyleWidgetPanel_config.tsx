@@ -77,9 +77,6 @@ function StyleWidgetConfigPanel({ node }: StyleWidgetConfigPanelProps) {
     const paramsForCopy = stringParams.slice(0, widgetInfo.parameters.length);
     newNode.copy = `${widgetType}(${paramsForCopy.join('|')})`;
 
-    // Mark the node as changed
-    newNode.isChanged = true;
-
     // Update the node in the store
     getCtx().modifyNodes([newNode]);
   };

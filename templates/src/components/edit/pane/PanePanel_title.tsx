@@ -145,7 +145,6 @@ const PaneTitlePanel = ({ nodeId, setMode }: PaneTitlePanelProps) => {
         ...cloneDeep(paneNode),
         title,
         slug: updatedSlug,
-        isChanged: true,
       };
       ctx.modifyNodes([updatedNode]);
     }
@@ -154,7 +153,7 @@ const PaneTitlePanel = ({ nodeId, setMode }: PaneTitlePanelProps) => {
   const handleSlugBlur = () => {
     if (canSaveSlug) {
       const ctx = getCtx();
-      const updatedNode = { ...cloneDeep(paneNode), slug, isChanged: true };
+      const updatedNode = { ...cloneDeep(paneNode), slug };
       ctx.modifyNodes([updatedNode]);
     }
   };

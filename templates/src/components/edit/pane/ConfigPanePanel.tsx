@@ -280,7 +280,7 @@ const ConfigPanePanel = ({
                 <ArrowPathRoundedSquareIcon className="h-4 w-4 text-white" />
               </button>
             )}
-            {import.meta.env.DEV && (
+            {import.meta.env.DEV && !isHtmlAstPane && (
               <button
                 title="Copy Pane Design to Clipboard"
                 onClick={handleCopyToClipboard}

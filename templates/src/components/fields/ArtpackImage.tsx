@@ -149,11 +149,9 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
       objectFit,
       position: artpackNode?.position || 'background',
       size: artpackNode?.size || 'equal',
-      isChanged: true,
     };
     ctx.addNode(updatedArtNode);
     const updatedPaneNode = cloneDeep(paneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
     setArtpackNode(updatedArtNode);
     setIsModalOpen(false);
@@ -172,7 +170,6 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
     if (!artpackNode) return;
     ctx.deleteNode(artpackNode.id);
     const updatedPaneNode = cloneDeep(paneNode);
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
     setArtpackNode(null);
     setSelectedCollection('');
@@ -188,9 +185,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
     if (artpackNode) {
       const updatedArtNode = cloneDeep(artpackNode);
       updatedArtNode.objectFit = newObjectFit;
-      updatedArtNode.isChanged = true;
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedArtNode, updatedPaneNode]);
     }
   };
@@ -205,9 +200,7 @@ const ArtpackImage = ({ paneId, onUpdate }: ArtpackImageProps) => {
       if (viewport === 'mobile') updatedArtNode.hiddenViewportMobile = hidden;
       if (viewport === 'tablet') updatedArtNode.hiddenViewportTablet = hidden;
       if (viewport === 'desktop') updatedArtNode.hiddenViewportDesktop = hidden;
-      updatedArtNode.isChanged = true;
       const updatedPaneNode = cloneDeep(paneNode);
-      updatedPaneNode.isChanged = true;
       ctx.modifyNodes([updatedArtNode, updatedPaneNode]);
     }
   };

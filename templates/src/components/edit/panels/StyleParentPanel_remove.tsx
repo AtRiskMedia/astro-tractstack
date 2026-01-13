@@ -121,9 +121,7 @@ const StyleParentPanelRemove = ({
     }
 
     if (wasModified) {
-      updatedNode.isChanged = true;
       ctx.modifyNodes([updatedNode]);
-      ctx.notifyNode('root');
     }
 
     settingsPanelStore.set({

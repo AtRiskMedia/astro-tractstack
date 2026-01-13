@@ -463,7 +463,6 @@ export const Compositor = (props: CompositorProps) => {
               {
                 ...node,
                 wordCarouselPayload: { words, speed: 2 },
-                isChanged: true,
               } as FlatNode,
             ]);
             settingsPanelStore.set({

@@ -100,7 +100,6 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
           ...cloneDeep(impressionNode),
           tagName: 'impression',
           ...data,
-          isChanged: true,
         };
         ctx.modifyNodes([node]);
       } else {
@@ -111,14 +110,12 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
           nodeType: 'Impression',
           parentId: nodeId,
           ...data,
-          isChanged: true,
         } as ImpressionNode;
         ctx.addTemplateImpressionNode(nodeId, node);
       }
       ctx.modifyNodes([
         {
           ...paneNode,
-          isChanged: true,
         },
       ]);
     },
@@ -156,7 +153,6 @@ const PaneImpressionPanel = ({ nodeId, setMode }: PaneImpressionPanelProps) => {
       ctx.modifyNodes([
         {
           ...paneNode,
-          isChanged: true,
         },
       ]);
       setMode(PaneConfigMode.DEFAULT);

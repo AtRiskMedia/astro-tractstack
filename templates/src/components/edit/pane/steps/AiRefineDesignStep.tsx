@@ -25,6 +25,7 @@ export const AiRefineDesignStep = ({
   initialHtml,
   initialCss,
 }: AiRefineDesignStepProps) => {
+  console.log(initialHtml, initialCss);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);

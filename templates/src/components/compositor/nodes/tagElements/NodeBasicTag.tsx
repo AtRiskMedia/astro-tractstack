@@ -497,7 +497,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             const updatedNode = {
               ...cloneDeep(node),
               isPlaceholder: false,
-              isChanged: true,
             };
             ctx.modifyNodes([updatedNode]);
           }
@@ -507,7 +506,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             const paneNode = cloneDeep(
               ctx.allNodes.get().get(paneNodeId)
             ) as PaneNode;
-            ctx.modifyNodes([{ ...paneNode, isChanged: true }]);
+            ctx.modifyNodes([paneNode]);
           }
         }
       } catch (error) {
@@ -573,7 +572,6 @@ export const NodeBasicTag = (props: NodeTagProps) => {
             const updatedNode = {
               ...cloneDeep(node),
               isPlaceholder: false,
-              isChanged: true,
             };
             ctx.modifyNodes([updatedNode]);
           }
@@ -591,7 +589,7 @@ export const NodeBasicTag = (props: NodeTagProps) => {
       const paneNode = cloneDeep(
         ctx.allNodes.get().get(paneNodeId)
       ) as PaneNode;
-      ctx.modifyNodes([{ ...paneNode, isChanged: true }]);
+      ctx.modifyNodes([paneNode]);
     }
 
     ctx.clearEditLock();

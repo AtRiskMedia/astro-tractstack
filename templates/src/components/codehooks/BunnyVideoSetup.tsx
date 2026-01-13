@@ -149,7 +149,6 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
             bgColor,
           }),
         },
-        isChanged: true,
       };
 
       if (bgColor) {

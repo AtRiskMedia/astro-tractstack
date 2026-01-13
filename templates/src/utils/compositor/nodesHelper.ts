@@ -304,7 +304,6 @@ export function createEmptyStorykeep(id: string) {
     nodeType: 'StoryFragment',
     tractStackId: 'temp',
     parentId: null,
-    isChanged: false,
     paneIds: [],
     changed: undefined,
     slug: 'temp',
@@ -549,7 +548,6 @@ export function revertFromGrid(gridLayoutId: string) {
       markdownNodeToKeep.parentId = paneNode.id;
       markdownNodeToKeep.parentClasses = gridLayoutNode.parentClasses || [];
       markdownNodeToKeep.defaultClasses = gridLayoutNode.defaultClasses || {};
-      markdownNodeToKeep.isChanged = true;
       newAllNodes.set(markdownNodeToKeepId, markdownNodeToKeep);
 
       const paneChildren = [...(newParentNodes.get(paneNode.id) || [])];
@@ -567,7 +565,6 @@ export function revertFromGrid(gridLayoutId: string) {
     }
 
     const updatedPaneNode = cloneDeep(paneNode);
-    updatedPaneNode.isChanged = true;
     newAllNodes.set(paneNode.id, updatedPaneNode);
 
     ctx.allNodes.set(newAllNodes);
@@ -622,7 +619,6 @@ export function convertToGrid(markdownNodeId: string) {
       parentClasses: markdownNode.parentClasses || [],
       defaultClasses: markdownNode.defaultClasses || {},
       gridColumns: { mobile: 1, tablet: 2, desktop: 2 },
-      isChanged: true,
     };
 
     const updatedMarkdownNode = cloneDeep(markdownNode);
@@ -630,7 +626,6 @@ export function convertToGrid(markdownNodeId: string) {
     updatedMarkdownNode.parentClasses = [];
     updatedMarkdownNode.parentCss = [];
     updatedMarkdownNode.defaultClasses = {};
-    updatedMarkdownNode.isChanged = true;
 
     // Create a new, truly empty MarkdownNode for the second column.
     const newColumnNodeId = ulid();
@@ -642,12 +637,11 @@ export function convertToGrid(markdownNodeId: string) {
       markdownId: ulid(),
       defaultClasses: {},
       parentClasses: [],
-      isChanged: true,
     };
 
     newAllNodes.set(gridLayoutId, newGridLayoutNode);
     newAllNodes.set(markdownNodeId, updatedMarkdownNode);
-    newAllNodes.set(paneNode.id, { ...cloneDeep(paneNode), isChanged: true });
+    newAllNodes.set(paneNode.id, { ...cloneDeep(paneNode) });
     newAllNodes.set(newColumnNodeId, newColumnNode);
 
     const paneChildren = [...(newParentNodes.get(paneNode.id) || [])];
@@ -703,7 +697,6 @@ export function addColumn(gridLayoutId: string) {
       defaultClasses: {},
       parentClasses: [],
       gridClasses: { mobile: {}, tablet: {}, desktop: {} },
-      isChanged: true,
     };
 
     newAllNodes.set(newMarkdownNodeId, newColumnNode);
@@ -714,7 +707,6 @@ export function addColumn(gridLayoutId: string) {
     newParentNodes.set(newMarkdownNodeId, []); // Set children to an empty array
 
     const updatedGridLayoutNode = cloneDeep(gridLayoutNode);
-    updatedGridLayoutNode.isChanged = true;
     newAllNodes.set(gridLayoutId, updatedGridLayoutNode);
 
     ctx.allNodes.set(newAllNodes);

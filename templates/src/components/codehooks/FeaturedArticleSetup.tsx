@@ -90,7 +90,6 @@ const FeaturedArticleSetup = ({
           }),
         },
         bgColour: bgColor || undefined,
-        isChanged: true,
       };
 
       // If bgColor is empty, remove the property

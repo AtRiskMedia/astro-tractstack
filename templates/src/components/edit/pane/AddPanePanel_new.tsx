@@ -134,22 +134,18 @@ const AddPaneNewPanel = ({
 
       if (isContextPane) {
         insertTemplate.isContextPane = true;
-        await ctx.applyAtomicUpdate(async (tmpCtx) => {
-          tmpCtx.addContextTemplatePane(ownerId, insertTemplate);
-        });
+        ctx.addContextTemplatePane(ownerId, insertTemplate);
       } else {
-        await ctx.applyAtomicUpdate(async (tmpCtx) => {
-          tmpCtx.addTemplatePane(
-            ownerId,
-            insertTemplate,
-            nodeId,
-            first ? 'before' : 'after'
-          );
-        });
+        ctx.addTemplatePane(
+          ownerId,
+          insertTemplate,
+          nodeId,
+          first ? 'before' : 'after'
+        );
         const storyFragment = cloneDeep(
           ctx.allNodes.get().get(ownerId)
         ) as StoryFragmentNode;
-        ctx.modifyNodes([{ ...storyFragment, isChanged: true }]);
+        ctx.modifyNodes([{ ...storyFragment }]);
       }
       ctx.notifyNode(`root`);
       setParentMode(PaneAddMode.DEFAULT, false);

@@ -161,7 +161,6 @@ const StyleParentPanel = ({
       {
         ...targetNode,
         parentClasses: newParentClasses,
-        isChanged: true,
       } as StyleableNode,
     ]);
 
@@ -195,9 +194,7 @@ const StyleParentPanel = ({
 
     const updatedNode = cloneDeep(selectedTargetNode);
     updatedNode.gridColumns[viewport] = count;
-    updatedNode.isChanged = true;
     ctx.modifyNodes([updatedNode]);
-    ctx.notifyNode('root');
   };
 
   const handleClickDeleteLayer = () => {
@@ -226,9 +223,7 @@ const StyleParentPanel = ({
     } else if (typeof updatedPaneNode.bgColour === 'string' && !color) {
       delete updatedPaneNode.bgColour;
     }
-    updatedPaneNode.isChanged = true;
     ctx.modifyNodes([updatedPaneNode]);
-    ctx.notifyNode('root');
   };
 
   const handleVisibilityChange = (
@@ -239,9 +234,7 @@ const StyleParentPanel = ({
       viewport.charAt(0).toUpperCase() + viewport.slice(1)
     }` as VisibilityKey;
     updatedNode[key] = !updatedNode[key];
-    updatedNode.isChanged = true;
     ctx.modifyNodes([updatedNode]);
-    ctx.notifyNode('root');
   };
 
   const setView = (newView: PanelView) => {

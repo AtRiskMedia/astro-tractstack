@@ -34,7 +34,6 @@ const StoryKeepHeader = ({
   const viewport = useStore(viewportModeStore);
   const pendingHomePageSlug = useStore(pendingHomePageSlugStore);
   const ctx = getCtx();
-  const showSaveBypass = useStore(ctx.showSaveBypass);
   const hasTitle = useStore(ctx.hasTitle);
   const hasPanes = useStore(ctx.hasPanes);
   const [canUndo, setCanUndo] = useState(false);
@@ -124,7 +123,7 @@ const StoryKeepHeader = ({
   ];
 
   // Show save button if there are undo changes OR pending home page change
-  const shouldShowSave = canUndo || pendingHomePageSlug || showSaveBypass;
+  const shouldShowSave = canUndo || pendingHomePageSlug;
 
   if (!hasTitle && !hasPanes) return null;
 

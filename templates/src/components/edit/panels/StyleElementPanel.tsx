@@ -215,7 +215,7 @@ const StyleElementPanel = ({
       ...preset,
     };
 
-    ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...targetNode }]);
 
     setShowPresets(false);
   };

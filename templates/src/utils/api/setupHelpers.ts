@@ -164,7 +164,7 @@ function forceMarkAllDirty(ctx: any) {
   if (VERBOSE)
     console.log('[forceMarkAllDirty] Flagging all nodes for SaveModal...');
   const allNodes = Array.from(ctx.allNodes.get().values());
-  const dirtyUpdates = allNodes.map((n: any) => ({ ...n, isChanged: true }));
+  const dirtyUpdates = allNodes.map((n: any) => ({ ...n }));
   ctx.modifyNodes(dirtyUpdates);
 }
 

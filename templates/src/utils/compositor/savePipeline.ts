@@ -211,7 +211,6 @@ export async function executeSavePipeline(
         updatedNode.fileId = result.fileId;
         updatedNode.src = result.src;
         if (result.srcSet) updatedNode.srcSet = result.srcSet;
-        updatedNode.isChanged = true;
         ctx.modifyNodes([updatedNode]);
 
         const localRef = fileNode as PendingFileNode;
@@ -286,9 +285,7 @@ export async function executeSavePipeline(
           }
         );
 
-        ctx.modifyNodes([
-          { ...pane, htmlAst: cleanAst, isChanged: true } as PaneNode,
-        ]);
+        ctx.modifyNodes([{ ...pane, htmlAst: cleanAst } as PaneNode]);
         logDebug(`Creative Pane ${pane.id} assets processed and node updated.`);
       } catch (err) {
         console.error('Creative Pane Asset Upload Error:', err);

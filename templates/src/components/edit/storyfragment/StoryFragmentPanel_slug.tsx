@@ -127,7 +127,6 @@ const StoryFragmentSlugPanel = ({
       const updatedNode = cloneDeep({
         ...storyfragmentNode,
         slug,
-        isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
     }

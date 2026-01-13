@@ -7,7 +7,11 @@ import { extractClassesFromNodes } from '@/utils/compositor/nodesHelper';
 import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
 import allowInsert from '@/utils/compositor/allowInsert';
 import { reservedSlugs } from '@/constants';
-import { NodesHistory, PatchOp } from '@/stores/nodesHistory';
+import {
+  NodesHistory,
+  PatchOp,
+  VERBOSE as VERBOSE_HISTORY,
+} from '@/stores/nodesHistory';
 import { moveNodeAtLocationInContext } from '@/utils/compositor/nodesHelper';
 import {
   rehydrateChildrenFromHtml,
@@ -90,7 +94,6 @@ export class NodesContext {
   allNodes = atom<Map<string, BaseNode>>(new Map<string, BaseNode>());
   impressionNodes = atom<Set<ImpressionNode>>(new Set<ImpressionNode>());
   parentNodes = atom<Map<string, string[]>>(new Map<string, string[]>());
-  showSaveBypass = atom<boolean>(false);
   hasTitle = atom<boolean>(false);
   hasPanes = atom<boolean>(false);
   isTemplate = atom<boolean>(false);
@@ -257,24 +260,6 @@ export class NodesContext {
     });
   }
 
-  //setActiveGhost(nodeId: string): void {
-  //  const currentActiveId = this.ghostTextActiveId.get();
-  //  // If this is already the active ghost, do nothing
-  //  if (currentActiveId === nodeId) return;
-  //  // If another ghost is active, clear it first
-  //  if (currentActiveId && currentActiveId !== nodeId) {
-  //    // Set to empty string to close any existing ghost
-  //    this.ghostTextActiveId.set("");
-  //    // After a short delay to allow the previous ghost to close,
-  //    // set the new active ghost
-  //    setTimeout(() => {
-  //      this.ghostTextActiveId.set(nodeId);
-  //    }, 100);
-  //  } else {
-  //    this.ghostTextActiveId.set(nodeId);
-  //  }
-  //}
-
   updateHasPanesStatus() {
     const allNodes = this.allNodes.get();
     const storyFragments = Array.from(allNodes.values()).filter(
@@ -328,7 +313,7 @@ export class NodesContext {
         const storyfragmentNode = cloneDeep(
           this.allNodes.get().get(storyfragmentNodeId)
         ) as StoryFragmentNode;
-        this.modifyNodes([{ ...storyfragmentNode, isChanged: true }]);
+        this.modifyNodes([{ ...storyfragmentNode }]);
         break;
       }
       case `TagElement`: {
@@ -336,7 +321,7 @@ export class NodesContext {
         const paneNode = cloneDeep(
           this.allNodes.get().get(paneNodeId)
         ) as PaneNode;
-        this.modifyNodes([{ ...paneNode, isChanged: true }]);
+        this.modifyNodes([{ ...paneNode }]);
         break;
       }
       default:
@@ -517,7 +502,7 @@ export class NodesContext {
       this.parentNodes.set(newParentNodes);
 
       if (originalPaneNode) {
-        this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+        this.modifyNodes([{ ...originalPaneNode }], {
           notify: false,
           recordHistory: false,
         });
@@ -542,11 +527,15 @@ export class NodesContext {
 
     const newAnchorId = redoLogic();
 
-    this.history.addPatch({
-      op: PatchOp.REPLACE,
-      undo: undoLogic,
-      redo: redoLogic,
-    });
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: wrapRangeInAnchor', { range });
+      this.history.addPatch({
+        op: PatchOp.REPLACE,
+        undo: undoLogic,
+        redo: redoLogic,
+      });
+    }
 
     return new Promise((resolve) =>
       setTimeout(() => resolve(newAnchorId), 310)
@@ -554,31 +543,29 @@ export class NodesContext {
   }
 
   applyShellToPane(paneId: string, template: TemplatePane) {
-    const allNodes = new Map(this.allNodes.get());
-    const originalPane = allNodes.get(paneId);
+    const allNodesMap = this.allNodes.get();
+    const originalPane = allNodesMap.get(paneId);
     if (!originalPane) return;
 
-    const paneNode = cloneDeep(originalPane) as PaneNode;
-    paneNode.isChanged = true;
+    const nodesToUpdate: BaseNode[] = [];
 
+    const paneNode = cloneDeep(originalPane) as PaneNode;
     if (template.bgColour) {
       paneNode.bgColour = template.bgColour;
     }
     if (template.htmlAst) {
       paneNode.htmlAst = template.htmlAst;
     }
-
-    allNodes.set(paneId, paneNode);
+    nodesToUpdate.push(paneNode);
 
     const childrenIds = this.getChildNodeIDs(paneId);
 
     const gridNodeRaw = childrenIds
-      .map((id) => allNodes.get(id))
+      .map((id) => allNodesMap.get(id))
       .find((n) => n?.nodeType === 'GridLayoutNode');
 
     if (gridNodeRaw && template.gridLayout) {
       const gridLayoutNode = cloneDeep(gridNodeRaw) as GridLayoutNode;
-      gridLayoutNode.isChanged = true;
 
       if (template.gridLayout.parentClasses) {
         gridLayoutNode.parentClasses = template.gridLayout.parentClasses;
@@ -586,7 +573,7 @@ export class NodesContext {
       if (template.gridLayout.defaultClasses) {
         gridLayoutNode.defaultClasses = template.gridLayout.defaultClasses;
       }
-      allNodes.set(gridLayoutNode.id, gridLayoutNode);
+      nodesToUpdate.push(gridLayoutNode);
 
       if (
         template.gridLayout.nodes &&
@@ -596,27 +583,25 @@ export class NodesContext {
 
         columnIds.forEach((colId, index) => {
           const templateCol = template.gridLayout!.nodes![index];
-          const colNodeRaw = allNodes.get(colId);
+          const colNodeRaw = allNodesMap.get(colId);
           if (templateCol && colNodeRaw) {
             const liveColNode = cloneDeep(
               colNodeRaw
             ) as MarkdownPaneFragmentNode;
             liveColNode.gridClasses = templateCol.gridClasses;
-            liveColNode.isChanged = true;
-            allNodes.set(colId, liveColNode);
+            nodesToUpdate.push(liveColNode);
           }
         });
       }
     } else {
       const markdownNodes = childrenIds
-        .map((id) => allNodes.get(id))
+        .map((id) => allNodesMap.get(id))
         .filter(
           (n) => n?.nodeType === 'Markdown'
         ) as MarkdownPaneFragmentNode[];
 
       if (markdownNodes.length > 0 && template.markdown) {
         const primaryMarkdown = cloneDeep(markdownNodes[0]);
-        primaryMarkdown.isChanged = true;
 
         if (template.markdown.parentClasses) {
           primaryMarkdown.parentClasses = template.markdown.parentClasses;
@@ -624,14 +609,12 @@ export class NodesContext {
         if (template.markdown.defaultClasses) {
           primaryMarkdown.defaultClasses = template.markdown.defaultClasses;
         }
-        allNodes.set(primaryMarkdown.id, primaryMarkdown);
+        nodesToUpdate.push(primaryMarkdown);
       }
     }
 
-    this.allNodes.set(allNodes);
-    this.notifyNode(paneId);
-    this.notifyNode('root');
-    this.showSaveBypass.set(true);
+    // Force a fresh history entry for this operation
+    this.modifyNodes(nodesToUpdate, { merge: false });
   }
 
   async updateCreativeAsset(
@@ -681,28 +664,19 @@ export class NodesContext {
     }
 
     paneNode.htmlAst = newHtmlAst;
-    paneNode.isChanged = true;
 
     this.modifyNodes([paneNode]);
   }
 
   updateCreativePane(paneId: string, containerId: string, htmlContent: string) {
-    const allNodes = new Map(this.allNodes.get());
-    const originalPane = allNodes.get(paneId);
-
-    // 1. Validation and Clone (matching applyShellToPane pattern)
+    const originalPane = this.allNodes.get().get(paneId);
     if (!originalPane || originalPane.nodeType !== 'Pane') return;
 
-    // Deep clone ensures we don't mutate state outside the atom update
     const paneNode = cloneDeep(originalPane) as PaneNode;
-
-    // Guard: Ensure we are in HTML mode
     if (!('htmlAst' in paneNode) || !paneNode.htmlAst) return;
 
-    // 2. Logic: Rehydrate and Patch
     const newChildren = rehydrateChildrenFromHtml(htmlContent);
 
-    // Recursive patcher to find the container in the cloned tree
     const patchNode = (nodes: any[]): boolean => {
       for (const node of nodes) {
         if (node.id === containerId) {
@@ -716,13 +690,8 @@ export class NodesContext {
       return false;
     };
 
-    // 3. Commit
     if (patchNode(paneNode.htmlAst.tree)) {
-      paneNode.isChanged = true;
-      allNodes.set(paneId, paneNode);
-      this.allNodes.set(allNodes);
-      this.notifyNode(paneId);
-      this.showSaveBypass.set(true);
+      this.modifyNodes([paneNode], { merge: false });
     }
   }
 
@@ -905,8 +874,6 @@ export class NodesContext {
    * @param tagName - The tag name for the wrapper element (e.g., 'span').
    * @returns A Promise that resolves with the new wrapper node's ID, or null.
    */
-  // Replacement for wrapRangeInSpan in src/stores/nodes.ts
-
   public async wrapRangeInSpan(
     range: SelectionRange,
     tagName: 'span'
@@ -1072,7 +1039,7 @@ export class NodesContext {
       this.parentNodes.set(newParentNodes);
 
       if (originalPaneNode) {
-        this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+        this.modifyNodes([{ ...originalPaneNode }], {
           notify: false,
           recordHistory: false,
         });
@@ -1116,11 +1083,15 @@ export class NodesContext {
 
     const newSpanId = redoLogic();
 
-    this.history.addPatch({
-      op: PatchOp.REPLACE,
-      undo: undoLogic,
-      redo: redoLogic,
-    });
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: wrapRangeInSpan', { range, tagName });
+      this.history.addPatch({
+        op: PatchOp.REPLACE,
+        undo: undoLogic,
+        redo: redoLogic,
+      });
+    }
 
     return new Promise((resolve) => setTimeout(() => resolve(newSpanId), 310));
   }
@@ -1742,37 +1713,33 @@ export class NodesContext {
     options?: {
       notify?: boolean;
       recordHistory?: boolean;
+      merge?: boolean;
     }
   ) {
     const undoList: ((ctx: NodesContext) => void)[] = [];
     const redoList: ((ctx: NodesContext) => void)[] = [];
     const shouldNotify = options?.notify ?? true;
-    const shouldRecordHistory = options?.recordHistory ?? true;
+    const shouldRecordHistory =
+      (options?.recordHistory ?? true) && !this.isTemplate.get();
 
-    for (let i = 0; i < newData.length; i++) {
-      const node = newData[i];
+    for (const incomingNode of newData) {
+      // Centralized persistence flag: Always mark modified nodes as changed
+      const node = { ...incomingNode, isChanged: true };
+
       const currentNodeData = this.allNodes.get().get(node.id) as BaseNode;
-      if (!currentNodeData) {
-        continue;
-      }
+      if (!currentNodeData) continue;
 
-      if (isDeepEqual(currentNodeData, node)) {
-        continue;
+      if (isDeepEqual(currentNodeData, node)) continue;
+
+      if (VERBOSE_HISTORY) {
+        console.log(`[Nodes] Modifying ${node.nodeType} (${node.id})`, node);
       }
 
       const newNodes = new Map(this.allNodes.get());
       newNodes.set(node.id, node);
       this.allNodes.set(newNodes);
 
-      const deepEqualWithExclusions = isDeepEqual(currentNodeData, node, [
-        'isChanged',
-      ]);
-
-      if (deepEqualWithExclusions) {
-        if (shouldNotify) this.notifyNode(node.id);
-        continue;
-      }
-
+      // Check if we need to dirty parents (bubbling changes up)
       switch (node.nodeType) {
         case 'GridLayoutNode':
         case 'TagElement':
@@ -1784,7 +1751,7 @@ export class NodesContext {
           if (paneNodeId) {
             const paneNode = this.allNodes.get().get(paneNodeId);
             if (paneNode && !paneNode.isChanged) {
-              nodesToDirty.push({ ...paneNode, isChanged: true });
+              nodesToDirty.push({ ...paneNode });
             }
           }
 
@@ -1796,7 +1763,7 @@ export class NodesContext {
               !parentNode.isChanged
             ) {
               if (!nodesToDirty.some((n) => n.id === parentNode.id)) {
-                nodesToDirty.push({ ...parentNode, isChanged: true });
+                nodesToDirty.push({ ...parentNode });
               }
             }
           }
@@ -1807,18 +1774,8 @@ export class NodesContext {
               recordHistory: false,
             });
           }
-
-          this.notifyNode(ROOT_NODE_NAME);
           break;
         }
-
-        case `Menu`:
-        case `Pane`:
-        case `StoryFragment`:
-          break;
-
-        default:
-          console.warn(`must dirty check missed on `, node.nodeType);
       }
 
       undoList.push((ctx: NodesContext) => {
@@ -1826,8 +1783,7 @@ export class NodesContext {
         newNodes.set(node.id, currentNodeData);
         ctx.allNodes.set(newNodes);
         if (shouldNotify) {
-          const parentNode = this.nodeToNotify(node.id, node.nodeType);
-          if (parentNode) this.notifyNode(parentNode);
+          ctx.notifyNode(node.id);
         }
       });
       redoList.push((ctx: NodesContext) => {
@@ -1835,28 +1791,32 @@ export class NodesContext {
         newNodes.set(node.id, node);
         ctx.allNodes.set(newNodes);
         if (shouldNotify) {
-          const parentNode = this.nodeToNotify(node.id, node.nodeType);
-          if (parentNode) this.notifyNode(parentNode);
+          ctx.notifyNode(node.id);
         }
       });
 
       if (shouldNotify) {
-        if ([`Menu`, `StoryFragment`].includes(node.nodeType))
-          this.notifyNode(ROOT_NODE_NAME);
         this.notifyNode(node.id);
+        const parentNodeToNotify = this.nodeToNotify(node.id, node.nodeType);
+        if (parentNodeToNotify && parentNodeToNotify !== node.id) {
+          this.notifyNode(parentNodeToNotify);
+        } else this.notifyNode('root');
       }
     }
 
     if (undoList.length > 0 && shouldRecordHistory) {
-      this.history.addPatch({
-        op: PatchOp.REPLACE,
-        undo: (ctx) => {
-          undoList.forEach((fn) => fn(ctx));
+      this.history.addPatch(
+        {
+          op: PatchOp.REPLACE,
+          undo: (ctx) => {
+            undoList.forEach((fn) => fn(ctx));
+          },
+          redo: (ctx) => {
+            redoList.forEach((fn) => fn(ctx));
+          },
         },
-        redo: (ctx) => {
-          redoList.forEach((fn) => fn(ctx));
-        },
-      });
+        { merge: options?.merge }
+      );
     }
   }
 
@@ -1915,7 +1875,6 @@ export class NodesContext {
       duplicatedPane.title = ownerNode.title;
     if (ownerNode && 'slug' in ownerNode && typeof ownerNode.slug === `string`)
       duplicatedPane.slug = ownerNode.slug;
-    duplicatedPane.isChanged = true;
 
     // Track all nodes that need to be added
     // Call the new helper to process markdown, gridLayout, and bgPane
@@ -1960,7 +1919,6 @@ export class NodesContext {
     const duplicatedPaneId = pane?.id || ulid();
     duplicatedPane.id = duplicatedPaneId;
     duplicatedPane.parentId = ownerNode.id;
-    duplicatedPane.isChanged = true;
 
     if (this.rootNodeId.get() !== 'tmp') {
       if (
@@ -2002,7 +1960,6 @@ export class NodesContext {
       location &&
       storyFragmentNode?.nodeType === 'StoryFragment'
     ) {
-      storyFragmentWasChanged = storyFragmentNode.isChanged || false;
       specificIdx = storyFragmentNode.paneIds.indexOf(insertPaneId);
       elIdx = specificIdx;
       if (elIdx === -1) {
@@ -2019,7 +1976,6 @@ export class NodesContext {
           );
         }
       }
-      storyFragmentNode.isChanged = true;
     }
 
     this.addNode(duplicatedPane as PaneNode);
@@ -2034,46 +1990,55 @@ export class NodesContext {
     // Combine the pane and all its child nodes for the history patch
     const nodesToHistory = [duplicatedPane as BaseNode, ...allNodes];
 
-    this.history.addPatch({
-      op: PatchOp.ADD,
-      undo: (ctx) => {
-        // Delete all nodes created (pane + children)
-        ctx.deleteNodes(nodesToHistory);
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: addTemplatePane', {
+          id: duplicatedPane.id,
+          slug: duplicatedPane.slug,
+        });
+      this.history.addPatch({
+        op: PatchOp.ADD,
+        undo: (ctx) => {
+          // Delete all nodes created (pane + children)
+          ctx.deleteNodes(nodesToHistory);
 
-        if (
-          storyFragmentNode &&
-          storyFragmentNode.nodeType === 'StoryFragment' &&
-          Array.isArray(storyFragmentNode.paneIds)
-        ) {
-          storyFragmentNode.paneIds = storyFragmentNode.paneIds.filter(
-            (id: string) => id !== duplicatedPane.id
-          );
-          storyFragmentNode.isChanged = storyFragmentWasChanged;
-        }
-      },
-      redo: (ctx) => {
-        if (storyFragmentNode?.nodeType === 'StoryFragment') {
-          if (elIdx === -1) {
-            storyFragmentNode.paneIds.push(duplicatedPane.id);
-          } else {
-            if (location === 'before') {
-              storyFragmentNode.paneIds.splice(elIdx, 0, duplicatedPane.id);
+          if (
+            storyFragmentNode &&
+            storyFragmentNode.nodeType === 'StoryFragment' &&
+            Array.isArray(storyFragmentNode.paneIds)
+          ) {
+            storyFragmentNode.paneIds = storyFragmentNode.paneIds.filter(
+              (id: string) => id !== duplicatedPane.id
+            );
+          }
+        },
+        redo: (ctx) => {
+          if (storyFragmentNode?.nodeType === 'StoryFragment') {
+            if (elIdx === -1) {
+              storyFragmentNode.paneIds.push(duplicatedPane.id);
             } else {
-              storyFragmentNode.paneIds.splice(elIdx + 1, 0, duplicatedPane.id);
+              if (location === 'before') {
+                storyFragmentNode.paneIds.splice(elIdx, 0, duplicatedPane.id);
+              } else {
+                storyFragmentNode.paneIds.splice(
+                  elIdx + 1,
+                  0,
+                  duplicatedPane.id
+                );
+              }
             }
           }
-          storyFragmentNode.isChanged = true;
-        }
 
-        // Add all nodes back (pane + children)
-        ctx.addNodes(nodesToHistory);
-        ctx.linkChildToParent(
-          duplicatedPane.id,
-          duplicatedPane.parentId,
-          specificIdx
-        );
-      },
-    });
+          // Add all nodes back (pane + children)
+          ctx.addNodes(nodesToHistory);
+          ctx.linkChildToParent(
+            duplicatedPane.id,
+            duplicatedPane.parentId,
+            specificIdx
+          );
+        },
+      });
+    }
 
     return duplicatedPaneId;
   }
@@ -2117,11 +2082,18 @@ export class NodesContext {
       targetId
     );
     this.addNodes(flattenedNodes);
-    this.history.addPatch({
-      op: PatchOp.ADD,
-      undo: (ctx) => ctx.deleteNodes(flattenedNodes),
-      redo: (ctx) => ctx.addNodes(flattenedNodes),
-    });
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: addTemplateImpressionNode', {
+          targetId,
+          nodeCount: flattenedNodes.length,
+        });
+      this.history.addPatch({
+        op: PatchOp.ADD,
+        undo: (ctx) => ctx.deleteNodes(flattenedNodes),
+        redo: (ctx) => ctx.addNodes(flattenedNodes),
+      });
+    }
   }
 
   addTemplateNode(
@@ -2234,7 +2206,7 @@ export class NodesContext {
 
     // 5. PERFORM REMAINING STATE MUTATIONS
     if (originalPaneNode) {
-      this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+      this.modifyNodes([{ ...originalPaneNode }], {
         notify: false,
         recordHistory: false,
       });
@@ -2266,54 +2238,61 @@ export class NodesContext {
     }
 
     // 6. RECORD THE ENTIRE ATOMIC OPERATION in a single history patch.
-    this.history.addPatch({
-      op: PatchOp.ADD,
-      undo: (ctx) => {
-        // Undo all changes: delete the element and the auto-created markdown node (if it exists)
-        ctx.deleteNodes(flattenedNodes);
-        if (autoCreatedMarkdownNode) {
-          ctx.deleteNodes([autoCreatedMarkdownNode]);
-        }
-        if (originalPaneNode) {
-          const newNodes = new Map(ctx.allNodes.get());
-          newNodes.set(originalPaneNode.id, originalPaneNode);
-          ctx.allNodes.set(newNodes);
-        }
-        if (paneNodeId) ctx.notifyNode(paneNodeId);
-      },
-      redo: (ctx) => {
-        // Redo all changes in the correct order
-        if (originalPaneNode) {
-          ctx.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
-            notify: false,
-            recordHistory: false,
-          });
-        }
-        if (autoCreatedMarkdownNode) {
-          ctx.addNode(autoCreatedMarkdownNode);
-        }
-        ctx.addNodes(flattenedNodes);
-
-        // Re-apply insertion logic
-        const parentNodesMap = ctx.parentNodes.get();
-        const parentChildren = parentNodesMap.get(parentId);
-        if (insertNodeId && location && parentChildren) {
-          const insertIndex = parentChildren.indexOf(insertNodeId);
-          if (insertIndex !== -1) {
-            const currentChildren = parentChildren.filter(
-              (id) => !newTopLevelIds.includes(id)
-            );
-            if (location === 'before') {
-              currentChildren.splice(insertIndex, 0, ...newTopLevelIds);
-            } else {
-              currentChildren.splice(insertIndex + 1, 0, ...newTopLevelIds);
-            }
-            parentNodesMap.set(parentId, currentChildren);
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: addTemplateNode', {
+          targetId,
+          nodeCount: flattenedNodes.length,
+        });
+      this.history.addPatch({
+        op: PatchOp.ADD,
+        undo: (ctx) => {
+          // Undo all changes: delete the element and the auto-created markdown node (if it exists)
+          ctx.deleteNodes(flattenedNodes);
+          if (autoCreatedMarkdownNode) {
+            ctx.deleteNodes([autoCreatedMarkdownNode]);
           }
-        }
-        if (paneNodeId) ctx.notifyNode(paneNodeId);
-      },
-    });
+          if (originalPaneNode) {
+            const newNodes = new Map(ctx.allNodes.get());
+            newNodes.set(originalPaneNode.id, originalPaneNode);
+            ctx.allNodes.set(newNodes);
+          }
+          if (paneNodeId) ctx.notifyNode(paneNodeId);
+        },
+        redo: (ctx) => {
+          // Redo all changes in the correct order
+          if (originalPaneNode) {
+            ctx.modifyNodes([{ ...originalPaneNode }], {
+              notify: false,
+              recordHistory: false,
+            });
+          }
+          if (autoCreatedMarkdownNode) {
+            ctx.addNode(autoCreatedMarkdownNode);
+          }
+          ctx.addNodes(flattenedNodes);
+
+          // Re-apply insertion logic
+          const parentNodesMap = ctx.parentNodes.get();
+          const parentChildren = parentNodesMap.get(parentId);
+          if (insertNodeId && location && parentChildren) {
+            const insertIndex = parentChildren.indexOf(insertNodeId);
+            if (insertIndex !== -1) {
+              const currentChildren = parentChildren.filter(
+                (id) => !newTopLevelIds.includes(id)
+              );
+              if (location === 'before') {
+                currentChildren.splice(insertIndex, 0, ...newTopLevelIds);
+              } else {
+                currentChildren.splice(insertIndex + 1, 0, ...newTopLevelIds);
+              }
+              parentNodesMap.set(parentId, currentChildren);
+            }
+          }
+          if (paneNodeId) ctx.notifyNode(paneNodeId);
+        },
+      });
+    }
 
     // 7. SEND A SINGLE NOTIFICATION to update the UI.
     if (paneNodeId) {
@@ -2486,7 +2465,7 @@ export class NodesContext {
             this.allNodes.get().get(paneNodeId)
           ) as PaneNode;
           if (paneNode) {
-            this.modifyNodes([{ ...paneNode, isChanged: true }]);
+            this.modifyNodes([{ ...paneNode }]);
           }
         }
       }
@@ -2498,23 +2477,29 @@ export class NodesContext {
 
     this.notifyNode(ROOT_NODE_NAME);
 
-    // Add to history for undo/redo
-    this.history.addPatch({
-      op: PatchOp.REMOVE,
-      undo: (ctx) => {
-        ctx.addNodes(toDelete);
-        if (targetNode.nodeType === 'Pane' && parentId !== null) {
-          const storyFragment = this.allNodes
-            .get()
-            .get(parentId) as StoryFragmentNode;
-          if (storyFragment) {
-            storyFragment.paneIds.splice(paneIdx, 0, targetNodeId);
-            this.linkChildToParent(targetNodeId, parentId, paneIdx);
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: deleteNode', {
+          targetNodeId,
+          deletedCount: toDelete.length,
+        });
+      this.history.addPatch({
+        op: PatchOp.REMOVE,
+        undo: (ctx) => {
+          ctx.addNodes(toDelete);
+          if (targetNode.nodeType === 'Pane' && parentId !== null) {
+            const storyFragment = this.allNodes
+              .get()
+              .get(parentId) as StoryFragmentNode;
+            if (storyFragment) {
+              storyFragment.paneIds.splice(paneIdx, 0, targetNodeId);
+              this.linkChildToParent(targetNodeId, parentId, paneIdx);
+            }
           }
-        }
-      },
-      redo: (ctx) => ctx.deleteNodes(toDelete),
-    });
+        },
+        redo: (ctx) => ctx.deleteNodes(toDelete),
+      });
+    }
   }
 
   getNodesRecursively(node: BaseNode | undefined): BaseNode[] {
@@ -2611,7 +2596,7 @@ export class NodesContext {
         this.allNodes.get().get(storyFragmentId)
       ) as StoryFragmentNode;
       if (storyFragment) {
-        this.modifyNodes([{ ...storyFragment, isChanged: true }]);
+        this.modifyNodes([{ ...storyFragment }]);
       }
     } else {
       const parentNode = this.nodeToNotify(
@@ -2621,64 +2606,72 @@ export class NodesContext {
       this.notifyNode(parentNode || '');
     }
 
-    this.history.addPatch({
-      op: PatchOp.REPLACE,
-      undo: (ctx) => {
-        const oldParentNodes = ctx.getChildNodeIDs(node.parentId || '');
-        const newParentNodes = ctx.getChildNodeIDs(
-          newLocationNode.parentId || ''
-        );
-        if (newParentNodes) {
-          newParentNodes.splice(newParentNodes.indexOf(nodeId), 1);
-        }
-        if (oldParentNodes) {
-          oldParentNodes.splice(originalIdx, 0, nodeId);
-        }
-        node.parentId = oldParentId;
-
-        if (node.nodeType === 'Pane' && originalPaneIds) {
-          const storyFragmentId = ctx.getClosestNodeTypeFromId(
-            node.id,
-            'StoryFragment'
-          );
-          const storyFragment = cloneDeep(
-            ctx.allNodes.get().get(storyFragmentId)
-          ) as StoryFragmentNode;
-          if (storyFragment) {
-            storyFragment.paneIds = [...originalPaneIds];
-            this.modifyNodes([{ ...storyFragment, isChanged: true }]);
-          }
-        }
-
-        //const parentNode = ctx.nodeToNotify(node?.parentId || "", node.nodeType);
-        ctx.notifyNode(node.id || '');
-      },
-      redo: (ctx) => {
-        moveNodeAtLocationInContext(
-          oldParentNodes,
-          originalIdx,
-          newLocationNode,
-          insertNodeId,
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: moveNodeTo', {
           nodeId,
+          insertNodeId,
           location,
-          node,
-          ctx
-        );
-
-        if (node.nodeType === 'Pane') {
-          const storyFragmentId = ctx.getClosestNodeTypeFromId(
-            node.id,
-            'StoryFragment'
+        });
+      this.history.addPatch({
+        op: PatchOp.REPLACE,
+        undo: (ctx) => {
+          const oldParentNodes = ctx.getChildNodeIDs(node.parentId || '');
+          const newParentNodes = ctx.getChildNodeIDs(
+            newLocationNode.parentId || ''
           );
-          const storyFragment = cloneDeep(
-            ctx.allNodes.get().get(storyFragmentId)
-          ) as StoryFragmentNode;
-          if (storyFragment) {
-            this.modifyNodes([{ ...storyFragment, isChanged: true }]);
+          if (newParentNodes) {
+            newParentNodes.splice(newParentNodes.indexOf(nodeId), 1);
           }
-        }
-      },
-    });
+          if (oldParentNodes) {
+            oldParentNodes.splice(originalIdx, 0, nodeId);
+          }
+          node.parentId = oldParentId;
+
+          if (node.nodeType === 'Pane' && originalPaneIds) {
+            const storyFragmentId = ctx.getClosestNodeTypeFromId(
+              node.id,
+              'StoryFragment'
+            );
+            const storyFragment = cloneDeep(
+              ctx.allNodes.get().get(storyFragmentId)
+            ) as StoryFragmentNode;
+            if (storyFragment) {
+              storyFragment.paneIds = [...originalPaneIds];
+              this.modifyNodes([{ ...storyFragment }]);
+            }
+          }
+
+          //const parentNode = ctx.nodeToNotify(node?.parentId || "", node.nodeType);
+          ctx.notifyNode(node.id || '');
+        },
+        redo: (ctx) => {
+          moveNodeAtLocationInContext(
+            oldParentNodes,
+            originalIdx,
+            newLocationNode,
+            insertNodeId,
+            nodeId,
+            location,
+            node,
+            ctx
+          );
+
+          if (node.nodeType === 'Pane') {
+            const storyFragmentId = ctx.getClosestNodeTypeFromId(
+              node.id,
+              'StoryFragment'
+            );
+            const storyFragment = cloneDeep(
+              ctx.allNodes.get().get(storyFragmentId)
+            ) as StoryFragmentNode;
+            if (storyFragment) {
+              this.modifyNodes([{ ...storyFragment }]);
+            }
+          }
+        },
+      });
+    }
   }
 
   getPaneImageFileIds(paneId: string): string[] {
@@ -2772,7 +2765,6 @@ export class NodesContext {
     const updatedStoryFragment: StoryFragmentNode = {
       ...storyfragment,
       paneIds: newPaneIds,
-      isChanged: true,
     };
 
     // Pass the correctly typed object to modifyNodes
@@ -3202,7 +3194,7 @@ export class NodesContext {
       this.parentNodes.set(newParentNodes);
 
       // Mark pane as dirty
-      this.modifyNodes([{ ...originalPaneNode, isChanged: true }], {
+      this.modifyNodes([{ ...originalPaneNode }], {
         notify: false,
         recordHistory: false,
       });
@@ -3228,41 +3220,15 @@ export class NodesContext {
     // --- 5. Execute the operation and add to history ---
     applyUnwrap();
 
-    this.history.addPatch({
-      op: PatchOp.REPLACE, // Using REPLACE as it's a complex operation
-      undo: () => applyRewrap(),
-      redo: () => applyUnwrap(),
-    });
-  }
-
-  /**
-   * Executes a series of updates on a temporary context and then applies the
-   * results to the main context in a single operation, triggering one UI update.
-   * @param work - An async function that receives the temporary context and performs modifications.
-   */
-  async applyAtomicUpdate(
-    work: (tmpCtx: NodesContext) => Promise<void>
-  ): Promise<void> {
-    // 1. Create a temporary, "off-screen" context
-    const tmpCtx = new NodesContext();
-    // Prime the temp context with the same root ID and other relevant state
-    tmpCtx.rootNodeId.set(this.rootNodeId.get());
-    tmpCtx.allNodes.set(new Map(this.allNodes.get()));
-    tmpCtx.parentNodes.set(new Map(this.parentNodes.get()));
-
-    // 2. Execute the long-running work on the temporary context
-    await work(tmpCtx);
-
-    // 3. Get the results from the temporary context
-    const newNodes = tmpCtx.allNodes.get();
-    const newParentRelations = tmpCtx.parentNodes.get();
-
-    // 4. Swap/Merge the results into the main context
-    this.allNodes.set(newNodes);
-    this.parentNodes.set(newParentRelations);
-
-    // 5. Trigger a single notification to re-render the UI
-    this.notifyNode('root');
+    if (!this.isTemplate.get()) {
+      if (VERBOSE_HISTORY)
+        console.log('[Nodes] Action: unwrapNode', { nodeId });
+      this.history.addPatch({
+        op: PatchOp.REPLACE, // Using REPLACE as it's a complex operation
+        undo: () => applyRewrap(),
+        redo: () => applyUnwrap(),
+      });
+    }
   }
 
   private deleteNodes(nodesList: BaseNode[]): BaseNode[] {

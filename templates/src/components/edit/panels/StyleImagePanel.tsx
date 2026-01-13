@@ -269,7 +269,7 @@ const StyleImagePanel = ({
     const imgNode = cloneDeep(allNodes.get(node.id)) as FlatNode;
     if (!imgNode) return;
     imgNode.alt = newAlt;
-    ctx.modifyNodes([{ ...imgNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...imgNode }]);
   };
 
   const handleImageUpdate = (params: ImageParams) => {
@@ -285,7 +285,7 @@ const StyleImagePanel = ({
       params.altDescription || '!!This is requires a description!!'
     );
     if (params.srcSet) imgNode.srcSet = params.srcSet;
-    ctx.modifyNodes([{ ...imgNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...imgNode }]);
   };
 
   const handleImageRemove = () => {
@@ -297,7 +297,7 @@ const StyleImagePanel = ({
     imgNode.src = `/static.jpg`;
     if (typeof imgNode.srcSet === `string`) delete imgNode.srcSet;
     imgNode.alt = `This is a placeholder for an image that hasn't yet been uploaded`;
-    ctx.modifyNodes([{ ...imgNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...imgNode }]);
   };
 
   if (

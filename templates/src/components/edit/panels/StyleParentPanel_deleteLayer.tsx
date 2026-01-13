@@ -67,7 +67,6 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: ParentBasePanelProps) => {
       const updatedNode = {
         ...nodeToUpdate,
         parentClasses: [emptyLayer],
-        isChanged: true,
       };
 
       ctx.modifyNodes([updatedNode]);
@@ -84,7 +83,6 @@ const StyleParentDeleteLayerPanel = ({ node, layer }: ParentBasePanelProps) => {
     const updatedNode = {
       ...nodeToUpdate,
       parentClasses: newParentClasses,
-      isChanged: true,
     };
 
     ctx.modifyNodes([updatedNode]);

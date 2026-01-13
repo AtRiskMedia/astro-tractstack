@@ -91,11 +91,15 @@ const AddPaneReUsePanel = ({
               pane.slug.toLowerCase().includes(query.toLowerCase())
           );
 
-    const newPreviews = filteredPanes.map((pane, index) => ({
-      ctx: new NodesContext(),
-      pane,
-      index,
-    }));
+    const newPreviews = filteredPanes.map((pane, index) => {
+      const previewCtx = new NodesContext();
+      previewCtx.isTemplate.set(true);
+      return {
+        ctx: previewCtx,
+        pane,
+        index,
+      };
+    });
 
     setPreviews(newPreviews);
     setCurrentPage(0);
@@ -194,7 +198,6 @@ const AddPaneReUsePanel = ({
           );
         }
       }
-      storyFragmentNode.isChanged = true;
 
       ctx.addNode(templateData.paneNode);
       ctx.linkChildToParent(

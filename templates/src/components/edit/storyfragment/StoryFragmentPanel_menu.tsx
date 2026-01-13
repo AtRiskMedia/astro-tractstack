@@ -125,7 +125,6 @@ const StoryFragmentMenuPanel = ({
     const updatedNode = {
       ...cloneDeep(storyfragmentNode),
       menuId: menuId,
-      isChanged: true,
     };
     ctx.modifyNodes([updatedNode]);
   };
@@ -134,7 +133,6 @@ const StoryFragmentMenuPanel = ({
     const updatedNode = {
       ...cloneDeep(storyfragmentNode),
       menuId: null,
-      isChanged: true,
     };
     ctx.modifyNodes([updatedNode]);
     setSelectedMenuId(null);

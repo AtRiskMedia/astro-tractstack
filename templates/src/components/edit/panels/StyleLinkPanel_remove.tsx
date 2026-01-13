@@ -48,7 +48,7 @@ const StyleLinkRemovePanel = ({ node, className }: BasePanelProps) => {
         delete linkNode.buttonPayload.buttonClasses[className];
       }
     }
-    ctx.modifyNodes([{ ...linkNode, isChanged: true }]);
+    ctx.modifyNodes([{ ...linkNode }]);
     resetStore();
   };
 

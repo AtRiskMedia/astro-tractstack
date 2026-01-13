@@ -152,9 +152,7 @@ const StyleParentPanelUpdate = ({
 
         classesTarget[viewport][className] = value;
 
-        updatedNode.isChanged = true;
         ctx.modifyNodes([updatedNode]);
-        ctx.notifyNode('root');
       }
     },
     [styleableNode, layer, className, targetProperty, values, ctx]

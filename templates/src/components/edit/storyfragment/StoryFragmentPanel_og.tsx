@@ -453,7 +453,6 @@ const StoryFragmentOpenGraphPanel = ({
         ...storyfragmentNode,
         title: draftTitle,
         ...(newSlug ? { slug: newSlug } : {}),
-        isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
 
@@ -482,7 +481,6 @@ const StoryFragmentOpenGraphPanel = ({
       const updatedNode = cloneDeep({
         ...currentNode,
         changed: new Date(),
-        isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
     }

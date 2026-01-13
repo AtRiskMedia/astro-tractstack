@@ -64,7 +64,6 @@ const StyleCodeHookPanel = ({
         codeHookPayload: {
           options: JSON.stringify(options),
         },
-        isChanged: true,
       };
       ctx.modifyNodes([updatedNode]);
     },

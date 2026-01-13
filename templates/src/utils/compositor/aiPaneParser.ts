@@ -747,3 +747,60 @@ export const parseAiPane = (
   // Fallback for invalid input
   throw new Error('Invalid input for parseAiPane');
 };
+
+/**
+ * Generates a default design shell when AI styling is disabled.
+ * Provides a clean, white-label structure compatible with the parser.
+ */
+export function createDefaultShell(layout: 'standard' | 'grid'): ShellJson {
+  const baseDefaults: LLMDefaultClasses = {
+    h2: {
+      mobile: 'text-3xl font-bold tracking-tight text-gray-900',
+      tablet: 'text-4xl',
+    },
+    h3: {
+      mobile: 'text-2xl font-bold tracking-tight text-gray-900',
+    },
+    p: {
+      mobile: 'mt-6 text-lg leading-8 text-gray-600',
+    },
+    ul: {
+      mobile: 'mt-6 list-disc list-outside ml-6 text-gray-600',
+    },
+    li: {
+      mobile: 'mb-2',
+    },
+    a: {
+      mobile: 'text-indigo-600 hover:text-indigo-500 font-semibold',
+    },
+    button: {
+      mobile:
+        'rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+    },
+  };
+
+  if (layout === 'grid') {
+    return {
+      bgColour: '#ffffff',
+      parentClasses: [
+        { mobile: 'mx-auto max-w-7xl' },
+        { mobile: 'px-6 py-24', tablet: 'px-8 py-32' },
+      ],
+      defaultClasses: baseDefaults,
+      columns: [
+        { gridClasses: { mobile: 'flex flex-col gap-y-4' } }, // Left Column
+        { gridClasses: { mobile: 'flex flex-col gap-y-4' } }, // Right Column
+      ],
+    };
+  }
+
+  // Standard Layout
+  return {
+    bgColour: '#ffffff',
+    parentClasses: [
+      { mobile: 'mx-auto max-w-3xl text-base leading-7' },
+      { mobile: 'px-6 py-24', tablet: 'px-8 py-32' },
+    ],
+    defaultClasses: baseDefaults,
+  };
+}

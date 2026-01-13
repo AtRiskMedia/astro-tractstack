@@ -109,7 +109,7 @@ const StyleLinkConfigPanel = ({ node }: StyleLinkConfigPanelProps) => {
         });
       }
 
-      ctx.modifyNodes([{ ...linkNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...linkNode }]);
     } catch (error) {
       console.error('Error in updateNode:', error);
     }

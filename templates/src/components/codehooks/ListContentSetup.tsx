@@ -109,7 +109,6 @@ const ListContentSetup = ({ params, nodeId }: ListContentSetupProps) => {
             }),
           },
           bgColour: bgColor || undefined,
-          isChanged: true,
         };
 
         // If bgColor is empty, remove the property

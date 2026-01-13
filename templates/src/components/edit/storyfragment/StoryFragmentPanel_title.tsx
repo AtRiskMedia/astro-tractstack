@@ -60,7 +60,6 @@ const StoryFragmentOpenGraphPanel = ({
         ...storyfragmentNode,
         title,
         ...(newSlug ? { slug: newSlug } : {}),
-        isChanged: true,
       });
       ctx.modifyNodes([updatedNode]);
     }

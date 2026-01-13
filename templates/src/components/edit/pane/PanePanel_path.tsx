@@ -107,7 +107,6 @@ const PaneMagicPathPanel = ({ nodeId, setMode }: PaneMagicPathPanelProps) => {
 
       updatedNode.heldBeliefs = updatedHeldPaths;
       updatedNode.withheldBeliefs = updatedWithheldPaths;
-      updatedNode.isChanged = true;
 
       const currentPanelState = ctx.activePaneMode.get();
 

@@ -12,7 +12,6 @@ import type {
   BasePanelProps,
   FlatNode,
   MarkdownPaneFragmentNode,
-  GridLayoutNode,
 } from '@/types/compositorTypes';
 
 const StyleWidgetUpdatePanel = ({
@@ -119,7 +118,7 @@ const StyleWidgetUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...targetNode }]);
     } else {
       const markdownNode = cloneDeep(
         allNodes.get(parentNode.id)
@@ -154,7 +153,7 @@ const StyleWidgetUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...markdownNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...markdownNode }]);
     }
 
     setPendingUpdate(null);
@@ -236,7 +235,7 @@ const StyleWidgetUpdatePanel = ({
         }
       }
 
-      ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...targetNode }]);
       setIsOverridden(checked);
     },
     [node, className, parentNode]

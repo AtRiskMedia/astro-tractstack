@@ -131,7 +131,7 @@ const StyleElementUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...elementNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...elementNode }]);
     } else {
       // Update default classes
       const markdownNode = cloneDeep(
@@ -170,7 +170,7 @@ const StyleElementUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...markdownNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...markdownNode }]);
     }
 
     setPendingUpdate(null);
@@ -251,7 +251,7 @@ const StyleElementUpdatePanel = ({
         }
       }
 
-      ctx.modifyNodes([{ ...elementNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...elementNode }]);
       setIsOverridden(checked);
     },
     [node, className, parentNode]

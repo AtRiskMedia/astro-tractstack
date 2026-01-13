@@ -56,7 +56,6 @@ export const ProductCardSetup = (props: ProductCardSetupProps) => {
         target: paneNode.codeHookPayload?.target,
         options: JSON.stringify(newPayload),
       },
-      isChanged: true,
     };
     ctx.modifyNodes([updatedPaneNode]);
   };

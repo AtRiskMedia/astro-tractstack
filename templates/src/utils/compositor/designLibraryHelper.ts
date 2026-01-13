@@ -500,8 +500,7 @@ function convertLivePaneToStoragePane(
           : [],
     };
   } else if (gridLayoutNode) {
-    const { id, parentId, isChanged, parentCss, gridCss, ...restOfGrid } =
-      gridLayoutNode;
+    const { id, parentId, parentCss, gridCss, ...restOfGrid } = gridLayoutNode;
     storageGridLayout = {
       ...restOfGrid,
       nodes: ctx
@@ -515,7 +514,6 @@ function convertLivePaneToStoragePane(
           const {
             id,
             parentId,
-            isChanged,
             markdownId,
             parentCss,
             gridCss,

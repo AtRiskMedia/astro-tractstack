@@ -70,7 +70,6 @@ const StyleWordCarouselPanel = ({ node }: StyleWordCarouselPanelProps) => {
           words: wordsArray,
           speed: currentSpeed,
         },
-        isChanged: true,
       } as FlatNode,
     ]);
   };
@@ -117,7 +116,6 @@ const StyleWordCarouselPanel = ({ node }: StyleWordCarouselPanelProps) => {
         {
           ...currentNode,
           wordCarouselPayload: undefined,
-          isChanged: true,
         } as FlatNode,
       ]);
     }

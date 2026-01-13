@@ -117,7 +117,6 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
           target: paneNode.codeHookPayload?.target,
           options: JSON.stringify(constructPayload()),
         },
-        isChanged: true,
       };
       ctx.modifyNodes([updatedPaneNode]);
     }, 500);

@@ -100,10 +100,7 @@ const StyleElementRemovePanel = ({
       }
     }
 
-    ctx.modifyNodes([
-      { ...elementNode, isChanged: true },
-      { ...markdownNode, isChanged: true },
-    ]);
+    ctx.modifyNodes([{ ...elementNode }, { ...markdownNode }]);
     resetStore();
   };
 

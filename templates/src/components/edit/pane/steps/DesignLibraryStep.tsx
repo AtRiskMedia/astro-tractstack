@@ -56,8 +56,9 @@ const TemplatePreviewItem = ({
   );
 
   const fragmentRequest = useMemo((): PanePreviewRequest[] => {
-    // This preview logic is correct: it creates a *temporary* context.
+    // This preview logic creates a *temporary* context.
     const ctx = new NodesContext();
+    ctx.isTemplate.set(true);
     ctx.addNode(createEmptyStorykeep('tmp'));
     ctx.addTemplatePane('tmp', liveTemplate);
     return [{ id: liveTemplate.id, ctx }];

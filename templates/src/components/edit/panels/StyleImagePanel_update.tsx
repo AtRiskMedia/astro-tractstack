@@ -18,7 +18,6 @@ const StyleImageUpdatePanel = ({
   node,
   parentNode,
   className,
-  config,
   childId,
 }: BasePanelProps) => {
   if (
@@ -119,7 +118,7 @@ const StyleImageUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...targetNode }]);
     } else {
       const markdownNode = cloneDeep(
         allNodes.get(parentNode.id)
@@ -158,7 +157,7 @@ const StyleImageUpdatePanel = ({
           break;
       }
 
-      ctx.modifyNodes([{ ...markdownNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...markdownNode }]);
     }
 
     setPendingUpdate(null);
@@ -240,7 +239,7 @@ const StyleImageUpdatePanel = ({
         }
       }
 
-      ctx.modifyNodes([{ ...targetNode, isChanged: true }]);
+      ctx.modifyNodes([{ ...targetNode }]);
       setIsOverridden(checked);
     },
     [node, className, parentNode, childId, isImage]

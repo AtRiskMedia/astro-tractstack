@@ -60,6 +60,7 @@ const TemplatePreviewItem = ({
 
   const fragmentRequest = useMemo((): PanePreviewRequest[] => {
     const ctx = new NodesContext();
+    ctx.isTemplate.set(true);
     ctx.addNode(createEmptyStorykeep('tmp'));
     ctx.addTemplatePane('tmp', template);
     return [{ id: template.id, ctx }];
@@ -319,11 +320,7 @@ export const RestylePaneModal = () => {
     paneToUpdate.heightRatioDesktop = template.heightRatioDesktop;
     paneToUpdate.heightRatioMobile = template.heightRatioMobile;
     paneToUpdate.heightRatioTablet = template.heightRatioTablet;
-    paneToUpdate.isChanged = true;
-
     ctx.modifyNodes([paneToUpdate]);
-    ctx.notifyNode('root');
-
     handleClose();
   };
 
