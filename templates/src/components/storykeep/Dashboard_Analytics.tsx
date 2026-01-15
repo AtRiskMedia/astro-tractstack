@@ -8,6 +8,7 @@ import DashboardActivity from './Dashboard_Activity';
 import SankeyDiagram from '../codehooks/SankeyDiagram';
 import EpinetDurationSelector from '../codehooks/EpinetDurationSelector';
 import FetchAnalytics from './state/FetchAnalytics';
+import type { PulseMetrics, SystemMetrics } from './state/FetchAnalytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryKeepDashboardAnalyticsProps {
@@ -15,12 +16,16 @@ interface StoryKeepDashboardAnalyticsProps {
   initializing?: boolean;
 }
 
-// Helper component for error boundary
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback: ReactNode;
+}
+
 class ErrorBoundary extends Component<
-  { children: ReactNode; fallback: ReactNode },
+  ErrorBoundaryProps,
   { hasError: boolean }
 > {
-  constructor(props: any) {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
@@ -35,6 +40,70 @@ class ErrorBoundary extends Component<
     }
     return this.props.children;
   }
+}
+
+// Types derived from Dashboard_Activity.tsx
+interface ActivitySeries {
+  id: string;
+  data: Array<{ x: any; y: number }>;
+}
+
+interface DashboardData {
+  stats: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+  line: ActivitySeries[];
+  dailyAnonymous: number;
+  dailyKnown: number;
+  weeklyAnonymous: number;
+  weeklyKnown: number;
+  monthlyAnonymous: number;
+  monthlyKnown: number;
+  status?: string;
+}
+
+interface LeadsData {
+  totalLeads: number;
+  status?: string;
+}
+
+// Types derived from SankeyDiagram.tsx
+interface SankeyNode {
+  name: string;
+  id: string;
+}
+
+interface SankeyLink {
+  source: number;
+  target: number;
+  value: number;
+}
+
+interface EpinetData {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+  status?: string;
+}
+
+// Types derived from EpinetDurationSelector.tsx usage
+interface UserCountItem {
+  id: string;
+  count: number;
+}
+
+interface AnalyticsState {
+  dashboard: DashboardData | null;
+  leads: LeadsData | null;
+  epinet: EpinetData | null;
+  userCounts: UserCountItem[];
+  hourlyNodeActivity: Record<string, number>;
+  pulse: PulseMetrics | null;
+  system: SystemMetrics | null;
+  isLoading: boolean;
+  status: string;
+  error: string | null;
 }
 
 const DurationSelector = ({
@@ -83,22 +152,14 @@ export default function StoryKeepDashboard_Analytics({
   const $epinetCustomFilters = useStore(epinetCustomFilters);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Analytics data state
-  const [analytics, setAnalytics] = useState<{
-    dashboard: any;
-    leads: any;
-    epinet: any;
-    userCounts: any[];
-    hourlyNodeActivity: any;
-    isLoading: boolean;
-    status: string;
-    error: string | null;
-  }>({
+  const [analytics, setAnalytics] = useState<AnalyticsState>({
     dashboard: null,
     leads: null,
     epinet: null,
     userCounts: [],
     hourlyNodeActivity: {},
+    pulse: null,
+    system: null,
     isLoading: false,
     status: 'idle',
     error: null,
@@ -128,7 +189,6 @@ export default function StoryKeepDashboard_Analytics({
     });
   };
 
-  // Duration helper for UI
   const currentDurationHelper = useMemo(():
     | 'daily'
     | 'weekly'
@@ -151,7 +211,6 @@ export default function StoryKeepDashboard_Analytics({
     return 'monthly';
   }, [$epinetCustomFilters.startTimeUTC, $epinetCustomFilters.endTimeUTC]);
 
-  // Standard duration setter helper
   const setStandardDuration = useCallback(
     (newValue: 'daily' | 'weekly' | 'monthly') => {
       const nowUTC = new Date();
@@ -171,7 +230,6 @@ export default function StoryKeepDashboard_Analytics({
     [$epinetCustomFilters]
   );
 
-  // Download leads CSV
   const downloadLeadsCSV = async () => {
     if (isDownloading) return;
     try {
@@ -212,12 +270,10 @@ export default function StoryKeepDashboard_Analytics({
     }
   };
 
-  // Helper function for number formatting
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(num);
   };
 
-  // Prepare stats data for display
   const stats = [
     {
       name: 'Past 24 Hours',
@@ -263,6 +319,77 @@ export default function StoryKeepDashboard_Analytics({
         </div>
       )}
 
+      {/* Live Operations Row */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Card 1: Active Visitors */}
+        <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
+            </span>
+            <dt className="text-sm font-bold text-gray-800">Active Visitors</dt>
+          </div>
+          <dd className="mt-2">
+            <div className="text-2xl font-bold tracking-tight text-cyan-700">
+              {analytics.pulse
+                ? formatNumber(analytics.pulse.activeVisitors)
+                : '-'}
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              {analytics.pulse
+                ? `${formatNumber(analytics.pulse.activeLeads)} Leads, ${formatNumber(analytics.pulse.activeGuests)} Guests`
+                : 'Live sessions'}
+            </div>
+          </dd>
+        </div>
+
+        {/* Card 2: Traffic Velocity */}
+        <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100">
+          <dt className="text-sm font-bold text-gray-800">Traffic Velocity</dt>
+          <dd className="mt-2">
+            <div className="text-2xl font-bold tracking-tight text-cyan-700">
+              {analytics.pulse ? formatNumber(analytics.pulse.velocity) : '-'}{' '}
+              <span className="text-sm font-normal text-gray-500">/ Hr</span>
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              Events (Last Full Hour)
+            </div>
+          </dd>
+        </div>
+
+        {/* Card 3: System Health */}
+        <div className="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100">
+          <dt className="text-sm font-bold text-gray-800">System Health</dt>
+          <dd className="mt-2">
+            {analytics.system ? (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className={`text-2xl font-bold tracking-tight ${analytics.system.waitCount > 0 ? 'text-yellow-600' : 'text-green-600'}`}
+                  >
+                    {analytics.system.waitCount > 0 ? 'Busy' : 'Healthy'}
+                  </span>
+                </div>
+                <div className="mt-1 text-xs text-gray-600">
+                  DB Load:{' '}
+                  {analytics.system.maxOpenConns > 0
+                    ? Math.round(
+                        (analytics.system.openConns /
+                          analytics.system.maxOpenConns) *
+                          100
+                      )
+                    : 0}
+                  %
+                </div>
+              </>
+            ) : (
+              <div className="text-2xl font-bold text-gray-300">-</div>
+            )}
+          </dd>
+        </div>
+      </div>
+
       {/* Stats Cards Grid */}
       <div className="mb-6 grid grid-cols-3 gap-4">
         {stats.map((item) => {
@@ -305,7 +432,6 @@ export default function StoryKeepDashboard_Analytics({
               <hr className="my-1.5 border-gray-100 md:my-3.5" />
 
               <dd>
-                {/* Desktop: side-by-side layout */}
                 <div className="hidden items-end justify-between md:flex">
                   <div className="flex-1">
                     <div className="text-sm text-gray-600">
@@ -327,7 +453,6 @@ export default function StoryKeepDashboard_Analytics({
                   </div>
                 </div>
 
-                {/* Mobile: stacked layout */}
                 <div className="md:hidden">
                   <div className="mb-1.5">
                     <div className="text-sm text-gray-600">
@@ -353,7 +478,6 @@ export default function StoryKeepDashboard_Analytics({
           );
         })}
 
-        {/* Total Leads Card */}
         <div className="col-span-3 rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm transition-colors hover:border-cyan-100">
           <div className="flex items-center justify-between">
             <dt className="text-sm font-bold text-gray-800">Total Leads</dt>
@@ -381,13 +505,11 @@ export default function StoryKeepDashboard_Analytics({
         </div>
       </div>
 
-      {/* Duration Selector */}
       <DurationSelector
         currentDurationHelper={currentDurationHelper}
         setStandardDuration={setStandardDuration}
       />
 
-      {/* Dashboard Activity Chart */}
       <div className="mb-6 overflow-hidden">
         <h3 className="mb-4 text-lg font-bold text-gray-900">
           Activity Over Time
@@ -412,12 +534,10 @@ export default function StoryKeepDashboard_Analytics({
         )}
       </div>
 
-      {/* Separator */}
       <div className="my-8">
         <hr className="border-gray-200" />
       </div>
 
-      {/* User Journey Section */}
       <div className="mb-6 overflow-visible">
         <h3 className="mb-4 text-lg font-bold text-gray-900">
           User Journey Analytics
@@ -466,7 +586,6 @@ export default function StoryKeepDashboard_Analytics({
                     analytics.isLoading || analytics.status === 'loading'
                   }
                   hourlyNodeActivity={analytics.hourlyNodeActivity}
-                  // MODIFICATION: Read availableFilters from the store, not local state
                   availableFilters={$epinetCustomFilters.availableFilters}
                   appliedFilters={$epinetCustomFilters.appliedFilters}
                   onBeliefFilterChange={handleBeliefFilterChange}
@@ -485,7 +604,6 @@ export default function StoryKeepDashboard_Analytics({
                   analytics.isLoading || analytics.status === 'loading'
                 }
                 hourlyNodeActivity={analytics.hourlyNodeActivity}
-                // MODIFICATION: Read availableFilters from the store, not local state
                 availableFilters={$epinetCustomFilters.availableFilters}
                 appliedFilters={$epinetCustomFilters.appliedFilters}
                 onBeliefFilterChange={handleBeliefFilterChange}
@@ -502,7 +620,6 @@ export default function StoryKeepDashboard_Analytics({
               fullContentMap={fullContentMap}
               isLoading={analytics.isLoading || analytics.status === 'loading'}
               hourlyNodeActivity={analytics.hourlyNodeActivity}
-              // MODIFICATION: Read availableFilters from the store, not local state
               availableFilters={$epinetCustomFilters.availableFilters}
               appliedFilters={$epinetCustomFilters.appliedFilters}
               onBeliefFilterChange={handleBeliefFilterChange}

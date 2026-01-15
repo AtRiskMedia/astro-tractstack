@@ -5,12 +5,31 @@ import { TractStackAPI } from '@/utils/api';
 
 const VERBOSE = false;
 
+export interface PulseMetrics {
+  activeVisitors: number;
+  activeLeads: number;
+  activeGuests: number;
+  velocity: number;
+}
+
+export interface SystemMetrics {
+  available: boolean;
+  openConns: number;
+  inUse: number;
+  idle: number;
+  waitCount: number;
+  waitDuration: string;
+  maxOpenConns: number;
+}
+
 interface AnalyticsState {
   dashboard: any;
   leads: any;
   epinet: any;
   userCounts: any[];
   hourlyNodeActivity: any;
+  pulse: PulseMetrics | null;
+  system: SystemMetrics | null;
   isLoading: boolean;
   status: string;
   error: string | null;
@@ -127,7 +146,6 @@ class AnalyticsService {
       if (filters.selectedUserId)
         params.append('userId', filters.selectedUserId);
 
-      // MODIFICATION: Properly format appliedFilters for the backend
       if (filters.appliedFilters && filters.appliedFilters.length > 0) {
         params.append('appliedFilters', JSON.stringify(filters.appliedFilters));
       }
@@ -145,6 +163,8 @@ class AnalyticsService {
         epinet: null,
         userCounts: [],
         hourlyNodeActivity: {},
+        pulse: null,
+        system: null,
         isLoading: true,
         status: 'loading',
         error: null,
@@ -153,13 +173,31 @@ class AnalyticsService {
       const api = new TractStackAPI(
         window.TRACTSTACK_CONFIG?.tenantId || 'default'
       );
-      const endpoint = `/api/v1/analytics/all${params.toString() ? `?${params.toString()}` : ''}`;
-      if (VERBOSE) console.log('🔥 Making API request', { endpoint });
 
-      const response = await api.get(endpoint);
-      if (!response.success)
-        throw new Error(response.error || 'Failed to fetch analytics data');
-      const data = response.data;
+      const endpoint = `/api/v1/analytics/all${params.toString() ? `?${params.toString()}` : ''}`;
+
+      if (VERBOSE) {
+        console.log('🔥 Making API requests', {
+          analytics: endpoint,
+          pulse: '/api/v1/admin/pulse',
+          system: '/api/v1/admin/db/stats',
+        });
+      }
+
+      const [analyticsResponse, pulseResponse, systemResponse] =
+        await Promise.all([
+          api.get(endpoint),
+          api.get('/api/v1/admin/pulse'),
+          api.get('/api/v1/admin/db/stats'),
+        ]);
+
+      if (!analyticsResponse.success) {
+        throw new Error(
+          analyticsResponse.error || 'Failed to fetch analytics data'
+        );
+      }
+
+      const data = analyticsResponse.data;
 
       const isStillLoading =
         data?.status === 'loading' ||
@@ -173,12 +211,15 @@ class AnalyticsService {
 
       if (isStillLoading) {
         if (VERBOSE) console.log('⏳ Backend data still loading, will poll...');
+
         const partialAnalytics = {
           dashboard: data.dashboard,
           leads: data.leads,
           epinet: data.epinet,
           userCounts: data.userCounts || [],
           hourlyNodeActivity: data.hourlyNodeActivity || {},
+          pulse: pulseResponse.success ? pulseResponse.data?.pulse : null,
+          system: systemResponse.success ? systemResponse.data : null,
           status: 'loading',
           error: null,
           isLoading: true,
@@ -203,6 +244,8 @@ class AnalyticsService {
         epinet: data.epinet,
         userCounts: data.userCounts || [],
         hourlyNodeActivity: data.hourlyNodeActivity || {},
+        pulse: pulseResponse.success ? pulseResponse.data?.pulse : null,
+        system: systemResponse.success ? systemResponse.data : null,
         status: 'complete',
         error: null,
         isLoading: false,
@@ -211,13 +254,12 @@ class AnalyticsService {
       this.setCachedResponse(cacheKey, analyticsData);
       onUpdate(analyticsData);
 
-      // MODIFICATION: Correctly extract top-level availableFilters and update the store
       epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...filters,
         availableFilters: data.availableFilters || [],
       });
 
-      if (VERBOSE) console.log('✅ Analytics request completed successfully');
+      if (VERBOSE) console.log('✅ Analytics requests completed successfully');
       this.activeRequest = null;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -231,6 +273,8 @@ class AnalyticsService {
         epinet: null,
         userCounts: [],
         hourlyNodeActivity: {},
+        pulse: null,
+        system: null,
         status: 'error',
         error:
           error instanceof Error ? error.message : 'Unknown error occurred',
