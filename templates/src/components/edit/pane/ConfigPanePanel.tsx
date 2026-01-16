@@ -13,6 +13,9 @@ import ArchiveBoxArrowDownIcon from '@heroicons/react/24/outline/ArchiveBoxArrow
 import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRoundedSquareIcon';
 import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import SparklesIcon from '@heroicons/react/24/solid/SparklesIcon';
+import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import ArrowUpIcon from '@heroicons/react/24/outline/ArrowUpIcon';
+import ArrowDownIcon from '@heroicons/react/24/outline/ArrowDownIcon';
 import {
   isContextPaneNode,
   hasBeliefPayload,
@@ -27,7 +30,11 @@ import { AiRestylePaneModal } from '@/components/edit/pane/AiRestylePaneModal';
 import PaneTitlePanel from './PanePanel_title';
 import PaneMagicPathPanel from './PanePanel_path';
 import PaneImpressionPanel from './PanePanel_impression';
-import { PaneConfigMode, type PaneNode } from '@/types/compositorTypes';
+import {
+  PaneConfigMode,
+  type PaneNode,
+  type StoryFragmentNode,
+} from '@/types/compositorTypes';
 
 interface ConfigPanePanelProps {
   nodeId: string;
@@ -60,6 +67,23 @@ const ConfigPanePanel = ({
   const isContextPane = isContextPaneNode(paneNode);
   const buttonClass =
     'px-2 py-1 bg-white text-cyan-700 text-sm rounded hover:bg-cyan-700 hover:text-white focus:bg-cyan-700 focus:text-white shadow-sm transition-colors whitespace-nowrap mb-1';
+
+  // Determine Position for Reordering
+  const parentNode = paneNode.parentId
+    ? (allNodes.get(paneNode.parentId) as StoryFragmentNode)
+    : null;
+  let isFirst = false;
+  let isLast = false;
+
+  if (parentNode && parentNode.nodeType === 'StoryFragment') {
+    if (parentNode.paneIds && Array.isArray(parentNode.paneIds)) {
+      const idx = parentNode.paneIds.indexOf(nodeId);
+      if (idx !== -1) {
+        isFirst = idx === 0;
+        isLast = idx === parentNode.paneIds.length - 1;
+      }
+    }
+  }
 
   const [mode, setMode] = useState<PaneConfigMode>(
     isActiveMode && activePaneMode.mode
@@ -144,6 +168,30 @@ const ConfigPanePanel = ({
     if (success) {
       setWasCopied(true);
       setTimeout(() => setWasCopied(false), 2000);
+    }
+  };
+
+  // Delete & Reorder Handlers
+  const handleDelete = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to delete this pane?')) {
+      ctx.deleteNode(nodeId);
+    }
+  };
+
+  const handleMoveUp = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (!isFirst) {
+      ctx.moveNode(nodeId, 'before');
+      if (paneNode.parentId) ctx.notifyNode(paneNode.parentId);
+    }
+  };
+
+  const handleMoveDown = (e: MouseEvent) => {
+    e.stopPropagation();
+    if (!isLast) {
+      ctx.moveNode(nodeId, 'after');
+      if (paneNode.parentId) ctx.notifyNode(paneNode.parentId);
     }
   };
 
@@ -251,8 +299,46 @@ const ConfigPanePanel = ({
             )}
           </div>
 
-          {/* Design Library Tools (Right Aligned) */}
-          <div className="ml-auto flex items-center gap-2 border-l border-gray-300 px-2">
+          {/* Right Aligned Tools */}
+          <div className="ml-auto flex items-center gap-2 px-2">
+            {/* Delete & Reorder Tools */}
+            {!isTemplate && !isContextPane && !isHtmlAstPane && (
+              <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
+                <button
+                  onClick={handleMoveUp}
+                  disabled={isFirst}
+                  title={isFirst ? 'First pane' : 'Move pane up'}
+                  className={`flex h-7 w-7 items-center justify-center rounded-full p-1 shadow-sm transition-colors ${
+                    isFirst
+                      ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <ArrowUpIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleMoveDown}
+                  disabled={isLast}
+                  title={isLast ? 'Last pane' : 'Move pane down'}
+                  className={`flex h-7 w-7 items-center justify-center rounded-full p-1 shadow-sm transition-colors ${
+                    isLast
+                      ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                      : 'bg-white text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <ArrowDownIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  title="Delete Pane"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white p-1 text-red-500 shadow-sm hover:bg-red-50 hover:text-red-700"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Design Library Tools */}
             {!isHtmlAstPane && !isSandboxMode && (
               <button
                 title="Save Pane to Design Library"

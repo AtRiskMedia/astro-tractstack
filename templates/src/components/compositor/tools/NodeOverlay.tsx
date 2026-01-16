@@ -127,7 +127,7 @@ export const NodeOverlay = ({
         zIndexClass,
         toolMode === 'text' ? outlineClass : '',
         isReorderMode && !isDragging
-          ? 'cursor-grab hover:outline hover:outline-dotted hover:outline-2 hover:outline-offset-2 hover:outline-cyan-500'
+          ? 'cursor-grab hover:outline-dotted hover:outline-2 hover:outline-offset-2 hover:outline-cyan-500'
           : ''
       )}
       style={isInline ? { display: 'inline-block' } : {}}
