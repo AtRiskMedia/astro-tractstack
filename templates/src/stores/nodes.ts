@@ -2451,8 +2451,14 @@ export class NodesContext {
           .get()
           .get(parentId) as StoryFragmentNode;
         if (storyFragment) {
-          paneIdx = storyFragment.paneIds.indexOf(targetNodeId);
-          storyFragment.paneIds.splice(paneIdx, 1);
+          // Use modifyNodes to ensure StoryFragment is marked dirty (isChanged: true)
+          // We disable history recording here because we create a specific REMOVE patch below
+          const updatedFragment = cloneDeep(storyFragment);
+          paneIdx = updatedFragment.paneIds.indexOf(targetNodeId);
+          if (paneIdx !== -1) {
+            updatedFragment.paneIds.splice(paneIdx, 1);
+            this.modifyNodes([updatedFragment], { recordHistory: false });
+          }
         }
       } else if (targetNode.nodeType === 'TagElement') {
         // mark pane as changed
@@ -2488,16 +2494,35 @@ export class NodesContext {
         undo: (ctx) => {
           ctx.addNodes(toDelete);
           if (targetNode.nodeType === 'Pane' && parentId !== null) {
-            const storyFragment = this.allNodes
+            const storyFragment = ctx.allNodes
               .get()
               .get(parentId) as StoryFragmentNode;
             if (storyFragment) {
-              storyFragment.paneIds.splice(paneIdx, 0, targetNodeId);
-              this.linkChildToParent(targetNodeId, parentId, paneIdx);
+              // Use modifyNodes in Undo to correctly restore state and links
+              const updatedFragment = cloneDeep(storyFragment);
+              updatedFragment.paneIds.splice(paneIdx, 0, targetNodeId);
+              ctx.modifyNodes([updatedFragment], { recordHistory: false });
+              ctx.linkChildToParent(targetNodeId, parentId, paneIdx);
             }
           }
         },
-        redo: (ctx) => ctx.deleteNodes(toDelete),
+        redo: (ctx) => {
+          ctx.deleteNodes(toDelete);
+          // Ensure Redo also updates the parent StoryFragment correctly
+          if (targetNode.nodeType === 'Pane' && parentId !== null) {
+            const storyFragment = ctx.allNodes
+              .get()
+              .get(parentId) as StoryFragmentNode;
+            if (storyFragment) {
+              const updatedFragment = cloneDeep(storyFragment);
+              const idx = updatedFragment.paneIds.indexOf(targetNodeId);
+              if (idx !== -1) {
+                updatedFragment.paneIds.splice(idx, 1);
+                ctx.modifyNodes([updatedFragment], { recordHistory: false });
+              }
+            }
+          }
+        },
       });
     }
   }
