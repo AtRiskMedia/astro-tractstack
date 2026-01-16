@@ -336,11 +336,6 @@ export default function StoryKeepDashboard_Analytics({
                 ? formatNumber(analytics.pulse.activeVisitors)
                 : '-'}
             </div>
-            <div className="mt-1 text-xs text-gray-600">
-              {analytics.pulse
-                ? `${formatNumber(analytics.pulse.activeLeads)} Leads, ${formatNumber(analytics.pulse.activeGuests)} Guests`
-                : 'Live sessions'}
-            </div>
           </dd>
         </div>
 

@@ -7,8 +7,6 @@ const VERBOSE = false;
 
 export interface PulseMetrics {
   activeVisitors: number;
-  activeLeads: number;
-  activeGuests: number;
   velocity: number;
 }
 
