@@ -3,6 +3,8 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
 import { toggleSettingsPanel } from '@/stores/storykeep';
 import { toolAddModeTitles, toolAddModes } from '@/constants';
+import { startToolDrag } from '@/stores/toolDrag';
+import { initToolDragListeners } from '@/utils/compositor/toolDragManager';
 
 import type { ToolAddMode } from '@/types/compositorTypes';
 
@@ -18,11 +20,18 @@ const AddElementsPanel = ({
     ctx.notifyNode('root');
   };
 
+  const handleMouseDown = (e: React.MouseEvent, mode: ToolAddMode) => {
+    e.preventDefault();
+    startToolDrag('insert', mode, e.clientX, e.clientY);
+    initToolDragListeners();
+  };
+
   return (
     <>
       {toolAddModes.map((mode) => (
         <button
           key={mode}
+          onMouseDown={(e) => handleMouseDown(e, mode)}
           onClick={() => handleElementClick(mode)}
           className={`rounded px-3 py-1.5 text-sm font-bold transition-colors ${
             currentToolAddMode === mode
@@ -39,12 +48,9 @@ const AddElementsPanel = ({
 
 const StoryKeepToolBar = () => {
   const ctx = getCtx();
-
-  // Connect to stores
   const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const { value: toolAddModeVal } = useStore(ctx.toolAddModeStore);
 
-  // Only show when in insert mode
   if (toolModeVal !== 'insert') {
     return null;
   }
@@ -67,6 +73,9 @@ const StoryKeepToolBar = () => {
       <div className="flex flex-wrap gap-x-2 gap-y-1">
         <AddElementsPanel currentToolAddMode={toolAddModeVal} />
       </div>
+      <p className="px-2 pt-4 text-xs">
+        Drag and drop, or select element and click the + to insert into a pane.
+      </p>
     </div>
   );
 };

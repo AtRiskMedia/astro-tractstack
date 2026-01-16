@@ -2,11 +2,8 @@ import { useRef, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import PencilSquareIcon from '@heroicons/react/24/outline/PencilSquareIcon';
 import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
-import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
-import SparklesIcon from '@heroicons/react/24/outline/SparklesIcon';
 import ArrowsUpDownIcon from '@heroicons/react/24/outline/ArrowsUpDownIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
-import BugAntIcon from '@heroicons/react/24/outline/BugAntIcon';
 import LinkIcon from '@heroicons/react/24/solid/LinkIcon';
 import ChatBubbleBottomCenterTextIcon from '@heroicons/react/24/outline/ChatBubbleBottomCenterTextIcon';
 import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
@@ -28,6 +25,12 @@ const storykeepToolModes = [
     Icon: PlusIcon,
     title: 'Add',
     description: 'Add new element, e.g. paragraph or image',
+  },
+  {
+    key: 'reorder',
+    Icon: ArrowsUpDownIcon,
+    title: 'Reorder',
+    description: 'Drag and drop to reorder elements',
   },
 ] as const;
 

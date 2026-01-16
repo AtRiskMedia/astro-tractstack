@@ -11,6 +11,8 @@ import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import { getCtx } from '@/stores/nodes';
 import { settingsPanelStore } from '@/stores/storykeep';
+import { toolDragStore, startToolDrag } from '@/stores/toolDrag';
+import { initToolDragListeners } from '@/utils/compositor/toolDragManager';
 import { handleClickEventDefault } from '@/utils/compositor/handleClickEvent';
 import { getTemplateNode } from '@/utils/compositor/nodesHelper';
 import { classNames } from '@/utils/helpers';
@@ -44,9 +46,9 @@ export const NodeOverlay = ({
   const toolMode = useStore(ctx.toolModeValStore).value;
   const toolAddMode = useStore(ctx.toolAddModeStore).value;
   const settingsPanel = useStore(settingsPanelStore);
+  const dragStore = useStore(toolDragStore);
   const [hoverZone, setHoverZone] = useState<'before' | 'after' | null>(null);
 
-  // put a contentEditable={false} component inside a tree that inherits contentEditable={true}.
   const chromeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -92,10 +94,29 @@ export const NodeOverlay = ({
     }
   };
 
+  const handleReorderStart = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    startToolDrag('reorder', nodeId, e.clientX, e.clientY);
+    initToolDragListeners();
+  };
+
   const canInsert =
     toolMode === 'insert'
       ? ctx.allowInsert(nodeId, toolAddMode || 'p')
       : { allowInsertBefore: false, allowInsertAfter: false };
+
+  const isReorderMode = toolMode === 'reorder';
+  const isDragging = dragStore.isDragging;
+
+  const showZones =
+    (toolMode === 'insert' && toolAddMode !== `span`) ||
+    (isReorderMode && isDragging);
+
+  const isDragTarget = dragStore.activeDropZone?.nodeId === nodeId;
+  const activeLocation = isDragTarget
+    ? dragStore.activeDropZone?.location
+    : null;
 
   const iconSrc = getIconForTag(node.tagName);
 
@@ -104,14 +125,19 @@ export const NodeOverlay = ({
       className={classNames(
         'compositor-wrapper group relative transition-all duration-200',
         zIndexClass,
-        toolMode === 'text' ? outlineClass : ''
+        toolMode === 'text' ? outlineClass : '',
+        isReorderMode && !isDragging
+          ? 'cursor-grab hover:outline hover:outline-dotted hover:outline-2 hover:outline-offset-2 hover:outline-cyan-500'
+          : ''
       )}
       style={isInline ? { display: 'inline-block' } : {}}
       data-node-overlay={nodeId}
+      onMouseDown={
+        isReorderMode && !isDragging ? handleReorderStart : undefined
+      }
     >
       {children}
 
-      {/* Text Mode: Tool Cart */}
       {toolMode === 'text' && (
         <div
           ref={chromeRef}
@@ -156,18 +182,19 @@ export const NodeOverlay = ({
         </div>
       )}
 
-      {/* Insert Mode: Split Drop Zones */}
-      {toolMode === 'insert' && toolAddMode !== `span` && (
+      {showZones && (
         <div
           className="compositor-chrome absolute inset-0 z-50 flex flex-col"
           data-attr="exclude"
         >
-          {/* Top / Before Zone */}
           <div
             className={classNames(
               'flex-1 transition-colors duration-200',
-              canInsert.allowInsertBefore
-                ? 'cursor-pointer hover:bg-blue-500/10'
+              activeLocation === 'before'
+                ? 'bg-blue-500 bg-opacity-10'
+                : 'hover:bg-blue-500 hover:bg-opacity-10',
+              canInsert.allowInsertBefore || isReorderMode
+                ? 'cursor-pointer'
                 : 'cursor-not-allowed opacity-0'
             )}
             onMouseEnter={() => setHoverZone('before')}
@@ -176,7 +203,7 @@ export const NodeOverlay = ({
               canInsert.allowInsertBefore && handleInsert('before', e)
             }
           >
-            {canInsert.allowInsertBefore && (
+            {toolMode === 'insert' && canInsert.allowInsertBefore && (
               <div
                 className={classNames(
                   'absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform transition-opacity duration-200',
@@ -190,12 +217,14 @@ export const NodeOverlay = ({
             )}
           </div>
 
-          {/* Bottom / After Zone */}
           <div
             className={classNames(
               'flex-1 transition-colors duration-200',
-              canInsert.allowInsertAfter
-                ? 'cursor-pointer hover:bg-blue-500/10'
+              activeLocation === 'after'
+                ? 'bg-blue-500 bg-opacity-10'
+                : 'hover:bg-blue-500 hover:bg-opacity-10',
+              canInsert.allowInsertAfter || isReorderMode
+                ? 'cursor-pointer'
                 : 'cursor-not-allowed opacity-0'
             )}
             onMouseEnter={() => setHoverZone('after')}
@@ -204,7 +233,7 @@ export const NodeOverlay = ({
               canInsert.allowInsertAfter && handleInsert('after', e)
             }
           >
-            {canInsert.allowInsertAfter && (
+            {toolMode === 'insert' && canInsert.allowInsertAfter && (
               <div
                 className={classNames(
                   'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 transform transition-opacity duration-200',

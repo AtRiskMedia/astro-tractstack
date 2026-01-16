@@ -96,6 +96,10 @@ export async function injectTemplateFiles(
       dest: 'src/components/compositor/Node.tsx',
     },
     {
+      src: resolve('../templates/src/components/compositor/ToolDragLayer.tsx'),
+      dest: 'src/components/compositor/ToolDragLayer.tsx',
+    },
+    {
       src: resolve(
         '../templates/src/components/compositor/tools/NodeOverlay.tsx'
       ),
@@ -577,6 +581,10 @@ export async function injectTemplateFiles(
       dest: 'src/stores/backend.ts',
     },
     {
+      src: resolve('../templates/src/stores/toolDrag.ts'),
+      dest: 'src/stores/toolDrag.ts',
+    },
+    {
       src: resolve('../templates/src/stores/resources.ts'),
       dest: 'src/stores/resources.ts',
     },
@@ -620,6 +628,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/compositor/savePipeline.ts'),
       dest: 'src/utils/compositor/savePipeline.ts',
+    },
+    {
+      src: resolve('../templates/src/utils/compositor/toolDragManager.ts'),
+      dest: 'src/utils/compositor/toolDragManager.ts',
     },
     {
       src: resolve('../templates/src/utils/compositor/aiPaneParser.ts'),

@@ -4,7 +4,7 @@ export type LispToken = string | number | LispToken[];
 
 export type ViewportKey = 'mobile' | 'tablet' | 'desktop' | 'auto';
 export type ViewportAuto = 'mobile' | 'tablet' | 'desktop';
-export type ToolModeVal = 'text' | 'insert';
+export type ToolModeVal = 'text' | 'insert' | 'reorder';
 
 export const toolAddModes = [
   'p',
