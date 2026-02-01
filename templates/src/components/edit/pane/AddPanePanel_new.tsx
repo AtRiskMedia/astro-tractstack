@@ -132,21 +132,32 @@ const AddPaneNewPanel = ({
       insertTemplate.title = '';
       insertTemplate.slug = '';
 
+      let newPaneId: string | undefined | null;
+
       if (isContextPane) {
         insertTemplate.isContextPane = true;
-        ctx.addContextTemplatePane(ownerId, insertTemplate);
+        newPaneId = ctx.addContextTemplatePane(ownerId, insertTemplate);
       } else {
-        ctx.addTemplatePane(
+        newPaneId = ctx.addTemplatePane(
           ownerId,
           insertTemplate,
           nodeId,
           first ? 'before' : 'after'
         );
+
         const storyFragment = cloneDeep(
           ctx.allNodes.get().get(ownerId)
         ) as StoryFragmentNode;
         ctx.modifyNodes([{ ...storyFragment }]);
       }
+
+      if (newPaneId) {
+        const newPane = ctx.allNodes.get().get(newPaneId);
+        if (newPane) {
+          ctx.modifyNodes([{ ...newPane }]);
+        }
+      }
+
       ctx.notifyNode(`root`);
       setParentMode(PaneAddMode.DEFAULT, false);
     } catch (err) {
