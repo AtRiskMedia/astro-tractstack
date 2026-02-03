@@ -36,3 +36,10 @@ export function initSearch(): void {
   // Default implementation does nothing
   // Override this function in your custom implementation to load search data
 }
+
+// Field Visibility Controls for ResourceForm
+export const resourceFormHideFields = ['gid', 'serviceBound'];
+
+// Field Formatting Controls for ResourceForm
+// Fields listed here will be treated as JSON objects but rendered as stringified text areas
+export const resourceJsonifyFields = ['shopifyData'];

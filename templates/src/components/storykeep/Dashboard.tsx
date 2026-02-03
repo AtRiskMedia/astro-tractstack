@@ -70,6 +70,15 @@ export default function StoryKeepDashboard({
               },
             ]
           : []),
+        ...(import.meta.env.PUBLIC_ENABLE_SHOPIFY === 'true'
+          ? [
+              {
+                id: 'shopify',
+                name: 'Shopify',
+                current: activeTab === 'shopify',
+              },
+            ]
+          : []),
       ];
 
   useEffect(() => {

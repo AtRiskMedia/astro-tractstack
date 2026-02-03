@@ -116,11 +116,14 @@ export async function getResourcesByIds(
   ids: string[]
 ): Promise<ResourceConfig[]> {
   const api = new TractStackAPI(tenantId);
-  const response = await api.post('/api/v1/nodes/resources', { ids });
-  if (!response.success) {
+  const response = await api.post<{ resources: ResourceConfig[] }>(
+    '/api/v1/nodes/resources',
+    { resourceIds: ids }
+  );
+  if (!response.success || !response.data) {
     throw new Error(response.error || 'Failed to get resources by IDs');
   }
-  return response.data;
+  return response.data.resources;
 }
 
 export async function getResourcesByCategory(

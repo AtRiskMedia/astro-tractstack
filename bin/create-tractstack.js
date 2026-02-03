@@ -23,7 +23,7 @@ function detectPackageManager() {
     const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
     if (pkg.packageManager?.startsWith('pnpm')) return 'pnpm';
     if (pkg.packageManager?.startsWith('yarn')) return 'yarn';
-  } catch {}
+  } catch { }
 
   return 'pnpm';
 }
@@ -348,7 +348,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install UI components
     execSync(
-      `${addCommand} @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@^3.10.1`,
+      `${addCommand} @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0`,
       {
         stdio: 'inherit',
       }
@@ -382,7 +382,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react@^19.0.0 react-dom@^19.0.0 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@^3.10.1 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
+        `${addCommand} react@^19.0.0 react-dom@^19.0.0 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
       )
     );
     console.log(

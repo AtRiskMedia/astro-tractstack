@@ -9,6 +9,10 @@ import BooleanToggle from '@/components/form/BooleanToggle';
 import DateTimeInput from '@/components/form/DateTimeInput';
 import FileUpload from '@/components/form/FileUpload';
 import EnumSelect from '@/components/form/EnumSelect';
+import {
+  resourceFormHideFields,
+  resourceJsonifyFields,
+} from '@/utils/customHelpers';
 import type {
   ResourceConfig,
   ResourceState,
@@ -37,24 +41,25 @@ export default function ResourceForm({
   const initialData = resourceData
     ? convertToLocalState(resourceData)
     : {
-        id: '',
-        title: '',
-        slug: '',
-        categorySlug,
-        oneliner: '',
-        optionsPayload: {},
-        actionLisp: '',
-      };
+      id: '',
+      title: '',
+      slug: '',
+      categorySlug,
+      oneliner: '',
+      optionsPayload: {},
+      actionLisp: '',
+    };
 
-  // Initialize optionsPayload with default values for all schema fields
+  // 1. Initialize optionsPayload with default values for all schema fields
+  // (Only runs if NO existing data is provided)
   if (!resourceData) {
-    // Only for new resources
     const defaultOptionsPayload: Record<string, any> = {};
 
     Object.entries(categorySchema).forEach(([fieldName, fieldDef]) => {
       switch (fieldDef.type) {
         case 'number':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? 0;
+          defaultOptionsPayload[fieldName] =
+            fieldDef.defaultValue ?? fieldDef.minNumber ?? 0;
           break;
         case 'boolean':
           defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? false;
@@ -77,6 +82,27 @@ export default function ResourceForm({
     });
 
     initialData.optionsPayload = defaultOptionsPayload;
+  }
+
+  // 2. Pre-process JSON fields for display (Pretty Print)
+  // This runs for both new and existing records to ensure readability
+  if (initialData.optionsPayload) {
+    resourceJsonifyFields.forEach((field) => {
+      const val = initialData.optionsPayload[field];
+      if (val && typeof val === 'string') {
+        try {
+          // Parse and re-stringify with indentation
+          initialData.optionsPayload[field] = JSON.stringify(
+            JSON.parse(val),
+            null,
+            2
+          );
+        } catch (e) {
+          // If it's not valid JSON, leave it as is
+          console.warn(`Failed to pretty-print field ${field}`, e);
+        }
+      }
+    });
   }
 
   const validator = (state: ResourceState): FieldErrors => {
@@ -114,9 +140,34 @@ export default function ResourceForm({
     validator,
     onSave: async (data) => {
       try {
+        // 3. Post-process JSON fields for saving (Minify)
+        const dataToSave = { ...data };
+        if (dataToSave.optionsPayload) {
+          // Create a shallow copy of optionsPayload to avoid mutating form state directly
+          dataToSave.optionsPayload = { ...dataToSave.optionsPayload };
+
+          resourceJsonifyFields.forEach((field) => {
+            const val = dataToSave.optionsPayload[field];
+            if (val && typeof val === 'string') {
+              try {
+                // Minify back to a compact string
+                dataToSave.optionsPayload[field] = JSON.stringify(
+                  JSON.parse(val)
+                );
+              } catch (e) {
+                console.error(`Failed to minify field ${field}`, e);
+                // Throwing here would stop the save if the user typed invalid JSON
+                throw new Error(
+                  `Invalid JSON in field "${field}". Please check your syntax.`
+                );
+              }
+            }
+          });
+        }
+
         const updatedState = await saveResourceWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
-          data
+          dataToSave
         );
 
         // Call success callback after save (original pattern)
@@ -144,7 +195,6 @@ export default function ResourceForm({
       }));
   };
 
-  // Helper to update optionsPayload field
   const updateOptionsField = (fieldName: string, value: any) => {
     updateField('optionsPayload', {
       ...state.optionsPayload,
@@ -156,10 +206,49 @@ export default function ResourceForm({
     onClose?.(false);
   };
 
-  // Render dynamic field based on field definition
   const renderDynamicField = (fieldName: string, fieldDef: FieldDefinition) => {
+    if (
+      resourceFormHideFields.includes(fieldName) &&
+      initialData.optionsPayload?.[fieldName]
+    ) {
+      return null;
+    }
+
     const fieldValue = state.optionsPayload[fieldName];
     const fieldError = errors?.[`optionsPayload.${fieldName}`];
+
+    if (resourceJsonifyFields.includes(fieldName)) {
+      return (
+        <div key={fieldName} className="space-y-1">
+          <label
+            htmlFor={`field-${fieldName}`}
+            className="block text-sm font-bold text-gray-700"
+          >
+            {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
+          </label>
+          <div className="relative">
+            <textarea
+              id={`field-${fieldName}`}
+              rows={12}
+              className={`block w-full rounded-md shadow-sm sm:text-xs font-mono ${fieldError
+                ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:border-cyan-500 focus:ring-cyan-500'
+                }`}
+              value={fieldValue || ''}
+              onChange={(e) => updateOptionsField(fieldName, e.target.value)}
+              placeholder="{}"
+            />
+          </div>
+          {fieldError ? (
+            <p className="mt-1 text-sm text-red-600">{fieldError}</p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-500">
+              Raw JSON configuration. Edits are validated on save.
+            </p>
+          )}
+        </div>
+      );
+    }
 
     switch (fieldDef.type) {
       case 'string':
@@ -215,7 +304,7 @@ export default function ResourceForm({
             value={
               fieldValue !== undefined && fieldValue !== null
                 ? fieldValue
-                : (fieldDef.defaultValue ?? 0)
+                : fieldDef.defaultValue ?? 0
             }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
@@ -233,7 +322,7 @@ export default function ResourceForm({
             value={
               fieldValue !== undefined && fieldValue !== null
                 ? fieldValue
-                : (fieldDef.defaultValue ?? false)
+                : fieldDef.defaultValue ?? false
             }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}

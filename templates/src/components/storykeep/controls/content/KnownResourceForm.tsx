@@ -259,11 +259,10 @@ const KnownResourceFormRenderer = ({
                   return (
                     <div
                       key={fieldName}
-                      className={`rounded-lg border p-4 ${
-                        locked
-                          ? 'border-gray-300 bg-gray-50'
-                          : 'border-gray-200 bg-white'
-                      }`}
+                      className={`rounded-lg border p-4 ${locked
+                        ? 'border-gray-300 bg-gray-50'
+                        : 'border-gray-200 bg-white'
+                        }`}
                     >
                       <div className="mb-4 flex items-center justify-between">
                         <h5 className="text-sm font-bold text-gray-900">
@@ -302,10 +301,31 @@ const KnownResourceFormRenderer = ({
                           }
                           disabled={locked}
                         />
-                        {fieldDef.type === 'categoryReference' && (
+                        {fieldDef.type === 'string' && (
+                          <BooleanToggle
+                            label="Reference Category?"
+                            value={!!fieldDef.belongsToCategory}
+                            onChange={(checked) => {
+                              if (checked) {
+                                // Enable: set to first available category or empty
+                                updateField(fieldName, {
+                                  belongsToCategory: availableCategories[0] || ''
+                                });
+                              } else {
+                                // Disable: remove the property
+                                updateField(fieldName, {
+                                  belongsToCategory: undefined
+                                });
+                              }
+                            }}
+                            disabled={locked}
+                          />
+                        )}
+
+                        {fieldDef.type === 'string' && fieldDef.belongsToCategory !== undefined && (
                           <EnumSelect
-                            label="Reference Category"
-                            value={fieldDef.belongsToCategory || ''}
+                            label="Target Category"
+                            value={fieldDef.belongsToCategory}
                             onChange={(value) =>
                               updateField(fieldName, {
                                 belongsToCategory: value,
