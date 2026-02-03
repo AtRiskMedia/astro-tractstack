@@ -259,10 +259,11 @@ const KnownResourceFormRenderer = ({
                   return (
                     <div
                       key={fieldName}
-                      className={`rounded-lg border p-4 ${locked
-                        ? 'border-gray-300 bg-gray-50'
-                        : 'border-gray-200 bg-white'
-                        }`}
+                      className={`rounded-lg border p-4 ${
+                        locked
+                          ? 'border-gray-300 bg-gray-50'
+                          : 'border-gray-200 bg-white'
+                      }`}
                     >
                       <div className="mb-4 flex items-center justify-between">
                         <h5 className="text-sm font-bold text-gray-900">
@@ -309,12 +310,13 @@ const KnownResourceFormRenderer = ({
                               if (checked) {
                                 // Enable: set to first available category or empty
                                 updateField(fieldName, {
-                                  belongsToCategory: availableCategories[0] || ''
+                                  belongsToCategory:
+                                    availableCategories[0] || '',
                                 });
                               } else {
                                 // Disable: remove the property
                                 updateField(fieldName, {
-                                  belongsToCategory: undefined
+                                  belongsToCategory: undefined,
                                 });
                               }
                             }}
@@ -322,22 +324,23 @@ const KnownResourceFormRenderer = ({
                           />
                         )}
 
-                        {fieldDef.type === 'string' && fieldDef.belongsToCategory !== undefined && (
-                          <EnumSelect
-                            label="Target Category"
-                            value={fieldDef.belongsToCategory}
-                            onChange={(value) =>
-                              updateField(fieldName, {
-                                belongsToCategory: value,
-                              })
-                            }
-                            options={availableCategories.map((cat) => ({
-                              value: cat,
-                              label: cat,
-                            }))}
-                            disabled={locked}
-                          />
-                        )}
+                        {fieldDef.type === 'string' &&
+                          fieldDef.belongsToCategory !== undefined && (
+                            <EnumSelect
+                              label="Target Category"
+                              value={fieldDef.belongsToCategory}
+                              onChange={(value) =>
+                                updateField(fieldName, {
+                                  belongsToCategory: value,
+                                })
+                              }
+                              options={availableCategories.map((cat) => ({
+                                value: cat,
+                                label: cat,
+                              }))}
+                              disabled={locked}
+                            />
+                          )}
                         {fieldDef.type === 'number' && (
                           <>
                             <NumberInput

@@ -44,9 +44,8 @@ export default function StoryKeepDashboard_Shopify({
   const [resources, setResources] = useState<ResourceNode[]>(existingResources);
 
   // Sync Logic
-  const [draftResource, setDraftResource] = useState<Partial<ResourceConfig> | null>(
-    null
-  );
+  const [draftResource, setDraftResource] =
+    useState<Partial<ResourceConfig> | null>(null);
   const [showResourceModal, setShowResourceModal] = useState(false);
   const [targetProduct, setTargetProduct] = useState<ShopifyProduct | null>(
     null
@@ -180,7 +179,11 @@ export default function StoryKeepDashboard_Shopify({
   };
 
   const handleUnlink = async (resourceId: string) => {
-    if (!confirm('Are you sure you want to unlink this resource? Content on your site relying on this link may break.')) {
+    if (
+      !confirm(
+        'Are you sure you want to unlink this resource? Content on your site relying on this link may break.'
+      )
+    ) {
       return;
     }
 
@@ -220,12 +223,12 @@ export default function StoryKeepDashboard_Shopify({
           shopifyData: { type: 'string', optional: false },
           ...(wantService
             ? {
-              serviceBound: {
-                type: 'string',
-                optional: true,
-                belongsToCategory: 'service',
-              },
-            }
+                serviceBound: {
+                  type: 'string',
+                  optional: true,
+                  belongsToCategory: 'service',
+                },
+              }
             : {}),
         };
       }
@@ -383,9 +386,14 @@ export default function StoryKeepDashboard_Shopify({
         <div className="relative z-50" aria-modal="true">
           <div className="fixed inset-0 bg-black bg-opacity-75" />
           <div className="fixed inset-0 flex items-end justify-center p-4 md:items-center">
-            <div className="flex w-full flex-col overflow-hidden rounded-lg bg-white shadow-xl md:max-w-4xl" style={{ maxHeight: '90vh' }}>
+            <div
+              className="flex w-full flex-col overflow-hidden rounded-lg bg-white shadow-xl md:max-w-4xl"
+              style={{ maxHeight: '90vh' }}
+            >
               <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-                <h3 className="text-lg font-bold text-gray-900">{selectedProduct.title}</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  {selectedProduct.title}
+                </h3>
                 <button
                   type="button"
                   className="rounded-md bg-white text-gray-400 hover:text-gray-500"
@@ -396,23 +404,41 @@ export default function StoryKeepDashboard_Shopify({
               </div>
               <div className="overflow-y-auto p-6">
                 <div className="mb-4">
-                  <h4 className="mb-2 text-sm font-bold text-gray-900">Product Details</h4>
+                  <h4 className="mb-2 text-sm font-bold text-gray-900">
+                    Product Details
+                  </h4>
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-2">
                     <div className="md:col-span-1">
-                      <dt className="text-sm font-bold text-gray-500">Handle</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{selectedProduct.handle}</dd>
+                      <dt className="text-sm font-bold text-gray-500">
+                        Handle
+                      </dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {selectedProduct.handle}
+                      </dd>
                     </div>
                   </dl>
                 </div>
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-gray-900">Raw API Data</h4>
-                    <button onClick={handleCopy} className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800">
-                      {copied ? <CheckIcon className="h-4 w-4" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
+                    <h4 className="text-sm font-bold text-gray-900">
+                      Raw API Data
+                    </h4>
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800"
+                    >
+                      {copied ? (
+                        <CheckIcon className="h-4 w-4" />
+                      ) : (
+                        <ClipboardDocumentIcon className="h-4 w-4" />
+                      )}
                       {copied ? 'Copied' : 'Copy JSON'}
                     </button>
                   </div>
-                  <pre className="overflow-auto rounded-md bg-gray-50 p-4 text-xs text-gray-800" style={{ maxHeight: '40vh' }}>
+                  <pre
+                    className="overflow-auto rounded-md bg-gray-50 p-4 text-xs text-gray-800"
+                    style={{ maxHeight: '40vh' }}
+                  >
                     {JSON.stringify(selectedProduct, null, 2)}
                   </pre>
                 </div>
@@ -429,9 +455,12 @@ export default function StoryKeepDashboard_Shopify({
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <div className="w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-xl">
               <div className="px-6 py-4">
-                <h3 className="text-lg font-bold text-gray-900">Import as...</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Import as...
+                </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Should "{targetProduct.title}" be imported as a Product or Service?
+                  Should "{targetProduct.title}" be imported as a Product or
+                  Service?
                 </p>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
@@ -471,7 +500,9 @@ export default function StoryKeepDashboard_Shopify({
                 fullContentMap={resources as any} // Use local resources for slug uniqueness check
                 categorySlug={draftResource.categorySlug || ''}
                 categorySchema={
-                  internalBrandConfig?.knownResources[draftResource.categorySlug || ''] || {}
+                  internalBrandConfig?.knownResources[
+                    draftResource.categorySlug || ''
+                  ] || {}
                 }
                 isCreate={true}
                 onClose={(saved) => {

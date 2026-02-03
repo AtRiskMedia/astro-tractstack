@@ -194,10 +194,11 @@ export default function ProductTable({
                         key={index}
                         type="page"
                         value={page.value}
-                        className={`rounded px-3 py-2 text-sm font-bold transition-colors ${page.value === currentPage
+                        className={`rounded px-3 py-2 text-sm font-bold transition-colors ${
+                          page.value === currentPage
                             ? 'bg-myblue text-white'
                             : 'text-mydarkgrey hover:text-myblue'
-                          }`}
+                        }`}
                       >
                         {page.value}
                       </Pagination.Item>

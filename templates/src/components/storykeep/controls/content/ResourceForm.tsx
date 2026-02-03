@@ -41,14 +41,14 @@ export default function ResourceForm({
   const initialData = resourceData
     ? convertToLocalState(resourceData)
     : {
-      id: '',
-      title: '',
-      slug: '',
-      categorySlug,
-      oneliner: '',
-      optionsPayload: {},
-      actionLisp: '',
-    };
+        id: '',
+        title: '',
+        slug: '',
+        categorySlug,
+        oneliner: '',
+        optionsPayload: {},
+        actionLisp: '',
+      };
 
   // 1. Initialize optionsPayload with default values for all schema fields
   // (Only runs if NO existing data is provided)
@@ -230,10 +230,11 @@ export default function ResourceForm({
             <textarea
               id={`field-${fieldName}`}
               rows={12}
-              className={`block w-full rounded-md shadow-sm sm:text-xs font-mono ${fieldError
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                : 'border-gray-300 focus:border-cyan-500 focus:ring-cyan-500'
-                }`}
+              className={`sm:text-xs block w-full rounded-md font-mono shadow-sm ${
+                fieldError
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:border-cyan-500 focus:ring-cyan-500'
+              }`}
               value={fieldValue || ''}
               onChange={(e) => updateOptionsField(fieldName, e.target.value)}
               placeholder="{}"
@@ -304,7 +305,7 @@ export default function ResourceForm({
             value={
               fieldValue !== undefined && fieldValue !== null
                 ? fieldValue
-                : fieldDef.defaultValue ?? 0
+                : (fieldDef.defaultValue ?? 0)
             }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
@@ -322,7 +323,7 @@ export default function ResourceForm({
             value={
               fieldValue !== undefined && fieldValue !== null
                 ? fieldValue
-                : fieldDef.defaultValue ?? false
+                : (fieldDef.defaultValue ?? false)
             }
             onChange={(value) => updateOptionsField(fieldName, value)}
             error={fieldError}
