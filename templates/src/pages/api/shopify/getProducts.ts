@@ -3,7 +3,7 @@ import { shopifyData } from '@/stores/shopify';
 
 export const prerender = false;
 
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 15 * 60 * 1000;
 
 export const GET: APIRoute = async () => {
   const token = import.meta.env.PRIVATE_SHOPIFY_STOREFRONT_TOKEN;
