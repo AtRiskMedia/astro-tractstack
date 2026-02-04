@@ -31,8 +31,11 @@ const getAssetPath = (configPath: string, fallback: string) => {
   }
   return fallback;
 };
-const logo = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
-const wordmark = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
+const logo = getAssetPath(brandConfig?.LOGO || ``, '/brand/logo.svg');
+const wordmark = getAssetPath(
+  brandConfig?.WORDMARK || ``,
+  '/brand/wordmark.svg'
+);
 const mainStylesUrl = isDev
   ? `${cssBasePath}/storykeep.css`
   : `${cssBasePath}/frontend.css`;
@@ -193,10 +196,8 @@ const mainStylesUrl = isDev
           const buttonText = submitButton.textContent.trim();
 
           submitButton.addEventListener('click', async function () {
-            // Hide error message
             if (loginErrorDiv) loginErrorDiv.style.display = 'none';
 
-            // Show loading state
             submitButton.disabled = true;
             submitButton.textContent = 'Signing in...';
 
@@ -226,17 +227,11 @@ const mainStylesUrl = isDev
               const result = await response.json();
 
               if (result.success) {
-                // Show success message with role
                 if (loginFormDiv) loginFormDiv.style.display = 'none';
                 if (loginSuccessDiv) loginSuccessDiv.style.display = 'block';
                 if (userRoleSpan)
                   userRoleSpan.textContent = result.role || 'authenticated';
 
-                // Console log for debugging
-                console.log('Login successful:', result);
-                console.log('User role:', result.role);
-
-                // Redirect after short delay
                 setTimeout(() => {
                   window.location.href = result.redirect || redirectPath;
                 }, 1500);

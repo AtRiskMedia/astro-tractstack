@@ -40,9 +40,10 @@ export const GET: APIRoute = async () => {
 
   try {
     while (hasNextPage) {
+      // Filter added here: query: "product_type:'active'"
       const query = `
         query ($cursor: String) {
-          products(first: 250, after: $cursor) {
+          products(first: 250, after: $cursor, query: "product_type:'active'") {
             pageInfo {
               hasNextPage
               endCursor
@@ -128,7 +129,16 @@ export const GET: APIRoute = async () => {
         description: node.description,
         options: node.options,
         images: node.images.edges.map((edge: any) => edge.node),
-        variants: node.variants.edges.map((edge: any) => edge.node),
+        variants: node.variants.edges.map(({ node }: any) => ({
+          id: node.id,
+          title: node.title,
+          price: node.price,
+          compareAtPrice: node.compareAtPrice,
+          sku: node.sku,
+          availableForSale: node.availableForSale,
+          requiresShipping: node.requiresShipping,
+          selectedOptions: node.selectedOptions,
+        })),
       }));
 
       allProducts = [...allProducts, ...mappedProducts];
