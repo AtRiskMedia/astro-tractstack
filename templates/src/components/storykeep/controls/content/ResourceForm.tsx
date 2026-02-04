@@ -188,7 +188,13 @@ export default function ResourceForm({
   // Helper to get category reference options for a field
   const getCategoryReferenceOptions = (belongsToCategory: string) => {
     return fullContentMap
-      .filter((item) => item.categorySlug === belongsToCategory)
+      .filter(
+        (item) =>
+          item.categorySlug === belongsToCategory &&
+          !(
+            belongsToCategory === 'service' && (item as any).optionsPayload?.gid
+          )
+      )
       .map((item) => ({
         value: item.slug,
         label: item.title,
@@ -439,7 +445,7 @@ export default function ResourceForm({
 
       {/* Save/Cancel Bar */}
       <UnsavedChangesBar
-        formState={formState}
+        formState={{ ...formState, isDirty: isCreate || formState.isDirty }}
         message="You have unsaved resource changes"
         saveLabel="Save Resource"
         cancelLabel="Discard Changes"

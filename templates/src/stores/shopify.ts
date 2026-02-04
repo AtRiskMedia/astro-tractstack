@@ -1,5 +1,4 @@
-import { persistentAtom } from '@nanostores/persistent';
-import { map } from 'nanostores';
+import { atom, map } from 'nanostores';
 
 export interface ShopifyVariant {
   id: string;
@@ -41,17 +40,13 @@ export interface ShopifyProduct {
   variants: ShopifyVariant[];
 }
 
-export const shopifyData = persistentAtom<{
+export const shopifyData = atom<{
   products: ShopifyProduct[];
   lastFetched: number;
-}>(
-  'shopifyData',
-  { products: [], lastFetched: 0 },
-  {
-    encode: JSON.stringify,
-    decode: JSON.parse,
-  }
-);
+}>({
+  products: [],
+  lastFetched: 0,
+});
 
 export const shopifyStatus = map<{
   isLoading: boolean;
@@ -61,21 +56,7 @@ export const shopifyStatus = map<{
   error: null,
 });
 
-const SHOPIFY_TTL = 60 * 60 * 1000;
-
-export async function fetchShopifyProducts(force = false) {
-  const data = shopifyData.get();
-  const now = Date.now();
-
-  if (
-    !force &&
-    data.products.length > 0 &&
-    data.lastFetched &&
-    now - data.lastFetched < SHOPIFY_TTL
-  ) {
-    return;
-  }
-
+export async function fetchShopifyProducts() {
   shopifyStatus.set({ isLoading: true, error: null });
 
   try {
@@ -88,7 +69,7 @@ export async function fetchShopifyProducts(force = false) {
 
     shopifyData.set({
       products: result.products,
-      lastFetched: now,
+      lastFetched: Date.now(),
     });
 
     shopifyStatus.set({ isLoading: false, error: null });

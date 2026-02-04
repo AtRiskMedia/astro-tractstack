@@ -96,7 +96,7 @@ export default function StoryKeepDashboard_Shopify({
   }, [resources]);
 
   const handleRefresh = () => {
-    fetchShopifyProducts(true);
+    fetchShopifyProducts();
   };
 
   const refreshResources = async () => {

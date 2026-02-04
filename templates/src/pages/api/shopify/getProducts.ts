@@ -1,14 +1,9 @@
 import type { APIRoute } from '@/types/astro';
+import { shopifyData } from '@/stores/shopify';
 
 export const prerender = false;
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-
-let cache: CacheEntry | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 export const GET: APIRoute = async () => {
   const token = import.meta.env.PRIVATE_SHOPIFY_STOREFRONT_TOKEN;
@@ -24,9 +19,15 @@ export const GET: APIRoute = async () => {
     );
   }
 
+  const currentStore = shopifyData.get();
   const now = Date.now();
-  if (cache && now - cache.timestamp < CACHE_TTL) {
-    return new Response(JSON.stringify(cache.data), {
+
+  if (
+    currentStore.products.length > 0 &&
+    currentStore.lastFetched &&
+    now - currentStore.lastFetched < CACHE_TTL
+  ) {
+    return new Response(JSON.stringify(currentStore), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -136,12 +137,14 @@ export const GET: APIRoute = async () => {
       cursor = products.pageInfo.endCursor;
     }
 
-    cache = {
-      data: { products: allProducts },
-      timestamp: now,
+    const newState = {
+      products: allProducts,
+      lastFetched: now,
     };
 
-    return new Response(JSON.stringify(cache.data), {
+    shopifyData.set(newState);
+
+    return new Response(JSON.stringify(newState), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
