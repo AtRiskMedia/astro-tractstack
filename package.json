@@ -24,6 +24,7 @@
     "build": "vite build && tsc -p tsconfig.dts.json",
     "format": "prettier --write .",
     "dev": "vite build --watch",
+    "lint": "prettier --check .",
     "prepublishOnly": "pnpm format && pnpm tsc && pnpm build"
   },
   "keywords": [

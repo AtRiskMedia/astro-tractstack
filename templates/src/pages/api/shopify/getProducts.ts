@@ -5,7 +5,11 @@ export const prerender = false;
 
 const CACHE_TTL = 15 * 60 * 1000;
 
-export const GET: APIRoute = async () => {
+const getBackendUrl = () => {
+  return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+};
+
+export const GET: APIRoute = async ({ request, cookies }) => {
   const token = import.meta.env.PRIVATE_SHOPIFY_STOREFRONT_TOKEN;
   const domain = import.meta.env.PRIVATE_SHOPIFY_DOMAIN;
 
@@ -40,7 +44,6 @@ export const GET: APIRoute = async () => {
 
   try {
     while (hasNextPage) {
-      // Filter added here: query: "product_type:'active'"
       const query = `
         query ($cursor: String) {
           products(first: 250, after: $cursor, query: "product_type:'active'") {
@@ -145,6 +148,72 @@ export const GET: APIRoute = async () => {
 
       hasNextPage = products.pageInfo.hasNextPage;
       cursor = products.pageInfo.endCursor;
+    }
+
+    try {
+      const resourcesToSync = allProducts.map((p) => {
+        return {
+          title: p.title,
+          nodeType: 'Resource',
+          slug: `product-${p.handle}`.toLowerCase(),
+          categorySlug: 'product',
+          oneliner: p.description ? p.description.substring(0, 255) : '',
+          actionLisp: '',
+          optionsPayload: {
+            gid: p.id,
+            shopifyData: JSON.stringify(p),
+          },
+        };
+      });
+
+      let authHeader = request.headers.get('Authorization');
+
+      if (!authHeader) {
+        const adminCookie = cookies.get('admin_auth');
+        const editorCookie = cookies.get('editor_auth');
+
+        if (adminCookie?.value) {
+          authHeader = `Bearer ${adminCookie.value}`;
+        } else if (editorCookie?.value) {
+          authHeader = `Bearer ${editorCookie.value}`;
+        }
+      }
+
+      if (authHeader && resourcesToSync.length > 0) {
+        const syncUrl = `${getBackendUrl()}/api/v1/nodes/resources/sync/shopify`;
+        const startTime = Date.now();
+
+        const syncResponse = await fetch(syncUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+            'X-Tenant-ID': 'default',
+          },
+          body: JSON.stringify(resourcesToSync),
+        });
+
+        const duration = Date.now() - startTime;
+
+        if (syncResponse.ok) {
+          const syncResult = await syncResponse.json();
+          const { totalIncoming, totalExisting, updated } = syncResult.stats;
+          console.log(
+            `[Shopify Sync] Time: ${duration}ms, Total Shopify: ${totalIncoming}, Total Resources: ${totalExisting}, Updates: ${updated}`
+          );
+        } else {
+          const errText = await syncResponse.text();
+          console.error(
+            `[Shopify Sync] Backend rejected sync: ${syncResponse.status} - ${errText}`
+          );
+        }
+      } else {
+        console.warn(
+          '[Shopify Sync] Skipped: No Authorization header/cookie or no products to sync'
+        );
+      }
+    } catch (syncErr) {
+      console.error('[Shopify Sync] Error during backend sync:', syncErr);
     }
 
     const newState = {

@@ -56,11 +56,36 @@ export const shopifyStatus = map<{
   error: null,
 });
 
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null;
+
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'admin_auth' || name === 'editor_auth') {
+      return value;
+    }
+  }
+  return null;
+}
+
 export async function fetchShopifyProducts() {
   shopifyStatus.set({ isLoading: true, error: null });
 
   try {
-    const response = await fetch('/api/shopify/getProducts');
+    const token = getAuthToken();
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch('/api/shopify/getProducts', {
+      headers,
+    });
+
     const result = await response.json();
 
     if (!response.ok) {
