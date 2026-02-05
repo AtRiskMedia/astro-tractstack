@@ -40,6 +40,8 @@ export function convertToLocalState(
     knownResources: brandConfig.KNOWN_RESOURCES ?? {},
     designLibrary: brandConfig.DESIGN_LIBRARY ?? undefined,
     hasAAI: brandConfig.HAS_AAI ?? false,
+    hasShopify: brandConfig.HAS_SHOPIFY ?? false,
+    hasResend: brandConfig.HAS_RESEND ?? false,
     hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
   };
 }
@@ -72,6 +74,8 @@ export function convertToBackendFormat(
     KNOWN_RESOURCES: localState.knownResources,
     DESIGN_LIBRARY: localState.designLibrary,
     HAS_AAI: localState.hasAAI,
+    HAS_SHOPIFY: localState.hasShopify,
+    HAS_RESEND: localState.hasResend,
 
     // ALWAYS send asset paths (current state)
     LOGO: localState.logo,

@@ -72,6 +72,7 @@ export default function StoryKeepDashboard_Advanced({
       const newState = convertToLocalState(newStatus);
       formState.resetToState(newState);
 
+      window.location.reload();
       return newState;
     },
   });

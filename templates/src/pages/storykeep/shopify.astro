@@ -23,7 +23,10 @@ if (authCheck) {
   return authCheck;
 }
 
-if (!import.meta.env.PUBLIC_ENABLE_SHOPIFY) {
+// Fetch configuration early to check enablement
+const brandConfig = await getBrandConfig(tenantId);
+
+if (!brandConfig.HAS_SHOPIFY) {
   return Astro.redirect('/storykeep');
 }
 
@@ -31,7 +34,6 @@ const userIsAuthenticated = isAuthenticated(Astro);
 const userIsAdmin = isAdmin(Astro);
 const role = userIsAdmin ? 'admin' : userIsAuthenticated ? 'editor' : null;
 
-const brandConfig = await getBrandConfig(tenantId);
 const initializing = !brandConfig.SITE_INIT;
 
 if (initializing) {

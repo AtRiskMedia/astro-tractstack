@@ -28,7 +28,11 @@ export async function getAdvancedConfigStatus(
       typeof data.tursoTokenSet !== 'boolean' ||
       typeof data.adminPasswordSet !== 'boolean' ||
       typeof data.editorPasswordSet !== 'boolean' ||
-      typeof data.aaiAPIKeySet !== 'boolean'
+      typeof data.aaiAPIKeySet !== 'boolean' ||
+      typeof data.shopifyStorefrontTokenSet !== 'boolean' ||
+      typeof data.shopifyApiSecretSet !== 'boolean' ||
+      typeof data.shopifyStoreDomainSet !== 'boolean' ||
+      typeof data.resendApiKeySet !== 'boolean'
     ) {
       throw new Error('Invalid response format from server');
     }

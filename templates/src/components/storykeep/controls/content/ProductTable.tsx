@@ -117,7 +117,7 @@ export default function ProductTable({
                         {product.title}
                       </div>
                       {isLinked && (
-                        <span className="mt-1 inline-flex items-center rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-medium text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
+                        <span className="mt-1 inline-flex items-center rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
                           Synced: {linkedResource.title}
                         </span>
                       )}

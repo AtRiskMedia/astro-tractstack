@@ -70,7 +70,7 @@ export default function StoryKeepDashboard({
               },
             ]
           : []),
-        ...(import.meta.env.PUBLIC_ENABLE_SHOPIFY === 'true'
+        ...(currentBrandConfig?.HAS_SHOPIFY
           ? [
               {
                 id: 'shopify',
