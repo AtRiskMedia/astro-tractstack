@@ -4,34 +4,16 @@ import { resolveTenantId } from '@/utils/tenantResolver';
 
 export const prerender = false;
 
-const CACHE_TTL = 15 * 60 * 1000;
-
 const getBackendUrl = () => {
   return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
 };
 
 export const GET: APIRoute = async ({ request }) => {
-  // 1. Check Cache
-  const currentStore = shopifyData.get();
-  const now = Date.now();
-
-  if (
-    currentStore.products.length > 0 &&
-    currentStore.lastFetched &&
-    now - currentStore.lastFetched < CACHE_TTL
-  ) {
-    return new Response(JSON.stringify(currentStore), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // 2. Resolve Tenant Identity
-  // We must identify the tenant to the backend to satisfy the TenantMiddleware
+  // 1. Resolve Tenant Identity
   const resolution = await resolveTenantId(request);
   const tenantId = resolution.id;
 
-  // 3. Fetch from Backend Proxy
+  // 2. Fetch from Backend Proxy
   const backendEndpoint = `${getBackendUrl()}/api/v1/shopify/products`;
   const cookieHeader = request.headers.get('cookie') || '';
 
@@ -52,13 +34,12 @@ export const GET: APIRoute = async ({ request }) => {
       );
     }
 
-    // The backend returns { "products": [...] }
     const result = await backendResponse.json();
 
-    // 4. Update Cache
+    // 3. Update Client Store
     const newState = {
       products: result.products || [],
-      lastFetched: now,
+      lastFetched: Date.now(),
     };
 
     shopifyData.set(newState);
