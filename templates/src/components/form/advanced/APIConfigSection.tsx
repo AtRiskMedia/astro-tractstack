@@ -112,7 +112,7 @@ export default function APIConfigSection({
 
               <div>
                 <StringInput
-                  label="Headless channel, Public Access Token"
+                  label="Headless channel, Private Access Token"
                   value={state.shopifyStorefrontToken}
                   onChange={(value) =>
                     updateField('shopifyStorefrontToken', value)
@@ -126,7 +126,7 @@ export default function APIConfigSection({
                   error={errors.shopifyStorefrontToken}
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Public access token for fetching products.
+                  Private access token for fetching products.
                   {shopifyStorefrontConfigured &&
                     ' Leave blank to keep existing.'}
                 </p>
