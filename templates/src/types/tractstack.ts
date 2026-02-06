@@ -258,6 +258,7 @@ export interface AdvancedConfigStatus {
   shopifyStorefrontTokenSet: boolean;
   shopifyAdminApiKeySet: boolean;
   shopifyApiSecretSet: boolean;
+  shopifyApiVersion: string;
   shopifyStoreDomainSet: boolean;
   resendApiKeySet: boolean;
 }
@@ -271,6 +272,7 @@ export interface AdvancedConfigState {
   shopifyStorefrontToken: string;
   shopifyAdminApiKey: string;
   shopifyApiSecret: string;
+  shopifyApiVersion: string;
   shopifyStoreDomain: string;
   resendApiKey: string;
 }
@@ -285,6 +287,7 @@ export interface AdvancedConfigUpdateRequest {
   TRACTSTACK_HOME_SLUG?: string;
   SHOPIFY_STOREFRONT_TOKEN?: string;
   SHOPIFY_API_SECRET?: string;
+  SHOPIFY_API_VERSION?: string;
   SHOPIFY_STORE_DOMAIN?: string;
   RESEND_API_KEY?: string;
 }

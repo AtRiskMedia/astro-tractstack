@@ -21,6 +21,8 @@ export default function APIConfigSection({
   const shopifyStorefrontConfigured = status?.shopifyStorefrontTokenSet;
   const shopifySecretConfigured = status?.shopifyApiSecretSet;
   const shopifyDomainConfigured = status?.shopifyStoreDomainSet;
+  const shopifyVersionConfigured = Boolean(status?.shopifyApiVersion);
+
   const resendConfigured = status?.resendApiKeySet;
 
   const renderStatusBadge = (isConfigured: boolean | undefined) => {
@@ -89,7 +91,8 @@ export default function APIConfigSection({
               {renderStatusBadge(
                 shopifyStorefrontConfigured &&
                   shopifySecretConfigured &&
-                  shopifyDomainConfigured
+                  shopifyDomainConfigured &&
+                  shopifyVersionConfigured
               )}
             </div>
             <div className="space-y-4">
@@ -107,6 +110,20 @@ export default function APIConfigSection({
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   The primary .myshopify.com domain for your store.
+                </p>
+              </div>
+
+              <div>
+                <StringInput
+                  label="API Version"
+                  value={state.shopifyApiVersion}
+                  onChange={(value) => updateField('shopifyApiVersion', value)}
+                  type="text"
+                  placeholder="2026-01"
+                  error={errors.shopifyApiVersion}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Target specific Shopify API version (YYYY-MM).
                 </p>
               </div>
 

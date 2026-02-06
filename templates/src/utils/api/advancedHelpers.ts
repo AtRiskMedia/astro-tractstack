@@ -22,6 +22,7 @@ export function convertToLocalState(
       shopifyStorefrontToken: '',
       shopifyAdminApiKey: '',
       shopifyApiSecret: '',
+      shopifyApiVersion: '',
       shopifyStoreDomain: '',
       resendApiKey: '',
     };
@@ -39,6 +40,7 @@ export function convertToLocalState(
     shopifyStorefrontToken: '',
     shopifyAdminApiKey: '',
     shopifyApiSecret: '',
+    shopifyApiVersion: status.shopifyApiVersion || '',
     shopifyStoreDomain: '',
     resendApiKey: '',
   };
@@ -80,6 +82,10 @@ export function convertToBackendFormat(
 
   if (state.shopifyApiSecret?.trim()) {
     request.SHOPIFY_API_SECRET = state.shopifyApiSecret.trim();
+  }
+
+  if (state.shopifyApiVersion?.trim()) {
+    request.SHOPIFY_API_VERSION = state.shopifyApiVersion.trim();
   }
 
   if (state.shopifyStoreDomain?.trim()) {
@@ -125,6 +131,13 @@ export function validateAdvancedConfig(
     if (!domainPattern.test(state.shopifyStoreDomain.trim())) {
       errors.shopifyStoreDomain =
         'Store domain must be in the format "your-shop.myshopify.com"';
+    }
+  }
+
+  if (state.shopifyApiVersion?.trim()) {
+    if (!/^\d{4}-\d{2}$/.test(state.shopifyApiVersion.trim())) {
+      errors.shopifyApiVersion =
+        'Version must match YYYY-MM format (e.g. 2026-01)';
     }
   }
 
