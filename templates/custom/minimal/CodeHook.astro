@@ -50,15 +50,9 @@ export const components = {
   ) : target === 'epinet' ? (
     <EpinetWrapper fullContentMap={fullContentMap} client:only="react" />
   ) : target === 'shopify-product-grid' ? (
-    <ShopifyProductGrid
-      resources={resourcesPayload['product'] || []}
-      client:only="react"
-    />
+    <ShopifyProductGrid resources={resourcesPayload} client:only="react" />
   ) : target === 'shopify-service-list' ? (
-    <ShopifyServiceList
-      resources={resourcesPayload['service'] || []}
-      client:only="react"
-    />
+    <ShopifyServiceList resources={resourcesPayload} client:only="react" />
   ) : (
     /* : target === "custom-hero" ? (
     <CustomHero />

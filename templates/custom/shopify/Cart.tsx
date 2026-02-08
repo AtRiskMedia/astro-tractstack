@@ -1,16 +1,67 @@
+import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { addQueue, cartStore } from '@/stores/shopify';
+import { addQueue, cartStore, type CartAction } from '@/stores/shopify';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
   resources: ResourceNode[];
 }
 
+const getCleanVariantTitle = (variant: any) => {
+  if (variant?.selectedOptions) {
+    return variant.selectedOptions
+      .filter((o: any) => o.name !== 'Mode')
+      .map((o: any) => o.value)
+      .join(' / ');
+  }
+  return variant?.title || '';
+};
+
 export default function Cart({ resources = [] }: CartProps) {
   const cart = useStore(cartStore);
-  const cartItems = Object.values(cart);
+  const [pickupEnabled, setPickupEnabled] = useState(false);
 
-  if (cartItems.length === 0) {
+  const cartValues = Object.values(cart);
+
+  const boundServiceIds = new Set(
+    cartValues
+      .map((item: any) => item.boundResourceId)
+      .filter((id) => !!id) as string[]
+  );
+
+  const displayItems = cartValues.filter(
+    (item) => !boundServiceIds.has(item.resourceId)
+  );
+
+  const hasService = cartValues.some((item) => {
+    const resource = resources.find((r) => r.id === item.resourceId);
+    return !!resource?.optionsPayload?.bookingLengthMinutes;
+  });
+
+  useEffect(() => {
+    if (hasService) {
+      setPickupEnabled(true);
+    } else {
+      setPickupEnabled(false);
+    }
+  }, [hasService]);
+
+  const isPickupMode = hasService && pickupEnabled;
+
+  const dispatchDualAction = (
+    parentId: string,
+    childId: string | undefined,
+    action: 'add' | 'remove'
+  ) => {
+    const queueUpdates: CartAction[] = [];
+    queueUpdates.push({ resourceId: parentId, action });
+    if (childId) {
+      queueUpdates.push({ resourceId: childId, action });
+    }
+    addQueue.set([...addQueue.get(), ...queueUpdates]);
+  };
+
+  if (cartValues.length === 0) {
     return (
       <div className="rounded-lg border bg-gray-50 p-8 text-center">
         <h2 className="text-xl font-bold">Your cart is empty</h2>
@@ -21,26 +72,63 @@ export default function Cart({ resources = [] }: CartProps) {
 
   return (
     <div className="rounded-lg bg-white shadow">
-      <div className="border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 className="text-xl font-bold text-gray-800">Shopping Cart</h2>
+        {hasService && (
+          <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
+            <input
+              type="checkbox"
+              checked={pickupEnabled}
+              onChange={(e) => setPickupEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+            />
+            <span>Pick up at Store</span>
+          </label>
+        )}
       </div>
 
       <ul className="divide-y divide-gray-200">
-        {cartItems.map((item) => {
+        {displayItems.map((item: any) => {
           const resource = resources.find((r) => r.id === item.resourceId);
           if (!resource) return null;
 
-          const isService = resource.categorySlug === 'service';
+          const isService = !!resource.optionsPayload?.bookingLengthMinutes;
 
-          let shopifyData: any = {};
+          const boundServiceId = item.boundResourceId;
+          const boundServiceResource = boundServiceId
+            ? resources.find((r) => r.id === boundServiceId)
+            : null;
+
+          const activeVariantId = isPickupMode
+            ? item.variantIdPickup
+            : item.variantIdShipped;
+
+          const displayId =
+            activeVariantId || item.variantIdPickup || item.variantId;
+
+          let price = '0.00';
+          let currency = 'USD';
+          let variantTitle = '';
+
           try {
-            shopifyData = resource.optionsPayload?.shopifyData
-              ? JSON.parse(resource.optionsPayload.shopifyData)
-              : {};
-          } catch (e) {}
+            if (resource.optionsPayload?.shopifyData) {
+              const product = JSON.parse(resource.optionsPayload.shopifyData);
+              const variants = product.variants || [];
+              const variant = variants.find((v: any) => v.id === displayId);
 
-          const price = shopifyData?.variants?.[0]?.price?.amount;
-          const currency = shopifyData?.variants?.[0]?.price?.currencyCode;
+              if (variant) {
+                price = variant.price?.amount || '0.00';
+                currency = variant.price?.currencyCode || 'USD';
+                variantTitle = getCleanVariantTitle(variant);
+              } else if (variants.length > 0) {
+                price = variants[0].price?.amount || '0.00';
+                currency = variants[0].price?.currencyCode || 'USD';
+                variantTitle = getCleanVariantTitle(variants[0]);
+              }
+            }
+          } catch (e) {
+            console.error('Price lookup failed for', resource.id);
+          }
 
           return (
             <li
@@ -57,26 +145,52 @@ export default function Cart({ resources = [] }: CartProps) {
                   <h3 className="text-base font-bold text-gray-900">
                     {resource.title}
                   </h3>
+
+                  {/* Visual Subtitle for Bound Service */}
+                  {boundServiceResource && (
+                    <p className="flex items-center text-xs font-semibold text-blue-600">
+                      <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                      Includes Booking: {boundServiceResource.title}
+                    </p>
+                  )}
+
                   <p className="mt-1 text-sm text-gray-500">
                     {resource.oneliner}
                   </p>
+
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    {variantTitle && variantTitle !== 'Default Title' && (
+                      <span className="text-sm font-bold text-gray-700">
+                        {variantTitle}
+                      </span>
+                    )}
+
+                    {isPickupMode && !isService && (
+                      <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                        Store Pickup
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-center">
                 <div className="mr-6 text-right">
                   <p className="text-base font-bold text-gray-900">
-                    {price
+                    {price && parseFloat(price) > 0
                       ? `${(parseFloat(price) * item.quantity).toFixed(2)} ${currency}`
                       : 'No Charge'}
                   </p>
-                  {price && !isService && (
+                  {price && parseFloat(price) > 0 && !isService && (
                     <p className="text-sm text-gray-500">
                       {parseFloat(price).toFixed(2)} each
                     </p>
                   )}
                 </div>
 
+                {/* If this is a Service (standalone), show simple Remove.
+                   If this is a Product (possibly bound), show Quantity controls that sync bound service.
+                */}
                 {isService ? (
                   <button
                     onClick={() =>
@@ -85,7 +199,7 @@ export default function Cart({ resources = [] }: CartProps) {
                         { resourceId: item.resourceId, action: 'remove' },
                       ])
                     }
-                    className="rounded-md border border-gray-300 px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                    className="rounded-md border border-gray-300 px-3 py-1 text-sm font-bold text-gray-600 hover:bg-gray-100"
                   >
                     Remove
                   </button>
@@ -93,10 +207,11 @@ export default function Cart({ resources = [] }: CartProps) {
                   <div className="flex items-center rounded-md border border-gray-300">
                     <button
                       onClick={() =>
-                        addQueue.set([
-                          ...addQueue.get(),
-                          { resourceId: item.resourceId, action: 'remove' },
-                        ])
+                        dispatchDualAction(
+                          item.resourceId,
+                          boundServiceId,
+                          'remove'
+                        )
                       }
                       className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                     >
@@ -107,10 +222,11 @@ export default function Cart({ resources = [] }: CartProps) {
                     </span>
                     <button
                       onClick={() =>
-                        addQueue.set([
-                          ...addQueue.get(),
-                          { resourceId: item.resourceId, action: 'add' },
-                        ])
+                        dispatchDualAction(
+                          item.resourceId,
+                          boundServiceId,
+                          'add'
+                        )
                       }
                       className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                     >
@@ -129,7 +245,10 @@ export default function Cart({ resources = [] }: CartProps) {
           <button
             className="rounded-lg bg-black px-6 py-3 font-bold text-white transition-colors hover:bg-gray-800"
             onClick={() => {
-              console.log(`checkout rough in`);
+              console.log('Proceeding to checkout with context:', {
+                isPickupMode,
+                items: cartValues,
+              });
             }}
           >
             Proceed to Checkout

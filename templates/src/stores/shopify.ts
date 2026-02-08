@@ -43,20 +43,24 @@ export interface ShopifyProduct {
 
 export type CartActionType = 'add' | 'remove';
 
-// Represents a request to change state (User Intent)
 export interface CartAction {
   resourceId: string;
   gid?: string;
   variantId?: string;
+  variantIdShipped?: string;
+  variantIdPickup?: string;
+  boundResourceId?: string;
   action: CartActionType;
 }
 
-// Represents the finalized state of an item in the cart (System Truth)
 export interface CartItemState {
   resourceId: string;
   quantity: number;
   variantId?: string;
   gid?: string;
+  variantIdShipped?: string;
+  variantIdPickup?: string;
+  boundResourceId?: string;
 }
 
 export const QUEUE_STATES = {

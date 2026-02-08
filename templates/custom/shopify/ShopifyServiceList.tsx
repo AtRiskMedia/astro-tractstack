@@ -3,28 +3,58 @@ import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
-  resources: ResourceNode[];
+  resources: Record<string, ResourceNode[]>;
 }
 
-export default function ShopifyServiceList({ resources = [] }: Props) {
+export default function ShopifyServiceList({ resources = {} }: Props) {
   const cart = useStore(cartStore);
 
-  const handleToggle = (resourceId: string, currentQuantity: number) => {
+  const products = resources['product'] || [];
+  const services = resources['service'] || [];
+
+  const boundServiceSlugs = new Set(
+    products
+      .map((p) => p.optionsPayload?.serviceBound as string | undefined)
+      .filter((s): s is string => !!s)
+  );
+
+  const displayServices = services.filter(
+    (s) => !boundServiceSlugs.has(s.slug)
+  );
+
+  const handleToggle = (resource: ResourceNode, currentQuantity: number) => {
     const actionType = currentQuantity > 0 ? 'remove' : 'add';
+
+    let variantIdPickup: string | undefined;
+    let gid: string | undefined;
+
+    try {
+      if (resource.optionsPayload?.shopifyData) {
+        const data = JSON.parse(resource.optionsPayload.shopifyData);
+        const product = data.products?.[0] || data;
+        gid = product?.id;
+        variantIdPickup = product?.variants?.[0]?.id;
+      }
+    } catch (e) {
+      console.error('Failed to parse Shopify data', resource.id);
+    }
+
     const newAction: CartAction = {
-      resourceId,
+      resourceId: resource.id,
+      gid,
+      variantIdPickup,
       action: actionType,
     };
     addQueue.set([...addQueue.get(), newAction]);
   };
 
-  if (!resources || resources.length === 0) {
+  if (!displayServices || displayServices.length === 0) {
     return null;
   }
 
   return (
     <div className="space-y-4">
-      {resources.map((resource) => {
+      {displayServices.map((resource) => {
         const cartItem = cart[resource.id];
         const isSelected = (cartItem?.quantity || 0) > 0;
         const duration = resource.optionsPayload?.bookingLengthMinutes;
@@ -32,17 +62,16 @@ export default function ShopifyServiceList({ resources = [] }: Props) {
         return (
           <div
             key={resource.id}
-            className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
-              isSelected
+            className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${isSelected
                 ? 'border-black bg-gray-50'
                 : 'border-gray-200 bg-white hover:border-gray-300'
-            }`}
+              }`}
           >
             <div className="flex-grow">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-gray-900">{resource.title}</h3>
+                <h3 className="font-bold text-gray-900">{resource.title}</h3>
                 {duration && (
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
                     {duration} mins
                   </span>
                 )}
@@ -52,19 +81,15 @@ export default function ShopifyServiceList({ resources = [] }: Props) {
 
             <div className="ml-4 flex-shrink-0">
               <button
-                onClick={() =>
-                  handleToggle(resource.id, cartItem?.quantity || 0)
-                }
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  isSelected ? 'bg-black' : 'bg-gray-200'
-                }`}
+                onClick={() => handleToggle(resource, cartItem?.quantity || 0)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isSelected ? 'bg-black' : 'bg-gray-200'
+                  }`}
                 role="switch"
                 aria-checked={isSelected}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    isSelected ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isSelected ? 'translate-x-5' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>

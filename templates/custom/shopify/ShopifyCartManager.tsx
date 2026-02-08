@@ -52,6 +52,14 @@ export default function ShopifyCartManager({
           cartStore.setKey(actionItem.resourceId, {
             resourceId: actionItem.resourceId,
             quantity: newQty,
+            gid: actionItem.gid || currentItem?.gid,
+            variantId: actionItem.variantId || currentItem?.variantId,
+            variantIdShipped:
+              actionItem.variantIdShipped || currentItem?.variantIdShipped,
+            variantIdPickup:
+              actionItem.variantIdPickup || currentItem?.variantIdPickup,
+            boundResourceId:
+              actionItem.boundResourceId || currentItem?.boundResourceId,
           });
         }
 

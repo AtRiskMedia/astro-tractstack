@@ -83,13 +83,13 @@ export default function CartModal({ resources = [] }: CartModalProps) {
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   onClick={handleClose}
-                  className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300"
+                  className="rounded-md bg-gray-200 px-4 py-2 text-sm font-bold text-gray-800 hover:bg-gray-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAccept}
-                  className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                  className="rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
                 >
                   {bookingDuration ? 'Continue' : 'Accept'}
                 </button>

@@ -30,6 +30,7 @@ export default function ProductTable({
   onLink,
   onUnlink,
 }: ProductTableProps) {
+  console.log(products);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
