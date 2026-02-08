@@ -1893,6 +1893,7 @@ export class NodesContext {
       delete duplicatedPane.gridLayout;
     }
 
+    duplicatedPane.isChanged = true;
     this.addNode(duplicatedPane as PaneNode);
     this.addNodes(allNodes);
     this.notifyNode(ownerId);
@@ -1953,7 +1954,6 @@ export class NodesContext {
     const storyFragmentNode = ownerNode as StoryFragmentNode;
     let specificIdx = -1;
     let elIdx = -1;
-    let storyFragmentWasChanged: boolean = false;
 
     if (
       insertPaneId &&
@@ -1976,8 +1976,10 @@ export class NodesContext {
           );
         }
       }
+      storyFragmentNode.isChanged = true;
     }
 
+    duplicatedPane.isChanged = true;
     this.addNode(duplicatedPane as PaneNode);
     this.linkChildToParent(
       duplicatedPane.id,

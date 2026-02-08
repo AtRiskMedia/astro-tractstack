@@ -1,0 +1,23 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Cart from '@/custom/shopify/Cart';
+import { getHeaderResources } from '@/lib/resources';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const brandConfig = await getBrandConfig(tenantId);
+if (!brandConfig.HAS_SHOPIFY) {
+  return Astro.redirect('/storykeep');
+}
+
+const resourceCategories = ['product', 'service'];
+const resources = await getHeaderResources(tenantId, resourceCategories);
+---
+
+<Layout title="Your Cart">
+  <main class="mx-auto max-w-7xl px-4 py-16 md:px-6 xl:px-8">
+    <Cart resources={resources} embedded={true} client:only="react" />
+  </main>
+</Layout>

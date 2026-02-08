@@ -4,9 +4,12 @@ import ListContent from '@/components/codehooks/ListContent.astro';
 import SearchWidget from '@/components/codehooks/SearchWidget.tsx';
 import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
 import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
+import ShopifyProductGrid from '@/custom/shopify/ShopifyProductGrid';
+import ShopifyServiceList from '@/custom/shopify/ShopifyServiceList';
 import type { FullContentMapItem } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
-// import CustomHero from './CustomHero.astro';  // Uncomment to add custom components
+// import CustomHero from './CustomHero.astro';
+// Uncomment to add custom components
 
 export interface Props {
   target: string;
@@ -20,7 +23,7 @@ export interface Props {
   };
 }
 
-const { target, options, fullContentMap /*, resourcesPayload */ } = Astro.props;
+const { target, options, fullContentMap, resourcesPayload = {} } = Astro.props;
 
 export const components = {
   'featured-article': true,
@@ -29,6 +32,8 @@ export const components = {
   'search-widget': true,
   'bunny-video': import.meta.env.PUBLIC_ENABLE_BUNNY === 'true',
   epinet: true,
+  'shopify-product-grid': true,
+  'shopify-service-list': true,
   // "custom-hero": true,  // Uncomment when you create CustomHero.astro
 };
 ---
@@ -43,11 +48,21 @@ export const components = {
   ) : target === 'bunny-video' && import.meta.env.PUBLIC_ENABLE_BUNNY ? (
     <BunnyVideoWrapper options={options} />
   ) : target === 'epinet' ? (
-    <EpinetWrapper fullContentMap={fullContentMap} client:only="react" /> /* 
-  : target === "custom-hero" ? (
+    <EpinetWrapper fullContentMap={fullContentMap} client:only="react" />
+  ) : target === 'shopify-product-grid' ? (
+    <ShopifyProductGrid
+      resources={resourcesPayload['product'] || []}
+      client:only="react"
+    />
+  ) : target === 'shopify-service-list' ? (
+    <ShopifyServiceList
+      resources={resourcesPayload['service'] || []}
+      client:only="react"
+    />
+  ) : (
+    /* : target === "custom-hero" ? (
     <CustomHero />
   ) */
-  ) : (
     <div class="rounded-lg bg-gray-50 p-8 text-center">
       <p class="text-gray-600">CodeHook target "{target}" not found</p>
     </div>

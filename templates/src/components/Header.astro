@@ -4,8 +4,13 @@ import SearchWrapper from '@/components/search/SearchWrapper';
 import { getFullContentMap } from '@/stores/analytics';
 import { isAuthenticated, isAdmin, getUserRole } from '@/utils/auth';
 import ImpressionWrapper from '@/components/widgets/ImpressionWrapper';
-import type { MenuNode } from '@/types/tractstack';
 import type { ImpressionNode } from '@/types/compositorTypes';
+import { getHeaderResources } from '@/lib/resources';
+import ShopifyCartManager from '@/custom/shopify/ShopifyCartManager';
+import CartIcon from '@/custom/shopify/CartIcon';
+import CartModal from '@/custom/shopify/CartModal';
+import type { MenuNode } from '@/types/tractstack';
+import type { ResourceNode } from '@/types/compositorTypes';
 
 export interface Props {
   title: string;
@@ -32,13 +37,11 @@ const {
   storyfragmentId = undefined,
   impressions = [],
 } = Astro.props;
-
 const isHome = slug === brandConfig?.HOME_SLUG;
 
 const tenantId =
   Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
 const fullContentMap = await getFullContentMap(tenantId);
-
 const getAssetPath = (configPath: string, fallback: string) => {
   // Always prioritize brandConfig values when they exist
   if (configPath && configPath !== '') {
@@ -52,17 +55,29 @@ const wordmarkMode =
   brandConfig?.WORDMARK_MODE && brandConfig.WORDMARK_MODE !== ''
     ? brandConfig.WORDMARK_MODE
     : 'default';
-
 // Auth status
 const authStatus = {
   isAuthenticated: isAuthenticated(Astro),
   isAdmin: isAdmin(Astro),
   userRole: getUserRole(Astro),
 };
+
+const hasShopify = brandConfig?.HAS_SHOPIFY;
+let shopifyResources: ResourceNode[] = [];
+if (hasShopify) {
+  shopifyResources = await getHeaderResources(tenantId, ['product', 'service']);
+}
 ---
 
 <header class="relative shadow-inner">
-  <!-- TOP ROW: Logo/Wordmark + Menu + Auth Controls -->
+  {
+    hasShopify ? (
+      <div class="flex w-full justify-end px-4 py-2 md:px-8">
+        <CartIcon client:only="react" />
+      </div>
+    ) : null
+  }
+
   <div
     class="flex flex-row flex-nowrap items-center justify-between px-4 py-3 md:px-8"
   >
@@ -76,6 +91,7 @@ const authStatus = {
                 alt="Logo"
                 class="pointer-events-none h-8 w-auto"
               />
+
               <span class="w-2" />
             </>
           ) : null
@@ -105,7 +121,6 @@ const authStatus = {
     }
   </div>
 
-  <!-- BOTTOM ROW: Title + Action Icons -->
   <div
     class="flex flex-row flex-nowrap justify-between bg-mywhite px-4 pb-3 pt-4 shadow-inner md:px-8"
   >
@@ -198,7 +213,6 @@ const authStatus = {
             localStorage.getItem('tractstack_has_profile') === '1';
 
           if (!sessionId) return;
-
           const rememberMeContainer = document.getElementById(
             'remember-me-container'
           );
@@ -211,7 +225,6 @@ const authStatus = {
               consent || hasProfile
                 ? '<svg class="h-6 w-6 text-myblue/80" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>'
                 : '<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" /></svg>';
-
             rememberMeContainer.innerHTML = `
         <a href="/storykeep/profile" 
            class="hover:text-myblue hover:rotate-6" 
@@ -339,6 +352,15 @@ const authStatus = {
   )
 }
 
+{
+  hasShopify && (
+    <>
+      <ShopifyCartManager resources={shopifyResources} client:only="react" />
+      <CartModal resources={shopifyResources} client:only="react" />
+    </>
+  )
+}
+
 <script>
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setupAdminModal);
@@ -383,7 +405,6 @@ const authStatus = {
             tractStackKeys.forEach((key) => localStorage.removeItem(key));
 
             console.log('TractStack: Complete logout finished');
-
             // Redirect to home page
             window.location.href = '/';
           } else {
@@ -432,7 +453,6 @@ const authStatus = {
         return;
       }
     });
-
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         const modal = document.getElementById('admin-modal');
@@ -441,7 +461,6 @@ const authStatus = {
         }
       }
     });
-
     function closeModal() {
       const modal = document.getElementById('admin-modal');
       const heartBtn = document.getElementById('admin-heart-btn');

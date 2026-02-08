@@ -1,3 +1,5 @@
+import type { ResourceNode } from '@/types/compositorTypes';
+
 // URL Helper: Strip category prefix from slug
 // e.g., "people-bleako" -> "bleako"
 export function getCleanSlug(categorySlug: string, fullSlug: string): string {
@@ -43,3 +45,27 @@ export const resourceFormHideFields = ['gid', 'serviceBound'];
 // Field Formatting Controls for ResourceForm
 // Fields listed here will be treated as JSON objects but rendered as stringified text areas
 export const resourceJsonifyFields = ['shopifyData'];
+
+// --- Commerce Helpers ---
+
+export const RESTRICTION_MESSAGES = {
+  BOOKING: (duration: string) =>
+    `This is a ${duration} minute service. On checkout we'll help you book at your convenience.`,
+  TERMS: 'Please review the terms for this item before adding it to your cart.',
+};
+
+export function checkRestrictions(resource: ResourceNode): boolean {
+  // 1. Service / Booking Requirement
+  // We check for the explicit option payload value used by services
+  if (resource.optionsPayload?.bookingLengthMinutes) {
+    return true;
+  }
+
+  // 2. Final Sale / Terms Check
+  // Placeholder: In the future, check for flags like resource.optionsPayload?.finalSale
+  // if (resource.optionsPayload?.finalSale) {
+  //   return true;
+  // }
+
+  return false;
+}

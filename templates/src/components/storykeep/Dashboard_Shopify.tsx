@@ -220,6 +220,7 @@ export default function StoryKeepDashboard_Shopify({
       if (wantProduct) {
         updatedKnownResources['product'] = {
           gid: { type: 'string', optional: false },
+          allowMultiple: { type: 'boolean', optional: false },
           shopifyData: { type: 'string', optional: false },
           ...(wantService
             ? {

@@ -889,6 +889,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/maint.astro',
     },
     {
+      src: resolve('../templates/custom/shopify/cart.astro'),
+      dest: 'src/pages/cart.astro',
+    },
+    {
       src: resolve('../templates/src/pages/404.astro'),
       dest: 'src/pages/404.astro',
     },
@@ -907,6 +911,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/shopify/getProducts.ts'),
       dest: 'src/pages/api/shopify/getProducts.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/shopify/createCart.ts'),
+      dest: 'src/pages/api/shopify/createCart.ts',
     },
     {
       src: resolve('../templates/src/pages/api/tailwind.ts'),
@@ -2225,6 +2233,36 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/customHelpers.ts'),
       dest: 'src/utils/customHelpers.ts',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyProductGrid.tsx'),
+      dest: 'src/custom/shopify/ShopifyProductGrid.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyServiceList.tsx'),
+      dest: 'src/custom/shopify/ShopifyServiceList.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CartIcon.tsx'),
+      dest: 'src/custom/shopify/CartIcon.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyCartManager.tsx'),
+      dest: 'src/custom/shopify/ShopifyCartManager.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CartModal.tsx'),
+      dest: 'src/custom/shopify/CartModal.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/Cart.tsx'),
+      dest: 'src/custom/shopify/Cart.tsx',
       protected: true,
     },
 

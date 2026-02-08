@@ -236,7 +236,7 @@ export default function ResourceForm({
             <textarea
               id={`field-${fieldName}`}
               rows={12}
-              className={`sm:text-xs block w-full rounded-md font-mono shadow-sm ${
+              className={`block w-full rounded-md font-mono text-xs shadow-sm ${
                 fieldError
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                   : 'border-gray-300 focus:border-cyan-500 focus:ring-cyan-500'

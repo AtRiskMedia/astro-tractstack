@@ -1,4 +1,5 @@
-import { atom, map } from 'nanostores';
+import { map, onMount } from 'nanostores';
+import { persistentAtom } from '@nanostores/persistent';
 
 export interface ShopifyVariant {
   id: string;
@@ -40,14 +41,61 @@ export interface ShopifyProduct {
   variants: ShopifyVariant[];
 }
 
-export const shopifyData = atom<{
+export type CartActionType = 'add' | 'remove';
+
+// Represents a request to change state (User Intent)
+export interface CartAction {
+  resourceId: string;
+  gid?: string;
+  variantId?: string;
+  action: CartActionType;
+}
+
+// Represents the finalized state of an item in the cart (System Truth)
+export interface CartItemState {
+  resourceId: string;
+  quantity: number;
+  variantId?: string;
+  gid?: string;
+}
+
+export const QUEUE_STATES = {
+  READY: 'READY',
+  ADDING: 'ADDING',
+  HAS_REQUIREMENTS: 'HAS_REQUIREMENTS',
+} as const;
+
+export type QueueState = (typeof QUEUE_STATES)[keyof typeof QUEUE_STATES];
+
+export const CART_STATES = {
+  INIT: 'INIT',
+  READY: 'READY',
+  LOADED: 'LOADED',
+  CHECKOUT: 'CHECKOUT',
+  BOOKING: 'BOOKING',
+  BOOKED: 'BOOKED',
+  SHOPIFY_HANDOFF: 'SHOPIFY_HANDOFF',
+} as const;
+
+export type CartState = (typeof CART_STATES)[keyof typeof CART_STATES];
+
+// Persistent Data Stores
+export const shopifyData = persistentAtom<{
   products: ShopifyProduct[];
   lastFetched: number;
-}>({
-  products: [],
-  lastFetched: 0,
-});
+}>(
+  'tractstack_shopify_data',
+  {
+    products: [],
+    lastFetched: 0,
+  },
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
 
+// Non-persistent Status (Load states should reset on refresh)
 export const shopifyStatus = map<{
   isLoading: boolean;
   error: string | null;
@@ -55,6 +103,51 @@ export const shopifyStatus = map<{
   isLoading: false,
   error: null,
 });
+
+export const addQueue = persistentAtom<CartAction[]>(
+  'tractstack_shopify_queue',
+  [],
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
+
+// We use a backing persistentAtom for the cart to ensure data survives reloads,
+// but expose it as a 'map' to preserve the .setKey() API used by consumers.
+const cartPersistence = persistentAtom<Record<string, CartItemState>>(
+  'tractstack_shopify_cart',
+  {},
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);
+
+export const cartStore = map<Record<string, CartItemState>>(
+  cartPersistence.get()
+);
+
+onMount(cartStore, () => {
+  // Sync initial state from persistence (in case of race conditions or hydration delay)
+  cartStore.set(cartPersistence.get());
+
+  // Persist any changes made to the map
+  const unbind = cartStore.listen((value) => {
+    cartPersistence.set(value);
+  });
+
+  return () => unbind();
+});
+
+export const queueState = persistentAtom<QueueState>(
+  'tractstack_shopify_queue_state',
+  QUEUE_STATES.READY
+);
+export const cartState = persistentAtom<CartState>(
+  'tractstack_shopify_cart_state',
+  CART_STATES.INIT
+);
 
 export async function fetchShopifyProducts() {
   shopifyStatus.set({ isLoading: true, error: null });
