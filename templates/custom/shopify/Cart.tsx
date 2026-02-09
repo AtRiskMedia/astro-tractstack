@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { addQueue, cartStore, type CartAction } from '@/stores/shopify';
+import {
+  addQueue,
+  cartStore,
+  cartState,
+  CART_STATES,
+  type CartAction,
+} from '@/stores/shopify';
 import { getResourceImage } from '@/utils/helpers';
+import {
+  calculateCartDuration,
+  MAX_LENGTH_MINUTES,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
@@ -23,6 +33,7 @@ export default function Cart({ resources = [] }: CartProps) {
   const [pickupEnabled, setPickupEnabled] = useState(false);
 
   const cartValues = Object.values(cart);
+  const currentDuration = calculateCartDuration(cart, resources);
 
   const boundServiceIds = new Set(
     cartValues
@@ -97,6 +108,13 @@ export default function Cart({ resources = [] }: CartProps) {
           const { src, srcSet } = getResourceImage(resource, '600');
 
           const isService = !!resource.optionsPayload?.bookingLengthMinutes;
+          const itemDuration = Number(
+            resource.optionsPayload?.bookingLengthMinutes || 0
+          );
+
+          // Determine if adding one more of this item would exceed the limit
+          const isAtCapacity =
+            currentDuration + itemDuration > MAX_LENGTH_MINUTES;
 
           const boundServiceId = item.boundResourceId;
           const boundServiceResource = boundServiceId
@@ -236,7 +254,12 @@ export default function Cart({ resources = [] }: CartProps) {
                           'add'
                         )
                       }
-                      className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                      disabled={isAtCapacity}
+                      className={`px-3 py-1 ${
+                        isAtCapacity
+                          ? 'cursor-not-allowed text-gray-300'
+                          : 'text-gray-600 hover:bg-gray-100'
+                      }`}
                     >
                       +
                     </button>
@@ -253,10 +276,7 @@ export default function Cart({ resources = [] }: CartProps) {
           <button
             className="rounded-lg bg-black px-6 py-3 font-bold text-white transition-colors hover:bg-gray-800"
             onClick={() => {
-              console.log('Proceeding to checkout with context:', {
-                isPickupMode,
-                items: cartValues,
-              });
+              cartState.set(CART_STATES.CHECKOUT);
             }}
           >
             Proceed to Checkout

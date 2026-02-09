@@ -179,3 +179,18 @@ export async function fetchShopifyProducts() {
     });
   }
 }
+
+export const customerDetails = persistentAtom<{
+  name: string;
+  email: string;
+}>(
+  'tractstack_shopify_customer',
+  {
+    name: '',
+    email: '',
+  },
+  {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+  }
+);

@@ -6,7 +6,11 @@ import {
   queueState,
   QUEUE_STATES,
 } from '@/stores/shopify';
-import { checkRestrictions } from '@/utils/customHelpers';
+import {
+  checkRestrictions,
+  calculateCartDuration,
+  MAX_LENGTH_MINUTES,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface ShopifyCartManagerProps {
@@ -29,12 +33,20 @@ export default function ShopifyCartManager({
         return;
       }
 
+      const currentCart = cartStore.get();
+      const currentDuration = calculateCartDuration(currentCart, resources);
+      const newItemDuration = Number(
+        resource.optionsPayload?.bookingLengthMinutes || 0
+      );
+      const isOverLimit =
+        currentDuration + newItemDuration > MAX_LENGTH_MINUTES;
+
       const hasRestrictions = checkRestrictions(resource);
 
-      if (hasRestrictions && actionItem.action === 'add') {
+      if ((hasRestrictions || isOverLimit) && actionItem.action === 'add') {
         queueState.set(QUEUE_STATES.HAS_REQUIREMENTS);
       } else {
-        const currentItem = cartStore.get()[actionItem.resourceId];
+        const currentItem = currentCart[actionItem.resourceId];
         const currentQty = currentItem?.quantity || 0;
 
         let newQty = currentQty;
@@ -45,7 +57,7 @@ export default function ShopifyCartManager({
         }
 
         if (newQty === 0) {
-          const newCart = { ...cartStore.get() };
+          const newCart = { ...currentCart };
           delete newCart[actionItem.resourceId];
           cartStore.set(newCart);
         } else {

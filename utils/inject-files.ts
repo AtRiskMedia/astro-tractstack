@@ -2261,8 +2261,23 @@ export async function injectTemplateFiles(
       protected: true,
     },
     {
+      src: resolve('../templates/custom/shopify/CheckoutModal.tsx'),
+      dest: 'src/custom/shopify/CheckoutModal.tsx',
+      protected: true,
+    },
+    {
       src: resolve('../templates/custom/shopify/Cart.tsx'),
       dest: 'src/custom/shopify/Cart.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CalDotComBooking.tsx'),
+      dest: 'src/custom/shopify/CalDotComBooking.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyCheckout.tsx'),
+      dest: 'src/custom/shopify/ShopifyCheckout.tsx',
       protected: true,
     },
 

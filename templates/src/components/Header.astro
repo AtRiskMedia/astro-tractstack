@@ -9,6 +9,7 @@ import { getHeaderResources } from '@/lib/resources';
 import ShopifyCartManager from '@/custom/shopify/ShopifyCartManager';
 import CartIcon from '@/custom/shopify/CartIcon';
 import CartModal from '@/custom/shopify/CartModal';
+import CheckoutModal from '@/custom/shopify/CheckoutModal';
 import type { MenuNode } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -72,9 +73,12 @@ if (hasShopify) {
 <header class="relative shadow-inner">
   {
     hasShopify ? (
-      <div class="flex w-full justify-end px-4 py-2 md:px-8">
-        <CartIcon client:only="react" />
-      </div>
+      <>
+        <div class="flex w-full justify-end px-4 py-2 md:px-8">
+          <CartIcon client:only="react" />
+        </div>
+        <CheckoutModal client:only="react" resources={shopifyResources} />
+      </>
     ) : null
   }
 

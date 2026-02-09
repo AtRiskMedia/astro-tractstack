@@ -3,6 +3,18 @@ import { resolveTenantId } from '@/utils/tenantResolver';
 
 export const prerender = false;
 
+interface CreateCartPayload {
+  lines: Array<{
+    merchandiseId: string;
+    quantity: number;
+  }>;
+  attributes?: Array<{
+    key: string;
+    value: string;
+  }>;
+  email?: string;
+}
+
 const getBackendUrl = () => {
   return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
 };
@@ -15,7 +27,13 @@ export const POST: APIRoute = async ({ request }) => {
   const cookieHeader = request.headers.get('cookie') || '';
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as CreateCartPayload;
+
+    const payload: CreateCartPayload = {
+      lines: body.lines,
+      attributes: body.attributes || [],
+      email: body.email,
+    };
 
     const backendResponse = await fetch(backendEndpoint, {
       method: 'POST',
@@ -24,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
         'X-Tenant-ID': tenantId,
         Cookie: cookieHeader,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
 
     if (!backendResponse.ok) {
