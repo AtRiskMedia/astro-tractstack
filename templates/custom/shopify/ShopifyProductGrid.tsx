@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
-import { getResourceImage } from '@/utils/helpers';
+import { getShopifyImage } from '@/utils/helpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
@@ -29,8 +29,6 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   const cart = useStore(cartStore);
   const cartItem = cart[resource.id];
   const quantity = cartItem?.quantity || 0;
-
-  const { src, srcSet } = getResourceImage(resource, '600');
 
   const serviceBoundSlug = resource.optionsPayload?.serviceBound as
     | string
@@ -93,6 +91,11 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
     getVariant('Shipped') || getVariant('Pickup') || variants[0];
   const price = currentDisplayVariant?.price?.amount;
   const currency = currentDisplayVariant?.price?.currencyCode || 'USD';
+  const { src, srcSet } = getShopifyImage(
+    resource,
+    '600',
+    currentDisplayVariant?.id
+  );
 
   const handleAction = (action: 'add' | 'remove') => {
     if (action === 'remove') {

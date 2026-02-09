@@ -538,6 +538,42 @@ export const resolveCollisions = () => {
   });
 };
 
+// Shopify Image Helper: Returns responsive WebP paths for the resource image
+export function getShopifyImage(
+  resource: ResourceNode,
+  size: '600' | '1080' | '1920' = '600',
+  variantId?: string
+): { src: string; srcSet: string } {
+  let imageId = resource.optionsPayload?.image;
+
+  if (variantId && typeof resource.optionsPayload?.shopifyImage === 'string') {
+    try {
+      const variantMap = JSON.parse(resource.optionsPayload.shopifyImage);
+      if (variantMap[variantId]?.fileId) {
+        imageId = variantMap[variantId].fileId;
+      }
+    } catch (e) {
+      console.warn(
+        `[Shopify] Failed to parse shopifyImage map for resource ${resource.id}`,
+        e
+      );
+    }
+  }
+
+  if (imageId && typeof imageId === 'string') {
+    const baseUrl = `/media/images/resources/${imageId}`;
+    return {
+      src: `${baseUrl}_${size}px.webp`,
+      srcSet: `${baseUrl}_1920px.webp 1920w, ${baseUrl}_1080px.webp 1080w, ${baseUrl}_600px.webp 600w`,
+    };
+  }
+
+  return {
+    src: '/static.jpg',
+    srcSet: '',
+  };
+}
+
 // Image Helper: Returns responsive WebP paths for the resource image
 export function getResourceImage(
   resource: ResourceNode,

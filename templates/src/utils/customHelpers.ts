@@ -41,15 +41,11 @@ export function initSearch(): void {
 }
 
 // Field Visibility Controls for ResourceForm
-export const resourceFormHideFields = [
-  'gid',
-  'serviceBound',
-  'shopifyImageSourceUrl',
-];
+export const resourceFormHideFields = ['gid', 'serviceBound', 'shopifyImage'];
 
 // Field Formatting Controls for ResourceForm
 // Fields listed here will be treated as JSON objects but rendered as stringified text areas
-export const resourceJsonifyFields = ['shopifyData'];
+export const resourceJsonifyFields = ['shopifyData', 'shopifyImage'];
 
 export const RESTRICTION_MESSAGES = {
   BOOKING: (duration: string) =>

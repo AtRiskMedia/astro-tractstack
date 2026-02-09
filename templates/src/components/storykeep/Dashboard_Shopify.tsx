@@ -222,8 +222,7 @@ export default function StoryKeepDashboard_Shopify({
           gid: { type: 'string', optional: false },
           allowMultiple: { type: 'boolean', optional: false },
           shopifyData: { type: 'string', optional: false },
-          image: { type: 'image', optional: true },
-          shopifyImageSourceUrl: { type: 'string', optional: true },
+          shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           ...(wantService
             ? {
                 serviceBound: {
@@ -241,14 +240,13 @@ export default function StoryKeepDashboard_Shopify({
         updatedKnownResources['service'] = {
           gid: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: true },
+          shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           bookingLengthMinutes: {
             type: 'number',
             optional: false,
             minNumber: 15,
             maxNumber: 120,
           },
-          image: { type: 'image', optional: true },
-          shopifyImageSourceUrl: { type: 'string', optional: true },
         };
       }
 

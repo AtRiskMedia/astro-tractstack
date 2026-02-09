@@ -7,7 +7,7 @@ import {
   CART_STATES,
   type CartAction,
 } from '@/stores/shopify';
-import { getResourceImage } from '@/utils/helpers';
+import { getShopifyImage } from '@/utils/helpers';
 import {
   calculateCartDuration,
   MAX_LENGTH_MINUTES,
@@ -104,9 +104,6 @@ export default function Cart({ resources = [] }: CartProps) {
           const resource = resources.find((r) => r.id === item.resourceId);
           if (!resource) return null;
 
-          // Get image using the helper (defaults to 600px)
-          const { src, srcSet } = getResourceImage(resource, '600');
-
           const isService = !!resource.optionsPayload?.bookingLengthMinutes;
           const itemDuration = Number(
             resource.optionsPayload?.bookingLengthMinutes || 0
@@ -127,6 +124,7 @@ export default function Cart({ resources = [] }: CartProps) {
 
           const displayId =
             activeVariantId || item.variantIdPickup || item.variantId;
+          const { src, srcSet } = getShopifyImage(resource, '600', displayId);
 
           let price = '0.00';
           let currency = 'USD';
