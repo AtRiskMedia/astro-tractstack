@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { addQueue, cartStore, type CartAction } from '@/stores/shopify';
+import { getResourceImage } from '@/utils/helpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
@@ -92,6 +93,9 @@ export default function Cart({ resources = [] }: CartProps) {
           const resource = resources.find((r) => r.id === item.resourceId);
           if (!resource) return null;
 
+          // Get image using the helper (defaults to 600px)
+          const { src, srcSet } = getResourceImage(resource, '600');
+
           const isService = !!resource.optionsPayload?.bookingLengthMinutes;
 
           const boundServiceId = item.boundResourceId;
@@ -137,9 +141,13 @@ export default function Cart({ resources = [] }: CartProps) {
             >
               <div className="flex items-center">
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                  <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
-                    IMG
-                  </div>
+                  <img
+                    src={src}
+                    srcSet={srcSet}
+                    alt={resource.title}
+                    className="aspect-square h-full w-full object-cover object-center"
+                    loading="lazy"
+                  />
                 </div>
                 <div className="ml-4">
                   <h3 className="text-base font-bold text-gray-900">
@@ -148,7 +156,7 @@ export default function Cart({ resources = [] }: CartProps) {
 
                   {/* Visual Subtitle for Bound Service */}
                   {boundServiceResource && (
-                    <p className="flex items-center text-xs font-semibold text-blue-600">
+                    <p className="flex items-center text-xs font-bold text-blue-600">
                       <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
                       Includes Booking: {boundServiceResource.title}
                     </p>

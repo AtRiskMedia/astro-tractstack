@@ -40,7 +40,11 @@ export function initSearch(): void {
 }
 
 // Field Visibility Controls for ResourceForm
-export const resourceFormHideFields = ['gid', 'serviceBound'];
+export const resourceFormHideFields = [
+  'gid',
+  'serviceBound',
+  'shopifyImageSourceUrl',
+];
 
 // Field Formatting Controls for ResourceForm
 // Fields listed here will be treated as JSON objects but rendered as stringified text areas

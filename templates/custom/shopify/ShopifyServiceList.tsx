@@ -62,10 +62,11 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
         return (
           <div
             key={resource.id}
-            className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${isSelected
+            className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+              isSelected
                 ? 'border-black bg-gray-50'
                 : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
+            }`}
           >
             <div className="flex-grow">
               <div className="flex items-center gap-2">
@@ -82,14 +83,16 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
             <div className="ml-4 flex-shrink-0">
               <button
                 onClick={() => handleToggle(resource, cartItem?.quantity || 0)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isSelected ? 'bg-black' : 'bg-gray-200'
-                  }`}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isSelected ? 'bg-black' : 'bg-gray-200'
+                }`}
                 role="switch"
                 aria-checked={isSelected}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isSelected ? 'translate-x-5' : 'translate-x-0'
-                    }`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isSelected ? 'translate-x-5' : 'translate-x-0'
+                  }`}
                 />
               </button>
             </div>

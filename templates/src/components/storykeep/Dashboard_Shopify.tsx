@@ -222,6 +222,8 @@ export default function StoryKeepDashboard_Shopify({
           gid: { type: 'string', optional: false },
           allowMultiple: { type: 'boolean', optional: false },
           shopifyData: { type: 'string', optional: false },
+          image: { type: 'image', optional: true },
+          shopifyImageSourceUrl: { type: 'string', optional: true },
           ...(wantService
             ? {
                 serviceBound: {
@@ -245,6 +247,8 @@ export default function StoryKeepDashboard_Shopify({
             minNumber: 15,
             maxNumber: 120,
           },
+          image: { type: 'image', optional: true },
+          shopifyImageSourceUrl: { type: 'string', optional: true },
         };
       }
 

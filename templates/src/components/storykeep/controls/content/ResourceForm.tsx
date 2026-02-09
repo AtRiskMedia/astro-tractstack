@@ -214,8 +214,8 @@ export default function ResourceForm({
 
   const renderDynamicField = (fieldName: string, fieldDef: FieldDefinition) => {
     if (
-      resourceFormHideFields.includes(fieldName) &&
-      initialData.optionsPayload?.[fieldName]
+      resourceFormHideFields.includes(fieldName)
+      // && initialData.optionsPayload?.[fieldName]
     ) {
       return null;
     }
