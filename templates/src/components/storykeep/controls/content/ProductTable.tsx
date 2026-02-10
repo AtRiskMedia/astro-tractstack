@@ -6,6 +6,7 @@ import ArrowPathIcon from '@heroicons/react/24/outline/ArrowPathIcon';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
+import PencilIcon from '@heroicons/react/24/outline/PencilIcon';
 import type { ShopifyProduct } from '@/stores/shopify';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -17,6 +18,7 @@ interface ProductTableProps {
   onSelectProduct: (product: ShopifyProduct) => void;
   onLink: (product: ShopifyProduct) => void;
   onUnlink: (resourceId: string) => void;
+  onEdit: (product: ShopifyProduct, resource: ResourceNode) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -29,6 +31,7 @@ export default function ProductTable({
   onSelectProduct,
   onLink,
   onUnlink,
+  onEdit,
 }: ProductTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -117,7 +120,13 @@ export default function ProductTable({
                         {product.title}
                       </div>
                       {isLinked && (
-                        <span className="mt-1 inline-flex items-center rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
+                        <span
+                          className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ring-1 ring-inset ${
+                            linkedResource.categorySlug === 'service'
+                              ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
+                              : 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
+                          }`}
+                        >
                           Synced: {linkedResource.title}
                         </span>
                       )}
@@ -128,16 +137,34 @@ export default function ProductTable({
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-bold">
                       <div className="flex items-center justify-end space-x-2">
                         {isLinked ? (
-                          <button
-                            onClick={() => onUnlink(linkedResource.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Unlink Resource"
-                          >
-                            <TrashIcon className="h-5 w-5" aria-hidden="true" />
-                            <span className="sr-only">
-                              Unlink {product.title}
-                            </span>
-                          </button>
+                          <>
+                            <button
+                              onClick={() => onEdit(product, linkedResource)}
+                              className="text-cyan-600 hover:text-cyan-900"
+                              title="Edit Resource"
+                            >
+                              <PencilIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">
+                                Edit {product.title}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => onUnlink(linkedResource.id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Unlink Resource"
+                            >
+                              <TrashIcon
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">
+                                Unlink {product.title}
+                              </span>
+                            </button>
+                          </>
                         ) : (
                           <button
                             onClick={() => onLink(product)}

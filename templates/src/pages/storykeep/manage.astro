@@ -1,0 +1,69 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
+import StoryKeepDashboard from '@/components/storykeep/Dashboard';
+import ManageContent from '@/components/storykeep/controls/content/ManageContent';
+import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) {
+  return authCheck;
+}
+
+const userIsAuthenticated = isAuthenticated(Astro);
+const userIsAdmin = isAdmin(Astro);
+const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
+const brandConfig = await getBrandConfig(tenantId);
+const initializing = !brandConfig.SITE_INIT;
+
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
+
+const title = 'Manage Content | StoryKeep';
+const createMenu = Astro.url.searchParams.has('create-menu');
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
+let fullContentMap;
+
+try {
+  fullContentMap = await getFullContentMap(tenantId);
+} catch (error) {
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
+}
+---
+
+<Layout title={title} slug="storykeep" isStoryKeep={true}>
+  <main id="main-content" class="relative min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
+    <div class="max-w-5xl p-3.5 md:p-8">
+      <StoryKeepDashboard
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+        activeTab="manage"
+        role={role}
+        initializing={initializing}
+      />
+
+      <ManageContent
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+        createMenu={createMenu}
+      />
+    </div>
+  </main>
+</Layout>

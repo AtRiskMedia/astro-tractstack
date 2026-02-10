@@ -357,7 +357,7 @@ if (hasShopify) {
 }
 
 {
-  hasShopify && (
+  !isStoryKeep && hasShopify && (
     <>
       <ShopifyCartManager resources={shopifyResources} client:only="react" />
       <CartModal client:only="react" />

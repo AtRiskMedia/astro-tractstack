@@ -45,6 +45,7 @@ export default function StoryKeepDashboard_Shopify({
   const [draftResource, setDraftResource] =
     useState<Partial<ResourceConfig> | null>(null);
   const [showResourceModal, setShowResourceModal] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useState(true);
   const [targetProduct, setTargetProduct] = useState<ShopifyProduct | null>(
     null
   );
@@ -134,6 +135,12 @@ export default function StoryKeepDashboard_Shopify({
     }
   };
 
+  const handleEdit = (_product: ShopifyProduct, resource: ResourceNode) => {
+    setDraftResource(resource as any);
+    setIsCreateMode(false);
+    setShowResourceModal(true);
+  };
+
   const startCreateFlow = (category: string, product: ShopifyProduct) => {
     const schema = internalBrandConfig?.knownResources[category] || {};
     const mergedOptions: Record<string, any> = {
@@ -164,6 +171,7 @@ export default function StoryKeepDashboard_Shopify({
       optionsPayload: mergedOptions,
     });
 
+    setIsCreateMode(true);
     setShowTypeSelector(false);
     setShowResourceModal(true);
   };
@@ -219,7 +227,6 @@ export default function StoryKeepDashboard_Shopify({
                   type: 'string',
                   optional: true,
                   belongsToCategory: 'service',
-                  defaultValue: 15,
                 },
               }
             : {}),
@@ -237,6 +244,7 @@ export default function StoryKeepDashboard_Shopify({
             optional: false,
             minNumber: 15,
             maxNumber: 120,
+            defaultValue: 15,
           },
         };
       }
@@ -372,6 +380,7 @@ export default function StoryKeepDashboard_Shopify({
           onSelectProduct={setSelectedProduct}
           onLink={handleLink}
           onUnlink={handleUnlink}
+          onEdit={handleEdit}
         />
       )}
 
@@ -498,9 +507,10 @@ export default function StoryKeepDashboard_Shopify({
                     draftResource.categorySlug || ''
                   ] || {}
                 }
-                isCreate={true}
+                isCreate={isCreateMode}
                 onClose={(saved) => {
                   setShowResourceModal(false);
+                  setIsCreateMode(true);
                   if (saved) {
                     refreshResources();
                   }

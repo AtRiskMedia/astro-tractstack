@@ -869,8 +869,12 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep.astro',
     },
     {
-      src: resolve('../templates/src/pages/storykeep/content.astro'),
-      dest: 'src/pages/storykeep/content.astro',
+      src: resolve('../templates/src/pages/storykeep/pages.astro'),
+      dest: 'src/pages/storykeep/pages.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/manage.astro'),
+      dest: 'src/pages/storykeep/manage.astro',
     },
     {
       src: resolve('../templates/src/pages/storykeep/branding.astro'),

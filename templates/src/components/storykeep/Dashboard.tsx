@@ -52,9 +52,14 @@ export default function StoryKeepDashboard({
           current: shouldShowInactiveTabs ? false : activeTab === 'analytics',
         },
         {
-          id: 'content',
-          name: 'Content',
-          current: activeTab === 'content',
+          id: 'pages',
+          name: 'Web Pages',
+          current: activeTab === 'pages',
+        },
+        {
+          id: 'manage',
+          name: 'Manage Content',
+          current: activeTab === 'manage',
         },
         {
           id: 'branding',

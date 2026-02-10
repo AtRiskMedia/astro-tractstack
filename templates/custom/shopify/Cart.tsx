@@ -117,24 +117,16 @@ export default function Cart({ resources = [] }: CartProps) {
     <div className="rounded-lg bg-white shadow">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 className="text-xl font-bold text-gray-800">Shopping Cart</h2>
-        {hasServiceBoundProduct ? (
-          <div className="flex items-center space-x-2 text-sm font-bold text-gray-900">
-            <span className="inline-flex items-center rounded bg-gray-100 px-2 py-1 text-gray-700">
-              Store Pickup Required
-            </span>
-          </div>
-        ) : (
-          canPickup && (
-            <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
-              <input
-                type="checkbox"
-                checked={pickupEnabled}
-                onChange={(e) => setPickupEnabled(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-              />
-              <span>Pick up at Store</span>
-            </label>
-          )
+        {canPickup && (
+          <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
+            <input
+              type="checkbox"
+              checked={pickupEnabled}
+              onChange={(e) => setPickupEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+            />
+            <span>Pick up at Store</span>
+          </label>
         )}
       </div>
 
