@@ -74,10 +74,13 @@ if (hasShopify) {
   {
     hasShopify ? (
       <>
-        <div class="flex w-full justify-end px-4 py-2 md:px-8">
-          <CartIcon client:only="react" />
-        </div>
-        <CheckoutModal client:only="react" resources={shopifyResources} />
+        {slug !== `cart` ? (
+          <div class="flex w-full justify-end px-4 py-2 md:px-8">
+            <CartIcon client:only="react" />
+          </div>
+        ) : (
+          <CheckoutModal client:only="react" resources={shopifyResources} />
+        )}
       </>
     ) : null
   }

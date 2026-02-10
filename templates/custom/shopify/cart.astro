@@ -16,7 +16,7 @@ const resourceCategories = ['product', 'service'];
 const resources = await getHeaderResources(tenantId, resourceCategories);
 ---
 
-<Layout title="Your Cart">
+<Layout title="Your Cart" slug="cart">
   <main class="mx-auto max-w-7xl px-4 py-16 md:px-6 xl:px-8">
     <Cart resources={resources} embedded={true} client:only="react" />
   </main>
