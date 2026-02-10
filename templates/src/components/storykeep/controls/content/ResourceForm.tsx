@@ -445,7 +445,11 @@ export default function ResourceForm({
 
       {/* Save/Cancel Bar */}
       <UnsavedChangesBar
-        formState={{ ...formState, isDirty: isCreate || formState.isDirty }}
+        formState={{
+          ...formState,
+          isDirty: isCreate || formState.isDirty,
+          cancel: handleCancel,
+        }}
         message="You have unsaved resource changes"
         saveLabel="Save Resource"
         cancelLabel="Discard Changes"

@@ -27,8 +27,6 @@ interface ProductCardProps {
 
 function ProductCard({ resource, allServices }: ProductCardProps) {
   const cart = useStore(cartStore);
-  const cartItem = cart[resource.id];
-  const quantity = cartItem?.quantity || 0;
 
   const serviceBoundSlug = resource.optionsPayload?.serviceBound as
     | string
@@ -87,6 +85,14 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
     return found;
   };
 
+  const variantShipped = getVariant(hasModeOption ? 'Shipped' : null);
+  const variantPickup = getVariant(hasModeOption ? 'Pickup' : null);
+  const cartKey = `${resource.id}_${variantShipped?.id || 'null'}_${
+    variantPickup?.id || 'null'
+  }`;
+  const cartItem = cart[cartKey];
+  const quantity = cartItem?.quantity || 0;
+
   const currentDisplayVariant =
     getVariant('Shipped') || getVariant('Pickup') || variants[0];
   const price = currentDisplayVariant?.price?.amount;
@@ -103,12 +109,18 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
 
       queueUpdates.push({
         resourceId: resource.id,
+        variantIdShipped: variantShipped?.id,
+        variantIdPickup: variantPickup?.id,
         action: 'remove',
       });
 
       if (boundServiceResource) {
         queueUpdates.push({
           resourceId: boundServiceResource.id,
+          variantId: boundServiceResource.optionsPayload?.shopifyData
+            ? JSON.parse(boundServiceResource.optionsPayload.shopifyData)
+                .variants?.[0]?.id
+            : undefined,
           action: 'remove',
         });
       }
@@ -116,9 +128,6 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
       addQueue.set([...addQueue.get(), ...queueUpdates]);
       return;
     }
-
-    const variantShipped = getVariant(hasModeOption ? 'Shipped' : null);
-    const variantPickup = getVariant(hasModeOption ? 'Pickup' : null);
 
     const queueUpdates: CartAction[] = [];
 
@@ -133,8 +142,19 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
     queueUpdates.push(productAction);
 
     if (boundServiceResource) {
+      let serviceVariantId = undefined;
+      try {
+        if (boundServiceResource.optionsPayload?.shopifyData) {
+          const serviceData = JSON.parse(
+            boundServiceResource.optionsPayload.shopifyData
+          );
+          serviceVariantId = serviceData.variants?.[0]?.id;
+        }
+      } catch (e) {}
+
       queueUpdates.push({
         resourceId: boundServiceResource.id,
+        variantId: serviceVariantId,
         action: 'add',
       });
     } else if (serviceBoundSlug) {

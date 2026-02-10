@@ -41,18 +41,19 @@ export function initSearch(): void {
 }
 
 // Field Visibility Controls for ResourceForm
-export const resourceFormHideFields = ['gid', 'serviceBound', 'shopifyImage'];
+export const resourceFormHideFields = ['gid', 'shopifyImage'];
 
 // Field Formatting Controls for ResourceForm
 // Fields listed here will be treated as JSON objects but rendered as stringified text areas
 export const resourceJsonifyFields = ['shopifyData', 'shopifyImage'];
 
 export const RESTRICTION_MESSAGES = {
-  BOOKING: (duration: string) =>
+  BOOKING: (duration: number) =>
     `This is a ${duration} minute service. On checkout we'll help you book at your convenience.`,
   TERMS: 'Please review the terms for this item before adding it to your cart.',
   MAX_DURATION: (max: number) =>
     `You cannot book more than ${max} minutes of services in one session.`,
+  DEFAULT_ADD: (title: string) => `${title} has been added to your cart.`,
 };
 
 // For CartModal.tsx

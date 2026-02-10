@@ -1,4 +1,4 @@
-import { map, onMount } from 'nanostores';
+import { atom, map, onMount } from 'nanostores';
 import { persistentAtom } from '@nanostores/persistent';
 
 export interface ShopifyVariant {
@@ -20,6 +20,18 @@ export interface ShopifyVariant {
     value: string;
   }[];
 }
+
+export const modalState = atom<{
+  isOpen: boolean;
+  type: 'success' | 'restriction';
+  title: string;
+  message: string;
+}>({
+  isOpen: false,
+  type: 'success',
+  title: '',
+  message: '',
+});
 
 export interface ShopifyOption {
   name: string;
@@ -51,6 +63,7 @@ export interface CartAction {
   variantIdPickup?: string;
   boundResourceId?: string;
   action: CartActionType;
+  suppressModal?: boolean;
 }
 
 export interface CartItemState {

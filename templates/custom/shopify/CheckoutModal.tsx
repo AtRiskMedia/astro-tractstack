@@ -87,7 +87,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   return (
     <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && handleClose()}>
       <Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-75" />
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-75 backdrop-blur-sm" />
         <Dialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content className="w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl">
             {state === CART_STATES.CHECKOUT && (

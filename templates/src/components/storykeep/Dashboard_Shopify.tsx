@@ -40,10 +40,8 @@ export default function StoryKeepDashboard_Shopify({
   );
   const [copied, setCopied] = useState(false);
 
-  // Local Resource State (allows optimistic updates/refreshes without full page reload)
   const [resources, setResources] = useState<ResourceNode[]>(existingResources);
 
-  // Sync Logic
   const [draftResource, setDraftResource] =
     useState<Partial<ResourceConfig> | null>(null);
   const [showResourceModal, setShowResourceModal] = useState(false);
@@ -52,17 +50,14 @@ export default function StoryKeepDashboard_Shopify({
   );
   const [showTypeSelector, setShowTypeSelector] = useState(false);
 
-  // State Machine
   const [machineState, setMachineState] = useState<MachineState>('INIT');
   const [internalBrandConfig, setInternalBrandConfig] =
     useState<BrandConfigState | null>(null);
 
-  // Config State (User Decisions)
   const [wantProduct, setWantProduct] = useState(true);
   const [wantService, setWantService] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize state based on prop
   useEffect(() => {
     if (brandConfig) {
       const localState = convertToLocalState(brandConfig);
@@ -114,9 +109,6 @@ export default function StoryKeepDashboard_Shopify({
       const results = await Promise.all(promises);
       const flattened = results.flat() as ResourceNode[];
 
-      // We only strictly need to update the relevant categories in our local state,
-      // but simplistic replacement works if we only show these types here.
-      // For robustness, let's merge into existingResources to preserve other types if they exist.
       setResources((prev) => {
         const otherTypes = prev.filter(
           (r) => r.categorySlug !== 'product' && r.categorySlug !== 'service'
@@ -143,8 +135,6 @@ export default function StoryKeepDashboard_Shopify({
   };
 
   const startCreateFlow = (category: string, product: ShopifyProduct) => {
-    // Construct the schema-compliant options payload manually.
-    // ResourceForm ignores default values if data is passed, so we must merge them here.
     const schema = internalBrandConfig?.knownResources[category] || {};
     const mergedOptions: Record<string, any> = {
       gid: product.id,
@@ -229,6 +219,7 @@ export default function StoryKeepDashboard_Shopify({
                   type: 'string',
                   optional: true,
                   belongsToCategory: 'service',
+                  defaultValue: 15,
                 },
               }
             : {}),

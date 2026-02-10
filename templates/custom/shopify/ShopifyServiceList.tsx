@@ -22,10 +22,24 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
     (s) => !boundServiceSlugs.has(s.slug)
   );
 
+  const getServiceVariantId = (resource: ResourceNode): string | undefined => {
+    try {
+      if (resource.optionsPayload?.shopifyData) {
+        const data = JSON.parse(resource.optionsPayload.shopifyData);
+        // Handle both raw product data and simplified product objects
+        const product = data.products?.[0] || data;
+        return product?.variants?.[0]?.id;
+      }
+    } catch (e) {
+      return undefined;
+    }
+    return undefined;
+  };
+
   const handleToggle = (resource: ResourceNode, currentQuantity: number) => {
     const actionType = currentQuantity > 0 ? 'remove' : 'add';
 
-    let variantIdPickup: string | undefined;
+    const variantId = getServiceVariantId(resource);
     let gid: string | undefined;
 
     try {
@@ -33,16 +47,13 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
         const data = JSON.parse(resource.optionsPayload.shopifyData);
         const product = data.products?.[0] || data;
         gid = product?.id;
-        variantIdPickup = product?.variants?.[0]?.id;
       }
-    } catch (e) {
-      console.error('Failed to parse Shopify data', resource.id);
-    }
+    } catch (e) {}
 
     const newAction: CartAction = {
       resourceId: resource.id,
       gid,
-      variantIdPickup,
+      variantId,
       action: actionType,
     };
     addQueue.set([...addQueue.get(), newAction]);
@@ -55,7 +66,10 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
   return (
     <div className="space-y-4">
       {displayServices.map((resource) => {
-        const cartItem = cart[resource.id];
+        const variantId = getServiceVariantId(resource);
+        const key = variantId || `${resource.id}_null_null`;
+
+        const cartItem = cart[key];
         const isSelected = (cartItem?.quantity || 0) > 0;
         const duration = resource.optionsPayload?.bookingLengthMinutes;
 

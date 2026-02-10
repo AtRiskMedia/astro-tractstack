@@ -360,7 +360,7 @@ if (hasShopify) {
   hasShopify && (
     <>
       <ShopifyCartManager resources={shopifyResources} client:only="react" />
-      <CartModal resources={shopifyResources} client:only="react" />
+      <CartModal client:only="react" />
     </>
   )
 }
