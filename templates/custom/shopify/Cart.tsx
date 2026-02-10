@@ -5,6 +5,7 @@ import {
   cartStore,
   cartState,
   CART_STATES,
+  isShopifyHandoff,
   type CartAction,
   type CartItemState,
 } from '@/stores/shopify';
@@ -27,6 +28,7 @@ const getCleanVariantTitle = (variant: any) => {
 
 export default function Cart({ resources = [] }: CartProps) {
   const cart = useStore(cartStore);
+  const isHandoff = useStore(isShopifyHandoff);
   const [pickupEnabled, setPickupEnabled] = useState(false);
 
   const cartValues = Object.values(cart);
@@ -106,9 +108,17 @@ export default function Cart({ resources = [] }: CartProps) {
 
   if (cartValues.length === 0) {
     return (
-      <div className="rounded-lg border bg-gray-50 p-8 text-center">
-        <h2 className="text-xl font-bold">Your cart is empty</h2>
-        <p className="mt-2 text-gray-600">Add some items to get started.</p>
+      <div className="relative">
+        {isHandoff && (
+          <div className="z-103 absolute inset-0 flex flex-col items-center justify-center rounded-lg bg-black bg-opacity-75 backdrop-blur-md">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black"></div>
+            <h3 className="mt-4 text-lg font-bold text-gray-900">Finalizing Handoff...</h3>
+          </div>
+        )}
+        <div className="rounded-lg border bg-gray-50 p-8 text-center">
+          <h2 className="text-xl font-bold">Your cart is empty</h2>
+          <p className="mt-2 text-gray-600">Add some items to get started.</p>
+        </div>
       </div>
     );
   }

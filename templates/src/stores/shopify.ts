@@ -96,7 +96,8 @@ export const CART_STATES = {
 
 export type CartState = (typeof CART_STATES)[keyof typeof CART_STATES];
 
-// Persistent Data Stores
+export const isShopifyHandoff = atom<boolean>(false);
+
 export const shopifyData = persistentAtom<{
   products: ShopifyProduct[];
   lastFetched: number;
