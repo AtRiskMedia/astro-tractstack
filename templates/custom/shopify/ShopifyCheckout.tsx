@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
-import { cartStore, cartState, CART_STATES, isShopifyHandoff } from '@/stores/shopify';
+import {
+  cartStore,
+  cartState,
+  CART_STATES,
+  isShopifyHandoff,
+} from '@/stores/shopify';
 import { calculateCartDuration } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -80,9 +85,9 @@ export default function ShopifyCheckout({
             };
           })
           .filter((line) => line !== null) as Array<{
-            merchandiseId: string;
-            quantity: number;
-          }>;
+          merchandiseId: string;
+          quantity: number;
+        }>;
 
         if (lines.length === 0) {
           throw new Error(
