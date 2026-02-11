@@ -302,22 +302,45 @@ const KnownResourceFormRenderer = ({
                           }
                           disabled={locked}
                         />
-                        {fieldDef.type === 'categoryReference' && (
-                          <EnumSelect
-                            label="Reference Category"
-                            value={fieldDef.belongsToCategory || ''}
-                            onChange={(value) =>
-                              updateField(fieldName, {
-                                belongsToCategory: value,
-                              })
-                            }
-                            options={availableCategories.map((cat) => ({
-                              value: cat,
-                              label: cat,
-                            }))}
+                        {fieldDef.type === 'string' && (
+                          <BooleanToggle
+                            label="Reference Category?"
+                            value={!!fieldDef.belongsToCategory}
+                            onChange={(checked) => {
+                              if (checked) {
+                                // Enable: set to first available category or empty
+                                updateField(fieldName, {
+                                  belongsToCategory:
+                                    availableCategories[0] || '',
+                                });
+                              } else {
+                                // Disable: remove the property
+                                updateField(fieldName, {
+                                  belongsToCategory: undefined,
+                                });
+                              }
+                            }}
                             disabled={locked}
                           />
                         )}
+
+                        {fieldDef.type === 'string' &&
+                          fieldDef.belongsToCategory !== undefined && (
+                            <EnumSelect
+                              label="Target Category"
+                              value={fieldDef.belongsToCategory}
+                              onChange={(value) =>
+                                updateField(fieldName, {
+                                  belongsToCategory: value,
+                                })
+                              }
+                              options={availableCategories.map((cat) => ({
+                                value: cat,
+                                label: cat,
+                              }))}
+                              disabled={locked}
+                            />
+                          )}
                         {fieldDef.type === 'number' && (
                           <>
                             <NumberInput

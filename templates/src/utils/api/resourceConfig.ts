@@ -104,11 +104,13 @@ export async function deleteResource(
 
 export async function getAllResourceIds(tenantId: string): Promise<string[]> {
   const api = new TractStackAPI(tenantId);
-  const response = await api.get('/api/v1/nodes/resources');
+  const response = await api.get<{ count: number; resourceIds: string[] }>(
+    '/api/v1/nodes/resources'
+  );
   if (!response.success) {
     throw new Error(response.error || 'Failed to get resource IDs');
   }
-  return response.data;
+  return response.data?.resourceIds || [];
 }
 
 export async function getResourcesByIds(
@@ -116,11 +118,14 @@ export async function getResourcesByIds(
   ids: string[]
 ): Promise<ResourceConfig[]> {
   const api = new TractStackAPI(tenantId);
-  const response = await api.post('/api/v1/nodes/resources', { ids });
-  if (!response.success) {
+  const response = await api.post<{ resources: ResourceConfig[] }>(
+    '/api/v1/nodes/resources',
+    { resourceIds: ids }
+  );
+  if (!response.success || !response.data) {
     throw new Error(response.error || 'Failed to get resources by IDs');
   }
-  return response.data;
+  return response.data.resources;
 }
 
 export async function getResourcesByCategory(
@@ -128,6 +133,9 @@ export async function getResourcesByCategory(
   categorySlug: string
 ): Promise<ResourceConfig[]> {
   const allIds = await getAllResourceIds(tenantId);
+  if (!allIds || allIds.length === 0) {
+    return [];
+  }
   const allResources = await getResourcesByIds(tenantId, allIds);
   return allResources.filter(
     (resource) => resource.categorySlug === categorySlug

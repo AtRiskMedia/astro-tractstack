@@ -332,17 +332,10 @@ const ManageContent = ({
 
       case 'resources':
         return (
-          <div className="space-y-6">
-            <div>
-              <h3 className="mb-4 text-lg font-bold text-gray-900">
-                Resource Categories
-              </h3>
-              <KnownResourceTable
-                contentMap={currentContentMap}
-                onEdit={handleEditKnownResource}
-              />
-            </div>
-          </div>
+          <KnownResourceTable
+            contentMap={currentContentMap}
+            onEdit={handleEditKnownResource}
+          />
         );
 
       case 'beliefs':

@@ -1,0 +1,101 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
+import StoryKeepDashboard from '@/components/storykeep/Dashboard';
+import StoryKeepDashboard_Shopify from '@/components/storykeep/Dashboard_Shopify';
+import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { getResourcesByIds } from '@/utils/api/resourceConfig';
+import { preHealthCheck } from '@/utils/backend';
+import type { ResourceNode } from '@/types/compositorTypes';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) {
+  return authCheck;
+}
+
+// Fetch configuration early to check enablement
+const brandConfig = await getBrandConfig(tenantId);
+
+if (!brandConfig.HAS_SHOPIFY) {
+  return Astro.redirect('/storykeep');
+}
+
+const userIsAuthenticated = isAuthenticated(Astro);
+const userIsAdmin = isAdmin(Astro);
+const role = userIsAdmin ? 'admin' : userIsAuthenticated ? 'editor' : null;
+
+const initializing = !brandConfig.SITE_INIT;
+
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
+
+const title = 'Shopify | StoryKeep';
+let fullContentMap = [];
+let relevantResources: ResourceNode[] = [];
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
+
+try {
+  fullContentMap = await getFullContentMap(tenantId);
+  const knownResources = brandConfig.KNOWN_RESOURCES || {};
+  const activeCategories = Object.keys(knownResources);
+
+  if (Array.isArray(fullContentMap)) {
+    const slimResources = fullContentMap.filter(
+      (node: any) =>
+        node.type === 'Resource' &&
+        node.categorySlug &&
+        activeCategories.includes(node.categorySlug)
+    ) as ResourceNode[];
+
+    if (slimResources.length > 0) {
+      const ids = slimResources.map((r) => r.id);
+      const configs = await getResourcesByIds(tenantId, ids);
+      relevantResources = configs.map((config) => ({
+        ...config,
+        nodeType: 'Resource',
+        parentId: null,
+      })) as ResourceNode[];
+    } else {
+      relevantResources = [];
+    }
+  }
+} catch (error) {
+  console.error('Failed to load shopify resources:', error);
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
+}
+---
+
+<Layout title={title} slug="storykeep" isStoryKeep={true}>
+  <main id="main-content" class="relative min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
+    <div class="max-w-5xl p-3.5 md:p-8">
+      <StoryKeepDashboard
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+        activeTab="shopify"
+        role={role}
+        initializing={initializing}
+        brandConfig={brandConfig}
+      />
+      <StoryKeepDashboard_Shopify
+        client:only="react"
+        brandConfig={brandConfig}
+        existingResources={relevantResources}
+      />
+    </div>
+  </main>
+</Layout>

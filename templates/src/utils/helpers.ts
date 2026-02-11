@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { stopWords } from '@/constants/stopWords';
 import type { RefObject } from 'react';
 import type { MenuNode } from '@/types/tractstack';
+import type { ResourceNode } from '@/types/compositorTypes';
 
 let progressInterval: NodeJS.Timeout | null = null;
 let safetyTimeout: NodeJS.Timeout | null = null;
@@ -536,3 +537,61 @@ export const resolveCollisions = () => {
     }
   });
 };
+
+// Shopify Image Helper: Returns responsive WebP paths for the resource image
+export function getShopifyImage(
+  resource: ResourceNode,
+  size: '600' | '1080' | '1920' = '600',
+  variantId?: string
+): { src: string; srcSet: string } {
+  let imageId = resource.optionsPayload?.image;
+
+  if (variantId && typeof resource.optionsPayload?.shopifyImage === 'string') {
+    try {
+      const variantMap = JSON.parse(resource.optionsPayload.shopifyImage);
+      if (variantMap[variantId]?.fileId) {
+        imageId = variantMap[variantId].fileId;
+      }
+    } catch (e) {
+      console.warn(
+        `[Shopify] Failed to parse shopifyImage map for resource ${resource.id}`,
+        e
+      );
+    }
+  }
+
+  if (imageId && typeof imageId === 'string') {
+    const baseUrl = `/media/images/resources/${imageId}`;
+    return {
+      src: `${baseUrl}_${size}px.webp`,
+      srcSet: `${baseUrl}_1920px.webp 1920w, ${baseUrl}_1080px.webp 1080w, ${baseUrl}_600px.webp 600w`,
+    };
+  }
+
+  return {
+    src: '/static.jpg',
+    srcSet: '',
+  };
+}
+
+// Image Helper: Returns responsive WebP paths for the resource image
+export function getResourceImage(
+  resource: ResourceNode,
+  size: '600' | '1080' | '1920' = '600'
+): { src: string; srcSet: string } {
+  const imageId = resource.optionsPayload?.image;
+
+  if (imageId && typeof imageId === 'string') {
+    const baseUrl = `/media/images/resources/${imageId}`;
+    return {
+      src: `${baseUrl}_${size}px.webp`,
+      srcSet: `${baseUrl}_1920px.webp 1920w, ${baseUrl}_1080px.webp 1080w, ${baseUrl}_600px.webp 600w`,
+    };
+  }
+
+  // Fallback for resources with no synced image
+  return {
+    src: '/static.jpg',
+    srcSet: '',
+  };
+}

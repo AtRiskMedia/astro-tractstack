@@ -25,26 +25,21 @@ if (MODE === `wordmark`)
   assetUrl = getAssetPath(brandConfig?.WORDMARK, '/brand/wordmark.svg');
 else assetUrl = getAssetPath(brandConfig?.LOGO, '/brand/logo.svg');
 
-// Generate positions programmatically for triple density
 const generatePositions = () => {
   const positions = [];
-  const rows = 15; // More rows to extend beyond boundaries
-  const cols = 12; // More cols to extend beyond boundaries
+  const rows = 15;
+  const cols = 12;
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      // Skip some positions for natural spacing
       if ((row + col) % 3 !== 0) continue;
-
-      // Allow logos to extend beyond container edges (no margins)
-      const top = (row / (rows - 1)) * 120 - 10; // Extend 10% beyond top/bottom
-      const left = (col / (cols - 1)) * 120 - 10; // Extend 10% beyond left/right
+      const top = (row / (rows - 1)) * 120 - 10;
+      const left = (col / (cols - 1)) * 120 - 10;
       const rotation = -45 + Math.random() * 90;
-
       positions.push({
         top: `${top}%`,
         left: `${left}%`,
-        rotation: `${rotation}deg`,
+        rotation: rotation,
       });
     }
   }
@@ -69,19 +64,44 @@ const logoPositions = generatePositions();
         border: '2px dashed rgba(0, 0, 0, 1)',
       }}
     >
-      {logoPositions.map((position) => (
-        <img
-          src={assetUrl}
-          style={{
-            position: 'absolute',
-            top: position.top,
-            left: position.left,
-            width: '120px',
-            height: 'auto',
-            transform: `rotate(${position.rotation})`,
-          }}
-        />
-      ))}
+      <svg
+        width="100%"
+        height="100%"
+        xmlns="http://www.w3.org/2000/svg"
+        style="overflow: visible;"
+      >
+        <defs>
+          <symbol id="brand-logo-symbol" viewBox="0 0 120 120">
+            <image href={assetUrl} width="120" height="120" />
+          </symbol>
+        </defs>
+        {logoPositions.map((pos) => (
+          <g
+            transform={`translate(${parseFloat(pos.left) * 0.01 * 100} ${parseFloat(pos.top) * 0.01 * 100})`}
+          >
+            <use
+              href="#brand-logo-symbol"
+              x={pos.left}
+              y={pos.top}
+              width="120"
+              height="120"
+              transform={`rotate(${pos.rotation}, 60, 60)`}
+              transform-origin="center"
+            />
+          </g>
+        ))}
+        {/* Simplified positioning to ensure browser compatibility with percentages */}
+        {logoPositions.map((pos) => (
+          <use
+            href="#brand-logo-symbol"
+            x={pos.left}
+            y={pos.top}
+            width="120"
+            height="120"
+            style={`transform: rotate(${pos.rotation}deg); transform-origin: center; transform-box: fill-box;`}
+          />
+        ))}
+      </svg>
     </div>
   )
 }

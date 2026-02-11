@@ -19,6 +19,12 @@ export function convertToLocalState(
       adminPassword: '',
       editorPassword: '',
       aaiApiKey: '',
+      shopifyStorefrontToken: '',
+      shopifyAdminApiKey: '',
+      shopifyApiSecret: '',
+      shopifyApiVersion: '',
+      shopifyStoreDomain: '',
+      resendApiKey: '',
     };
   }
 
@@ -31,6 +37,12 @@ export function convertToLocalState(
     adminPassword: '',
     editorPassword: '',
     aaiApiKey: '',
+    shopifyStorefrontToken: '',
+    shopifyAdminApiKey: '',
+    shopifyApiSecret: '',
+    shopifyApiVersion: status.shopifyApiVersion || '',
+    shopifyStoreDomain: '',
+    resendApiKey: '',
   };
 }
 
@@ -64,6 +76,26 @@ export function convertToBackendFormat(
     request.AAI_API_KEY = state.aaiApiKey.trim();
   }
 
+  if (state.shopifyStorefrontToken?.trim()) {
+    request.SHOPIFY_STOREFRONT_TOKEN = state.shopifyStorefrontToken.trim();
+  }
+
+  if (state.shopifyApiSecret?.trim()) {
+    request.SHOPIFY_API_SECRET = state.shopifyApiSecret.trim();
+  }
+
+  if (state.shopifyApiVersion?.trim()) {
+    request.SHOPIFY_API_VERSION = state.shopifyApiVersion.trim();
+  }
+
+  if (state.shopifyStoreDomain?.trim()) {
+    request.SHOPIFY_STORE_DOMAIN = state.shopifyStoreDomain.trim();
+  }
+
+  if (state.resendApiKey?.trim()) {
+    request.RESEND_API_KEY = state.resendApiKey.trim();
+  }
+
   return request;
 }
 
@@ -78,22 +110,34 @@ export function validateAdvancedConfig(
   // Turso validation: both URL and token must be provided together
   const hasTursoUrl = Boolean(state.tursoUrl?.trim());
   const hasTursoToken = Boolean(state.tursoToken?.trim());
-
   if (hasTursoUrl && !hasTursoToken) {
     errors.tursoToken =
       'Turso Auth Token is required when Turso URL is provided';
   }
-
   if (hasTursoToken && !hasTursoUrl) {
     errors.tursoUrl =
       'Turso Database URL is required when Turso Token is provided';
   }
-
-  // Basic URL validation for Turso
   if (hasTursoUrl && state.tursoUrl) {
     const urlPattern = /^libsql:\/\/.+/;
     if (!urlPattern.test(state.tursoUrl.trim())) {
       errors.tursoUrl = 'Turso Database URL must start with "libsql://"';
+    }
+  }
+
+  // Shopify store domain validation
+  if (state.shopifyStoreDomain?.trim()) {
+    const domainPattern = /^[a-zA-Z0-9-]+\.myshopify\.com$/;
+    if (!domainPattern.test(state.shopifyStoreDomain.trim())) {
+      errors.shopifyStoreDomain =
+        'Store domain must be in the format "your-shop.myshopify.com"';
+    }
+  }
+
+  if (state.shopifyApiVersion?.trim()) {
+    if (!/^\d{4}-\d{2}$/.test(state.shopifyApiVersion.trim())) {
+      errors.shopifyApiVersion =
+        'Version must match YYYY-MM format (e.g. 2026-01)';
     }
   }
 
@@ -102,7 +146,6 @@ export function validateAdvancedConfig(
     errors.adminPassword =
       'Admin password should be at least 8 characters long';
   }
-
   if (state.editorPassword && state.editorPassword.length < 8) {
     errors.editorPassword =
       'Editor password should be at least 8 characters long';

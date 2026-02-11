@@ -1,6 +1,6 @@
 {
   "name": "astro-tractstack",
-  "version": "2.2.10",
+  "version": "2.3.0",
   "description": "Astro integration for TractStack - the free web press by At Risk Media",
   "type": "module",
   "main": "dist/index.js",
@@ -24,6 +24,7 @@
     "build": "vite build && tsc -p tsconfig.dts.json",
     "format": "prettier --write .",
     "dev": "vite build --watch",
+    "lint": "prettier --check .",
     "prepublishOnly": "pnpm format && pnpm tsc && pnpm build"
   },
   "keywords": [
@@ -50,6 +51,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
     "kleur": "^4.1.5",
     "prompts": "^2.4.2"
   },

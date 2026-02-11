@@ -35,10 +35,8 @@
     </div>
 
     <script>
-      // Clear authentication data
       async function logout() {
         try {
-          // Call server-side logout API to clear HTTP-only cookies
           const response = await fetch('/api/auth/logout', {
             method: 'POST',
             headers: {
@@ -48,13 +46,10 @@
 
           const result = await response.json();
 
-          if (result.success) {
-            console.log('StoryKeep: Admin logout successful');
-          } else {
+          if (!result.success) {
             console.error('StoryKeep: Admin logout failed:', result.error);
           }
 
-          // Also clear any remaining TractStack user profile data
           const tractStackKeys = [];
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -64,15 +59,11 @@
           }
           tractStackKeys.forEach((key) => localStorage.removeItem(key));
 
-          console.log('TractStack: Complete logout finished');
-
-          // Redirect to home page
           setTimeout(() => {
             window.location.href = '/';
           }, 1000);
         } catch (error) {
           console.error('Logout error:', error);
-          // Still redirect even if logout API fails
           window.location.href = '/';
         }
       }

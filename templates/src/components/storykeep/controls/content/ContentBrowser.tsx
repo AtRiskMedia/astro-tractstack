@@ -171,20 +171,6 @@ const ContentBrowser = ({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <h2 className="font-action text-2xl font-bold text-gray-900">
-          Content Management
-          {(analytics.isLoading || analytics.status === 'loading') && (
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              (Loading data...)
-            </span>
-          )}
-        </h2>
-        <p className="mt-1 text-sm text-gray-600">
-          Browse and manage your StoryKeep content pages
-        </p>
-      </div>
-
       {analytics.error && (
         <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-800">
           <h4 className="font-bold">Content Error</h4>

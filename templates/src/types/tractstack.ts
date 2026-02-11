@@ -183,6 +183,8 @@ export interface BrandConfig {
   KNOWN_RESOURCES?: KnownResourcesConfig;
   DESIGN_LIBRARY?: DesignLibraryConfig;
   HAS_AAI?: boolean;
+  HAS_SHOPIFY?: boolean;
+  HAS_RESEND?: boolean;
   HAS_HYDRATION_TOKEN?: boolean;
 }
 
@@ -217,6 +219,8 @@ export interface BrandConfigState {
   knownResources: KnownResourcesConfig;
   designLibrary?: DesignLibraryConfig;
   hasAAI: boolean;
+  hasShopify: boolean;
+  hasResend: boolean;
   hasHydrationToken: boolean;
 }
 
@@ -251,6 +255,12 @@ export interface AdvancedConfigStatus {
   editorPasswordSet: boolean;
   aaiAPIKeySet: boolean;
   tursoEnabled: boolean;
+  shopifyStorefrontTokenSet: boolean;
+  shopifyAdminApiKeySet: boolean;
+  shopifyApiSecretSet: boolean;
+  shopifyApiVersion: string;
+  shopifyStoreDomainSet: boolean;
+  resendApiKeySet: boolean;
 }
 
 export interface AdvancedConfigState {
@@ -259,6 +269,12 @@ export interface AdvancedConfigState {
   adminPassword: string;
   editorPassword: string;
   aaiApiKey: string;
+  shopifyStorefrontToken: string;
+  shopifyAdminApiKey: string;
+  shopifyApiSecret: string;
+  shopifyApiVersion: string;
+  shopifyStoreDomain: string;
+  resendApiKey: string;
 }
 
 export interface AdvancedConfigUpdateRequest {
@@ -269,6 +285,11 @@ export interface AdvancedConfigUpdateRequest {
   AAI_API_KEY?: string;
   HOME_SLUG?: string;
   TRACTSTACK_HOME_SLUG?: string;
+  SHOPIFY_STOREFRONT_TOKEN?: string;
+  SHOPIFY_API_SECRET?: string;
+  SHOPIFY_API_VERSION?: string;
+  SHOPIFY_STORE_DOMAIN?: string;
+  RESEND_API_KEY?: string;
 }
 
 export interface MenuNodeState {

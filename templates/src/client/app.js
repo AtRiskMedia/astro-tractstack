@@ -144,8 +144,10 @@ if (!window.TractStackApp) {
       }
 
       const { backendUrl, sessionId, storyfragmentId, tenantId } = this.config;
-      if (!sessionId || !tenantId) {
-        logError('Cannot start SSE connection: missing sessionId or tenantId.');
+      if (!sessionId || !tenantId || !storyfragmentId) {
+        logError(
+          'Cannot start SSE connection: missing sessionId or tenantId or storyfragmentId.'
+        );
         return;
       }
 

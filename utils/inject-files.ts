@@ -588,6 +588,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/stores/resources.ts'),
       dest: 'src/stores/resources.ts',
     },
+    {
+      src: resolve('../templates/src/stores/shopify.ts'),
+      dest: 'src/stores/shopify.ts',
+    },
 
     // Compositor stores
     {
@@ -865,8 +869,12 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep.astro',
     },
     {
-      src: resolve('../templates/src/pages/storykeep/content.astro'),
-      dest: 'src/pages/storykeep/content.astro',
+      src: resolve('../templates/src/pages/storykeep/pages.astro'),
+      dest: 'src/pages/storykeep/pages.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/manage.astro'),
+      dest: 'src/pages/storykeep/manage.astro',
     },
     {
       src: resolve('../templates/src/pages/storykeep/branding.astro'),
@@ -877,8 +885,16 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep/advanced.astro',
     },
     {
+      src: resolve('../templates/src/pages/storykeep/shopify.astro'),
+      dest: 'src/pages/storykeep/shopify.astro',
+    },
+    {
       src: resolve('../templates/src/pages/maint.astro'),
       dest: 'src/pages/maint.astro',
+    },
+    {
+      src: resolve('../templates/custom/shopify/cart.astro'),
+      dest: 'src/pages/cart.astro',
     },
     {
       src: resolve('../templates/src/pages/404.astro'),
@@ -895,6 +911,14 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/sitemap.xml.ts'),
       dest: 'src/pages/sitemap.xml.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/shopify/getProducts.ts'),
+      dest: 'src/pages/api/shopify/getProducts.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/shopify/createCart.ts'),
+      dest: 'src/pages/api/shopify/createCart.ts',
     },
     {
       src: resolve('../templates/src/pages/api/tailwind.ts'),
@@ -1158,6 +1182,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/storykeep/Dashboard_Shopify.tsx'
+      ),
+      dest: 'src/components/storykeep/Dashboard_Shopify.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/storykeep/Dashboard_Analytics.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Analytics.tsx',
@@ -1211,6 +1241,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/controls/content/PaneTable.tsx'
       ),
       dest: 'src/components/storykeep/controls/content/PaneTable.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/controls/content/ProductTable.tsx'
+      ),
+      dest: 'src/components/storykeep/controls/content/ProductTable.tsx',
     },
     {
       src: resolve(
@@ -2201,6 +2237,51 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/utils/customHelpers.ts'),
       dest: 'src/utils/customHelpers.ts',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyProductGrid.tsx'),
+      dest: 'src/custom/shopify/ShopifyProductGrid.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyServiceList.tsx'),
+      dest: 'src/custom/shopify/ShopifyServiceList.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CartIcon.tsx'),
+      dest: 'src/custom/shopify/CartIcon.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyCartManager.tsx'),
+      dest: 'src/custom/shopify/ShopifyCartManager.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CartModal.tsx'),
+      dest: 'src/custom/shopify/CartModal.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CheckoutModal.tsx'),
+      dest: 'src/custom/shopify/CheckoutModal.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/Cart.tsx'),
+      dest: 'src/custom/shopify/Cart.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/CalDotComBooking.tsx'),
+      dest: 'src/custom/shopify/CalDotComBooking.tsx',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/ShopifyCheckout.tsx'),
+      dest: 'src/custom/shopify/ShopifyCheckout.tsx',
       protected: true,
     },
 
