@@ -16,7 +16,7 @@ interface CreateCartPayload {
 }
 
 const getBackendUrl = () => {
-  return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+  return import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 };
 
 export const POST: APIRoute = async ({ request }) => {

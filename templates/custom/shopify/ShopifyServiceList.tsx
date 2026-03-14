@@ -4,13 +4,30 @@ import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
   resources: Record<string, ResourceNode[]>;
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
 }
 
-export default function ShopifyServiceList({ resources = {} }: Props) {
+export default function ShopifyServiceList({ resources = {}, options }: Props) {
   const cart = useStore(cartStore);
 
   const products = resources['product'] || [];
-  const services = resources['service'] || [];
+  let services = resources['service'] || [];
+
+  let group = '';
+  try {
+    const parsedOptions = JSON.parse(options?.params?.options || '{}');
+    group = parsedOptions.group || '';
+  } catch (e) {
+    // Ignore JSON parse errors
+  }
+
+  if (group) {
+    services = services.filter((s) => s.optionsPayload?.group === group);
+  }
 
   const boundServiceSlugs = new Set(
     products
@@ -86,7 +103,7 @@ export default function ShopifyServiceList({ resources = {} }: Props) {
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-900">{resource.title}</h3>
                 {duration && (
-                  <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                  <span className="inline-flex items-center rounded-sm bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
                     {duration} mins
                   </span>
                 )}

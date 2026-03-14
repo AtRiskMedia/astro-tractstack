@@ -202,7 +202,7 @@ export default function Cart({ resources = [] }: CartProps) {
                           {resource.title}
                         </h3>
                         {isService && (
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
+                          <span className="inline-flex items-center rounded-sm bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700">
                             {serviceDuration} mins
                           </span>
                         )}

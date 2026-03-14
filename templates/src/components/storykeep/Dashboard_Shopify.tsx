@@ -73,14 +73,12 @@ export default function StoryKeepDashboard_Shopify({
     }
   }, [brandConfig]);
 
-  // Operational Effect: Fetch products only when READY
   useEffect(() => {
     if (machineState === 'READY') {
       fetchShopifyProducts();
     }
   }, [machineState]);
 
-  // Memoize the lookup map for performance (gid -> ResourceNode)
   const linkedResourceMap = useMemo(() => {
     const map = new Map<string, ResourceNode>();
     resources.forEach((r) => {
@@ -219,6 +217,7 @@ export default function StoryKeepDashboard_Shopify({
         updatedKnownResources['product'] = {
           gid: { type: 'string', optional: false },
           allowMultiple: { type: 'boolean', optional: false },
+          group: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: false },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           ...(wantService
@@ -237,6 +236,7 @@ export default function StoryKeepDashboard_Shopify({
       if (wantService) {
         updatedKnownResources['service'] = {
           gid: { type: 'string', optional: true },
+          group: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: true },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           bookingLengthMinutes: {

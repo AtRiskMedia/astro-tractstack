@@ -6,6 +6,11 @@ import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
   resources: Record<string, ResourceNode[]>;
+  options?: {
+    params?: {
+      options?: string;
+    };
+  };
 }
 
 interface ShopifyOption {
@@ -259,9 +264,21 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   );
 }
 
-export default function ShopifyProductGrid({ resources = {} }: Props) {
-  const products = resources['product'] || [];
+export default function ShopifyProductGrid({ resources = {}, options }: Props) {
+  let products = resources['product'] || [];
   const services = resources['service'] || [];
+
+  let group = '';
+  try {
+    const parsedOptions = JSON.parse(options?.params?.options || '{}');
+    group = parsedOptions.group || '';
+  } catch (e) {
+    // Ignore JSON parse errors
+  }
+
+  if (group) {
+    products = products.filter((p) => p.optionsPayload?.group === group);
+  }
 
   if (products.length === 0) {
     return null;
