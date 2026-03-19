@@ -1,43 +1,32 @@
 import type { APIRoute } from '@/types/astro';
-import { map } from 'nanostores'; // Replaces the persistent store import
 import { resolveTenantId } from '@/utils/tenantResolver';
 
 export const prerender = false;
-
-/**
- * Standard nanostore map for server-side memory caching keyed by Tenant ID.
- * This is non-persistent and safe for Node/SSR execution, ensuring it
- * does not trigger the Proxy trap error in development environments.
- */
-const serverCache = map<
-  Record<string, { products: any[]; lastFetched: number }>
->({});
-const CACHE_TTL = 300000; // 5 minute cache duration
 
 const getBackendUrl = () => {
   return import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 };
 
 export const GET: APIRoute = async ({ request }) => {
-  // 1. Resolve Tenant Identity
   const resolution = await resolveTenantId(request);
   const tenantId = resolution.id;
 
-  // 2. Check Server-Side Cache for this specific tenant
-  const tenantCache = serverCache.get()[tenantId];
-  if (tenantCache && Date.now() - tenantCache.lastFetched < CACHE_TTL) {
-    return new Response(JSON.stringify(tenantCache), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const url = new URL(request.url);
+  const q = url.searchParams.get('q') || '';
+  const cursor = url.searchParams.get('cursor') || '';
+
+  const backendUrl = new URL(`${getBackendUrl()}/api/v1/shopify/products`);
+  if (q) {
+    backendUrl.searchParams.set('q', q);
+  }
+  if (cursor) {
+    backendUrl.searchParams.set('cursor', cursor);
   }
 
-  // 3. Fetch from Backend Proxy (Cache Miss)
-  const backendEndpoint = `${getBackendUrl()}/api/v1/shopify/products`;
   const cookieHeader = request.headers.get('cookie') || '';
 
   try {
-    const backendResponse = await fetch(backendEndpoint, {
+    const backendResponse = await fetch(backendUrl.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -55,15 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
 
     const result = await backendResponse.json();
 
-    // 4. Update the Tenant-specific Cache
-    const newState = {
-      products: result.products || [],
-      lastFetched: Date.now(),
-    };
-
-    serverCache.setKey(tenantId, newState);
-
-    return new Response(JSON.stringify(newState), {
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

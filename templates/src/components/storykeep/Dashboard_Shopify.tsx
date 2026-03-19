@@ -73,12 +73,6 @@ export default function StoryKeepDashboard_Shopify({
     }
   }, [brandConfig]);
 
-  useEffect(() => {
-    if (machineState === 'READY') {
-      fetchShopifyProducts();
-    }
-  }, [machineState]);
-
   const linkedResourceMap = useMemo(() => {
     const map = new Map<string, ResourceNode>();
     resources.forEach((r) => {
@@ -362,27 +356,16 @@ export default function StoryKeepDashboard_Shopify({
         </div>
       )}
 
-      {status.isLoading && data.products.length === 0 ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
-            <p className="mt-2 text-sm text-gray-500">
-              Loading products from Shopify...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <ProductTable
-          products={data.products}
-          linkedResourceMap={linkedResourceMap}
-          onRefresh={handleRefresh}
-          isRefreshing={status.isLoading}
-          onSelectProduct={setSelectedProduct}
-          onLink={handleLink}
-          onUnlink={handleUnlink}
-          onEdit={handleEdit}
-        />
-      )}
+      <ProductTable
+        products={data.products}
+        linkedResourceMap={linkedResourceMap}
+        onRefresh={handleRefresh}
+        isRefreshing={status.isLoading}
+        onSelectProduct={setSelectedProduct}
+        onLink={handleLink}
+        onUnlink={handleUnlink}
+        onEdit={handleEdit}
+      />
 
       {/* Product Inspector Modal */}
       {selectedProduct && (

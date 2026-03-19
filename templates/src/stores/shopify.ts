@@ -53,6 +53,11 @@ export interface ShopifyProduct {
   variants: ShopifyVariant[];
 }
 
+export interface ShopifyPageInfo {
+  hasNextPage: boolean;
+  endCursor: string;
+}
+
 export type CartActionType = 'add' | 'remove';
 
 export interface CartAction {
@@ -98,22 +103,15 @@ export type CartState = (typeof CART_STATES)[keyof typeof CART_STATES];
 
 export const isShopifyHandoff = atom<boolean>(false);
 
-export const shopifyData = persistentAtom<{
+export const shopifyData = atom<{
   products: ShopifyProduct[];
+  pageInfo?: ShopifyPageInfo;
   lastFetched: number;
-}>(
-  'tractstack_shopify_data',
-  {
-    products: [],
-    lastFetched: 0,
-  },
-  {
-    encode: JSON.stringify,
-    decode: JSON.parse,
-  }
-);
+}>({
+  products: [],
+  lastFetched: 0,
+});
 
-// Non-persistent Status (Load states should reset on refresh)
 export const shopifyStatus = map<{
   isLoading: boolean;
   error: string | null;
@@ -131,8 +129,6 @@ export const addQueue = persistentAtom<CartAction[]>(
   }
 );
 
-// We use a backing persistentAtom for the cart to ensure data survives reloads,
-// but expose it as a 'map' to preserve the .setKey() API used by consumers.
 const cartPersistence = persistentAtom<Record<string, CartItemState>>(
   'tractstack_shopify_cart',
   {},
@@ -147,10 +143,8 @@ export const cartStore = map<Record<string, CartItemState>>(
 );
 
 onMount(cartStore, () => {
-  // Sync initial state from persistence (in case of race conditions or hydration delay)
   cartStore.set(cartPersistence.get());
 
-  // Persist any changes made to the map
   const unbind = cartStore.listen((value) => {
     cartPersistence.set(value);
   });
@@ -167,11 +161,29 @@ export const cartState = persistentAtom<CartState>(
   CART_STATES.INIT
 );
 
-export async function fetchShopifyProducts() {
+let currentAbortController: AbortController | null = null;
+
+export async function fetchShopifyProducts(
+  q: string = '',
+  cursor: string | null = null
+) {
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  currentAbortController = new AbortController();
+  const signal = currentAbortController.signal;
+
   shopifyStatus.set({ isLoading: true, error: null });
 
   try {
-    const response = await fetch('/api/shopify/getProducts');
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (cursor) params.set('cursor', cursor);
+
+    const queryString = params.toString();
+    const url = `/api/shopify/getProducts${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetch(url, { signal });
     const result = await response.json();
 
     if (!response.ok) {
@@ -179,12 +191,17 @@ export async function fetchShopifyProducts() {
     }
 
     shopifyData.set({
-      products: result.products,
+      products: result.products || [],
+      pageInfo: result.pageInfo,
       lastFetched: Date.now(),
     });
 
     shopifyStatus.set({ isLoading: false, error: null });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return;
+    }
+
     console.error('Shopify fetch failed:', error);
     shopifyStatus.set({
       isLoading: false,
@@ -192,6 +209,18 @@ export async function fetchShopifyProducts() {
         error instanceof Error ? error.message : 'Failed to fetch products',
     });
   }
+}
+
+export function clearShopifySearch() {
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  shopifyData.set({
+    products: [],
+    pageInfo: undefined,
+    lastFetched: 0,
+  });
+  shopifyStatus.set({ isLoading: false, error: null });
 }
 
 export const customerDetails = persistentAtom<{
