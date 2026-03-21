@@ -4,7 +4,7 @@ import {
   parseAiPane,
   createDefaultShell,
 } from '@/utils/compositor/aiPaneParser';
-import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
+import { callAaiAPI } from '@/utils/compositor/aiGeneration';
 import { markdownToHtml } from '@/utils/compositor/htmlAst';
 import { CopyInputStep, type CopyMode } from './CopyInputStep';
 import { AiDesignStep, type AiDesignConfig } from './AiDesignStep';
@@ -148,7 +148,7 @@ export const AiStandardDesignStep = ({
       let shellResult = '';
 
       if (isAiStyling) {
-        // AI Path: Generate Shell via AskLemur
+        // AI Path: Generate Shell via Aai
         let designInput = `Generate a design using a **${aiDesignConfig.harmony.toLowerCase()}** color scheme with a **${aiDesignConfig.theme.toLowerCase()}** theme.`;
         if (aiDesignConfig.baseColor)
           designInput += ` Base the colors around **${aiDesignConfig.baseColor}**.`;
@@ -173,7 +173,7 @@ export const AiStandardDesignStep = ({
           );
         }
 
-        shellResult = await callAskLemurAPI({
+        shellResult = await callAaiAPI({
           prompt: formattedShellPrompt,
           context: masterShellSystem,
           expectJson: true,
@@ -204,7 +204,7 @@ export const AiStandardDesignStep = ({
             .replace('{{LAYOUT_TYPE}}', layoutType)
             .replace('{{SHELL_JSON}}', shellResult);
 
-          finalHtml = await callAskLemurAPI({
+          finalHtml = await callAaiAPI({
             prompt: formattedCopyPrompt,
             context: masterCopySystem,
             expectJson: false,
@@ -218,7 +218,7 @@ export const AiStandardDesignStep = ({
               .replace('{{SHELL_JSON}}', shellResult)
               .replace('{{COPY_INPUT}}', copyValue);
 
-            finalHtml = await callAskLemurAPI({
+            finalHtml = await callAaiAPI({
               prompt: formattedStylePrompt,
               context: masterStyleSystem,
               expectJson: false,
@@ -246,7 +246,7 @@ export const AiStandardDesignStep = ({
                 .replace('{{SHELL_JSON}}', shellResult)
                 .replace('{{COPY_INPUT}}', content);
 
-              const styledHtml = await callAskLemurAPI({
+              const styledHtml = await callAaiAPI({
                 prompt: formattedStylePrompt,
                 context: masterStyleSystem,
                 expectJson: false,
@@ -289,7 +289,7 @@ export const AiStandardDesignStep = ({
               .replace('{{LAYOUT_TYPE}}', layoutType)
               .replace('{{COLUMN_EXAMPLE}}', columnPreset.example);
 
-            const copyResult = await callAskLemurAPI({
+            const copyResult = await callAaiAPI({
               prompt: formattedCopyPrompt,
               context: masterCopySystem,
               expectJson: false,

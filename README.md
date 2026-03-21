@@ -75,7 +75,7 @@ For more recipes and community guides, visit [FreeWebPress.org](https://FreeWebP
 
 Expanding full-text search to include embedded video transcripts (via BunnyCDN).
 
-- **AI Visual Editor:** Powered by AssemblyAI askLemur to highlight and extract transcript sections.
+- **AI Visual Editor:** Powered by AssemblyAI aai to highlight and extract transcript sections.
 - **Smart Content:** Automated chaptering and descriptions for long-form video.
 - **Video-to-Blog Pipeline:** Transform video highlights into rich, searchable blog pages using the design library.
 
