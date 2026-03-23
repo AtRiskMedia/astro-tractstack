@@ -22,6 +22,7 @@ interface ShopifyVariant {
   id: string;
   title: string;
   price: { amount: string; currencyCode: string };
+  compareAtPrice?: { amount: string; currencyCode: string };
   selectedOptions: { name: string; value: string }[];
 }
 
@@ -36,7 +37,6 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   const serviceBoundSlug = resource.optionsPayload?.serviceBound as
     | string
     | undefined;
-
   const boundServiceResource = serviceBoundSlug
     ? allServices.find((r) => r.slug === serviceBoundSlug)
     : undefined;
@@ -52,9 +52,9 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
 
   const options: ShopifyOption[] = product?.options || [];
   const variants: ShopifyVariant[] = product?.variants || [];
+  const vendor: string = product?.vendor || '';
 
   const hasModeOption = options.some((o) => o.name === 'Mode');
-  // Filter out 'Mode' (utilitarian) and 'Title' (Shopify default unconfigured option)
   const visibleOptions = options.filter(
     (o) => o.name !== 'Mode' && o.name !== 'Title'
   );
@@ -68,28 +68,19 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   });
 
   const getVariant = (targetMode: 'Shipped' | 'Pickup' | null) => {
-    // If we're looking for a mode variant but the product isn't configured for it, return undefined.
     if (targetMode && !hasModeOption) return undefined;
-
     const found = variants.find((v) => {
       const optionsMatch = visibleOptions.every((opt) => {
         const variantOpt = v.selectedOptions.find((o) => o.name === opt.name);
         return variantOpt?.value === selections[opt.name];
       });
-
       if (!optionsMatch) return false;
-
       if (hasModeOption && targetMode) {
         const modeOpt = v.selectedOptions.find((o) => o.name === 'Mode');
         return modeOpt?.value === targetMode;
       }
-
-      // If it's a Smart Product but we aren't looking for a specific mode, don't return a random mode variant.
-      if (hasModeOption && !targetMode) return false;
-
-      return true;
+      return !(hasModeOption && !targetMode);
     });
-
     return found;
   };
 
@@ -98,164 +89,127 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
     : getVariant(null);
   const variantPickup = hasModeOption ? getVariant('Pickup') : undefined;
 
-  const cartKey = `${resource.id}_${variantShipped?.id || 'null'}_${
-    variantPickup?.id || 'null'
-  }`;
-  const cartItem = cart[cartKey];
-  const quantity = cartItem?.quantity || 0;
-
   const currentDisplayVariant = variantShipped || variantPickup || variants[0];
   const price = currentDisplayVariant?.price?.amount;
+  const compareAtPrice = currentDisplayVariant?.compareAtPrice?.amount;
   const currency = currentDisplayVariant?.price?.currencyCode || 'USD';
+
+  // High contrast rose badge calculation
+  let discountPercent = 0;
+  if (price && compareAtPrice) {
+    const p = parseFloat(price);
+    const cap = parseFloat(compareAtPrice);
+    if (cap > p) {
+      discountPercent = Math.round(((cap - p) / cap) * 100);
+    }
+  }
+
   const { src, srcSet } = getShopifyImage(
     resource,
     '600',
     currentDisplayVariant?.id
   );
 
-  const handleAction = (action: 'add' | 'remove') => {
-    const queueUpdates: CartAction[] = [];
-
-    if (action === 'remove') {
-      queueUpdates.push({
-        resourceId: resource.id,
-        variantIdShipped: variantShipped?.id,
-        variantIdPickup: variantPickup?.id,
-        action: 'remove',
-      });
-
-      if (boundServiceResource) {
-        queueUpdates.push({
-          resourceId: boundServiceResource.id,
-          variantId: boundServiceResource.optionsPayload?.shopifyData
-            ? JSON.parse(boundServiceResource.optionsPayload.shopifyData)
-                .variants?.[0]?.id
-            : undefined,
-          action: 'remove',
-        });
-      }
-    } else {
-      const productAction: CartAction & { boundResourceId?: string } = {
+  const handleAction = () => {
+    const queueUpdates: CartAction[] = [
+      {
         resourceId: resource.id,
         gid: product?.id,
         variantIdShipped: variantShipped?.id,
         variantIdPickup: variantPickup?.id,
         action: 'add',
         boundResourceId: boundServiceResource?.id,
-      };
-      queueUpdates.push(productAction);
-
-      if (boundServiceResource) {
-        let serviceVariantId = undefined;
-        try {
-          if (boundServiceResource.optionsPayload?.shopifyData) {
-            const serviceData = JSON.parse(
-              boundServiceResource.optionsPayload.shopifyData
-            );
-            serviceVariantId = serviceData.variants?.[0]?.id;
-          }
-        } catch (e) {}
-
-        queueUpdates.push({
-          resourceId: boundServiceResource.id,
-          variantId: serviceVariantId,
-          action: 'add',
-        });
-      }
-    }
-
+      },
+    ];
     addQueue.set([...addQueue.get(), ...queueUpdates]);
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="aspect-square w-full overflow-hidden bg-gray-100">
-        <img
-          src={src}
-          srcSet={srcSet}
-          alt={resource.title}
-          className="h-full w-full object-cover object-center"
-          loading="lazy"
-        />
-      </div>
+    <div className="group flex flex-col text-left font-main">
+      {/* Clickable Area: Image and Title */}
+      <button
+        onClick={handleAction}
+        className="text-left focus:outline-none"
+        aria-label={`Add ${resource.title} to cart`}
+      >
+        {/* Rounded-2xl Frame with Top-Left Badge */}
+        <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-brand-8 transition-opacity group-hover:opacity-90">
+          <img
+            src={src}
+            srcSet={srcSet}
+            alt={resource.title}
+            className="h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+          {discountPercent > 0 && (
+            <div className="absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-md bg-rose-600 text-xs font-bold text-white shadow-sm">
+              -{discountPercent}%
+            </div>
+          )}
+        </div>
 
-      <div className="flex flex-1 flex-col p-6">
-        <h3 className="text-lg font-bold text-gray-900">{resource.title}</h3>
-        <p className="mt-2 flex-grow text-sm text-gray-500">
-          {resource.oneliner}
-        </p>
+        <div className="mt-6 flex flex-col">
+          {/* Vendor Label */}
+          {vendor && (
+            <span className="text-xs font-bold uppercase tracking-widest text-brand-6">
+              {vendor}
+            </span>
+          )}
 
-        {boundServiceResource && (
-          <div className="mt-2 w-fit rounded bg-blue-50 p-3 text-xs font-bold text-blue-700">
-            Includes {boundServiceResource.title}
-          </div>
-        )}
+          <h3 className="mt-1 text-2xl font-bold text-brand-1">
+            {resource.title}
+          </h3>
 
-        {visibleOptions.length > 0 && (
-          <div className="mt-4 w-fit space-y-3 p-1">
-            {visibleOptions.map((opt) => (
-              <div key={opt.name}>
-                <label className="mb-1 block text-xs font-bold text-gray-700">
-                  {opt.name}
-                </label>
-                <select
-                  value={selections[opt.name]}
-                  onChange={(e) => {
-                    const newVal = e.target.value;
-                    setSelections((prev) => ({
-                      ...prev,
-                      [opt.name]: newVal,
-                    }));
-                  }}
-                  className="block w-full rounded-md border-gray-300 p-2 text-sm shadow-sm focus:border-black focus:ring-black"
-                >
-                  {opt.values.map((val) => (
-                    <option key={val} value={val}>
-                      {val}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex items-center justify-between">
-          <span className="text-base font-bold text-gray-900">
-            {price ? `${price} ${currency}` : ''}
-          </span>
-          <div className="flex items-center space-x-3">
-            {quantity > 0 ? (
-              <>
-                <button
-                  onClick={() => handleAction('remove')}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
-                  aria-label="Remove one"
-                >
-                  -
-                </button>
-                <span className="text-sm font-bold text-gray-900">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => handleAction('add')}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-100"
-                  aria-label="Add one"
-                >
-                  +
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => handleAction('add')}
-                className="rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
-              >
-                Add to Cart
-              </button>
+          {/* Combined Price Baseline */}
+          <div className="mt-1 flex items-baseline space-x-2">
+            <span className="text-lg font-bold text-brand-1">
+              {price} {currency}
+            </span>
+            {discountPercent > 0 && (
+              <span className="text-sm text-brand-6 line-through">
+                {compareAtPrice} {currency}
+              </span>
             )}
           </div>
+
+          <p className="mt-3 text-sm text-brand-7">{resource.oneliner}</p>
         </div>
-      </div>
+      </button>
+
+      {/* Interactive Variant Selectors */}
+      {visibleOptions.length > 0 && (
+        <div className="mt-4 space-y-4">
+          {visibleOptions.map((opt) => (
+            <div key={opt.name} onClick={(e) => e.stopPropagation()}>
+              <label className="mb-1 block text-xs font-bold uppercase text-brand-7">
+                {opt.name}
+              </label>
+              <select
+                value={selections[opt.name]}
+                onChange={(e) =>
+                  setSelections((prev) => ({
+                    ...prev,
+                    [opt.name]: e.target.value,
+                  }))
+                }
+                className="block w-full border-b border-brand-8 bg-transparent py-2 text-sm text-brand-1 focus:border-brand-1 focus:outline-none"
+              >
+                {opt.values.map((val) => (
+                  <option key={val} value={val}>
+                    {val}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {boundServiceResource && (
+        <div className="bg-brand-4/10 mt-4 w-fit rounded px-2 py-1 text-xs font-bold text-brand-4">
+          INCLUDES {boundServiceResource.title.toUpperCase()}
+        </div>
+      )}
     </div>
   );
 }
@@ -276,15 +230,18 @@ export default function ShopifyProductGrid({ resources = {}, options }: Props) {
 
   if (products.length === 0) return null;
 
+  // Grid with increased gaps matching the design
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {products.map((resource) => (
-        <ProductCard
-          key={resource.id}
-          resource={resource}
-          allServices={services}
-        />
-      ))}
+    <div className="mx-auto max-w-7xl px-4 md:px-8">
+      <div className="grid grid-cols-2 gap-x-8 gap-y-16 md:gap-x-12 xl:grid-cols-3">
+        {products.map((resource) => (
+          <ProductCard
+            key={resource.id}
+            resource={resource}
+            allServices={services}
+          />
+        ))}
+      </div>
     </div>
   );
 }
