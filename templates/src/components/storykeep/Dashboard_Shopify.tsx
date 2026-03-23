@@ -51,6 +51,12 @@ export default function StoryKeepDashboard_Shopify({
   );
   const [showTypeSelector, setShowTypeSelector] = useState(false);
 
+  const [showSmartCartWarning, setShowSmartCartWarning] = useState(false);
+  const [pendingImport, setPendingImport] = useState<{
+    category: string;
+    product: ShopifyProduct;
+  } | null>(null);
+
   const [machineState, setMachineState] = useState<MachineState>('INIT');
   const [internalBrandConfig, setInternalBrandConfig] =
     useState<BrandConfigState | null>(null);
@@ -121,9 +127,9 @@ export default function StoryKeepDashboard_Shopify({
       setTargetProduct(product);
       setShowTypeSelector(true);
     } else if (hasServiceSchema) {
-      startCreateFlow('service', product);
+      executePreFlightCheck('service', product);
     } else {
-      startCreateFlow('product', product);
+      executePreFlightCheck('product', product);
     }
   };
 
@@ -131,6 +137,19 @@ export default function StoryKeepDashboard_Shopify({
     setDraftResource(resource as any);
     setIsCreateMode(false);
     setShowResourceModal(true);
+  };
+
+  // Architectural Constraint: Smart Cart architecture strictly requires the exact "Mode" option
+  // to successfully map Variant IDs for the shipping bypass in the downstream cart state.
+  const executePreFlightCheck = (category: string, product: ShopifyProduct) => {
+    const hasMode = product.options.some((opt) => opt.name === 'Mode');
+    if (hasMode) {
+      startCreateFlow(category, product);
+    } else {
+      setPendingImport({ category, product });
+      setShowSmartCartWarning(true);
+      setShowTypeSelector(false);
+    }
   };
 
   const startCreateFlow = (category: string, product: ShopifyProduct) => {
@@ -450,13 +469,17 @@ export default function StoryKeepDashboard_Shopify({
                 </p>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
-                    onClick={() => startCreateFlow('product', targetProduct)}
+                    onClick={() =>
+                      executePreFlightCheck('product', targetProduct)
+                    }
                     className="flex w-full items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
                   >
                     Product
                   </button>
                   <button
-                    onClick={() => startCreateFlow('service', targetProduct)}
+                    onClick={() =>
+                      executePreFlightCheck('service', targetProduct)
+                    }
                     className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"
                   >
                     Service (Bookable)
@@ -466,6 +489,54 @@ export default function StoryKeepDashboard_Shopify({
                   <button
                     onClick={() => setShowTypeSelector(false)}
                     className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Smart Cart Warning Modal */}
+      {showSmartCartWarning && pendingImport && (
+        <div className="relative z-50" aria-modal="true">
+          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+              <div className="px-6 py-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Missing Smart Cart Architecture
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  This product cannot bypass shipping fees during mixed-cart
+                  checkout. To enable Smart Cart pickup, the product must be
+                  configured in Shopify with an <strong>Option name</strong> of
+                  exactly "Mode" containing the <strong>Option values</strong>{' '}
+                  "Shipped" and "Pickup". If you import this now, it will be
+                  treated as a standard shipped item.
+                </p>
+                <div className="mt-6 flex flex-col gap-3">
+                  <button
+                    onClick={() => {
+                      setShowSmartCartWarning(false);
+                      startCreateFlow(
+                        pendingImport.category,
+                        pendingImport.product
+                      );
+                      setPendingImport(null);
+                    }}
+                    className="flex w-full items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
+                  >
+                    Acknowledge & Import
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSmartCartWarning(false);
+                      setPendingImport(null);
+                    }}
+                    className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"
                   >
                     Cancel
                   </button>

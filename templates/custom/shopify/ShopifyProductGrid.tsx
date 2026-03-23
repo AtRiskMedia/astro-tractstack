@@ -53,14 +53,11 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   const options: ShopifyOption[] = product?.options || [];
   const variants: ShopifyVariant[] = product?.variants || [];
 
-  const isUnconfigured = options.some((o) => o.name === 'Title');
-
-  if (isUnconfigured) {
-    return null;
-  }
-
   const hasModeOption = options.some((o) => o.name === 'Mode');
-  const visibleOptions = options.filter((o) => o.name !== 'Mode');
+  // Filter out 'Mode' (utilitarian) and 'Title' (Shopify default unconfigured option)
+  const visibleOptions = options.filter(
+    (o) => o.name !== 'Mode' && o.name !== 'Title'
+  );
 
   const [selections, setSelections] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -71,6 +68,9 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   });
 
   const getVariant = (targetMode: 'Shipped' | 'Pickup' | null) => {
+    // If we're looking for a mode variant but the product isn't configured for it, return undefined.
+    if (targetMode && !hasModeOption) return undefined;
+
     const found = variants.find((v) => {
       const optionsMatch = visibleOptions.every((opt) => {
         const variantOpt = v.selectedOptions.find((o) => o.name === opt.name);
@@ -84,22 +84,27 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
         return modeOpt?.value === targetMode;
       }
 
+      // If it's a Smart Product but we aren't looking for a specific mode, don't return a random mode variant.
+      if (hasModeOption && !targetMode) return false;
+
       return true;
     });
 
     return found;
   };
 
-  const variantShipped = getVariant(hasModeOption ? 'Shipped' : null);
-  const variantPickup = getVariant(hasModeOption ? 'Pickup' : null);
+  const variantShipped = hasModeOption
+    ? getVariant('Shipped')
+    : getVariant(null);
+  const variantPickup = hasModeOption ? getVariant('Pickup') : undefined;
+
   const cartKey = `${resource.id}_${variantShipped?.id || 'null'}_${
     variantPickup?.id || 'null'
   }`;
   const cartItem = cart[cartKey];
   const quantity = cartItem?.quantity || 0;
 
-  const currentDisplayVariant =
-    getVariant('Shipped') || getVariant('Pickup') || variants[0];
+  const currentDisplayVariant = variantShipped || variantPickup || variants[0];
   const price = currentDisplayVariant?.price?.amount;
   const currency = currentDisplayVariant?.price?.currencyCode || 'USD';
   const { src, srcSet } = getShopifyImage(
@@ -109,9 +114,9 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   );
 
   const handleAction = (action: 'add' | 'remove') => {
-    if (action === 'remove') {
-      const queueUpdates: CartAction[] = [];
+    const queueUpdates: CartAction[] = [];
 
+    if (action === 'remove') {
       queueUpdates.push({
         resourceId: resource.id,
         variantIdShipped: variantShipped?.id,
@@ -129,43 +134,34 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
           action: 'remove',
         });
       }
-
-      addQueue.set([...addQueue.get(), ...queueUpdates]);
-      return;
-    }
-
-    const queueUpdates: CartAction[] = [];
-
-    const productAction: CartAction & { boundResourceId?: string } = {
-      resourceId: resource.id,
-      gid: product?.id,
-      variantIdShipped: variantShipped?.id,
-      variantIdPickup: variantPickup?.id,
-      action: 'add',
-      boundResourceId: boundServiceResource?.id,
-    };
-    queueUpdates.push(productAction);
-
-    if (boundServiceResource) {
-      let serviceVariantId = undefined;
-      try {
-        if (boundServiceResource.optionsPayload?.shopifyData) {
-          const serviceData = JSON.parse(
-            boundServiceResource.optionsPayload.shopifyData
-          );
-          serviceVariantId = serviceData.variants?.[0]?.id;
-        }
-      } catch (e) {}
-
-      queueUpdates.push({
-        resourceId: boundServiceResource.id,
-        variantId: serviceVariantId,
+    } else {
+      const productAction: CartAction & { boundResourceId?: string } = {
+        resourceId: resource.id,
+        gid: product?.id,
+        variantIdShipped: variantShipped?.id,
+        variantIdPickup: variantPickup?.id,
         action: 'add',
-      });
-    } else if (serviceBoundSlug) {
-      console.warn(
-        `[Shopify] Service bound to slug '${serviceBoundSlug}' was not found in provided resources.`
-      );
+        boundResourceId: boundServiceResource?.id,
+      };
+      queueUpdates.push(productAction);
+
+      if (boundServiceResource) {
+        let serviceVariantId = undefined;
+        try {
+          if (boundServiceResource.optionsPayload?.shopifyData) {
+            const serviceData = JSON.parse(
+              boundServiceResource.optionsPayload.shopifyData
+            );
+            serviceVariantId = serviceData.variants?.[0]?.id;
+          }
+        } catch (e) {}
+
+        queueUpdates.push({
+          resourceId: boundServiceResource.id,
+          variantId: serviceVariantId,
+          action: 'add',
+        });
+      }
     }
 
     addQueue.set([...addQueue.get(), ...queueUpdates]);
@@ -272,17 +268,13 @@ export default function ShopifyProductGrid({ resources = {}, options }: Props) {
   try {
     const parsedOptions = JSON.parse(options?.params?.options || '{}');
     group = parsedOptions.group || '';
-  } catch (e) {
-    // Ignore JSON parse errors
-  }
+  } catch (e) {}
 
   if (group) {
     products = products.filter((p) => p.optionsPayload?.group === group);
   }
 
-  if (products.length === 0) {
-    return null;
-  }
+  if (products.length === 0) return null;
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">

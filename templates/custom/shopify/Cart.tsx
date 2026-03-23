@@ -16,14 +16,25 @@ interface CartProps {
   resources: ResourceNode[];
 }
 
+/**
+ * Filters out utilitarian 'Mode' and 'Title' options.
+ * If the result is 'Default Title', it returns an empty string.
+ */
 const getCleanVariantTitle = (variant: any) => {
   if (variant?.selectedOptions) {
-    return variant.selectedOptions
-      .filter((o: any) => o.name !== 'Mode')
+    const filtered = variant.selectedOptions
+      .filter(
+        (o: any) =>
+          o.name !== 'Mode' && o.name !== 'Title' && o.value !== 'Default Title'
+      )
       .map((o: any) => o.value)
       .join(' / ');
+
+    return filtered === 'Default Title' ? '' : filtered;
   }
-  return variant?.title || '';
+
+  const title = variant?.title || '';
+  return title === 'Default Title' ? '' : title;
 };
 
 export default function Cart({ resources = [] }: CartProps) {
@@ -33,6 +44,7 @@ export default function Cart({ resources = [] }: CartProps) {
 
   const cartValues = Object.values(cart);
 
+  // Group items by resource to handle multi-variant products cleanly
   const boundServiceIds = new Set(
     cartValues
       .map((item) => item.boundResourceId)
@@ -61,16 +73,16 @@ export default function Cart({ resources = [] }: CartProps) {
     return !!resource?.optionsPayload?.bookingLengthMinutes;
   });
 
+  // A product is pickup-eligible if it has a distinct variantIdPickup
   const hasPhysicalProductWithPickup = cartValues.some(
-    (item) => !!item.variantIdPickup
+    (item) =>
+      item.variantIdPickup && item.variantIdPickup !== item.variantIdShipped
   );
 
   const canPickup = hasService && hasPhysicalProductWithPickup;
 
   useEffect(() => {
-    if (hasServiceBoundProduct) {
-      setPickupEnabled(true);
-    } else if (canPickup) {
+    if (hasServiceBoundProduct || canPickup) {
       setPickupEnabled(true);
     } else {
       setPickupEnabled(false);
@@ -112,7 +124,7 @@ export default function Cart({ resources = [] }: CartProps) {
         {isHandoff && (
           <div className="absolute inset-0 z-103 flex flex-col items-center justify-center rounded-lg bg-black bg-opacity-75 backdrop-blur-md">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black"></div>
-            <h3 className="mt-4 text-lg font-bold text-gray-900">
+            <h3 className="mt-4 text-lg font-bold text-gray-900 text-white">
               Finalizing Handoff...
             </h3>
           </div>
@@ -164,6 +176,7 @@ export default function Cart({ resources = [] }: CartProps) {
             activeVariantIdFirst ||
             firstItem.variantIdPickup ||
             firstItem.variantId;
+
           const { src, srcSet } = getShopifyImage(
             resource,
             '600',
@@ -242,11 +255,6 @@ export default function Cart({ resources = [] }: CartProps) {
                         price = variant.price?.amount || '0.00';
                         currency = variant.price?.currencyCode || 'USD';
                         variantTitle = getCleanVariantTitle(variant);
-                      } else if (variants.length > 0 && !variantTitle) {
-                        const v = variants[0];
-                        price = v.price?.amount || '0.00';
-                        currency = v.price?.currencyCode || 'USD';
-                        variantTitle = getCleanVariantTitle(v);
                       }
 
                       return (
@@ -255,17 +263,24 @@ export default function Cart({ resources = [] }: CartProps) {
                           className="flex items-center justify-between"
                         >
                           <div className="flex items-center gap-2">
-                            <div className="text-sm font-bold text-gray-700">
-                              {variantTitle &&
-                                variantTitle !== 'Default Title' && (
-                                  <span>{variantTitle}</span>
-                                )}
-                            </div>
-                            {isPickupMode && !isService && (
-                              <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
-                                Store Pickup
-                              </span>
+                            {variantTitle && (
+                              <div className="text-sm font-bold text-gray-700">
+                                <span>{variantTitle}</span>
+                              </div>
                             )}
+                            {isPickupMode &&
+                              !isService &&
+                              // Robust check: only show Store Pickup if there is a dedicated pickup variant
+                              (item.variantIdPickup &&
+                              item.variantIdPickup !== item.variantIdShipped ? (
+                                <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                                  Store Pickup
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center rounded bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
+                                  Not available for pickup
+                                </span>
+                              ))}
                           </div>
 
                           <div className="flex items-center">
