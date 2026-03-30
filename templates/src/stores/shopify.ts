@@ -223,17 +223,30 @@ export function clearShopifySearch() {
   shopifyStatus.set({ isLoading: false, error: null });
 }
 
-export const customerDetails = persistentAtom<{
+export interface CustomerDetails {
   name: string;
   email: string;
-}>(
+  traceId: string;
+  leadId: string;
+}
+
+export const customerDetails = persistentAtom<CustomerDetails>(
   'tractstack_shopify_customer',
   {
     name: '',
     email: '',
+    traceId: '',
+    leadId: '',
   },
   {
     encode: JSON.stringify,
     decode: JSON.parse,
   }
 );
+
+export function setCustomerDetails(details: Partial<CustomerDetails>) {
+  customerDetails.set({
+    ...customerDetails.get(),
+    ...details,
+  });
+}

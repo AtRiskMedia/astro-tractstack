@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { addQueue, cartStore, modalState } from '@/stores/shopify';
 import {
-  calculateCartDuration,
   MAX_LENGTH_MINUTES,
   RESTRICTION_MESSAGES,
 } from '@/utils/customHelpers';
@@ -10,7 +9,7 @@ import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
 
 interface ShopifyCartManagerProps {
-  resources: ResourceNode[];
+  resources?: ResourceNode[];
 }
 
 export default function ShopifyCartManager({
@@ -48,16 +47,9 @@ export default function ShopifyCartManager({
           cartStore.set(newCart);
         } else {
           cartStore.setKey(key, {
+            ...currentItem,
             resourceId: actionItem.resourceId,
             quantity: newQty,
-            gid: actionItem.gid || currentItem?.gid,
-            variantId: actionItem.variantId || currentItem?.variantId,
-            variantIdShipped:
-              actionItem.variantIdShipped || currentItem?.variantIdShipped,
-            variantIdPickup:
-              actionItem.variantIdPickup || currentItem?.variantIdPickup,
-            boundResourceId:
-              actionItem.boundResourceId || currentItem?.boundResourceId,
           });
         }
 
@@ -65,7 +57,7 @@ export default function ShopifyCartManager({
       } else if (actionItem.action === 'add') {
         const newQty = currentQty + 1;
 
-        const newItem = {
+        const newItem: CartItemState = {
           resourceId: actionItem.resourceId,
           quantity: newQty,
           gid: actionItem.gid || currentItem?.gid,
@@ -102,27 +94,41 @@ export default function ShopifyCartManager({
           }
         }
 
-        const duration = calculateCartDuration(nextCart, resources);
-        const bookingDuration = resource.optionsPayload?.bookingLengthMinutes;
+        let rawDuration = 0;
+        Object.values(nextCart).forEach((item) => {
+          const res = resources.find((r) => r.id === item.resourceId);
+          if (res?.optionsPayload?.needsBooking || item.boundResourceId) {
+            rawDuration +=
+              (res?.optionsPayload?.duration || 0) * (item.quantity || 1);
+          }
+        });
 
-        if (duration > MAX_LENGTH_MINUTES) {
+        const interval = 15;
+        const snappedDuration = Math.ceil(rawDuration / interval) * interval;
+
+        if (snappedDuration > (MAX_LENGTH_MINUTES || 120)) {
           modalState.set({
             isOpen: true,
             type: 'restriction',
             title: 'Appointment Length Limit Reached',
-            message: RESTRICTION_MESSAGES.MAX_DURATION(MAX_LENGTH_MINUTES),
+            message: RESTRICTION_MESSAGES.MAX_DURATION(
+              MAX_LENGTH_MINUTES || 120
+            ),
           });
         } else {
           cartStore.setKey(key, newItem);
 
           if (!actionItem.suppressModal) {
-            if (resource.categorySlug === 'service') {
+            if (
+              resource.categorySlug === 'service' ||
+              resource.optionsPayload?.needsBooking
+            ) {
               modalState.set({
                 isOpen: true,
                 type: 'success',
                 title: 'Booking Required',
                 message: RESTRICTION_MESSAGES.BOOKING(
-                  (bookingDuration || 0).toString()
+                  (resource.optionsPayload?.duration || 0).toString()
                 ),
               });
             } else {

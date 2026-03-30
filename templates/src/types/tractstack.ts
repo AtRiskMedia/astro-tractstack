@@ -152,6 +152,18 @@ export interface FullContentMapItem {
   scale?: string;
 }
 
+export interface TimeBlock {
+  start: string; // "09:00" for business hours or ISO-8601 for unavailable blocks
+  end: string;
+}
+
+export interface SchedulingConfig {
+  timezone: string;
+  bufferGapsMinutes: number;
+  businessHours: Record<string, TimeBlock>;
+  unavailableHours: TimeBlock[];
+}
+
 export interface BrandConfig {
   TENANT_ID: string;
   SITE_INIT?: boolean;
@@ -186,6 +198,7 @@ export interface BrandConfig {
   HAS_SHOPIFY?: boolean;
   HAS_RESEND?: boolean;
   HAS_HYDRATION_TOKEN?: boolean;
+  SCHEDULING?: SchedulingConfig;
 }
 
 export interface BrandConfigState {
@@ -222,6 +235,7 @@ export interface BrandConfigState {
   hasShopify: boolean;
   hasResend: boolean;
   hasHydrationToken: boolean;
+  scheduling: SchedulingConfig;
 }
 
 // Form validation types

@@ -43,6 +43,12 @@ export function convertToLocalState(
     hasShopify: brandConfig.HAS_SHOPIFY ?? false,
     hasResend: brandConfig.HAS_RESEND ?? false,
     hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
+    scheduling: brandConfig.SCHEDULING ?? {
+      timezone: 'UTC',
+      bufferGapsMinutes: 15,
+      businessHours: {},
+      unavailableHours: [],
+    },
   };
 }
 
@@ -76,6 +82,7 @@ export function convertToBackendFormat(
     HAS_AAI: localState.hasAAI,
     HAS_SHOPIFY: localState.hasShopify,
     HAS_RESEND: localState.hasResend,
+    SCHEDULING: localState.scheduling,
 
     // ALWAYS send asset paths (current state)
     LOGO: localState.logo,

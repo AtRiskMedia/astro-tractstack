@@ -771,11 +771,11 @@ export function createDefaultShell(layout: 'standard' | 'grid'): ShellJson {
       mobile: 'mb-2',
     },
     a: {
-      mobile: 'text-indigo-600 hover:text-indigo-500 font-semibold',
+      mobile: 'text-cyan-600 hover:text-cyan-500 font-bold',
     },
     button: {
       mobile:
-        'rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+        'rounded-md bg-cyan-600 px-3.5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-cyan-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600',
     },
   };
 

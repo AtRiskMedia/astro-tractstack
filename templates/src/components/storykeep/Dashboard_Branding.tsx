@@ -11,6 +11,7 @@ import BrandColorsSection from '@/components/form/brand/BrandColorsSection';
 import BrandAssetsSection from '@/components/form/brand/BrandAssetsSection';
 import SiteConfigSection from '@/components/form/brand/SiteConfigSection';
 import SocialLinksSection from '@/components/form/brand/SocialLinksSection';
+import SchedulingSection from '@/components/form/brand/SchedulingSection';
 import SEOSection from '@/components/form/brand/SEOSection';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
@@ -82,6 +83,7 @@ export default function StoryKeepDashboard_Branding({
       <BrandColorsSection formState={formState} />
       <BrandAssetsSection formState={formState} />
       <SEOSection formState={formState} />
+      <SchedulingSection formState={formState} />
       <SocialLinksSection formState={formState} />
 
       <UnsavedChangesBar

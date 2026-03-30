@@ -823,6 +823,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/resourceHelpers.ts',
     },
     {
+      src: resolve('../templates/src/utils/api/bookingHelpers.ts'),
+      dest: 'src/utils/api/bookingHelpers.ts',
+    },
+    {
       src: resolve('../templates/src/utils/api/menuHelpers.ts'),
       dest: 'src/utils/api/menuHelpers.ts',
     },
@@ -948,6 +952,22 @@ export async function injectTemplateFiles(
     },
 
     // API Routes
+    {
+      src: resolve('../templates/src/pages/api/booking/release.ts'),
+      dest: 'src/pages/api/booking/release.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/booking/availability.ts'),
+      dest: 'src/pages/api/booking/availability.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/booking/hold.ts'),
+      dest: 'src/pages/api/booking/hold.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/auth/lookup-lead.ts'),
+      dest: 'src/pages/api/auth/lookup-lead.ts',
+    },
     {
       src: resolve('../templates/src/pages/api/auth/profile.ts'),
       dest: 'src/pages/api/auth/profile.ts',
@@ -1131,6 +1151,12 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/form/brand/SEOSection.tsx'),
       dest: 'src/components/form/brand/SEOSection.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/form/brand/SchedulingSection.tsx'
+      ),
+      dest: 'src/components/form/brand/SchedulingSection.tsx',
     },
 
     // Advanced Configuration Components
@@ -2275,13 +2301,13 @@ export async function injectTemplateFiles(
       protected: true,
     },
     {
-      src: resolve('../templates/custom/shopify/CalDotComBooking.tsx'),
-      dest: 'src/custom/shopify/CalDotComBooking.tsx',
+      src: resolve('../templates/custom/shopify/ShopifyCheckout.tsx'),
+      dest: 'src/custom/shopify/ShopifyCheckout.tsx',
       protected: true,
     },
     {
-      src: resolve('../templates/custom/shopify/ShopifyCheckout.tsx'),
-      dest: 'src/custom/shopify/ShopifyCheckout.tsx',
+      src: resolve('../templates/custom/shopify/NativeBookingCalendar.tsx'),
+      dest: 'src/custom/shopify/NativeBookingCalendar.tsx',
       protected: true,
     },
 

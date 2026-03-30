@@ -7,12 +7,14 @@ interface CreateCartPayload {
   lines: Array<{
     merchandiseId: string;
     quantity: number;
+    attributes?: Array<{ key: string; value: string }>;
   }>;
   attributes?: Array<{
     key: string;
     value: string;
   }>;
   email?: string;
+  traceId?: string;
 }
 
 const getBackendUrl = () => {
@@ -30,7 +32,13 @@ export const POST: APIRoute = async ({ request }) => {
     const body = (await request.json()) as CreateCartPayload;
 
     const payload: CreateCartPayload = {
-      lines: body.lines,
+      lines: body.lines.map((line) => ({
+        ...line,
+        attributes: [
+          ...(line.attributes || []),
+          { key: 'Trace ID', value: body.traceId || '' },
+        ],
+      })),
       attributes: body.attributes || [],
       email: body.email,
     };
