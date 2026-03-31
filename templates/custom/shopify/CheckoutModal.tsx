@@ -75,7 +75,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         resource: {
           id: item.resourceId,
           needsBooking:
-            resource?.optionsPayload?.needsBooking || !!item.boundResourceId,
+            resource?.categorySlug === 'service' ||
+            resource?.optionsPayload?.needsBooking ||
+            !!item.boundResourceId,
           duration: resource?.optionsPayload?.duration || 0,
         },
       };
@@ -88,7 +90,10 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   );
 
   const needsPayment = useMemo(
-    () => enrichedCart.some((item) => item.gid || item.variantId),
+    () =>
+      enrichedCart.some(
+        (item) => (item.gid || item.variantId) && parseFloat(item.price) > 0
+      ),
     [enrichedCart]
   );
 
@@ -195,8 +200,11 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         end.toISOString()
       );
 
-      if (response && (response.success || !response.error)) {
-        if (response.data?.status === 'CONFIRMED' || !needsPayment) {
+      if (
+        response &&
+        (response.success || !response.error || response.status === 201)
+      ) {
+        if (!needsPayment) {
           setInternalState('SUCCESS');
         } else {
           setInternalState('SUMMARY');

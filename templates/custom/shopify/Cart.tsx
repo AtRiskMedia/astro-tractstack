@@ -235,7 +235,7 @@ export default function Cart({ resources = [] }: CartProps) {
                   </div>
 
                   <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
-                    {items.map((item) => {
+                    {items.map((item, idx) => {
                       const activeVariantId = isPickupMode
                         ? item.variantIdPickup
                         : item.variantIdShipped;
@@ -261,7 +261,7 @@ export default function Cart({ resources = [] }: CartProps) {
 
                       return (
                         <div
-                          key={`${item.resourceId}_${displayId}`}
+                          key={`${item.resourceId}_${displayId}_${idx}`}
                           className="flex items-center justify-between"
                         >
                           <div className="flex items-center gap-2">
@@ -361,9 +361,7 @@ export default function Cart({ resources = [] }: CartProps) {
                 } else if (!isPickupMode && item.variantIdShipped) {
                   item.variantId = item.variantIdShipped;
                 }
-
-                delete item.variantIdPickup;
-                delete item.variantIdShipped;
+                // Removed the destructive deletes to maintain key integrity
               });
 
               cartStore.set(sanitizedCart);

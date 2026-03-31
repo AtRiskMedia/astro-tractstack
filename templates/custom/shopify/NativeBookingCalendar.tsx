@@ -57,8 +57,11 @@ export const NativeBookingCalendar = ({
           end.toISOString()
         );
 
-        if (response && response.bookings) {
-          setAvailability(response.data);
+        if (response && response.scheduling) {
+          setAvailability({
+            bookings: response.bookings || [],
+            scheduling: response.scheduling,
+          });
           setError(null);
         } else {
           setError(response.message || 'Failed to load availability.');
@@ -81,12 +84,14 @@ export const NativeBookingCalendar = ({
     const dayName = selectedDate
       .toLocaleDateString('en-US', { weekday: 'long' })
       .toLowerCase();
-    const businessHours = availability.scheduling.businessHours[dayName];
+
+    const businessHours = availability.scheduling.businessHours?.[dayName];
     if (!businessHours) return [];
 
     const daySlots: { start: Date; end: Date; isAvailable: boolean }[] = [];
     const [startH, startM] = businessHours.start.split(':').map(Number);
     const [endH, endM] = businessHours.end.split(':').map(Number);
+    const bufferGap = availability.scheduling.bufferGapsMinutes || 0;
 
     const iter = new Date(selectedDate);
     iter.setHours(startH, startM, 0, 0);
@@ -99,17 +104,18 @@ export const NativeBookingCalendar = ({
     while (iter.getTime() + totalDurationMinutes * 60000 <= dayEnd.getTime()) {
       const slotStart = new Date(iter);
       const slotEnd = new Date(iter.getTime() + totalDurationMinutes * 60000);
+      const slotEndWithBuffer = new Date(slotEnd.getTime() + bufferGap * 60000);
 
       const isBlocked =
         availability.bookings.some((b) => {
           const bStart = new Date(b.startTime);
           const bEnd = new Date(b.endTime);
-          return slotStart < bEnd && slotEnd > bStart;
+          return slotStart < bEnd && slotEndWithBuffer > bStart;
         }) ||
         availability.scheduling.unavailableHours.some((u) => {
           const uStart = new Date(u.start);
           const uEnd = new Date(u.end);
-          return slotStart < uEnd && slotEnd > uStart;
+          return slotStart < uEnd && slotEndWithBuffer > uStart;
         });
 
       daySlots.push({
@@ -185,6 +191,7 @@ export const NativeBookingCalendar = ({
                   {slot.start.toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
+                    timeZone: availability?.scheduling.timezone || undefined,
                   })}
                 </button>
               ))
@@ -206,11 +213,9 @@ export const NativeBookingCalendar = ({
               {selectedSlot.start.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
+                timeZone: availability?.scheduling.timezone || undefined,
               })}
             </span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            Local Time: {selectedSlot.start.toString()}
           </p>
         </div>
       )}

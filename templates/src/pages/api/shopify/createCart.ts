@@ -39,7 +39,10 @@ export const POST: APIRoute = async ({ request }) => {
           { key: 'Trace ID', value: body.traceId || '' },
         ],
       })),
-      attributes: body.attributes || [],
+      attributes: [
+        ...(body.attributes || []),
+        { key: 'Trace ID', value: body.traceId || '' },
+      ],
       email: body.email,
     };
 

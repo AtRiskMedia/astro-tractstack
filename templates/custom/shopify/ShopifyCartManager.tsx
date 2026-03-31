@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { addQueue, cartStore, modalState } from '@/stores/shopify';
+import {
+  addQueue,
+  cartStore,
+  modalState,
+  customerDetails,
+} from '@/stores/shopify';
+import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import {
   MAX_LENGTH_MINUTES,
   RESTRICTION_MESSAGES,
@@ -42,6 +48,21 @@ export default function ShopifyCartManager({
         const newQty = Math.max(0, currentQty - 1);
 
         if (newQty === 0) {
+          // Release hold if it was a booking item
+          if (
+            resource?.optionsPayload?.needsBooking ||
+            currentItem?.boundResourceId
+          ) {
+            const traceId = customerDetails.get().traceId;
+            if (traceId) {
+              bookingHelpers
+                .releaseHold(traceId)
+                .catch((err) =>
+                  console.error('Failed to release hold on cart removal:', err)
+                );
+            }
+          }
+
           const newCart = { ...currentCart };
           delete newCart[key];
           cartStore.set(newCart);
