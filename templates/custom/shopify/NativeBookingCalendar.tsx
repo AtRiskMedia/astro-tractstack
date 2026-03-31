@@ -113,12 +113,10 @@ export const NativeBookingCalendar = ({
     if (!availability || !selectedDate) return [];
     const shopTz = availability.scheduling.timezone;
 
-    const shopDateStr = selectedDate.toLocaleDateString('en-US', {
-      timeZone: shopTz,
-    });
-    const dayName = new Date(shopDateStr)
+    const dayName = selectedDate
       .toLocaleDateString('en-US', { weekday: 'long' })
       .toLowerCase();
+
     const businessHours = availability.scheduling.businessHours?.[dayName];
     if (!businessHours) return [];
 
