@@ -223,10 +223,11 @@ export function clearShopifySearch() {
   shopifyStatus.set({ isLoading: false, error: null });
 }
 
+export const transactionTraceId = atom<string>('');
+
 export interface CustomerDetails {
   name: string;
   email: string;
-  traceId: string;
   leadId: string;
 }
 
@@ -235,7 +236,6 @@ export const customerDetails = persistentAtom<CustomerDetails>(
   {
     name: '',
     email: '',
-    traceId: '',
     leadId: '',
   },
   {

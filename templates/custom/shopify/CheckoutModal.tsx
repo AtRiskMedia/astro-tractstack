@@ -11,6 +11,7 @@ import {
   setCustomerDetails,
   shopifyData,
   CART_STATES,
+  transactionTraceId,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
@@ -78,7 +79,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
             resource?.categorySlug === 'service' ||
             resource?.optionsPayload?.needsBooking ||
             !!item.boundResourceId,
-          duration: resource?.optionsPayload?.duration || 0,
+          duration: resource?.optionsPayload?.bookingLengthMinutes || 0,
         },
       };
     });
@@ -110,6 +111,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   useEffect(() => {
     if ($globalCartState === CART_STATES.CHECKOUT) {
       if ($customer.leadId) {
+        if (!transactionTraceId.get()) {
+          transactionTraceId.set(ulid());
+        }
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
         setInternalState('IDENTITY_EMAIL');
@@ -118,14 +122,17 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   }, [$globalCartState, needsBooking, $customer.leadId]);
 
   const handleClose = async () => {
-    if ($customer.traceId && internalState !== 'SUCCESS') {
+    const currentTraceId = transactionTraceId.get();
+
+    if (currentTraceId && internalState !== 'SUCCESS') {
       try {
-        await bookingHelpers.releaseHold($customer.traceId);
+        await bookingHelpers.releaseHold(currentTraceId);
       } catch (err) {
         console.error('Failed to release hold on close', err);
       }
-      setCustomerDetails({ traceId: '' });
     }
+
+    transactionTraceId.set('');
     cartState.set(CART_STATES.READY);
     setInternalState('IDENTITY_EMAIL');
     setError(null);
@@ -140,11 +147,11 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       const response: any = await bookingHelpers.lookupLead(email);
 
       if (response && response.exists && response.leadId) {
+        transactionTraceId.set(ulid());
         setCustomerDetails({
           ...$customer,
           email,
           leadId: response.leadId,
-          traceId: ulid(),
         });
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
@@ -171,11 +178,11 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       const data = await response.json();
 
       if (response.ok && data.profile?.leadId) {
+        transactionTraceId.set(ulid());
         setCustomerDetails({
           ...$customer,
           email,
           leadId: data.profile.leadId,
-          traceId: ulid(),
         });
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
@@ -195,7 +202,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
 
     try {
       const response: any = await bookingHelpers.holdSlot(
-        $customer.traceId,
+        transactionTraceId.get(),
         start.toISOString(),
         end.toISOString()
       );
@@ -231,6 +238,8 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     setInternalState('PROCESSING');
 
     try {
+      const currentTraceId = transactionTraceId.get();
+
       const response = await fetch('/api/shopify/createCart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,9 +249,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
             .map((i) => ({
               merchandiseId: i.variantId || i.gid,
               quantity: i.quantity || 1,
+              attributes: [{ key: 'Trace ID', value: currentTraceId }],
             })),
           email: $customer.email,
-          traceId: $customer.traceId,
         }),
       });
 

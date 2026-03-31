@@ -5,6 +5,7 @@ import {
   cartStore,
   modalState,
   customerDetails,
+  transactionTraceId,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import {
@@ -53,7 +54,7 @@ export default function ShopifyCartManager({
             resource?.optionsPayload?.needsBooking ||
             currentItem?.boundResourceId
           ) {
-            const traceId = customerDetails.get().traceId;
+            const traceId = transactionTraceId.get();
             if (traceId) {
               bookingHelpers
                 .releaseHold(traceId)
@@ -120,7 +121,8 @@ export default function ShopifyCartManager({
           const res = resources.find((r) => r.id === item.resourceId);
           if (res?.optionsPayload?.needsBooking || item.boundResourceId) {
             rawDuration +=
-              (res?.optionsPayload?.duration || 0) * (item.quantity || 1);
+              (res?.optionsPayload?.bookingLengthMinutes || 0) *
+              (item.quantity || 1);
           }
         });
 
@@ -149,7 +151,9 @@ export default function ShopifyCartManager({
                 type: 'success',
                 title: 'Booking Required',
                 message: RESTRICTION_MESSAGES.BOOKING(
-                  (resource.optionsPayload?.duration || 0).toString()
+                  (
+                    resource.optionsPayload?.bookingLengthMinutes || 0
+                  ).toString()
                 ),
               });
             } else {

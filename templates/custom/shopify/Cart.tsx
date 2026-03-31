@@ -8,6 +8,7 @@ import {
   CART_STATES,
   isShopifyHandoff,
   setCustomerDetails,
+  transactionTraceId,
   type CartAction,
   type CartItemState,
 } from '@/stores/shopify';
@@ -365,7 +366,7 @@ export default function Cart({ resources = [] }: CartProps) {
               });
 
               cartStore.set(sanitizedCart);
-              setCustomerDetails({ traceId: ulid() });
+              transactionTraceId.set(ulid());
               cartState.set(CART_STATES.CHECKOUT);
             }}
           >
