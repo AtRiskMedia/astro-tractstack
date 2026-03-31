@@ -151,7 +151,7 @@ export default function SchedulingSection({
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <h3 className="mb-6 text-xl font-extrabold text-gray-900">
-        Native Scheduling
+        Shopify Store
       </h3>
       <div className="space-y-10 divide-y divide-gray-100">
         <div className="pt-2">
