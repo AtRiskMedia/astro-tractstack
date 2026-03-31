@@ -18,14 +18,35 @@ const DAYS = [
 
 const TIMEZONE_OPTIONS = [
   {
-    group: 'Americas',
+    group: 'North America (Canada & US)',
     zones: [
-      { label: 'Eastern Time (New York)', value: 'America/New_York' },
-      { label: 'Central Time (Chicago)', value: 'America/Chicago' },
-      { label: 'Mountain Time (Denver)', value: 'America/Denver' },
-      { label: 'Pacific Time (Los Angeles)', value: 'America/Los_Angeles' },
-      { label: 'Toronto / Montreal', value: 'America/Toronto' },
+      { label: 'Pacific Time (Vancouver / BC)', value: 'America/Vancouver' },
+      {
+        label: 'Pacific Time (Los Angeles / Seattle)',
+        value: 'America/Los_Angeles',
+      },
+      {
+        label: 'Mountain Time (Edmonton / Calgary)',
+        value: 'America/Edmonton',
+      },
+      { label: 'Mountain Time (Denver / Salt Lake)', value: 'America/Denver' },
+      { label: 'Mountain Time - No DST (Phoenix)', value: 'America/Phoenix' },
+      { label: 'Central Time (Winnipeg)', value: 'America/Winnipeg' },
+      { label: 'Central Time (Chicago / Dallas)', value: 'America/Chicago' },
+      { label: 'Eastern Time (Toronto / Montreal)', value: 'America/Toronto' },
+      { label: 'Eastern Time (New York / Miami)', value: 'America/New_York' },
+      { label: 'Atlantic Time (Halifax)', value: 'America/Halifax' },
+      { label: "Newfoundland Time (St. John's)", value: 'America/St_Johns' },
+      { label: 'Alaska Time (Anchorage)', value: 'America/Anchorage' },
+      { label: 'Hawaii Time (Honolulu)', value: 'Pacific/Honolulu' },
+    ],
+  },
+  {
+    group: 'Latin America',
+    zones: [
       { label: 'Mexico City', value: 'America/Mexico_City' },
+      { label: 'Bogota / Lima', value: 'America/Bogota' },
+      { label: 'São Paulo', value: 'America/Sao_Paulo' },
     ],
   },
   {
@@ -50,6 +71,37 @@ const TIMEZONE_OPTIONS = [
   },
   { label: 'UTC / GMT', value: 'UTC' },
 ];
+
+function getUtcFromWallTime(wallTimeIso: string, timeZone: string): string {
+  const [datePart, timePart] = wallTimeIso.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const pseudoUtc = new Date(
+    `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00Z`
+  );
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(pseudoUtc);
+  const getPart = (type: string) => parts.find((p) => p.type === type)?.value;
+
+  const tzDate = new Date(
+    `${getPart('year')}-${getPart('month')}-${getPart('day')}T${getPart('hour')}:${getPart('minute')}:00Z`
+  );
+  const diff = pseudoUtc.getTime() - tzDate.getTime();
+
+  return new Date(pseudoUtc.getTime() + diff).toISOString();
+}
 
 export default function SchedulingSection({
   formState,
@@ -80,12 +132,12 @@ export default function SchedulingSection({
   const addUnavailableBlock = () => {
     if (!newBlock.start || !newBlock.end) return;
 
+    const startUtc = getUtcFromWallTime(newBlock.start, config.timezone);
+    const endUtc = getUtcFromWallTime(newBlock.end, config.timezone);
+
     const updated = [
       ...config.unavailableHours,
-      {
-        start: new Date(newBlock.start).toISOString(),
-        end: new Date(newBlock.end).toISOString(),
-      },
+      { start: startUtc, end: endUtc },
     ];
     updateField('scheduling', { ...config, unavailableHours: updated });
     setNewBlock({ start: '', end: '' });
@@ -101,7 +153,6 @@ export default function SchedulingSection({
       <h3 className="mb-6 text-xl font-extrabold text-gray-900">
         Native Scheduling
       </h3>
-
       <div className="space-y-10 divide-y divide-gray-100">
         <div className="pt-2">
           <div className="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-6 xl:grid-cols-12">
@@ -174,16 +225,10 @@ export default function SchedulingSection({
                 <button
                   type="button"
                   onClick={() => toggleDay(day)}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2 ${
-                    config.businessHours[day] ? 'bg-cyan-600' : 'bg-gray-200'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2 ${config.businessHours[day] ? 'bg-cyan-600' : 'bg-gray-200'}`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      config.businessHours[day]
-                        ? 'translate-x-5'
-                        : 'translate-x-0'
-                    }`}
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${config.businessHours[day] ? 'translate-x-5' : 'translate-x-0'}`}
                   />
                 </button>
                 {config.businessHours[day] && (
@@ -240,7 +285,6 @@ export default function SchedulingSection({
                 Add Blackout
               </button>
             </div>
-
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               {config.unavailableHours.map((block: TimeBlock, idx: number) => (
                 <div
@@ -252,14 +296,16 @@ export default function SchedulingSection({
                       Closed Period
                     </span>
                     <span className="text-xs font-bold text-gray-700">
-                      {new Date(block.start).toLocaleString([], {
+                      {new Date(block.start).toLocaleString('en-US', {
                         dateStyle: 'short',
                         timeStyle: 'short',
+                        timeZone: config.timezone,
                       })}{' '}
                       —{' '}
-                      {new Date(block.end).toLocaleString([], {
+                      {new Date(block.end).toLocaleString('en-US', {
                         dateStyle: 'short',
                         timeStyle: 'short',
+                        timeZone: config.timezone,
                       })}
                     </span>
                   </div>

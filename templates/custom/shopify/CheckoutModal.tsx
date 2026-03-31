@@ -40,7 +40,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   const [email, setEmail] = useState($customer.email || '');
   const [name, setName] = useState('');
   const [codeword, setCodeword] = useState('');
-
+  const [shopTimeZone, setShopTimeZone] = useState<string | undefined>(
+    undefined
+  );
   const [selectedSlot, setSelectedSlot] = useState<{
     start: Date;
     end: Date;
@@ -56,7 +58,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     return Object.values($cartItems).map((item: any) => {
       const resource = resources.find((r) => r.id === item.resourceId);
       let productData: any = {};
-
       if (resource?.optionsPayload?.shopifyData) {
         try {
           productData = JSON.parse(resource.optionsPayload.shopifyData);
@@ -64,11 +65,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
           console.error('Failed to parse Shopify data', item.resourceId);
         }
       }
-
-      const variants = productData?.variants || [];
-      const displayId = item.variantId || item.gid;
-      const variant = variants.find((v: any) => v.id === displayId);
-
+      const variant = (productData?.variants || []).find(
+        (v: any) => v.id === (item.variantId || item.gid)
+      );
       return {
         ...item,
         title: productData?.title || resource?.title || 'Loading...',
@@ -89,7 +88,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     () => enrichedCart.some((item) => item.resource?.needsBooking),
     [enrichedCart]
   );
-
   const needsPayment = useMemo(
     () =>
       enrichedCart.some(
@@ -97,23 +95,19 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       ),
     [enrichedCart]
   );
-
   const totalDuration = useMemo(() => {
     const rawMinutes = enrichedCart.reduce(
       (acc, item) =>
         acc + (item.resource?.duration || 0) * (item.quantity || 1),
       0
     );
-    const snapped = Math.ceil(rawMinutes / 15) * 15;
-    return Math.min(snapped, 120);
+    return Math.min(Math.ceil(rawMinutes / 15) * 15, 120);
   }, [enrichedCart]);
 
   useEffect(() => {
     if ($globalCartState === CART_STATES.CHECKOUT) {
       if ($customer.leadId) {
-        if (!transactionTraceId.get()) {
-          transactionTraceId.set(ulid());
-        }
+        if (!transactionTraceId.get()) transactionTraceId.set(ulid());
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
         setInternalState('IDENTITY_EMAIL');
@@ -123,7 +117,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
 
   const handleClose = async () => {
     const currentTraceId = transactionTraceId.get();
-
     if (currentTraceId && internalState !== 'SUCCESS') {
       try {
         await bookingHelpers.releaseHold(currentTraceId);
@@ -131,7 +124,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         console.error('Failed to release hold on close', err);
       }
     }
-
     transactionTraceId.set('');
     cartState.set(CART_STATES.READY);
     setInternalState('IDENTITY_EMAIL');
@@ -142,23 +134,17 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     e.preventDefault();
     setError(null);
     setInternalState('PROCESSING');
-
     try {
       const response: any = await bookingHelpers.lookupLead(email);
-
       if (response && response.exists && response.leadId) {
-        transactionTraceId.set(ulid());
-        setCustomerDetails({
-          ...$customer,
-          email,
-          leadId: response.leadId,
-        });
+        if (!transactionTraceId.get()) transactionTraceId.set(ulid());
+        setCustomerDetails({ ...$customer, email, leadId: response.leadId });
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
         setInternalState('IDENTITY_NEW_USER');
       }
     } catch (err) {
-      setError('Failed to verify email. Please try again.');
+      setError('Failed to verify email.');
       setInternalState('IDENTITY_EMAIL');
     }
   };
@@ -167,18 +153,15 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     e.preventDefault();
     setError(null);
     setInternalState('PROCESSING');
-
     try {
       const response = await fetch('/api/auth/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, firstName: name, password: codeword }),
       });
-
       const data = await response.json();
-
       if (response.ok && data.profile?.leadId) {
-        transactionTraceId.set(ulid());
+        if (!transactionTraceId.get()) transactionTraceId.set(ulid());
         setCustomerDetails({
           ...$customer,
           email,
@@ -186,40 +169,34 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         });
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
-        setError(data.error || 'Failed to create profile. Please try again.');
+        setError(data.error || 'Registration failed.');
         setInternalState('IDENTITY_NEW_USER');
       }
     } catch (err) {
-      setError('An error occurred during registration.');
+      setError('Error during registration.');
       setInternalState('IDENTITY_NEW_USER');
     }
   };
 
-  const handleSlotSelection = async (start: Date, end: Date) => {
+  const handleSlotSelection = async (
+    start: Date,
+    end: Date,
+    timeZone: string
+  ) => {
     setSelectedSlot({ start, end });
+    setShopTimeZone(timeZone);
     setError(null);
     setInternalState('PROCESSING');
-
     try {
       const response: any = await bookingHelpers.holdSlot(
         transactionTraceId.get(),
         start.toISOString(),
         end.toISOString()
       );
-
-      if (
-        response &&
-        (response.success || !response.error || response.status === 201)
-      ) {
-        if (!needsPayment) {
-          setInternalState('SUCCESS');
-        } else {
-          setInternalState('SUMMARY');
-        }
+      if (response && (response.success || response.status === 201)) {
+        setInternalState(needsPayment ? 'SUMMARY' : 'SUCCESS');
       } else {
-        setError(
-          response?.message || response?.error || 'Slot no longer available.'
-        );
+        setError(response?.message || 'Slot no longer available.');
         setInternalState('BOOKING');
       }
     } catch (err) {
@@ -233,13 +210,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       setInternalState('SUCCESS');
       return;
     }
-
     setError(null);
     setInternalState('PROCESSING');
-
     try {
-      const currentTraceId = transactionTraceId.get();
-
       const response = await fetch('/api/shopify/createCart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -249,23 +222,17 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
             .map((i) => ({
               merchandiseId: i.variantId || i.gid,
               quantity: i.quantity || 1,
-              attributes: [{ key: 'Trace ID', value: currentTraceId }],
+              attributes: [
+                { key: 'Trace ID', value: transactionTraceId.get() },
+              ],
             })),
           email: $customer.email,
         }),
       });
-
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Checkout initialization failed');
-      }
-
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-      } else {
-        throw new Error('No checkout URL received');
-      }
+      if (!response.ok) throw new Error(result.error || 'Checkout failed');
+      if (result.checkoutUrl) window.location.href = result.checkoutUrl;
+      else throw new Error('No checkout URL');
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to reach checkout.'
@@ -293,14 +260,12 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                 ✕
               </button>
             </div>
-
             <div className="p-8">
               {error && (
                 <div className="mb-6 rounded-md border border-red-100 bg-red-50 p-4 text-sm text-red-700">
                   {error}
                 </div>
               )}
-
               {internalState === 'IDENTITY_EMAIL' && (
                 <form onSubmit={handleEmailLookup} className="space-y-6">
                   <div>
@@ -311,10 +276,8 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                       type="email"
                       required
                       value={email}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setEmail(e.target.value)
-                      }
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:ring-black"
                     />
                   </div>
                   <button
@@ -325,100 +288,95 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                   </button>
                 </form>
               )}
-
               {internalState === 'IDENTITY_NEW_USER' && (
                 <form onSubmit={handleCreateLead} className="space-y-6">
-                  <div>
-                    <p className="mb-4 text-sm text-gray-600">
-                      We couldn't find an account for <strong>{email}</strong>.
-                      Please provide your details to secure this booking.
-                    </p>
-                    <label className="block text-sm font-bold text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setName(e.target.value)
-                      }
-                      className="mb-4 mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                    />
-                    <label className="block text-sm font-bold text-gray-700">
-                      Codeword (to unlock your account)
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={codeword}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setCodeword(e.target.value)
-                      }
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
-                    />
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    Provide details for <strong>{email}</strong>.
+                  </p>
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-1 focus:ring-black"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Codeword"
+                    required
+                    value={codeword}
+                    onChange={(e) => setCodeword(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-1 focus:ring-black"
+                  />
                   <button
                     type="submit"
                     className="w-full rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
                   >
                     Create Profile & Continue
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setInternalState('IDENTITY_EMAIL')}
-                    className="mt-2 w-full text-sm font-bold text-gray-500 hover:text-gray-700"
-                  >
-                    ← Back to Email
-                  </button>
                 </form>
               )}
-
               {internalState === 'BOOKING' && (
                 <NativeBookingCalendar
                   resourceIds={
                     enrichedCart
-                      .map((item) => item.resource?.id)
+                      .map((i) => i.resource?.id)
                       .filter(Boolean) as string[]
                   }
                   totalDurationMinutes={totalDuration}
                   onSlotSelected={handleSlotSelection}
                 />
               )}
-
               {internalState === 'SUMMARY' && (
                 <div className="space-y-6">
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
                     <h3 className="mb-4 font-bold text-gray-900">
                       Order Summary
                     </h3>
-                    <div className="space-y-4">
-                      {enrichedCart.map((item, idx) => (
-                        <div key={idx} className="flex justify-between">
-                          <span className="text-sm text-gray-700">
-                            {item.title}
-                          </span>
-                          <span className="text-sm font-bold text-gray-900">
-                            $
-                            {(
-                              parseFloat(item.price) * (item.quantity || 1)
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    {enrichedCart.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between text-sm text-gray-700"
+                      >
+                        <span>{item.title}</span>
+                        <span className="font-bold">
+                          $
+                          {(
+                            parseFloat(item.price) * (item.quantity || 1)
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
                     {selectedSlot && (
                       <div className="mt-6 border-t border-gray-200 pt-6">
                         <p className="text-xs font-bold uppercase text-gray-500">
                           Appointment
                         </p>
                         <p className="mt-1 text-sm font-bold text-gray-900">
-                          {selectedSlot.start.toLocaleDateString()} at{' '}
-                          {selectedSlot.start.toLocaleTimeString([], {
+                          {selectedSlot.start.toLocaleDateString('en-US', {
+                            timeZone: shopTimeZone,
+                          })}{' '}
+                          at{' '}
+                          {selectedSlot.start.toLocaleTimeString('en-US', {
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: shopTimeZone,
                           })}
                         </p>
+                        {shopTimeZone &&
+                          shopTimeZone !==
+                            Intl.DateTimeFormat().resolvedOptions()
+                              .timeZone && (
+                            <p className="mt-1 text-xs font-bold text-gray-500">
+                              (
+                              {selectedSlot.start.toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}{' '}
+                              local)
+                            </p>
+                          )}
                       </div>
                     )}
                   </div>
@@ -428,19 +386,8 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                   >
                     Complete Payment
                   </button>
-                  <button
-                    onClick={() =>
-                      setInternalState(
-                        needsBooking ? 'BOOKING' : 'IDENTITY_EMAIL'
-                      )
-                    }
-                    className="w-full text-sm font-bold text-gray-500 hover:text-gray-700"
-                  >
-                    ← Back
-                  </button>
                 </div>
               )}
-
               {internalState === 'SUCCESS' && (
                 <div className="py-10 text-center">
                   <h3 className="text-2xl font-bold text-gray-900">
@@ -457,7 +404,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                   </button>
                 </div>
               )}
-
               {internalState === 'PROCESSING' && (
                 <div className="flex flex-col items-center py-20">
                   <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black"></div>
