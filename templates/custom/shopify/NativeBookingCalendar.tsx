@@ -21,7 +21,6 @@ interface Booking {
 }
 
 interface NativeBookingCalendarProps {
-  resourceIds: string[];
   totalDurationMinutes: number;
   onSlotSelected: (start: Date, end: Date, timeZone: string) => void;
 }
@@ -58,7 +57,6 @@ function getUtcFromWallTime(wallTimeIso: string, timeZone: string): Date {
 }
 
 export const NativeBookingCalendar = ({
-  resourceIds,
   totalDurationMinutes,
   onSlotSelected,
 }: NativeBookingCalendarProps) => {
@@ -83,7 +81,6 @@ export const NativeBookingCalendar = ({
         end.setDate(end.getDate() + 14);
 
         const response = await bookingHelpers.getAvailability(
-          resourceIds,
           start.toISOString(),
           end.toISOString()
         );
@@ -104,10 +101,8 @@ export const NativeBookingCalendar = ({
       }
     };
 
-    if (resourceIds.length > 0) {
-      fetchAvailability();
-    }
-  }, [resourceIds]);
+    fetchAvailability();
+  }, []);
 
   const slots = useMemo(() => {
     if (!availability || !selectedDate) return [];

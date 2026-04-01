@@ -207,6 +207,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
 
   const handleFinalCheckout = async () => {
     if (!needsPayment) {
+      cartStore.set({});
       setInternalState('SUCCESS');
       return;
     }
@@ -319,11 +320,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
               )}
               {internalState === 'BOOKING' && (
                 <NativeBookingCalendar
-                  resourceIds={
-                    enrichedCart
-                      .map((i) => i.resource?.id)
-                      .filter(Boolean) as string[]
-                  }
                   totalDurationMinutes={totalDuration}
                   onSlotSelected={handleSlotSelection}
                 />

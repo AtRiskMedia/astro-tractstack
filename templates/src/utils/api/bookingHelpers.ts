@@ -18,13 +18,8 @@ export const bookingHelpers = {
   /**
    * Asks backend for availability slots
    */
-  getAvailability: async (
-    resourceIds: string[],
-    start: string,
-    end: string
-  ) => {
+  getAvailability: async (start: string, end: string) => {
     const query = new URLSearchParams({
-      resourceIds: resourceIds.join(','),
       start,
       end,
     });
