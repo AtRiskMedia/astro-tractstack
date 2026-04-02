@@ -7,9 +7,7 @@ import {
   cartState,
   CART_STATES,
   isShopifyHandoff,
-  setCustomerDetails,
   transactionTraceId,
-  type CartAction,
   type CartItemState,
 } from '@/stores/shopify';
 import { getShopifyImage } from '@/utils/helpers';
@@ -19,10 +17,6 @@ interface CartProps {
   resources: ResourceNode[];
 }
 
-/**
- * Filters out utilitarian 'Mode' and 'Title' options.
- * If the result is 'Default Title', it returns an empty string.
- */
 const getCleanVariantTitle = (variant: any) => {
   if (variant?.selectedOptions) {
     const filtered = variant.selectedOptions
@@ -47,14 +41,11 @@ export default function Cart({ resources = [] }: CartProps) {
 
   const cartValues = Object.values(cart);
 
-  // Group items by resource to handle multi-variant products cleanly
   const boundServiceIds = new Set(
     cartValues
       .map((item) => item.boundResourceId)
       .filter((id) => !!id) as string[]
   );
-
-  const hasServiceBoundProduct = boundServiceIds.size > 0;
 
   const displayableItems = cartValues.filter(
     (item) => !boundServiceIds.has(item.resourceId)
@@ -76,7 +67,6 @@ export default function Cart({ resources = [] }: CartProps) {
     return !!resource?.optionsPayload?.bookingLengthMinutes;
   });
 
-  // A product is pickup-eligible if it has a distinct variantIdPickup
   const hasPhysicalProductWithPickup = cartValues.some(
     (item) =>
       item.variantIdPickup && item.variantIdPickup !== item.variantIdShipped
@@ -85,40 +75,28 @@ export default function Cart({ resources = [] }: CartProps) {
   const canPickup = hasService && hasPhysicalProductWithPickup;
 
   useEffect(() => {
-    if (hasServiceBoundProduct || canPickup) {
+    if (canPickup) {
       setPickupEnabled(true);
     } else {
       setPickupEnabled(false);
     }
-  }, [canPickup, hasServiceBoundProduct]);
+  }, [canPickup]);
 
-  const isPickupMode = (canPickup || hasServiceBoundProduct) && pickupEnabled;
+  const isPickupMode = canPickup && pickupEnabled;
 
-  const dispatchDualAction = (
-    item: CartItemState,
-    action: 'add' | 'remove'
-  ) => {
-    const queueUpdates: CartAction[] = [];
-
-    queueUpdates.push({
-      resourceId: item.resourceId,
-      action,
-      variantId: item.variantId,
-      variantIdShipped: item.variantIdShipped,
-      variantIdPickup: item.variantIdPickup,
-      boundResourceId: item.boundResourceId,
-      suppressModal: action === 'add' ? true : undefined,
-    });
-
-    if (item.boundResourceId) {
-      queueUpdates.push({
-        resourceId: item.boundResourceId,
+  const dispatchAction = (item: CartItemState, action: 'add' | 'remove') => {
+    addQueue.set([
+      ...addQueue.get(),
+      {
+        resourceId: item.resourceId,
         action,
+        variantId: item.variantId,
+        variantIdShipped: item.variantIdShipped,
+        variantIdPickup: item.variantIdPickup,
+        boundResourceId: item.boundResourceId,
         suppressModal: action === 'add' ? true : undefined,
-      });
-    }
-
-    addQueue.set([...addQueue.get(), ...queueUpdates]);
+      },
+    ]);
   };
 
   if (cartValues.length === 0) {
@@ -223,11 +201,22 @@ export default function Cart({ resources = [] }: CartProps) {
                           </span>
                         )}
                       </div>
+
                       {boundServiceResource && (
-                        <p className="flex items-center text-xs font-bold text-blue-600">
-                          <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                          Includes Booking: {boundServiceResource.title}
-                        </p>
+                        <div className="mt-2 flex items-center gap-2 rounded-md bg-blue-50 px-3 py-2">
+                          <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                          <div>
+                            <p className="text-sm font-bold text-blue-900">
+                              Includes Booking: {boundServiceResource.title}
+                            </p>
+                            <p className="text-xs text-blue-700">
+                              Duration:{' '}
+                              {boundServiceResource.optionsPayload
+                                ?.bookingLengthMinutes || 0}{' '}
+                              mins
+                            </p>
+                          </div>
+                        </div>
                       )}
                       <p className="mt-1 text-sm text-gray-500">
                         {resource.oneliner}
@@ -273,7 +262,6 @@ export default function Cart({ resources = [] }: CartProps) {
                             )}
                             {isPickupMode &&
                               !isService &&
-                              // Robust check: only show Store Pickup if there is a dedicated pickup variant
                               (item.variantIdPickup &&
                               item.variantIdPickup !== item.variantIdShipped ? (
                                 <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
@@ -314,9 +302,7 @@ export default function Cart({ resources = [] }: CartProps) {
                             ) : (
                               <div className="flex items-center rounded-md border border-gray-300">
                                 <button
-                                  onClick={() =>
-                                    dispatchDualAction(item, 'remove')
-                                  }
+                                  onClick={() => dispatchAction(item, 'remove')}
                                   className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                                 >
                                   -
@@ -325,9 +311,7 @@ export default function Cart({ resources = [] }: CartProps) {
                                   {item.quantity}
                                 </span>
                                 <button
-                                  onClick={() =>
-                                    dispatchDualAction(item, 'add')
-                                  }
+                                  onClick={() => dispatchAction(item, 'add')}
                                   className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                                 >
                                   +
@@ -362,7 +346,6 @@ export default function Cart({ resources = [] }: CartProps) {
                 } else if (!isPickupMode && item.variantIdShipped) {
                   item.variantId = item.variantIdShipped;
                 }
-                // Removed the destructive deletes to maintain key integrity
               });
 
               cartStore.set(sanitizedCart);
