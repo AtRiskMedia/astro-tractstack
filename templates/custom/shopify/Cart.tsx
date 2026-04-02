@@ -348,9 +348,23 @@ export default function Cart({ resources = [] }: CartProps) {
                 }
               });
 
+              const requiresPayment = Object.values(sanitizedCart).some(
+                (item) => {
+                  const resource = resources.find(
+                    (r) => r.id === item.resourceId
+                  );
+                  return !!resource?.optionsPayload?.gid;
+                }
+              );
+
               cartStore.set(sanitizedCart);
               transactionTraceId.set(ulid());
-              cartState.set(CART_STATES.CHECKOUT);
+
+              if (!requiresPayment) {
+                cartState.set(CART_STATES.BOOKED);
+              } else {
+                cartState.set(CART_STATES.CHECKOUT);
+              }
             }}
           >
             Proceed to Checkout
