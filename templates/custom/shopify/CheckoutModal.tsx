@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { FormEvent, ChangeEvent } from 'react';
+import type { FormEvent } from 'react';
 import { ulid } from 'ulid';
 import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react/dialog';
@@ -33,7 +33,6 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   const $globalCartState = useStore(cartState);
   const $cartItems = useStore(cartStore);
   const $customer = useStore(customerDetails);
-  const $shopify = useStore(shopifyData);
 
   const [internalState, setInternalState] =
     useState<CheckoutState>('IDENTITY_EMAIL');
@@ -191,7 +190,8 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       const response: any = await bookingHelpers.holdSlot(
         transactionTraceId.get(),
         start.toISOString(),
-        end.toISOString()
+        end.toISOString(),
+        resources
       );
       if (response && (response.success || response.status === 201)) {
         setInternalState(needsPayment ? 'SUMMARY' : 'SUCCESS');

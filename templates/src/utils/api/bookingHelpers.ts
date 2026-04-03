@@ -1,4 +1,5 @@
 import { customerDetails, cartStore } from '@/stores/shopify';
+import type { ResourceNode } from '@/types/compositorTypes';
 
 export const bookingHelpers = {
   /**
@@ -30,14 +31,33 @@ export const bookingHelpers = {
   },
 
   /**
-   * Places a temporary hold on a specific slot for the given resources.
+   * Places a temporary hold on a specific slot for the manifest of services and pickup products.
    */
-  holdSlot: async (traceId: string, startTime: string, endTime: string) => {
+  holdSlot: async (
+    traceId: string,
+    startTime: string,
+    endTime: string,
+    resources: ResourceNode[]
+  ) => {
     const details = customerDetails.get();
     const cart = cartStore.get();
+
     const resourceIds = Object.values(cart)
-      .map((item) => item.resourceId)
-      .filter(Boolean) as string[];
+      .filter((item) => {
+        const resource = resources.find((r) => r.id === item.resourceId);
+        if (!resource) return false;
+
+        const isService =
+          resource.categorySlug === 'service' ||
+          !!resource.optionsPayload?.bookingLengthMinutes ||
+          !!resource.optionsPayload?.needsBooking;
+
+        const isPickupProduct =
+          !!item.variantIdPickup && item.variantId === item.variantIdPickup;
+
+        return isService || isPickupProduct;
+      })
+      .map((item) => item.resourceId);
 
     const response = await fetch('/api/booking/hold', {
       method: 'POST',
