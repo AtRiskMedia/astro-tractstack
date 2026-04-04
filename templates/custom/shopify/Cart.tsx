@@ -360,11 +360,7 @@ export default function Cart({ resources = [] }: CartProps) {
               cartStore.set(sanitizedCart);
               transactionTraceId.set(ulid());
 
-              if (!requiresPayment) {
-                cartState.set(CART_STATES.BOOKED);
-              } else {
-                cartState.set(CART_STATES.CHECKOUT);
-              }
+              cartState.set(CART_STATES.CHECKOUT);
             }}
           >
             Proceed to Checkout

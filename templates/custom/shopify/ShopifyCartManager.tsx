@@ -7,10 +7,7 @@ import {
   transactionTraceId,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
-import {
-  MAX_LENGTH_MINUTES,
-  RESTRICTION_MESSAGES,
-} from '@/utils/customHelpers';
+import { RESTRICTION_MESSAGES } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
 import type { BrandConfigState } from '@/types/tractstack';
@@ -146,14 +143,13 @@ export default function ShopifyCartManager({
         const interval = 15;
         const snappedDuration = Math.ceil(rawDuration / interval) * interval;
 
-        if (snappedDuration > (MAX_LENGTH_MINUTES || 120)) {
+        const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 120;
+        if (snappedDuration > dynamicMax) {
           modalState.set({
             isOpen: true,
             type: 'restriction',
             title: 'Appointment Length Limit Reached',
-            message: RESTRICTION_MESSAGES.MAX_DURATION(
-              MAX_LENGTH_MINUTES || 120
-            ),
+            message: RESTRICTION_MESSAGES.MAX_DURATION(dynamicMax),
           });
         } else {
           cartStore.set(nextCart);

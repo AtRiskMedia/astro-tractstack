@@ -206,6 +206,22 @@ export default function SchedulingSection({
                 className="mt-2 block w-full rounded-md border-gray-300 px-2 py-3 focus:border-cyan-700 focus:ring-cyan-700 md:text-sm"
               />
             </div>
+            <div className="md:col-span-3 xl:col-span-4">
+              <label className="block text-xs font-black uppercase tracking-widest text-gray-500">
+                Max Duration (Minutes)
+              </label>
+              <input
+                type="number"
+                value={config.maxLengthMinutes}
+                onChange={(e) =>
+                  updateField('scheduling', {
+                    ...config,
+                    maxLengthMinutes: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="mt-2 block w-full rounded-md border-gray-300 px-2 py-3 focus:border-cyan-700 focus:ring-cyan-700 md:text-sm"
+              />
+            </div>
           </div>
         </div>
 

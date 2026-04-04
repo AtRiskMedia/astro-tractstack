@@ -220,6 +220,7 @@ export const NativeBookingCalendar = ({
             {slots.length > 0 ? (
               slots.map((slot, i) => (
                 <button
+                  type="button"
                   key={i}
                   disabled={!slot.isAvailable}
                   onClick={() => handleSlotClick(slot.start, slot.end)}

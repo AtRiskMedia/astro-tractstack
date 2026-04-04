@@ -9,7 +9,6 @@ import {
   cartStore,
   customerDetails,
   setCustomerDetails,
-  shopifyData,
   CART_STATES,
   transactionTraceId,
 } from '@/stores/shopify';
@@ -194,7 +193,12 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         resources
       );
       if (response && (response.success || response.status === 201)) {
-        setInternalState(needsPayment ? 'SUMMARY' : 'SUCCESS');
+        if (needsPayment) {
+          setInternalState('SUMMARY');
+        } else {
+          cartStore.set({}); // Safely clears the cart for free bookings
+          setInternalState('SUCCESS');
+        }
       } else {
         setError(response?.message || 'Slot no longer available.');
         setInternalState('BOOKING');
@@ -380,7 +384,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
                     onClick={handleFinalCheckout}
                     className="w-full rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
                   >
-                    Complete Payment
+                    {needsPayment ? 'Complete Payment' : 'Complete Booking'}
                   </button>
                 </div>
               )}
