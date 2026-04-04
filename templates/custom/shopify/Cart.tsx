@@ -99,17 +99,26 @@ export default function Cart({ resources = [] }: CartProps) {
     ]);
   };
 
+  if (isHandoff) {
+    return (
+      <div
+        className="fixed inset-0 flex flex-col items-center justify-center bg-black bg-opacity-75 backdrop-blur-md"
+        style={{ zIndex: 9005 }}
+      >
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-white"></div>
+        <h3 className="mt-4 text-lg font-bold text-white">
+          Finalizing Handoff...
+        </h3>
+        <p className="mt-2 text-sm text-gray-300">
+          Redirecting to Shopify secured payment
+        </p>
+      </div>
+    );
+  }
+
   if (cartValues.length === 0) {
     return (
       <div className="relative">
-        {isHandoff && (
-          <div className="absolute inset-0 z-103 flex flex-col items-center justify-center rounded-lg bg-black bg-opacity-75 backdrop-blur-md">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black"></div>
-            <h3 className="mt-4 text-lg font-bold text-gray-900">
-              Finalizing Handoff...
-            </h3>
-          </div>
-        )}
         <div className="rounded-lg border bg-gray-50 p-8 text-center">
           <h2 className="text-xl font-bold">Your cart is empty</h2>
           <p className="mt-2 text-gray-600">Add some items to get started.</p>
@@ -347,15 +356,6 @@ export default function Cart({ resources = [] }: CartProps) {
                   item.variantId = item.variantIdShipped;
                 }
               });
-
-              const requiresPayment = Object.values(sanitizedCart).some(
-                (item) => {
-                  const resource = resources.find(
-                    (r) => r.id === item.resourceId
-                  );
-                  return !!resource?.optionsPayload?.gid;
-                }
-              );
 
               cartStore.set(sanitizedCart);
               transactionTraceId.set(ulid());

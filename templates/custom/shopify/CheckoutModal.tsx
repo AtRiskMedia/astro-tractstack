@@ -11,6 +11,7 @@ import {
   setCustomerDetails,
   CART_STATES,
   transactionTraceId,
+  isShopifyHandoff,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
@@ -103,17 +104,24 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
   }, [enrichedCart]);
 
   useEffect(() => {
-    if ($globalCartState === CART_STATES.CHECKOUT) {
-      if ($customer.leadId) {
-        if (!transactionTraceId.get()) transactionTraceId.set(ulid());
-        setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
-      } else {
-        setInternalState('IDENTITY_EMAIL');
-      }
+    if ($globalCartState !== CART_STATES.CHECKOUT) return;
+
+    const isIdentifying =
+      internalState === 'IDENTITY_EMAIL' ||
+      internalState === 'IDENTITY_NEW_USER';
+
+    if (!isIdentifying) return;
+
+    if ($customer.leadId) {
+      if (!transactionTraceId.get()) transactionTraceId.set(ulid());
+      setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
+    } else {
+      setInternalState('IDENTITY_EMAIL');
     }
-  }, [$globalCartState, needsBooking, $customer.leadId]);
+  }, [$globalCartState, needsBooking, $customer.leadId, internalState]);
 
   const handleClose = async () => {
+    const redirect = internalState === 'SUCCESS';
     const currentTraceId = transactionTraceId.get();
     if (currentTraceId && internalState !== 'SUCCESS') {
       try {
@@ -126,6 +134,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     cartState.set(CART_STATES.READY);
     setInternalState('IDENTITY_EMAIL');
     setError(null);
+    if (redirect) window.location.href = `/`;
   };
 
   const handleEmailLookup = async (e: FormEvent) => {
@@ -193,12 +202,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         resources
       );
       if (response && (response.success || response.status === 201)) {
-        if (needsPayment) {
-          setInternalState('SUMMARY');
-        } else {
-          cartStore.set({}); // Safely clears the cart for free bookings
-          setInternalState('SUCCESS');
-        }
+        setInternalState('SUMMARY');
       } else {
         setError(response?.message || 'Slot no longer available.');
         setInternalState('BOOKING');
@@ -236,8 +240,15 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Checkout failed');
-      if (result.checkoutUrl) window.location.href = result.checkoutUrl;
-      else throw new Error('No checkout URL');
+
+      if (result.checkoutUrl) {
+        isShopifyHandoff.set(true);
+        cartStore.set({});
+        cartState.set(CART_STATES.READY);
+        window.location.href = result.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL');
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to reach checkout.'
