@@ -25,6 +25,8 @@ export function convertToLocalState(
       shopifyApiVersion: '',
       shopifyStoreDomain: '',
       resendApiKey: '',
+      shopifyAdminSlug: '',
+      userSetupWebhooks: false,
     };
   }
 
@@ -43,6 +45,8 @@ export function convertToLocalState(
     shopifyApiVersion: status.shopifyApiVersion || '',
     shopifyStoreDomain: '',
     resendApiKey: '',
+    shopifyAdminSlug: '',
+    userSetupWebhooks: false,
   };
 }
 
@@ -92,6 +96,14 @@ export function convertToBackendFormat(
     request.SHOPIFY_STORE_DOMAIN = state.shopifyStoreDomain.trim();
   }
 
+  if (state.shopifyAdminSlug?.trim()) {
+    request.SHOPIFY_ADMIN_SLUG = state.shopifyAdminSlug.trim();
+  }
+
+  if (state.userSetupWebhooks !== undefined) {
+    request.USER_SETUP_WEBHOOKS = state.userSetupWebhooks;
+  }
+
   if (state.resendApiKey?.trim()) {
     request.RESEND_API_KEY = state.resendApiKey.trim();
   }
@@ -138,6 +150,16 @@ export function validateAdvancedConfig(
     if (!/^\d{4}-\d{2}$/.test(state.shopifyApiVersion.trim())) {
       errors.shopifyApiVersion =
         'Version must match YYYY-MM format (e.g. 2026-01)';
+    }
+  }
+
+  if (state.shopifyAdminSlug?.trim()) {
+    if (
+      state.shopifyAdminSlug.includes('/') ||
+      state.shopifyAdminSlug.includes('.')
+    ) {
+      errors.shopifyAdminSlug =
+        'Please enter only the store slug, not the full URL';
     }
   }
 

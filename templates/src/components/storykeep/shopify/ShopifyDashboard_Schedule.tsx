@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { navigate } from 'astro:transitions/client';
 import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
@@ -7,23 +6,19 @@ import {
   validateBrandConfig,
 } from '@/utils/api/brandHelpers';
 import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
-import BrandColorsSection from '@/components/form/brand/BrandColorsSection';
-import BrandAssetsSection from '@/components/form/brand/BrandAssetsSection';
-import SiteConfigSection from '@/components/form/brand/SiteConfigSection';
-import SocialLinksSection from '@/components/form/brand/SocialLinksSection';
-import SEOSection from '@/components/form/brand/SEOSection';
+import SchedulingSection from '@/components/form/shopify/SchedulingSection';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 
-interface StoryKeepDashboardBrandingProps {
+interface ShopifyDashboardScheduleProps {
   brandConfig: BrandConfig;
   onBrandConfigUpdate?: (config: BrandConfig) => void;
 }
 
-export default function StoryKeepDashboard_Branding({
+export default function ShopifyDashboard_Schedule({
   brandConfig,
   onBrandConfigUpdate,
-}: StoryKeepDashboardBrandingProps) {
+}: ShopifyDashboardScheduleProps) {
   const [currentBrandConfig, setCurrentBrandConfig] = useState(brandConfig);
   const initialState: BrandConfigState =
     convertToLocalState(currentBrandConfig);
@@ -33,8 +28,6 @@ export default function StoryKeepDashboard_Branding({
     validator: validateBrandConfig,
     onSave: async (data) => {
       try {
-        const isFirstSave = !currentBrandConfig.SITE_INIT;
-
         const updatedState = await saveBrandConfigWithStateUpdate(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
           data
@@ -52,10 +45,6 @@ export default function StoryKeepDashboard_Branding({
         if (onBrandConfigUpdate) {
           onBrandConfigUpdate(updatedBrandConfig);
         }
-
-        if (isFirstSave) {
-          navigate('/storykeep');
-        }
       } catch (error) {
         console.error('Save failed:', error);
         throw error;
@@ -63,31 +52,25 @@ export default function StoryKeepDashboard_Branding({
     },
     unsavedChanges: {
       enableBrowserWarning: true,
-      browserWarningMessage: 'Your brand configuration changes will be lost!',
+      browserWarningMessage: 'Your scheduling changes will be lost!',
     },
   });
 
   return (
     <div className="space-y-8">
       <div className="border-b border-gray-200 pb-4">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Brand Configuration
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900">Booking Schedule</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Configure your site's branding, colors, assets, and social presence.
+          Manage your store timezone, business hours, and blackout dates.
         </p>
       </div>
 
-      <SiteConfigSection formState={formState} />
-      <BrandColorsSection formState={formState} />
-      <BrandAssetsSection formState={formState} />
-      <SEOSection formState={formState} />
-      <SocialLinksSection formState={formState} />
+      <SchedulingSection formState={formState} />
 
       <UnsavedChangesBar
         formState={formState}
-        message="You have unsaved brand configuration changes"
-        saveLabel="Save Brand Config"
+        message="You have unsaved scheduling changes"
+        saveLabel="Save Schedule"
         cancelLabel="Discard Changes"
       />
     </div>

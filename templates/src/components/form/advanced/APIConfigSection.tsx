@@ -1,4 +1,5 @@
 import StringInput from '../StringInput';
+import BooleanToggle from '../BooleanToggle';
 import type { FormStateReturn } from '@/hooks/useFormState';
 import type {
   AdvancedConfigState,
@@ -22,6 +23,7 @@ export default function APIConfigSection({
   const shopifySecretConfigured = status?.shopifyApiSecretSet;
   const shopifyDomainConfigured = status?.shopifyStoreDomainSet;
   const shopifyVersionConfigured = Boolean(status?.shopifyApiVersion);
+  const shopifyWebhooksConfigured = state.userSetupWebhooks;
 
   const resendConfigured = status?.resendApiKeySet;
 
@@ -92,7 +94,8 @@ export default function APIConfigSection({
                 shopifyStorefrontConfigured &&
                   shopifySecretConfigured &&
                   shopifyDomainConfigured &&
-                  shopifyVersionConfigured
+                  shopifyVersionConfigured &&
+                  shopifyWebhooksConfigured
               )}
             </div>
             <div className="space-y-4">
@@ -110,6 +113,20 @@ export default function APIConfigSection({
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   The primary .myshopify.com domain for your store.
+                </p>
+              </div>
+
+              <div>
+                <StringInput
+                  label="Shopify Admin Slug"
+                  value={state.shopifyAdminSlug}
+                  onChange={(value) => updateField('shopifyAdminSlug', value)}
+                  placeholder="your-store-slug"
+                  error={errors.shopifyAdminSlug}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  The internal Shopify slug (found in
+                  admin.shopify.com/store/SLUG).
                 </p>
               </div>
 
@@ -164,6 +181,15 @@ export default function APIConfigSection({
                   Required for Webhook signature verification.
                   {shopifySecretConfigured && ' Leave blank to keep existing.'}
                 </p>
+              </div>
+
+              <div className="mt-6 border-t border-gray-100 pt-6">
+                <BooleanToggle
+                  label="Webhooks Manually Configured"
+                  description="I have manually created the required webhooks (orders/paid, products/*) in my Shopify Admin."
+                  value={state.userSetupWebhooks}
+                  onChange={(value) => updateField('userSetupWebhooks', value)}
+                />
               </div>
             </div>
           </div>

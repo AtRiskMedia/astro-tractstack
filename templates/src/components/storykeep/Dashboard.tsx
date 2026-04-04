@@ -149,7 +149,7 @@ export default function StoryKeepDashboard({
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
-        <nav className="-mb-px flex gap-x-8" aria-label="Tabs">
+        <nav className="-mb-px flex flex-wrap gap-x-8" aria-label="Tabs">
           {tabs.map((tab) => (
             <a
               key={tab.id}

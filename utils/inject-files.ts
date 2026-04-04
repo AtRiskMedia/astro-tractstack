@@ -1154,9 +1154,9 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/form/brand/SchedulingSection.tsx'
+        '../templates/src/components/form/shopify/SchedulingSection.tsx'
       ),
-      dest: 'src/components/form/brand/SchedulingSection.tsx',
+      dest: 'src/components/form/shopify/SchedulingSection.tsx',
     },
 
     // Advanced Configuration Components
@@ -1211,6 +1211,36 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/Dashboard_Shopify.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Shopify.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Schedule.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Schedule.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Products.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Products.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Services.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Services.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Search.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Search.tsx',
     },
     {
       src: resolve(

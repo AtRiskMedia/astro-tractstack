@@ -13,13 +13,16 @@ import {
 } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
+import type { BrandConfigState } from '@/types/tractstack';
 
 interface ShopifyCartManagerProps {
   resources?: ResourceNode[];
+  brandConfig?: BrandConfigState;
 }
 
 export default function ShopifyCartManager({
   resources = [],
+  brandConfig,
 }: ShopifyCartManagerProps) {
   const queue = useStore(addQueue);
 

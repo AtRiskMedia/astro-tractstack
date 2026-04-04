@@ -32,6 +32,8 @@ export async function getAdvancedConfigStatus(
       typeof data.shopifyStorefrontTokenSet !== 'boolean' ||
       typeof data.shopifyApiSecretSet !== 'boolean' ||
       typeof data.shopifyStoreDomainSet !== 'boolean' ||
+      typeof data.shopifyAdminSlugSet !== 'boolean' ||
+      typeof data.userSetupWebhooks !== 'boolean' ||
       typeof data.resendApiKeySet !== 'boolean'
     ) {
       throw new Error('Invalid response format from server');

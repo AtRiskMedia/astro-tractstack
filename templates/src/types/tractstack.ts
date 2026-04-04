@@ -160,6 +160,7 @@ export interface TimeBlock {
 export interface SchedulingConfig {
   timezone: string;
   bufferGapsMinutes: number;
+  maxLengthMinutes: number;
   businessHours: Record<string, TimeBlock>;
   unavailableHours: TimeBlock[];
 }
@@ -196,6 +197,9 @@ export interface BrandConfig {
   DESIGN_LIBRARY?: DesignLibraryConfig;
   HAS_AAI?: boolean;
   HAS_SHOPIFY?: boolean;
+  SHOW_SHOPIFY_HELPER?: boolean;
+  SHOPIFY_ADMIN_SLUG?: string;
+  USER_SETUP_WEBHOOKS?: boolean;
   HAS_RESEND?: boolean;
   HAS_HYDRATION_TOKEN?: boolean;
   SCHEDULING?: SchedulingConfig;
@@ -233,6 +237,7 @@ export interface BrandConfigState {
   designLibrary?: DesignLibraryConfig;
   hasAAI: boolean;
   hasShopify: boolean;
+  showShopifyHelper: boolean;
   hasResend: boolean;
   hasHydrationToken: boolean;
   scheduling: SchedulingConfig;
@@ -275,6 +280,8 @@ export interface AdvancedConfigStatus {
   shopifyApiVersion: string;
   shopifyStoreDomainSet: boolean;
   resendApiKeySet: boolean;
+  shopifyAdminSlugSet: boolean;
+  userSetupWebhooks: boolean;
 }
 
 export interface AdvancedConfigState {
@@ -288,6 +295,8 @@ export interface AdvancedConfigState {
   shopifyApiSecret: string;
   shopifyApiVersion: string;
   shopifyStoreDomain: string;
+  shopifyAdminSlug: string;
+  userSetupWebhooks: boolean;
   resendApiKey: string;
 }
 
@@ -303,6 +312,8 @@ export interface AdvancedConfigUpdateRequest {
   SHOPIFY_API_SECRET?: string;
   SHOPIFY_API_VERSION?: string;
   SHOPIFY_STORE_DOMAIN?: string;
+  SHOPIFY_ADMIN_SLUG?: string;
+  USER_SETUP_WEBHOOKS?: boolean;
   RESEND_API_KEY?: string;
 }
 

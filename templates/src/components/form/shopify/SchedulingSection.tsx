@@ -323,7 +323,7 @@ export default function SchedulingSection({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="6 18L18 6M6 6l12 12"
+                        d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
                   </button>

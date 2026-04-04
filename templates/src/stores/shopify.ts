@@ -102,6 +102,7 @@ export const CART_STATES = {
 export type CartState = (typeof CART_STATES)[keyof typeof CART_STATES];
 
 export const isShopifyHandoff = atom<boolean>(false);
+export const shopifyActiveTabStore = atom<string>('dashboards');
 
 export const shopifyData = atom<{
   products: ShopifyProduct[];
