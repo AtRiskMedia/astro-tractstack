@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 
 interface TimeBlock {
@@ -71,6 +71,62 @@ export const NativeBookingCalendar = ({
     start: Date;
     end: Date;
   } | null>(null);
+  const [isAtCapacity, setIsAtCapacity] = useState(false);
+
+  const checkDayHasSlots = useCallback(
+    (date: Date, scheduling: SchedulingConfig, bookings: Booking[]) => {
+      const dayName = date
+        .toLocaleDateString('en-US', { weekday: 'long' })
+        .toLowerCase();
+
+      const businessHours = scheduling.businessHours?.[dayName];
+      if (!businessHours) return false;
+
+      const baseDateIso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T`;
+      let iterUtc = getUtcFromWallTime(
+        `${baseDateIso}${businessHours.start}`,
+        scheduling.timezone
+      );
+      const dayEndUtc = getUtcFromWallTime(
+        `${baseDateIso}${businessHours.end}`,
+        scheduling.timezone
+      );
+      const bufferGap = scheduling.bufferGapsMinutes || 0;
+      const now = new Date();
+
+      while (
+        iterUtc.getTime() + totalDurationMinutes * 60000 <=
+        dayEndUtc.getTime()
+      ) {
+        const slotStart = new Date(iterUtc);
+        const slotEnd = new Date(
+          iterUtc.getTime() + totalDurationMinutes * 60000
+        );
+        const slotEndWithBuffer = new Date(
+          slotEnd.getTime() + bufferGap * 60000
+        );
+
+        if (slotStart >= now) {
+          const isBlocked =
+            bookings.some((b) => {
+              const bStart = new Date(b.startTime);
+              const bEnd = new Date(b.endTime);
+              return slotStart < bEnd && slotEndWithBuffer > bStart;
+            }) ||
+            scheduling.unavailableHours.some((u) => {
+              const uStart = new Date(u.start);
+              const uEnd = new Date(u.end);
+              return slotStart < uEnd && slotEndWithBuffer > uStart;
+            });
+
+          if (!isBlocked) return true;
+        }
+        iterUtc = new Date(iterUtc.getTime() + 15 * 60000);
+      }
+      return false;
+    },
+    [totalDurationMinutes]
+  );
 
   useEffect(() => {
     const fetchAvailability = async () => {
@@ -78,7 +134,8 @@ export const NativeBookingCalendar = ({
         setLoading(true);
         const start = new Date();
         const end = new Date();
-        end.setDate(end.getDate() + 14);
+        // Capped Front-Load: 30 days forward scanning limits infinite loop risk while finding first available opening
+        end.setDate(end.getDate() + 30);
 
         const response = await bookingHelpers.getAvailability(
           start.toISOString(),
@@ -90,6 +147,28 @@ export const NativeBookingCalendar = ({
             bookings: response.bookings || [],
             scheduling: response.scheduling,
           });
+
+          let foundAvailable = false;
+          let currentCheck = new Date();
+
+          for (let i = 0; i <= 30; i++) {
+            if (
+              checkDayHasSlots(
+                currentCheck,
+                response.scheduling,
+                response.bookings || []
+              )
+            ) {
+              setSelectedDate(new Date(currentCheck));
+              foundAvailable = true;
+              break;
+            }
+            currentCheck.setDate(currentCheck.getDate() + 1);
+          }
+
+          if (!foundAvailable) {
+            setIsAtCapacity(true);
+          }
           setError(null);
         } else {
           setError(response.message || 'Failed to load availability.');
@@ -102,7 +181,7 @@ export const NativeBookingCalendar = ({
     };
 
     fetchAvailability();
-  }, []);
+  }, [checkDayHasSlots]);
 
   const slots = useMemo(() => {
     if (!availability || !selectedDate) return [];
@@ -125,6 +204,7 @@ export const NativeBookingCalendar = ({
       shopTz
     );
     const bufferGap = availability.scheduling.bufferGapsMinutes || 0;
+    const now = new Date();
     const daySlots = [];
 
     while (
@@ -137,7 +217,9 @@ export const NativeBookingCalendar = ({
       );
       const slotEndWithBuffer = new Date(slotEnd.getTime() + bufferGap * 60000);
 
+      const isPast = slotStart < now;
       const isBlocked =
+        isPast ||
         availability.bookings.some((b) => {
           const bStart = new Date(b.startTime);
           const bEnd = new Date(b.endTime);
@@ -178,6 +260,20 @@ export const NativeBookingCalendar = ({
     );
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
+  if (isAtCapacity) {
+    return (
+      <div className="flex flex-col space-y-6 rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
+        <h3 className="text-lg font-bold text-gray-900">At Capacity</h3>
+        <p className="text-gray-600">
+          We are currently fully booked for the next 30 days! Please check back
+          soon as cancellations do happen, or contact us directly.
+        </p>
+      </div>
+    );
+  }
+
+  const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between border-b pb-4">
@@ -203,6 +299,7 @@ export const NativeBookingCalendar = ({
           <label className="block text-sm text-gray-700">Date</label>
           <input
             type="date"
+            min={todayStr}
             value={`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`}
             onChange={(e) => {
               const [y, m, d] = e.target.value.split('-');
