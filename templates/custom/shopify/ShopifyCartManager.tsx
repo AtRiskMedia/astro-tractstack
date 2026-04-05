@@ -143,7 +143,7 @@ export default function ShopifyCartManager({
         const interval = 15;
         const snappedDuration = Math.ceil(rawDuration / interval) * interval;
 
-        const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 120;
+        const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 180;
         if (snappedDuration > dynamicMax) {
           modalState.set({
             isOpen: true,

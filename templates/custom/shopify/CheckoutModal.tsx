@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
-import type { FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { ulid } from 'ulid';
 import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react/dialog';
@@ -26,10 +25,14 @@ type CheckoutState =
   | 'SUCCESS';
 
 interface CheckoutModalProps {
+  maxLength: number;
   resources?: ResourceNode[];
 }
 
-export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
+export default function CheckoutModal({
+  maxLength,
+  resources = [],
+}: CheckoutModalProps) {
   const $globalCartState = useStore(cartState);
   const $cartItems = useStore(cartStore);
   const $customer = useStore(customerDetails);
@@ -97,7 +100,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
         acc + (item.resource?.duration || 0) * (item.quantity || 1),
       0
     );
-    return Math.min(Math.ceil(rawMinutes / 15) * 15, 120);
+    return Math.min(Math.ceil(rawMinutes / 15) * 15, maxLength);
   }, [enrichedCart]);
 
   useEffect(() => {
