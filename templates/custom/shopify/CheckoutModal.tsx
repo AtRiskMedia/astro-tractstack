@@ -194,12 +194,13 @@ export default function CheckoutModal({
     setShopTimeZone(timeZone);
     setError(null);
     setInternalState('PROCESSING');
+    const cartResourceIds = enrichedCart.map((item) => item.resourceId);
     try {
       const response: any = await bookingHelpers.holdSlot(
         transactionTraceId.get(),
         start.toISOString(),
         end.toISOString(),
-        resources
+        cartResourceIds
       );
       if (response && (response.success || response.status === 201)) {
         setInternalState('SUMMARY');
