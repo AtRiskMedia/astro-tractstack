@@ -228,11 +228,9 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
             .map((i) => ({
               merchandiseId: i.variantId || i.gid,
               quantity: i.quantity || 1,
-              attributes: [
-                { key: 'Trace ID', value: transactionTraceId.get() },
-              ],
             })),
           email: $customer.email,
+          attributes: [{ key: 'Trace ID', value: transactionTraceId.get() }],
         }),
       });
       const result = await response.json();

@@ -31,21 +31,6 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = (await request.json()) as CreateCartPayload;
 
-    const payload: CreateCartPayload = {
-      lines: body.lines.map((line) => ({
-        ...line,
-        attributes: [
-          ...(line.attributes || []),
-          { key: 'Trace ID', value: body.traceId || '' },
-        ],
-      })),
-      attributes: [
-        ...(body.attributes || []),
-        { key: 'Trace ID', value: body.traceId || '' },
-      ],
-      email: body.email,
-    };
-
     const backendResponse = await fetch(backendEndpoint, {
       method: 'POST',
       headers: {
@@ -53,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
         'X-Tenant-ID': tenantId,
         Cookie: cookieHeader,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     if (!backendResponse.ok) {
