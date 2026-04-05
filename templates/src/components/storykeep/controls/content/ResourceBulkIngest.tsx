@@ -595,7 +595,7 @@ export default function ResourceBulkIngest({
 
             {/* Status Display */}
             <div className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4">
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-gray-900">
                   {validationResult.resources.length} resources found
                 </span>
@@ -638,7 +638,7 @@ export default function ResourceBulkIngest({
                     Validation Errors:
                   </p>
                   <div className="max-h-32 overflow-y-auto">
-                    <ul className="space-y-1 text-sm text-red-600">
+                    <ul className="space-y-1 break-words text-sm text-red-600">
                       {validationResult.errors
                         .slice(0, 10)
                         .map((error, idx) => (
@@ -648,8 +648,12 @@ export default function ResourceBulkIngest({
                                 ? `Item ${error.index + 1}:`
                                 : 'JSON:'}
                             </span>
-                            <span>
-                              {error.field} - {error.message}
+                            <span
+                              className="truncate"
+                              title={`${error.field} - ${error.message}`}
+                            >
+                              <span className="font-bold">{error.field}</span> -{' '}
+                              {error.message}
                             </span>
                           </li>
                         ))}
@@ -674,7 +678,7 @@ export default function ResourceBulkIngest({
             {/* Progress indicator */}
             {isProcessing && progress && (
               <div className="mb-6">
-                <div className="mb-2 flex items-center justify-between text-sm">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span>
                     Processing resource {progress.current + 1} of{' '}
                     {progress.total}

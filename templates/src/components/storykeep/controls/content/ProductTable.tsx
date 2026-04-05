@@ -140,7 +140,7 @@ export default function ProductTable({
         <p className="text-xs text-gray-500">Search by product title.</p>
       </div>
 
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+      <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-gray-50">
             <tr>
@@ -209,7 +209,10 @@ export default function ProductTable({
                 return (
                   <tr key={product.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">
+                      <div
+                        className="max-w-xs truncate font-bold text-gray-900"
+                        title={product.title}
+                      >
                         {product.title}
                       </div>
                       {isLinked && (
@@ -220,11 +223,20 @@ export default function ProductTable({
                               : 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
                           }`}
                         >
-                          Synced: {linkedResource.title}
+                          Synced:{' '}
+                          <span
+                            className="max-w-xs truncate"
+                            title={linkedResource.title}
+                          >
+                            {linkedResource.title}
+                          </span>
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    <td
+                      className="max-w-xs truncate whitespace-nowrap px-6 py-4 text-sm text-gray-500"
+                      title={product.handle}
+                    >
                       {product.handle}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-bold">

@@ -117,7 +117,7 @@ export default function ResourceTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+      <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-gray-50">
             <tr>
@@ -153,13 +153,22 @@ export default function ResourceTable({
                   className="cursor-pointer hover:bg-gray-50"
                   onClick={() => onEdit(resource.id)}
                 >
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900">
+                  <td
+                    className="max-w-xs truncate whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900"
+                    title={resource.title}
+                  >
                     {resource.title}
                   </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                  <td
+                    className="max-w-xs truncate whitespace-nowrap px-6 py-4 text-sm text-gray-500"
+                    title={resource.slug}
+                  >
                     {resource.slug}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td
+                    className="max-w-xs truncate px-6 py-4 text-sm text-gray-500"
+                    title={(resource as any).oneliner || '-'}
+                  >
                     {(resource as any).oneliner || '-'}
                   </td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-bold md:pr-6">
