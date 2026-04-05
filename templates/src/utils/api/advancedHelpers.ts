@@ -46,7 +46,7 @@ export function convertToLocalState(
     shopifyStoreDomain: '',
     resendApiKey: '',
     shopifyAdminSlug: '',
-    userSetupWebhooks: false,
+    userSetupWebhooks: status.userSetupWebhooks,
   };
 }
 
@@ -119,7 +119,6 @@ export function validateAdvancedConfig(
 ): FieldErrors {
   const errors: FieldErrors = {};
 
-  // Turso validation: both URL and token must be provided together
   const hasTursoUrl = Boolean(state.tursoUrl?.trim());
   const hasTursoToken = Boolean(state.tursoToken?.trim());
   if (hasTursoUrl && !hasTursoToken) {
@@ -137,7 +136,6 @@ export function validateAdvancedConfig(
     }
   }
 
-  // Shopify store domain validation
   if (state.shopifyStoreDomain?.trim()) {
     const domainPattern = /^[a-zA-Z0-9-]+\.myshopify\.com$/;
     if (!domainPattern.test(state.shopifyStoreDomain.trim())) {
@@ -163,7 +161,24 @@ export function validateAdvancedConfig(
     }
   }
 
-  // Password strength validation (optional but recommended)
+  const isConfiguringShopify = Boolean(
+    state.shopifyStoreDomain?.trim() ||
+    state.shopifyStorefrontToken?.trim() ||
+    state.shopifyApiSecret?.trim() ||
+    state.shopifyAdminSlug?.trim()
+  );
+
+  if (isConfiguringShopify) {
+    if (!state.shopifyAdminSlug?.trim()) {
+      errors.shopifyAdminSlug =
+        'Admin slug is required to generate webhook links.';
+    }
+    if (!state.userSetupWebhooks) {
+      errors.userSetupWebhooks =
+        'You must confirm webhooks are configured to ensure synchronization.';
+    }
+  }
+
   if (state.adminPassword && state.adminPassword.length < 8) {
     errors.adminPassword =
       'Admin password should be at least 8 characters long';
