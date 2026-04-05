@@ -88,10 +88,7 @@ export default function CheckoutModal({ resources = [] }: CheckoutModalProps) {
     [enrichedCart]
   );
   const needsPayment = useMemo(
-    () =>
-      enrichedCart.some(
-        (item) => (item.gid || item.variantId) && parseFloat(item.price) > 0
-      ),
+    () => enrichedCart.some((item) => !!(item.gid || item.variantId)),
     [enrichedCart]
   );
   const totalDuration = useMemo(() => {
