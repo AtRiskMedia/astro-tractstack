@@ -214,12 +214,48 @@ export default function CheckoutModal({
     }
   };
 
+  const handleCancelBooking = async () => {
+    const currentTraceId = transactionTraceId.get();
+    if (currentTraceId) {
+      setError(null);
+      setInternalState('PROCESSING');
+      try {
+        await bookingHelpers.releaseHold(currentTraceId);
+        setSelectedSlot(null);
+        setInternalState('BOOKING');
+      } catch (err) {
+        console.error('Failed to release hold', err);
+        setError('Failed to cancel the hold. Please try again.');
+        setInternalState('SUMMARY');
+      }
+    } else {
+      setSelectedSlot(null);
+      setInternalState('BOOKING');
+    }
+  };
+
   const handleFinalCheckout = async () => {
     if (!needsPayment) {
-      cartStore.set({});
-      setInternalState('SUCCESS');
+      setError(null);
+      setInternalState('PROCESSING');
+      try {
+        const response: any = await bookingHelpers.confirmBooking(
+          transactionTraceId.get()
+        );
+        if (response && response.success) {
+          cartStore.set({});
+          setInternalState('SUCCESS');
+        } else {
+          setError(response?.error || 'Failed to confirm booking.');
+          setInternalState('SUMMARY');
+        }
+      } catch (err) {
+        setError('Error confirming booking.');
+        setInternalState('SUMMARY');
+      }
       return;
     }
+
     setError(null);
     setInternalState('PROCESSING');
     try {
@@ -390,12 +426,23 @@ export default function CheckoutModal({
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={handleFinalCheckout}
-                    className="w-full rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
-                  >
-                    {needsPayment ? 'Complete Payment' : 'Complete Booking'}
-                  </button>
+
+                  <div className="flex gap-3">
+                    {needsBooking && (
+                      <button
+                        onClick={handleCancelBooking}
+                        className="w-1/3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                      >
+                        Go Back
+                      </button>
+                    )}
+                    <button
+                      onClick={handleFinalCheckout}
+                      className="flex-1 rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
+                    >
+                      {needsPayment ? 'Complete Payment' : 'Complete Booking'}
+                    </button>
+                  </div>
                 </div>
               )}
               {internalState === 'SUCCESS' && (

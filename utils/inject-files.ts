@@ -953,6 +953,10 @@ export async function injectTemplateFiles(
 
     // API Routes
     {
+      src: resolve('../templates/src/pages/api/booking/confirm.ts'),
+      dest: 'src/pages/api/booking/confirm.ts',
+    },
+    {
       src: resolve('../templates/src/pages/api/booking/release.ts'),
       dest: 'src/pages/api/booking/release.ts',
     },

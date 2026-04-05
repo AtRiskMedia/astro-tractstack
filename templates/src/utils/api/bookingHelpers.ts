@@ -1,5 +1,4 @@
-import { customerDetails, cartStore } from '@/stores/shopify';
-import type { ResourceNode } from '@/types/compositorTypes';
+import { customerDetails } from '@/stores/shopify';
 
 export const bookingHelpers = {
   /**
@@ -62,6 +61,20 @@ export const bookingHelpers = {
    */
   releaseHold: async (traceId: string) => {
     const response = await fetch('/api/booking/release', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ traceId }),
+    });
+    return await response.json();
+  },
+
+  /**
+   * Confirms a pending hold, finalizing the booking for free services.
+   */
+  confirmBooking: async (traceId: string) => {
+    const response = await fetch('/api/booking/confirm', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
