@@ -72,6 +72,7 @@ export async function resolveTenantId(
 
     if (VERBOSE) console.log(`[TenantResolver] Fetching from: ${localBackend}`);
 
+    console.log(`[TenantResolver] Activating local bypass`);
     // Temporarily disable TLS validation because 127.0.0.1 won't match the cert
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
