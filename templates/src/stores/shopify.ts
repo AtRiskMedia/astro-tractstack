@@ -129,7 +129,7 @@ export const addQueue = persistentAtom<CartAction[]>(
   }
 );
 
-const cartPersistence = persistentAtom<Record<string, CartItemState>>(
+export const cartPersistence = persistentAtom<Record<string, CartItemState>>(
   'tractstack_shopify_cart',
   {},
   {
@@ -249,4 +249,14 @@ export function setCustomerDetails(details: Partial<CustomerDetails>) {
     ...customerDetails.get(),
     ...details,
   });
+}
+
+export function clearCommerceState() {
+  cartStore.set({});
+  customerDetails.set({
+    name: '',
+    email: '',
+    leadId: '',
+  });
+  cartState.set(CART_STATES.READY);
 }

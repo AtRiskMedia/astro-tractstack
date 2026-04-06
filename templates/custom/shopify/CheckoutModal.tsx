@@ -14,6 +14,7 @@ import {
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
+import { ProfileStorage } from '@/utils/profileStorage';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 type CheckoutState =
@@ -39,7 +40,14 @@ export default function CheckoutModal({
 
   const [internalState, setInternalState] =
     useState<CheckoutState>('IDENTITY_EMAIL');
-  const [email, setEmail] = useState($customer.email || '');
+
+  const [email, setEmail] = useState(() => {
+    const profile = ProfileStorage.getProfileData();
+    if (ProfileStorage.isProfileUnlocked() && profile.email)
+      return profile.email;
+    return $customer.email || '';
+  });
+
   const [name, setName] = useState('');
   const [codeword, setCodeword] = useState('');
   const [shopTimeZone, setShopTimeZone] = useState<string | undefined>(
@@ -104,19 +112,37 @@ export default function CheckoutModal({
   }, [enrichedCart]);
 
   useEffect(() => {
-    if ($globalCartState !== CART_STATES.CHECKOUT) return;
+    const profile = ProfileStorage.getProfileData();
+    if (ProfileStorage.isProfileUnlocked() && profile.email) {
+      setEmail(profile.email);
+    } else if ($customer.email) {
+      setEmail($customer.email);
+    }
+  }, [ProfileStorage.isProfileUnlocked(), $customer.email]);
 
-    const isIdentifying =
-      internalState === 'IDENTITY_EMAIL' ||
-      internalState === 'IDENTITY_NEW_USER';
-
-    if (!isIdentifying) return;
+  useEffect(() => {
+    if (
+      $globalCartState !== CART_STATES.CHECKOUT ||
+      internalState === 'SUCCESS' ||
+      internalState === 'PROCESSING'
+    )
+      return;
 
     if ($customer.leadId) {
-      if (!transactionTraceId.get()) transactionTraceId.set(ulid());
-      setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
+      if (
+        internalState === 'IDENTITY_EMAIL' ||
+        internalState === 'IDENTITY_NEW_USER'
+      ) {
+        if (!transactionTraceId.get()) transactionTraceId.set(ulid());
+        setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
+      }
     } else {
-      setInternalState('IDENTITY_EMAIL');
+      if (
+        internalState !== 'IDENTITY_EMAIL' &&
+        internalState !== 'IDENTITY_NEW_USER'
+      ) {
+        setInternalState('IDENTITY_EMAIL');
+      }
     }
   }, [$globalCartState, needsBooking, $customer.leadId, internalState]);
 
@@ -161,18 +187,37 @@ export default function CheckoutModal({
     setError(null);
     setInternalState('PROCESSING');
     try {
+      const handshake = ProfileStorage.prepareHandshakeData();
       const response = await fetch('/api/auth/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, firstName: name, password: codeword }),
+        body: JSON.stringify({
+          email,
+          firstName: name,
+          codeword,
+          contactPersona: 'major',
+          shortBio: '',
+          sessionId: handshake.sessionId,
+          consent: '1',
+          isUpdate: false,
+        }),
       });
       const data = await response.json();
-      if (response.ok && data.profile?.leadId) {
+      if (response.ok && data.profile?.LeadID) {
+        ProfileStorage.storeProfileToken(data.token);
+        ProfileStorage.setProfileData(data.profile);
+        ProfileStorage.storeEncryptedCredentials(
+          data.encryptedEmail,
+          data.encryptedCode
+        );
+        ProfileStorage.storeConsent('1');
+
         if (!transactionTraceId.get()) transactionTraceId.set(ulid());
         setCustomerDetails({
           ...$customer,
-          email,
-          leadId: data.profile.leadId,
+          email: data.profile.Email,
+          name: data.profile.Firstname,
+          leadId: data.profile.LeadID,
         });
         setInternalState(needsBooking ? 'BOOKING' : 'SUMMARY');
       } else {
@@ -341,25 +386,41 @@ export default function CheckoutModal({
               )}
               {internalState === 'IDENTITY_NEW_USER' && (
                 <form onSubmit={handleCreateLead} className="space-y-6">
-                  <p className="text-sm text-gray-600">
-                    Provide details for <strong>{email}</strong>.
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Full Name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-1 focus:ring-black"
-                  />
-                  <input
-                    type="password"
-                    placeholder="Codeword"
-                    required
-                    value={codeword}
-                    onChange={(e) => setCodeword(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-1 focus:ring-black"
-                  />
+                  <div className="space-y-1">
+                    <label className="block text-sm font-bold text-gray-700">
+                      Email:
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={email}
+                      className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-500 shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-bold text-gray-700">
+                      Your name:
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:ring-black"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-bold text-gray-700">
+                      Codeword to protect your account:
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      value={codeword}
+                      onChange={(e) => setCodeword(e.target.value)}
+                      className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:ring-black"
+                    />
+                  </div>
                   <button
                     type="submit"
                     className="w-full rounded-md bg-black px-4 py-2 text-sm font-bold text-white hover:bg-gray-800"
