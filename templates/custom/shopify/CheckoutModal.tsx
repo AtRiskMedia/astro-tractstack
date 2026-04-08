@@ -149,7 +149,11 @@ export default function CheckoutModal({
   const handleClose = async () => {
     const redirect = internalState === 'SUCCESS';
     const currentTraceId = transactionTraceId.get();
-    if (currentTraceId && internalState !== 'SUCCESS') {
+    if (
+      currentTraceId &&
+      internalState !== 'SUCCESS' &&
+      !isShopifyHandoff.get()
+    ) {
       try {
         await bookingHelpers.releaseHold(currentTraceId);
       } catch (err) {
