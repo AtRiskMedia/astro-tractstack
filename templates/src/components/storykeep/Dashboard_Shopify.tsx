@@ -6,7 +6,6 @@ import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import {
   shopifyStatus,
   shopifyActiveTabStore,
-  fetchShopifyProducts,
   type ShopifyProduct,
 } from '@/stores/shopify';
 import ResourceForm from './controls/content/ResourceForm';
@@ -26,6 +25,7 @@ import ShopifyDashboard_Products from './shopify/ShopifyDashboard_Products';
 import ShopifyDashboard_Services from './shopify/ShopifyDashboard_Services';
 import ShopifyDashboard_Schedule from './shopify/ShopifyDashboard_Schedule';
 import ShopifyDashboard_Search from './shopify/ShopifyDashboard_Search';
+import ShopifyDashboard_Bookings from './shopify/ShopifyDashboard_Bookings';
 
 interface DashboardShopifyProps {
   brandConfig: BrandConfig;
@@ -74,6 +74,7 @@ export default function StoryKeepDashboard_Shopify({
   // Tab definitions
   const tabs = [
     { id: 'dashboards', name: 'Dashboard' },
+    { id: 'bookings', name: 'Bookings' },
     { id: 'products', name: 'Products' },
     { id: 'services', name: 'Services' },
     { id: 'schedule', name: 'Schedule' },
@@ -103,10 +104,6 @@ export default function StoryKeepDashboard_Shopify({
     });
     return map;
   }, [resources]);
-
-  const handleRefresh = () => {
-    fetchShopifyProducts();
-  };
 
   const refreshResources = async () => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
@@ -418,7 +415,7 @@ export default function StoryKeepDashboard_Shopify({
               Shopify products must be configured with a specific architectural
               pattern:
             </p>
-            <ul className="list-inside list-disc space-y-1 font-medium">
+            <ul className="list-inside list-disc space-y-1 font-bold">
               <li>
                 Option Name: Must be exactly{' '}
                 <code className="rounded bg-cyan-100 px-1">Mode</code>
@@ -444,7 +441,7 @@ export default function StoryKeepDashboard_Shopify({
             <button
               key={tab.id}
               onClick={() => shopifyActiveTabStore.set(tab.id)}
-              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium ${
+              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold ${
                 activeTab === tab.id
                   ? 'border-cyan-500 text-cyan-600'
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
@@ -468,7 +465,13 @@ export default function StoryKeepDashboard_Shopify({
           </div>
         )}
 
-        {activeTab === 'dashboards' && <ShopifyDashboard />}
+        {activeTab === 'dashboards' && (
+          <ShopifyDashboard existingResources={resources} />
+        )}
+
+        {activeTab === 'bookings' && (
+          <ShopifyDashboard_Bookings existingResources={resources} />
+        )}
 
         {/* Local Management Tabs */}
         {activeTab === 'products' && (

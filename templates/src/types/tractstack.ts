@@ -515,3 +515,32 @@ export interface CategorizedResults {
   contextPaneResults: FTSResult[];
   resourceResults: FTSResult[];
 }
+
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+
+export interface BookingEntity {
+  id: string; // traceId
+  resourceIds: string[];
+  leadId: string;
+  startTime: string; // ISO-8601 UTC string
+  endTime: string; // ISO-8601 UTC string
+  status: BookingStatus;
+  shopifyOrderId?: string;
+  createdAt: string; // ISO-8601 UTC string
+  leadEmail?: string;
+  leadName?: string;
+}
+
+export interface BookingListResponse {
+  data: BookingEntity[];
+  totalCount: number;
+}
+
+export interface BookingMetricsResponse {
+  totalMonthlyConfirmed: number;
+  totalAnnualConfirmed: number;
+  totalWeeklyConfirmed: number;
+  leadConversionAnchor: number;
+  pendingLast24h: number;
+  confirmedLast24h: number;
+}

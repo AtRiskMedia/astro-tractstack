@@ -953,6 +953,18 @@ export async function injectTemplateFiles(
 
     // API Routes
     {
+      src: resolve('../templates/src/pages/api/booking/list.ts'),
+      dest: 'src/pages/api/booking/list.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/booking/metrics.ts'),
+      dest: 'src/pages/api/booking/metrics.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/booking/cancel.ts'),
+      dest: 'src/pages/api/booking/cancel.ts',
+    },
+    {
       src: resolve('../templates/src/pages/api/booking/confirm.ts'),
       dest: 'src/pages/api/booking/confirm.ts',
     },
@@ -1221,6 +1233,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/shopify/ShopifyDashboard.tsx'
       ),
       dest: 'src/components/storykeep/shopify/ShopifyDashboard.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Bookings.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Bookings.tsx',
     },
     {
       src: resolve(

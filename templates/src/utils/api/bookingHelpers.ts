@@ -83,4 +83,43 @@ export const bookingHelpers = {
     });
     return await response.json();
   },
+
+  /**
+   * Retrieves a paginated list of all bookings for the administrative dashboard.
+   */
+  listBookings: async (
+    limit: number = 50,
+    offset: number = 0,
+    status: string = 'ALL'
+  ) => {
+    const query = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+      status,
+    });
+    const response = await fetch(`/api/booking/list?${query.toString()}`);
+    return await response.json();
+  },
+
+  /**
+   * Retrieves aggregated booking volume and conversion statistics.
+   */
+  getMetrics: async () => {
+    const response = await fetch('/api/booking/metrics');
+    return await response.json();
+  },
+
+  /**
+   * Manually cancels an existing booking from the administrative dashboard.
+   */
+  cancelBooking: async (traceId: string) => {
+    const response = await fetch('/api/booking/cancel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ traceId }),
+    });
+    return await response.json();
+  },
 };
