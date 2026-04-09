@@ -223,7 +223,10 @@ export function clearShopifySearch() {
   shopifyStatus.set({ isLoading: false, error: null });
 }
 
-export const transactionTraceId = atom<string>('');
+export const transactionTraceId = persistentAtom<string>(
+  'tractstack_shopify_trace_id',
+  ''
+);
 
 export interface CustomerDetails {
   name: string;
@@ -258,5 +261,6 @@ export function clearCommerceState() {
     email: '',
     leadId: '',
   });
+  transactionTraceId.set('');
   cartState.set(CART_STATES.READY);
 }

@@ -94,6 +94,7 @@ export default function ShopifyCartManager({
         cartStore.set(nextCart);
         addQueue.set(remaining);
       } else if (actionItem.action === 'add') {
+        transactionTraceId.set('');
         const newQty = currentQty + 1;
 
         const newItem: CartItemState = {

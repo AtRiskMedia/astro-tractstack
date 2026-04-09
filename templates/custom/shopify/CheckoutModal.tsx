@@ -251,7 +251,7 @@ export default function CheckoutModal({
         end.toISOString(),
         cartResourceIds
       );
-      if (response && (response.success || response.status === 201)) {
+      if (response && (response.success || response.status === 'PENDING')) {
         setInternalState('SUMMARY');
       } else {
         setError(response?.message || 'Slot no longer available.');
@@ -319,7 +319,13 @@ export default function CheckoutModal({
               quantity: i.quantity || 1,
             })),
           email: $customer.email,
-          attributes: [{ key: 'Trace ID', value: transactionTraceId.get() }],
+          ...(needsBooking
+            ? {
+                attributes: [
+                  { key: 'bookingId', value: transactionTraceId.get() },
+                ],
+              }
+            : {}),
         }),
       });
       const result = await response.json();
