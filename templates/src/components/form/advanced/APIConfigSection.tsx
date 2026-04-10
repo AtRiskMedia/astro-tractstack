@@ -309,7 +309,7 @@ export default function APIConfigSection({
                       <li>
                         <strong>URL:</strong> Enter your backend webhook URL:{' '}
                         <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
-                          {goBackend}/api/webhooks/shopify
+                          {goBackend}/api/v1/hooks/shopify
                         </code>
                       </li>
                       <li>
@@ -344,7 +344,7 @@ export default function APIConfigSection({
                   the following four topics. All of them should point to the
                   exact same URL:{' '}
                   <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
-                    {goBackend}/api/webhooks/shopify
+                    {goBackend}/api/v1/hooks/shopify
                   </code>
                 </p>
 
