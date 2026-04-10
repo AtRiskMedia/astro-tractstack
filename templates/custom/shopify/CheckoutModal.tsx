@@ -323,6 +323,28 @@ export default function CheckoutModal({
             ? {
                 attributes: [
                   { key: 'bookingId', value: transactionTraceId.get() },
+                  ...(selectedSlot
+                    ? [
+                        {
+                          key: 'Appointment Date',
+                          value: selectedSlot.start.toLocaleDateString(
+                            'en-US',
+                            { timeZone: shopTimeZone }
+                          ),
+                        },
+                        {
+                          key: 'Appointment Time',
+                          value: selectedSlot.start.toLocaleTimeString(
+                            'en-US',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              timeZone: shopTimeZone,
+                            }
+                          ),
+                        },
+                      ]
+                    : []),
                 ],
               }
             : {}),
@@ -498,6 +520,11 @@ export default function CheckoutModal({
                     )}
                   </div>
 
+                  {needsBooking && (
+                    <div className="mb-4 rounded-md bg-amber-50 p-3 text-center text-xs font-bold text-amber-800">
+                      Your appointment time is held for the next 30 minutes.
+                    </div>
+                  )}
                   <div className="flex gap-3">
                     {needsBooking && (
                       <button
