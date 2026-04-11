@@ -73,27 +73,6 @@ export function checkRestrictions(resource: ResourceNode): boolean {
   return false;
 }
 
-export const MAX_LENGTH_MINUTES = 180;
-
-export const BOOKING_LINK_INCREMENTS = [30, 60, 90, 120, 150, 180];
-
-export const BOOKING_LINKS: Record<number, string> = {
-  30: '30min',
-  60: '60min',
-  90: '90min',
-  120: '120min',
-  150: '150min',
-  180: '180min',
-};
-
-export function getBookingBucket(minutes: number): string | null {
-  if (minutes <= 0) return null;
-  if (minutes > MAX_LENGTH_MINUTES) return null;
-
-  const bucket = BOOKING_LINK_INCREMENTS.find((inc) => minutes <= inc);
-  return bucket ? BOOKING_LINKS[bucket] : null;
-}
-
 export function calculateCartDuration(
   cart: Record<string, CartItemState>,
   resources: ResourceNode[]

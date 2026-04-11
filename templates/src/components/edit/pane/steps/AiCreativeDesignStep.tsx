@@ -6,7 +6,7 @@ import ArrowPathRoundedSquareIcon from '@heroicons/react/24/outline/ArrowPathRou
 import prompts from '@/constants/prompts.json';
 import { htmlToHtmlAst } from '@/utils/compositor/htmlAst';
 import type { TemplatePane } from '@/types/compositorTypes';
-import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
+import { callAaiAPI } from '@/utils/compositor/aiGeneration';
 import BooleanToggle from '@/components/form/BooleanToggle';
 import { AiDesignStep, type AiDesignConfig } from './AiDesignStep';
 
@@ -86,7 +86,7 @@ export const AiCreativeDesignStep = ({
       userPrompt = userPrompt.replace('{{DESIGN_NOTES}}', combinedNotes);
 
       // Use shared infrastructure utility
-      const rawHtml = await callAskLemurAPI({
+      const rawHtml = await callAaiAPI({
         prompt: userPrompt,
         context: systemPrompt,
         expectJson: false,

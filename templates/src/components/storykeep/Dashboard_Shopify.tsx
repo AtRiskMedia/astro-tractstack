@@ -4,16 +4,15 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ClipboardDocumentIcon from '@heroicons/react/24/outline/ClipboardDocumentIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import {
-  shopifyData,
   shopifyStatus,
-  fetchShopifyProducts,
+  shopifyActiveTabStore,
   type ShopifyProduct,
 } from '@/stores/shopify';
-import ProductTable from './controls/content/ProductTable';
 import ResourceForm from './controls/content/ResourceForm';
 import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
 import {
   deleteResource,
+  getResource,
   getResourcesByCategory,
 } from '@/utils/api/resourceConfig';
 import { convertToLocalState } from '@/utils/api/brandHelpers';
@@ -21,6 +20,12 @@ import BooleanToggle from '@/components/form/BooleanToggle';
 import type { BrandConfig, BrandConfigState } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { ResourceConfig } from '@/types/tractstack';
+import ShopifyDashboard from './shopify/ShopifyDashboard';
+import ShopifyDashboard_Products from './shopify/ShopifyDashboard_Products';
+import ShopifyDashboard_Services from './shopify/ShopifyDashboard_Services';
+import ShopifyDashboard_Schedule from './shopify/ShopifyDashboard_Schedule';
+import ShopifyDashboard_Search from './shopify/ShopifyDashboard_Search';
+import ShopifyDashboard_Bookings from './shopify/ShopifyDashboard_Bookings';
 
 interface DashboardShopifyProps {
   brandConfig: BrandConfig;
@@ -33,8 +38,9 @@ export default function StoryKeepDashboard_Shopify({
   brandConfig,
   existingResources,
 }: DashboardShopifyProps) {
-  const data = useStore(shopifyData);
   const status = useStore(shopifyStatus);
+  const activeTab = useStore(shopifyActiveTabStore);
+
   const [selectedProduct, setSelectedProduct] = useState<ShopifyProduct | null>(
     null
   );
@@ -51,6 +57,12 @@ export default function StoryKeepDashboard_Shopify({
   );
   const [showTypeSelector, setShowTypeSelector] = useState(false);
 
+  const [showSmartCartWarning, setShowSmartCartWarning] = useState(false);
+  const [pendingImport, setPendingImport] = useState<{
+    category: string;
+    product: ShopifyProduct;
+  } | null>(null);
+
   const [machineState, setMachineState] = useState<MachineState>('INIT');
   const [internalBrandConfig, setInternalBrandConfig] =
     useState<BrandConfigState | null>(null);
@@ -58,6 +70,16 @@ export default function StoryKeepDashboard_Shopify({
   const [wantProduct, setWantProduct] = useState(true);
   const [wantService, setWantService] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Tab definitions
+  const tabs = [
+    { id: 'dashboards', name: 'Dashboard' },
+    { id: 'bookings', name: 'Bookings' },
+    { id: 'products', name: 'Products' },
+    { id: 'services', name: 'Services' },
+    { id: 'schedule', name: 'Schedule' },
+    { id: 'search', name: 'Search' },
+  ];
 
   useEffect(() => {
     if (brandConfig) {
@@ -73,14 +95,6 @@ export default function StoryKeepDashboard_Shopify({
     }
   }, [brandConfig]);
 
-  // Operational Effect: Fetch products only when READY
-  useEffect(() => {
-    if (machineState === 'READY') {
-      fetchShopifyProducts();
-    }
-  }, [machineState]);
-
-  // Memoize the lookup map for performance (gid -> ResourceNode)
   const linkedResourceMap = useMemo(() => {
     const map = new Map<string, ResourceNode>();
     resources.forEach((r) => {
@@ -91,14 +105,9 @@ export default function StoryKeepDashboard_Shopify({
     return map;
   }, [resources]);
 
-  const handleRefresh = () => {
-    fetchShopifyProducts();
-  };
-
   const refreshResources = async () => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
     try {
-      // Fetch both categories if configured, then merge unique
       const promises = [];
       if (internalBrandConfig?.knownResources['product']) {
         promises.push(getResourcesByCategory(tenantId, 'product'));
@@ -129,16 +138,46 @@ export default function StoryKeepDashboard_Shopify({
       setTargetProduct(product);
       setShowTypeSelector(true);
     } else if (hasServiceSchema) {
-      startCreateFlow('service', product);
+      executePreFlightCheck('service', product);
     } else {
-      startCreateFlow('product', product);
+      executePreFlightCheck('product', product);
     }
   };
 
-  const handleEdit = (_product: ShopifyProduct, resource: ResourceNode) => {
+  // Handler for ProductTable (External Catalog)
+  const handleEditFromCatalog = (
+    _product: ShopifyProduct,
+    resource: ResourceNode
+  ) => {
     setDraftResource(resource as any);
     setIsCreateMode(false);
     setShowResourceModal(true);
+  };
+
+  // Handler for ResourceTable (Local Management)
+  const handleEditResource = async (resourceId: string) => {
+    try {
+      const resource = await getResource(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        resourceId
+      );
+      setDraftResource(resource as any);
+      setIsCreateMode(false);
+      setShowResourceModal(true);
+    } catch (error) {
+      console.error('Failed to load resource for editing:', error);
+    }
+  };
+
+  const executePreFlightCheck = (category: string, product: ShopifyProduct) => {
+    const hasMode = product.options.some((opt) => opt.name === 'Mode');
+    if (hasMode) {
+      startCreateFlow(category, product);
+    } else {
+      setPendingImport({ category, product });
+      setShowSmartCartWarning(true);
+      setShowTypeSelector(false);
+    }
   };
 
   const startCreateFlow = (category: string, product: ShopifyProduct) => {
@@ -148,7 +187,6 @@ export default function StoryKeepDashboard_Shopify({
       shopifyData: JSON.stringify(product),
     };
 
-    // Apply schema defaults for missing fields
     Object.entries(schema).forEach(([key, def]) => {
       if (mergedOptions[key] === undefined) {
         if (def.type === 'number') {
@@ -190,7 +228,6 @@ export default function StoryKeepDashboard_Shopify({
         window.TRACTSTACK_CONFIG?.tenantId || 'default',
         resourceId
       );
-      // Optimistic update
       setResources((prev) => prev.filter((r) => r.id !== resourceId));
     } catch (error) {
       console.error('Unlink failed', error);
@@ -214,11 +251,11 @@ export default function StoryKeepDashboard_Shopify({
     try {
       const updatedKnownResources = { ...internalBrandConfig.knownResources };
 
-      // 1. Product Schema
       if (wantProduct) {
         updatedKnownResources['product'] = {
           gid: { type: 'string', optional: false },
           allowMultiple: { type: 'boolean', optional: false },
+          group: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: false },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           ...(wantService
@@ -233,10 +270,10 @@ export default function StoryKeepDashboard_Shopify({
         };
       }
 
-      // 2. Service Schema
       if (wantService) {
         updatedKnownResources['service'] = {
           gid: { type: 'string', optional: true },
+          group: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: true },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           bookingLengthMinutes: {
@@ -269,11 +306,25 @@ export default function StoryKeepDashboard_Shopify({
     }
   };
 
-  if (machineState === 'INIT') {
-    return null;
-  }
+  const handleDismissHelper = async () => {
+    if (!internalBrandConfig) return;
+    try {
+      const updatedState = {
+        ...internalBrandConfig,
+        showShopifyHelper: false,
+      };
+      await saveBrandConfigWithStateUpdate(
+        window.TRACTSTACK_CONFIG?.tenantId || 'default',
+        updatedState
+      );
+      setInternalBrandConfig(updatedState);
+    } catch (error) {
+      console.error('Failed to dismiss Shopify helper:', error);
+    }
+  };
 
-  // CONFIG State
+  if (machineState === 'INIT') return null;
+
   if (machineState === 'CONFIG' || machineState === 'UPDATE') {
     return (
       <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -336,7 +387,6 @@ export default function StoryKeepDashboard_Shopify({
     );
   }
 
-  // READY State
   return (
     <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-6 border-b border-gray-100 pb-4">
@@ -346,12 +396,66 @@ export default function StoryKeepDashboard_Shopify({
         </p>
       </div>
 
-      {status.error && (
-        <div className="mb-6 rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <span className="text-red-400">⚠️</span>
-            </div>
+      {/* Persistent Onboarding Helper Banner */}
+      {internalBrandConfig?.showShopifyHelper && (
+        <div className="relative mb-8 rounded-lg border border-cyan-200 bg-cyan-50 p-6 pr-12 shadow-sm">
+          <button
+            onClick={handleDismissHelper}
+            className="absolute right-4 top-4 text-cyan-600 hover:text-cyan-800"
+            title="Dismiss instructions"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+          <h3 className="text-lg font-bold text-cyan-900">
+            Smart Cart Architecture: "Mode" Options
+          </h3>
+          <div className="mt-2 space-y-3 text-sm text-cyan-800">
+            <p>
+              To enable automatic shipping fee bypass for local pickup, your
+              Shopify products must be configured with a specific architectural
+              pattern:
+            </p>
+            <ul className="list-inside list-disc space-y-1 font-bold">
+              <li>
+                Option Name: Must be exactly{' '}
+                <code className="rounded bg-cyan-100 px-1">Mode</code>
+              </li>
+              <li>
+                Option Values: Must include{' '}
+                <code className="rounded bg-cyan-100 px-1">Shipped</code> and{' '}
+                <code className="rounded bg-cyan-100 px-1">Pickup</code>
+              </li>
+            </ul>
+            <p>
+              Without this "Mode" option, items will always be treated as
+              standard shipped products.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Navigation Shell */}
+      <div className="mb-8 border-b border-gray-200">
+        <nav className="-mb-px flex flex-wrap gap-x-8" aria-label="Tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => shopifyActiveTabStore.set(tab.id)}
+              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-bold ${
+                activeTab === tab.id
+                  ? 'border-cyan-500 text-cyan-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              } `}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="space-y-6">
+        {status.error && (
+          <div className="mb-6 rounded-md bg-red-50 p-4">
             <div className="ml-3">
               <h3 className="text-sm font-bold text-red-800">Error</h3>
               <div className="mt-2 text-sm text-red-700">
@@ -359,32 +463,53 @@ export default function StoryKeepDashboard_Shopify({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {status.isLoading && data.products.length === 0 ? (
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600"></div>
-            <p className="mt-2 text-sm text-gray-500">
-              Loading products from Shopify...
-            </p>
-          </div>
-        </div>
-      ) : (
-        <ProductTable
-          products={data.products}
-          linkedResourceMap={linkedResourceMap}
-          onRefresh={handleRefresh}
-          isRefreshing={status.isLoading}
-          onSelectProduct={setSelectedProduct}
-          onLink={handleLink}
-          onUnlink={handleUnlink}
-          onEdit={handleEdit}
-        />
-      )}
+        {activeTab === 'dashboards' && (
+          <ShopifyDashboard existingResources={resources} />
+        )}
 
-      {/* Product Inspector Modal */}
+        {activeTab === 'bookings' && (
+          <ShopifyDashboard_Bookings existingResources={resources} />
+        )}
+
+        {/* Local Management Tabs */}
+        {activeTab === 'products' && (
+          <ShopifyDashboard_Products
+            resources={resources}
+            onEdit={handleEditResource}
+            onCreate={() => shopifyActiveTabStore.set('search')}
+            onRefresh={refreshResources}
+          />
+        )}
+
+        {activeTab === 'services' && (
+          <ShopifyDashboard_Services
+            resources={resources}
+            onEdit={handleEditResource}
+            onCreate={() => shopifyActiveTabStore.set('search')}
+            onRefresh={refreshResources}
+          />
+        )}
+
+        {/* Schedule Tab */}
+        {activeTab === 'schedule' && (
+          <ShopifyDashboard_Schedule brandConfig={brandConfig} />
+        )}
+
+        {/* Catalog Discovery Tab */}
+        {activeTab === 'search' && (
+          <ShopifyDashboard_Search
+            linkedResourceMap={linkedResourceMap}
+            onSelectProduct={setSelectedProduct}
+            onLink={handleLink}
+            onUnlink={handleUnlink}
+            onEdit={handleEditFromCatalog}
+          />
+        )}
+      </div>
+
+      {/* Shared Modals */}
       {selectedProduct && (
         <div className="relative z-50" aria-modal="true">
           <div className="fixed inset-0 bg-black bg-opacity-75" />
@@ -399,59 +524,41 @@ export default function StoryKeepDashboard_Shopify({
                 </h3>
                 <button
                   type="button"
-                  className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                  className="rounded-md bg-white text-gray-400 hover:text-gray-50"
                   onClick={() => setSelectedProduct(null)}
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
               <div className="overflow-y-auto p-6">
-                <div className="mb-4">
-                  <h4 className="mb-2 text-sm font-bold text-gray-900">
-                    Product Details
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-gray-900">
+                    Raw API Data
                   </h4>
-                  <dl className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-2">
-                    <div className="md:col-span-1">
-                      <dt className="text-sm font-bold text-gray-500">
-                        Handle
-                      </dt>
-                      <dd className="mt-1 text-sm text-gray-900">
-                        {selectedProduct.handle}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-gray-900">
-                      Raw API Data
-                    </h4>
-                    <button
-                      onClick={handleCopy}
-                      className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800"
-                    >
-                      {copied ? (
-                        <CheckIcon className="h-4 w-4" />
-                      ) : (
-                        <ClipboardDocumentIcon className="h-4 w-4" />
-                      )}
-                      {copied ? 'Copied' : 'Copy JSON'}
-                    </button>
-                  </div>
-                  <pre
-                    className="overflow-auto rounded-md bg-gray-50 p-4 text-xs text-gray-800"
-                    style={{ maxHeight: '40vh' }}
+                  <button
+                    onClick={handleCopy}
+                    className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800"
                   >
-                    {JSON.stringify(selectedProduct, null, 2)}
-                  </pre>
+                    {copied ? (
+                      <CheckIcon className="h-4 w-4" />
+                    ) : (
+                      <ClipboardDocumentIcon className="h-4 w-4" />
+                    )}
+                    {copied ? 'Copied' : 'Copy JSON'}
+                  </button>
                 </div>
+                <pre
+                  className="overflow-auto rounded-md bg-gray-50 p-4 text-xs text-gray-800"
+                  style={{ maxHeight: '40vh' }}
+                >
+                  {JSON.stringify(selectedProduct, null, 2)}
+                </pre>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Type Selector Modal */}
       {showTypeSelector && targetProduct && (
         <div className="relative z-50" aria-modal="true">
           <div className="fixed inset-0 bg-black bg-opacity-50" />
@@ -462,27 +569,66 @@ export default function StoryKeepDashboard_Shopify({
                   Import as...
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Should "{targetProduct.title}" be imported as a Product or
-                  Service?
+                  Should "{targetProduct.title}" be a Product or Service?
                 </p>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
-                    onClick={() => startCreateFlow('product', targetProduct)}
+                    onClick={() =>
+                      executePreFlightCheck('product', targetProduct)
+                    }
                     className="flex w-full items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
                   >
                     Product
                   </button>
                   <button
-                    onClick={() => startCreateFlow('service', targetProduct)}
+                    onClick={() =>
+                      executePreFlightCheck('service', targetProduct)
+                    }
                     className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"
                   >
                     Service (Bookable)
                   </button>
                 </div>
-                <div className="mt-4 border-t pt-4">
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSmartCartWarning && pendingImport && (
+        <div className="relative z-50" aria-modal="true">
+          <div className="fixed inset-0 bg-black bg-opacity-50" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+              <div className="px-6 py-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Missing Smart Cart Architecture
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  To enable Smart Cart pickup, the product must have a "Mode"
+                  option containing "Shipped" and "Pickup". If you import now,
+                  it will be standard shipping only.
+                </p>
+                <div className="mt-6 flex flex-col gap-3">
                   <button
-                    onClick={() => setShowTypeSelector(false)}
-                    className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                      setShowSmartCartWarning(false);
+                      startCreateFlow(
+                        pendingImport.category,
+                        pendingImport.product
+                      );
+                      setPendingImport(null);
+                    }}
+                    className="flex w-full items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
+                  >
+                    Acknowledge & Import
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSmartCartWarning(false);
+                      setPendingImport(null);
+                    }}
+                    className="flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50"
                   >
                     Cancel
                   </button>
@@ -493,14 +639,13 @@ export default function StoryKeepDashboard_Shopify({
         </div>
       )}
 
-      {/* Resource Form Modal */}
       {showResourceModal && draftResource && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900 bg-opacity-50 backdrop-blur-sm">
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
               <ResourceForm
                 resourceData={draftResource as any}
-                fullContentMap={resources as any} // Use local resources for slug uniqueness check
+                fullContentMap={resources as any}
                 categorySlug={draftResource.categorySlug || ''}
                 categorySchema={
                   internalBrandConfig?.knownResources[
@@ -511,9 +656,7 @@ export default function StoryKeepDashboard_Shopify({
                 onClose={(saved) => {
                   setShowResourceModal(false);
                   setIsCreateMode(true);
-                  if (saved) {
-                    refreshResources();
-                  }
+                  if (saved) refreshResources();
                 }}
               />
             </div>

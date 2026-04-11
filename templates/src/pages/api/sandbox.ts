@@ -69,14 +69,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const { action, payload } = body;
 
-    if (action !== 'askLemur') {
+    if (action !== 'aai') {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid action.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const backendResponse = await fetch(`${goBackend}/api/v1/aai/askLemur`, {
+    const backendResponse = await fetch(`${goBackend}/api/v1/aai/aai`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

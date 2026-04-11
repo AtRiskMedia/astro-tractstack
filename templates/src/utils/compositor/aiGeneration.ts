@@ -10,7 +10,7 @@ interface AiGenerationOptions {
   temperature?: number;
 }
 
-export const callAskLemurAPI = async ({
+export const callAaiAPI = async ({
   prompt,
   context,
   expectJson,
@@ -43,7 +43,7 @@ export const callAskLemurAPI = async ({
         'X-Sandbox-Token': token || '',
       },
       credentials: 'include',
-      body: JSON.stringify({ action: 'askLemur', payload: requestBody }),
+      body: JSON.stringify({ action: 'aai', payload: requestBody }),
     });
 
     if (!response.ok) {
@@ -58,7 +58,7 @@ export const callAskLemurAPI = async ({
     resultData = json.data;
   } else {
     const api = new TractStackAPI(tenantId);
-    const response = await api.post('/api/v1/aai/askLemur', requestBody);
+    const response = await api.post('/api/v1/aai/aai', requestBody);
 
     if (!response.success) {
       throw new Error(

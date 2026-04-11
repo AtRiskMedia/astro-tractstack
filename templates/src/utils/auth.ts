@@ -12,19 +12,29 @@ export interface AdminAuthClaims {
 }
 
 /**
+ * Helper to get the current expected tenant ID from the Astro context
+ */
+function getExpectedTenantId(astro: any): string {
+  return (
+    astro.locals?.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default'
+  );
+}
+
+/**
  * Check if user is authenticated (either admin or editor)
  */
 export function isAuthenticated(astro: any): boolean {
+  const expectedTenantId = getExpectedTenantId(astro);
   const adminCookie = astro.cookies.get('admin_auth');
   const editorCookie = astro.cookies.get('editor_auth');
 
   if (adminCookie?.value) {
-    const claims = validateAdminToken(adminCookie.value);
+    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
     if (claims && claims.role === 'admin') return true;
   }
 
   if (editorCookie?.value) {
-    const claims = validateAdminToken(editorCookie.value);
+    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
     if (claims && claims.role === 'editor') return true;
   }
 
@@ -35,10 +45,11 @@ export function isAuthenticated(astro: any): boolean {
  * Check if user has admin role
  */
 export function isAdmin(astro: any): boolean {
+  const expectedTenantId = getExpectedTenantId(astro);
   const adminCookie = astro.cookies.get('admin_auth');
   if (!adminCookie?.value) return false;
 
-  const claims = validateAdminToken(adminCookie.value);
+  const claims = validateAdminToken(adminCookie.value, expectedTenantId);
   return claims?.role === 'admin';
 }
 
@@ -46,10 +57,11 @@ export function isAdmin(astro: any): boolean {
  * Check if user has editor role
  */
 export function isEditor(astro: any): boolean {
+  const expectedTenantId = getExpectedTenantId(astro);
   const editorCookie = astro.cookies.get('editor_auth');
   if (!editorCookie?.value) return false;
 
-  const claims = validateAdminToken(editorCookie.value);
+  const claims = validateAdminToken(editorCookie.value, expectedTenantId);
   return claims?.role === 'editor';
 }
 
@@ -57,15 +69,16 @@ export function isEditor(astro: any): boolean {
  * Get user role (admin, editor, or null)
  */
 export function getUserRole(astro: any): 'admin' | 'editor' | null {
+  const expectedTenantId = getExpectedTenantId(astro);
   const adminCookie = astro.cookies.get('admin_auth');
   if (adminCookie?.value) {
-    const claims = validateAdminToken(adminCookie.value);
+    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
     if (claims?.role === 'admin') return 'admin';
   }
 
   const editorCookie = astro.cookies.get('editor_auth');
   if (editorCookie?.value) {
-    const claims = validateAdminToken(editorCookie.value);
+    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
     if (claims?.role === 'editor') return 'editor';
   }
 
@@ -110,15 +123,16 @@ export function requireAdminOrEditor(astro: any): Response | undefined {
  * Returns the JWT token from the appropriate cookie
  */
 export function getAdminToken(astro: any): string | null {
+  const expectedTenantId = getExpectedTenantId(astro);
   const adminCookie = astro.cookies.get('admin_auth');
   if (adminCookie?.value) {
-    const claims = validateAdminToken(adminCookie.value);
+    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
     if (claims?.role === 'admin') return adminCookie.value;
   }
 
   const editorCookie = astro.cookies.get('editor_auth');
   if (editorCookie?.value) {
-    const claims = validateAdminToken(editorCookie.value);
+    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
     if (claims?.role === 'editor') return editorCookie.value;
   }
 
@@ -130,7 +144,10 @@ export function getAdminToken(astro: any): string | null {
  * Note: This is a simplified client-side validation
  * Real validation happens on the backend
  */
-function validateAdminToken(token: string): AdminAuthClaims | null {
+function validateAdminToken(
+  token: string,
+  expectedTenantId: string
+): AdminAuthClaims | null {
   try {
     // Split JWT token
     const parts = token.split('.');
@@ -145,6 +162,9 @@ function validateAdminToken(token: string): AdminAuthClaims | null {
     if (claims.type !== 'admin_auth') return null;
     if (!claims.role || !['admin', 'editor'].includes(claims.role)) return null;
     if (Date.now() / 1000 > claims.exp) return null; // Token expired
+
+    // Tenant validation
+    if (claims.tenantId !== expectedTenantId) return null; // Must match current environment
 
     return claims;
   } catch {

@@ -1,20 +1,25 @@
 import { useEffect } from 'react';
 import { useStore } from '@nanostores/react';
-import { addQueue, cartStore, modalState } from '@/stores/shopify';
 import {
-  calculateCartDuration,
-  MAX_LENGTH_MINUTES,
-  RESTRICTION_MESSAGES,
-} from '@/utils/customHelpers';
+  addQueue,
+  cartStore,
+  modalState,
+  transactionTraceId,
+} from '@/stores/shopify';
+import { bookingHelpers } from '@/utils/api/bookingHelpers';
+import { RESTRICTION_MESSAGES } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
+import type { BrandConfigState } from '@/types/tractstack';
 
 interface ShopifyCartManagerProps {
-  resources: ResourceNode[];
+  resources?: ResourceNode[];
+  brandConfig?: BrandConfigState;
 }
 
 export default function ShopifyCartManager({
   resources = [],
+  brandConfig,
 }: ShopifyCartManagerProps) {
   const queue = useStore(addQueue);
 
@@ -38,34 +43,61 @@ export default function ShopifyCartManager({
       const currentCart = cartStore.get();
       const currentItem = currentCart[key];
       const currentQty = currentItem?.quantity || 0;
+      const nextCart = { ...currentCart };
 
       if (actionItem.action === 'remove') {
         const newQty = Math.max(0, currentQty - 1);
 
         if (newQty === 0) {
-          const newCart = { ...currentCart };
-          delete newCart[key];
-          cartStore.set(newCart);
+          if (
+            resource?.optionsPayload?.needsBooking ||
+            currentItem?.boundResourceId
+          ) {
+            const traceId = transactionTraceId.get();
+            if (traceId) {
+              bookingHelpers
+                .releaseHold(traceId)
+                .catch((err) =>
+                  console.error('Failed to release hold on cart removal:', err)
+                );
+            }
+          }
+          delete nextCart[key];
         } else {
-          cartStore.setKey(key, {
+          nextCart[key] = {
+            ...currentItem,
             resourceId: actionItem.resourceId,
             quantity: newQty,
-            gid: actionItem.gid || currentItem?.gid,
-            variantId: actionItem.variantId || currentItem?.variantId,
-            variantIdShipped:
-              actionItem.variantIdShipped || currentItem?.variantIdShipped,
-            variantIdPickup:
-              actionItem.variantIdPickup || currentItem?.variantIdPickup,
-            boundResourceId:
-              actionItem.boundResourceId || currentItem?.boundResourceId,
-          });
+          };
         }
 
+        if (currentItem?.boundResourceId || actionItem.boundResourceId) {
+          const boundId =
+            currentItem?.boundResourceId || actionItem.boundResourceId;
+          const serviceEntry = Object.entries(nextCart).find(
+            ([_, item]) => item.resourceId === boundId
+          );
+          if (serviceEntry) {
+            const [serviceKey, serviceItem] = serviceEntry;
+            const newServiceQty = Math.max(0, serviceItem.quantity - 1);
+            if (newServiceQty === 0) {
+              delete nextCart[serviceKey];
+            } else {
+              nextCart[serviceKey] = {
+                ...serviceItem,
+                quantity: newServiceQty,
+              };
+            }
+          }
+        }
+
+        cartStore.set(nextCart);
         addQueue.set(remaining);
       } else if (actionItem.action === 'add') {
+        transactionTraceId.set('');
         const newQty = currentQty + 1;
 
-        const newItem = {
+        const newItem: CartItemState = {
           resourceId: actionItem.resourceId,
           quantity: newQty,
           gid: actionItem.gid || currentItem?.gid,
@@ -78,14 +110,11 @@ export default function ShopifyCartManager({
             actionItem.boundResourceId || currentItem?.boundResourceId,
         };
 
-        const nextCart: Record<string, CartItemState> = {
-          ...currentCart,
-          [key]: newItem,
-        };
+        nextCart[key] = newItem;
 
-        if (actionItem.boundResourceId) {
-          const serviceEntry = Object.entries(currentCart).find(
-            ([_, item]) => item.resourceId === actionItem.boundResourceId
+        if (newItem.boundResourceId) {
+          const serviceEntry = Object.entries(nextCart).find(
+            ([_, item]) => item.resourceId === newItem.boundResourceId
           );
 
           if (serviceEntry) {
@@ -95,34 +124,60 @@ export default function ShopifyCartManager({
               quantity: serviceItem.quantity + 1,
             };
           } else {
-            nextCart[`temp_service_${actionItem.boundResourceId}`] = {
-              resourceId: actionItem.boundResourceId,
+            nextCart[`temp_service_${newItem.boundResourceId}`] = {
+              resourceId: newItem.boundResourceId,
               quantity: 1,
             };
           }
         }
 
-        const duration = calculateCartDuration(nextCart, resources);
-        const bookingDuration = resource.optionsPayload?.bookingLengthMinutes;
+        let rawDuration = 0;
+        Object.values(nextCart).forEach((item) => {
+          const res = resources.find((r) => r.id === item.resourceId);
+          if (res?.optionsPayload?.needsBooking || item.boundResourceId) {
+            rawDuration +=
+              (res?.optionsPayload?.bookingLengthMinutes || 0) *
+              (item.quantity || 1);
+          }
+        });
 
-        if (duration > MAX_LENGTH_MINUTES) {
+        const interval = 15;
+        const snappedDuration = Math.ceil(rawDuration / interval) * interval;
+
+        const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 180;
+        if (snappedDuration > dynamicMax) {
           modalState.set({
             isOpen: true,
             type: 'restriction',
             title: 'Appointment Length Limit Reached',
-            message: RESTRICTION_MESSAGES.MAX_DURATION(MAX_LENGTH_MINUTES),
+            message: RESTRICTION_MESSAGES.MAX_DURATION(dynamicMax),
           });
         } else {
-          cartStore.setKey(key, newItem);
+          cartStore.set(nextCart);
 
           if (!actionItem.suppressModal) {
-            if (resource.categorySlug === 'service') {
+            let targetResource = resource;
+            if (newItem.boundResourceId) {
+              const bound = resources.find(
+                (r) => r.id === newItem.boundResourceId
+              );
+              if (bound) {
+                targetResource = bound;
+              }
+            }
+
+            if (
+              targetResource.categorySlug === 'service' ||
+              targetResource.optionsPayload?.needsBooking
+            ) {
               modalState.set({
                 isOpen: true,
                 type: 'success',
                 title: 'Booking Required',
                 message: RESTRICTION_MESSAGES.BOOKING(
-                  (bookingDuration || 0).toString()
+                  (
+                    targetResource.optionsPayload?.bookingLengthMinutes || 0
+                  ).toString()
                 ),
               });
             } else {
@@ -130,7 +185,7 @@ export default function ShopifyCartManager({
                 isOpen: true,
                 type: 'success',
                 title: 'Added to Cart',
-                message: RESTRICTION_MESSAGES.DEFAULT_ADD(resource.title),
+                message: RESTRICTION_MESSAGES.DEFAULT_ADD(targetResource.title),
               });
             }
           }

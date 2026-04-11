@@ -11,7 +11,7 @@ import { AiDesignStep, type AiDesignConfig } from './steps/AiDesignStep';
 import { AiRefineDesignStep } from './steps/AiRefineDesignStep';
 import prompts from '@/constants/prompts.json';
 import { parseAiPane } from '@/utils/compositor/aiPaneParser';
-import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
+import { callAaiAPI } from '@/utils/compositor/aiGeneration';
 import type { PaneNode, TemplatePane } from '@/types/compositorTypes';
 
 interface AiRestylePaneModalProps {
@@ -87,7 +87,7 @@ export const AiRestylePaneModal = ({
         .replace('{{COPY_INPUT}}', 'A generic content section')
         .replace('{{LAYOUT_TYPE}}', 'Text Only');
 
-      const resultStr = await callAskLemurAPI({
+      const resultStr = await callAaiAPI({
         prompt: formattedPrompt,
         context: shellPromptDetails.system || '',
         expectJson: true,

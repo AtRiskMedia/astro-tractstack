@@ -65,13 +65,14 @@ export async function resolveTenantId(
   // Strategy 3: Backend Lookup (Fallback - Network Request)
   try {
     const backendUrl =
-      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:10000';
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
     const urlObj = new URL(backendUrl);
     // Force localhost to avoid Hairpin NAT / Loopback firewall blocks
     const localBackend = `${urlObj.protocol}//127.0.0.1:${urlObj.port}`;
 
     if (VERBOSE) console.log(`[TenantResolver] Fetching from: ${localBackend}`);
 
+    console.log(`[TenantResolver] Activating local bypass`);
     // Temporarily disable TLS validation because 127.0.0.1 won't match the cert
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 

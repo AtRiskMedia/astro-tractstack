@@ -41,8 +41,16 @@ export function convertToLocalState(
     designLibrary: brandConfig.DESIGN_LIBRARY ?? undefined,
     hasAAI: brandConfig.HAS_AAI ?? false,
     hasShopify: brandConfig.HAS_SHOPIFY ?? false,
+    showShopifyHelper: brandConfig.SHOW_SHOPIFY_HELPER ?? false,
     hasResend: brandConfig.HAS_RESEND ?? false,
     hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
+    scheduling: brandConfig.SCHEDULING ?? {
+      timezone: 'UTC',
+      bufferGapsMinutes: 15,
+      maxLengthMinutes: 0,
+      businessHours: {},
+      unavailableHours: [],
+    },
   };
 }
 
@@ -75,7 +83,9 @@ export function convertToBackendFormat(
     DESIGN_LIBRARY: localState.designLibrary,
     HAS_AAI: localState.hasAAI,
     HAS_SHOPIFY: localState.hasShopify,
+    SHOW_SHOPIFY_HELPER: localState.showShopifyHelper,
     HAS_RESEND: localState.hasResend,
+    SCHEDULING: localState.scheduling,
 
     // ALWAYS send asset paths (current state)
     LOGO: localState.logo,

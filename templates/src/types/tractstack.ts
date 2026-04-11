@@ -152,6 +152,19 @@ export interface FullContentMapItem {
   scale?: string;
 }
 
+export interface TimeBlock {
+  start: string; // "09:00" for business hours or ISO-8601 for unavailable blocks
+  end: string;
+}
+
+export interface SchedulingConfig {
+  timezone: string;
+  bufferGapsMinutes: number;
+  maxLengthMinutes: number;
+  businessHours: Record<string, TimeBlock>;
+  unavailableHours: TimeBlock[];
+}
+
 export interface BrandConfig {
   TENANT_ID: string;
   SITE_INIT?: boolean;
@@ -184,8 +197,12 @@ export interface BrandConfig {
   DESIGN_LIBRARY?: DesignLibraryConfig;
   HAS_AAI?: boolean;
   HAS_SHOPIFY?: boolean;
+  SHOW_SHOPIFY_HELPER?: boolean;
+  SHOPIFY_ADMIN_SLUG?: string;
+  USER_SETUP_WEBHOOKS?: boolean;
   HAS_RESEND?: boolean;
   HAS_HYDRATION_TOKEN?: boolean;
+  SCHEDULING?: SchedulingConfig;
 }
 
 export interface BrandConfigState {
@@ -220,8 +237,10 @@ export interface BrandConfigState {
   designLibrary?: DesignLibraryConfig;
   hasAAI: boolean;
   hasShopify: boolean;
+  showShopifyHelper: boolean;
   hasResend: boolean;
   hasHydrationToken: boolean;
+  scheduling: SchedulingConfig;
 }
 
 // Form validation types
@@ -261,6 +280,8 @@ export interface AdvancedConfigStatus {
   shopifyApiVersion: string;
   shopifyStoreDomainSet: boolean;
   resendApiKeySet: boolean;
+  shopifyAdminSlugSet: boolean;
+  userSetupWebhooks: boolean;
 }
 
 export interface AdvancedConfigState {
@@ -274,6 +295,8 @@ export interface AdvancedConfigState {
   shopifyApiSecret: string;
   shopifyApiVersion: string;
   shopifyStoreDomain: string;
+  shopifyAdminSlug: string;
+  userSetupWebhooks: boolean;
   resendApiKey: string;
 }
 
@@ -289,6 +312,8 @@ export interface AdvancedConfigUpdateRequest {
   SHOPIFY_API_SECRET?: string;
   SHOPIFY_API_VERSION?: string;
   SHOPIFY_STORE_DOMAIN?: string;
+  SHOPIFY_ADMIN_SLUG?: string;
+  USER_SETUP_WEBHOOKS?: boolean;
   RESEND_API_KEY?: string;
 }
 
@@ -489,4 +514,33 @@ export interface CategorizedResults {
   storyFragmentResults: FTSResult[];
   contextPaneResults: FTSResult[];
   resourceResults: FTSResult[];
+}
+
+export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+
+export interface BookingEntity {
+  id: string; // traceId
+  resourceIds: string[];
+  leadId: string;
+  startTime: string; // ISO-8601 UTC string
+  endTime: string; // ISO-8601 UTC string
+  status: BookingStatus;
+  shopifyOrderId?: string;
+  createdAt: string; // ISO-8601 UTC string
+  leadEmail?: string;
+  leadName?: string;
+}
+
+export interface BookingListResponse {
+  data: BookingEntity[];
+  totalCount: number;
+}
+
+export interface BookingMetricsResponse {
+  totalMonthlyConfirmed: number;
+  totalAnnualConfirmed: number;
+  totalWeeklyConfirmed: number;
+  leadConversionAnchor: number;
+  pendingLast24h: number;
+  confirmedLast24h: number;
 }

@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- better fortify sandbox askLemur with secret token
+- better fortify sandbox aai with secret token
 
 #### [2.1.0] - 2025-12-17
 

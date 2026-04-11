@@ -7,16 +7,18 @@ interface CreateCartPayload {
   lines: Array<{
     merchandiseId: string;
     quantity: number;
+    attributes?: Array<{ key: string; value: string }>;
   }>;
   attributes?: Array<{
     key: string;
     value: string;
   }>;
   email?: string;
+  traceId?: string;
 }
 
 const getBackendUrl = () => {
-  return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+  return import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 };
 
 export const POST: APIRoute = async ({ request }) => {
@@ -29,12 +31,6 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = (await request.json()) as CreateCartPayload;
 
-    const payload: CreateCartPayload = {
-      lines: body.lines,
-      attributes: body.attributes || [],
-      email: body.email,
-    };
-
     const backendResponse = await fetch(backendEndpoint, {
       method: 'POST',
       headers: {
@@ -42,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
         'X-Tenant-ID': tenantId,
         Cookie: cookieHeader,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     if (!backendResponse.ok) {

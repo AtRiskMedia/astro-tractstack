@@ -276,9 +276,9 @@ const AddPaneNewPanel = ({
         {!hasAssemblyAI && (
           <div className="rounded-lg border-l-4 border-blue-400 bg-blue-50 p-4 shadow-sm">
             <p className="text-sm text-blue-800">
-              Tract Stack uses AssemblyAI AskLemur service to generate designs,
-              describe content, and streamline the management of your site. We
-              strongly recommend enabling these features. See{' '}
+              Tract Stack uses AssemblyAI to generate designs, describe content,
+              and streamline the management of your site. We strongly recommend
+              enabling these features. See{' '}
               <a
                 href="https://freewebpress.org"
                 target="_blank"

@@ -199,7 +199,7 @@ const StoryFragmentTable = ({
       </div>
 
       {/* Table Container */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow">
         {filteredFragments.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <svg
@@ -241,7 +241,7 @@ const StoryFragmentTable = ({
             )}
           </div>
         ) : (
-          <div className="overflow-hidden">
+          <div className="inline-block min-w-full align-middle">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -271,15 +271,24 @@ const StoryFragmentTable = ({
                     <tr key={item.id} className="hover:bg-gray-50">
                       <td className="px-3 py-4 md:px-6">
                         <div className="flex flex-col">
-                          <div className="text-sm font-bold text-gray-900">
+                          <div
+                            className="max-w-xs truncate text-sm font-bold text-gray-900"
+                            title={item.title}
+                          >
                             {item.title}
                           </div>
-                          <div className="text-sm text-gray-500 md:hidden">
+                          <div
+                            className="max-w-xs truncate text-sm text-gray-500 md:hidden"
+                            title={`/${item.slug}`}
+                          >
                             /{item.slug}
                           </div>
                         </div>
                       </td>
-                      <td className="hidden whitespace-nowrap px-3 py-4 text-sm text-gray-500 md:table-cell md:px-6">
+                      <td
+                        className="hidden max-w-xs truncate whitespace-nowrap px-3 py-4 text-sm text-gray-500 md:table-cell md:px-6"
+                        title={`/${item.slug}`}
+                      >
                         /{item.slug}
                       </td>
                       <td className="hidden whitespace-nowrap px-3 py-4 text-sm md:table-cell md:px-6">

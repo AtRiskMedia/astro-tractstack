@@ -142,7 +142,7 @@ const KnownResourceTable = ({
         </div>
       </div>
 
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+      <div className="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-gray-50">
             <tr>
@@ -185,7 +185,10 @@ const KnownResourceTable = ({
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => onEdit(categorySlug)}
                   >
-                    <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900">
+                    <td
+                      className="max-w-xs truncate whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900"
+                      title={categorySlug}
+                    >
                       {categorySlug}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">

@@ -1,3 +1,5 @@
+import { clearCommerceState } from '@/stores/shopify';
+
 export interface ProfileData {
   firstname?: string;
   contactPersona?: string;
@@ -148,6 +150,7 @@ export class ProfileStorage {
     StorageManager.set(this.STORAGE_KEYS.profileToken, token);
     StorageManager.set(this.STORAGE_KEYS.hasProfile, '1');
     StorageManager.set(this.STORAGE_KEYS.unlockedProfile, '1');
+    StorageManager.remove('shopify_customer');
 
     try {
       const maxAge = 60 * 60 * 24;
@@ -205,6 +208,7 @@ export class ProfileStorage {
     }
 
     console.log('TractStack: Session cleared completely including session ID');
+    clearCommerceState();
   }
 
   /**
@@ -218,6 +222,7 @@ export class ProfileStorage {
     StorageManager.remove(this.STORAGE_KEYS.contactPersona);
     StorageManager.remove(this.STORAGE_KEYS.email);
     StorageManager.remove(this.STORAGE_KEYS.shortBio);
+    clearCommerceState();
   }
 
   /**

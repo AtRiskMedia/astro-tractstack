@@ -1,24 +1,32 @@
 import type { APIRoute } from '@/types/astro';
-import { shopifyData } from '@/stores/shopify';
 import { resolveTenantId } from '@/utils/tenantResolver';
 
 export const prerender = false;
 
 const getBackendUrl = () => {
-  return import.meta.env.PUBLIC_API_URL || 'http://localhost:8080';
+  return import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 };
 
 export const GET: APIRoute = async ({ request }) => {
-  // 1. Resolve Tenant Identity
   const resolution = await resolveTenantId(request);
   const tenantId = resolution.id;
 
-  // 2. Fetch from Backend Proxy
-  const backendEndpoint = `${getBackendUrl()}/api/v1/shopify/products`;
+  const url = new URL(request.url);
+  const q = url.searchParams.get('q') || '';
+  const cursor = url.searchParams.get('cursor') || '';
+
+  const backendUrl = new URL(`${getBackendUrl()}/api/v1/shopify/products`);
+  if (q) {
+    backendUrl.searchParams.set('q', q);
+  }
+  if (cursor) {
+    backendUrl.searchParams.set('cursor', cursor);
+  }
+
   const cookieHeader = request.headers.get('cookie') || '';
 
   try {
-    const backendResponse = await fetch(backendEndpoint, {
+    const backendResponse = await fetch(backendUrl.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -36,15 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
 
     const result = await backendResponse.json();
 
-    // 3. Update Client Store
-    const newState = {
-      products: result.products || [],
-      lastFetched: Date.now(),
-    };
-
-    shopifyData.set(newState);
-
-    return new Response(JSON.stringify(newState), {
+    return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

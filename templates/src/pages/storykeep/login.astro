@@ -55,20 +55,27 @@ const mainStylesUrl = isDev
       <div class="mx-auto pb-6">
         <!-- Logo and Wordmark -->
         <div class="flex flex-col items-center justify-center gap-4">
-          <div class="h-16 w-auto">
-            <img
-              src={logo}
-              class="pointer-events-none h-full w-auto"
-              alt="Logo"
-            />
-          </div>
-          <div class="h-16 w-auto">
-            <img
-              src={wordmark}
-              class="pointer-events-none h-full w-auto max-w-48 md:max-w-72"
-              alt="Wordmark"
-            />
-          </div>
+          {
+            brandConfig?.WORDMARK_MODE !== 'wordmark' && (
+              <img
+                id="t8k-logo"
+                src={logo}
+                class="pointer-events-none h-16 w-auto"
+                alt="Logo"
+              />
+            )
+          }
+
+          {
+            brandConfig?.WORDMARK_MODE !== 'logo' && (
+              <img
+                id="t8k-wordmark"
+                src={wordmark}
+                class="pointer-events-none h-16 w-auto max-w-48 md:max-w-72"
+                alt="Wordmark"
+              />
+            )
+          }
         </div>
 
         <h2

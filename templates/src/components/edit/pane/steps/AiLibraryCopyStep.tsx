@@ -6,7 +6,7 @@ import {
   convertTemplateToAIShell,
 } from '@/utils/compositor/designLibraryHelper';
 import { parseAiPane, parseAiCopyHtml } from '@/utils/compositor/aiPaneParser';
-import { callAskLemurAPI } from '@/utils/compositor/aiGeneration';
+import { callAaiAPI } from '@/utils/compositor/aiGeneration';
 import { CopyInputStep, type CopyMode } from './CopyInputStep';
 import type { DesignLibraryEntry } from '@/types/tractstack';
 import type { TemplatePane } from '@/types/compositorTypes';
@@ -159,7 +159,7 @@ export const AiLibraryCopyStep = ({
               .replace('{{LAYOUT_TYPE}}', layoutType)
               .replace('{{COLUMN_EXAMPLE}}', columnPreset.example);
 
-            const copyResult = await callAskLemurAPI({
+            const copyResult = await callAaiAPI({
               prompt: formattedCopyPrompt,
               context: copyPromptDetails.system || '',
               expectJson: false,
@@ -201,7 +201,7 @@ export const AiLibraryCopyStep = ({
             .replace('{{LAYOUT_TYPE}}', layoutType)
             .replace('{{SHELL_JSON}}', shellResult);
 
-          const copyResult = await callAskLemurAPI({
+          const copyResult = await callAaiAPI({
             prompt: formattedCopyPrompt,
             context: copyPromptDetails.system || '',
             expectJson: false,

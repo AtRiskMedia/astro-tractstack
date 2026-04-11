@@ -10,13 +10,13 @@ import ShopifyCartManager from '@/custom/shopify/ShopifyCartManager';
 import CartIcon from '@/custom/shopify/CartIcon';
 import CartModal from '@/custom/shopify/CartModal';
 import CheckoutModal from '@/custom/shopify/CheckoutModal';
-import type { MenuNode } from '@/types/tractstack';
+import type { MenuNode, BrandConfig } from '@/types/tractstack';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 export interface Props {
   title: string;
   slug: string;
-  brandConfig: any;
+  brandConfig: BrandConfig;
   isContext?: boolean;
   isStoryKeep?: boolean;
   isEditable?: boolean;
@@ -79,7 +79,11 @@ if (hasShopify) {
             <CartIcon client:only="react" />
           </div>
         ) : (
-          <CheckoutModal client:only="react" resources={shopifyResources} />
+          <CheckoutModal
+            client:only="react"
+            resources={shopifyResources}
+            maxLength={brandConfig?.scheduling?.maxLengthMinutes || 180}
+          />
         )}
       </>
     ) : null
@@ -94,6 +98,7 @@ if (hasShopify) {
           [`default`, `logo`].includes(wordmarkMode) ? (
             <>
               <img
+                id="t8k-logo"
                 src={logo}
                 alt="Logo"
                 class="pointer-events-none h-8 w-auto"
@@ -106,6 +111,7 @@ if (hasShopify) {
         {
           [`default`, `wordmark`].includes(wordmarkMode) ? (
             <img
+              id="t8k-wordmark"
               src={wordmark}
               alt="Wordmark"
               class="pointer-events-none h-14 w-auto max-w-48 md:max-w-72"
