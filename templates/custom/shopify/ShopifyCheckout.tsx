@@ -36,29 +36,20 @@ export default function ShopifyCheckout({
       try {
         const cartItems = Object.values(cart);
 
-        // Determine if we are in "Pickup Mode" (Service exists in cart)
-        const duration = calculateCartDuration(cart, resources);
-        const isPickupMode = duration > 0;
-
         const lines = cartItems
           .map((item) => {
-            // 1. Resolve the ResourceNode for this item
+            // Resolve the ResourceNode for this item
             const resource = resources.find((r) => r.id === item.resourceId);
 
             if (!resource) {
               return null;
             }
 
-            // 2. Determine the preferred Variant ID based on mode
-            const activeVariantId = isPickupMode
-              ? item.variantIdPickup
-              : item.variantIdShipped;
-
-            // 3. Establish the specific ID to use from the cart state
+            // Establish the specific ID to use from the explicitly sanitized cart state
             let merchandiseId =
-              activeVariantId || item.variantIdPickup || item.variantId;
+              item.variantId || item.variantIdPickup || item.variantIdShipped;
 
-            // 4. FALLBACK LOGIC (Mirrors Cart.tsx)
+            //  FALLBACK LOGIC (Mirrors Cart.tsx)
             // If no specific variant ID is saved on the cart item,
             // look up the Default Variant from the Resource data.
             if (!merchandiseId && resource?.optionsPayload?.shopifyData) {

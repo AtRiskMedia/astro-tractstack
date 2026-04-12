@@ -171,7 +171,7 @@ export default function StoryKeepDashboard_Shopify({
 
   const executePreFlightCheck = (category: string, product: ShopifyProduct) => {
     const hasMode = product.options.some((opt) => opt.name === 'Mode');
-    if (hasMode) {
+    if (category === 'service' || hasMode) {
       startCreateFlow(category, product);
     } else {
       setPendingImport({ category, product });

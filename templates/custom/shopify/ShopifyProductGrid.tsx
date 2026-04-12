@@ -115,8 +115,9 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
       {
         resourceId: resource.id,
         gid: product?.id,
-        variantIdShipped: variantShipped?.id,
-        variantIdPickup: variantPickup?.id,
+        variantId: !hasModeOption ? variantShipped?.id : undefined,
+        variantIdShipped: hasModeOption ? variantShipped?.id : undefined,
+        variantIdPickup: hasModeOption ? variantPickup?.id : undefined,
         action: 'add',
         boundResourceId: boundServiceResource?.id,
       },

@@ -163,9 +163,9 @@ export default function Cart({ resources = [] }: CartProps) {
             ? firstItem.variantIdPickup
             : firstItem.variantIdShipped;
           const displayIdFirst =
+            firstItem.variantId ||
             activeVariantIdFirst ||
-            firstItem.variantIdPickup ||
-            firstItem.variantId;
+            firstItem.variantIdPickup;
 
           const { src, srcSet } = getShopifyImage(
             resource,
@@ -240,9 +240,9 @@ export default function Cart({ resources = [] }: CartProps) {
                         : item.variantIdShipped;
 
                       const displayId =
+                        item.variantId ||
                         activeVariantId ||
-                        item.variantIdPickup ||
-                        item.variantId;
+                        item.variantIdPickup;
 
                       let price = '0.00';
                       let currency = 'USD';
@@ -349,6 +349,14 @@ export default function Cart({ resources = [] }: CartProps) {
 
               Object.keys(sanitizedCart).forEach((key) => {
                 const item = sanitizedCart[key];
+
+                if (
+                  item.variantId &&
+                  !item.variantIdShipped &&
+                  !item.variantIdPickup
+                ) {
+                  return;
+                }
 
                 if (isPickupMode && item.variantIdPickup) {
                   item.variantId = item.variantIdPickup;

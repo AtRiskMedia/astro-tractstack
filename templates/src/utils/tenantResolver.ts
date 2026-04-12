@@ -1,4 +1,4 @@
-const VERBOSE = false;
+const VERBOSE = true;
 
 interface TenantResolution {
   id: string;

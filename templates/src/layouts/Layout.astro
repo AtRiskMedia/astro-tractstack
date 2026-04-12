@@ -50,15 +50,18 @@ const {
 
 const isInitialized = !freshInstallStore.get().needsSetup;
 const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-// Resolve tenant explicitly "Above the Fences" to guarantee the client gets the truth
-const resolution = await resolveTenantId(Astro.request);
-const tenantId = resolution.id;
+const isMultiTenant = import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
+const tenantId = isMultiTenant
+  ? (await resolveTenantId(Astro.request)).id
+  : import.meta.env.PUBLIC_TENANTID || 'default';
+
 if (!Astro.locals.tenant) {
   Astro.locals.tenant = {
     id: tenantId,
     domain: Astro.url.hostname,
-    isMultiTenant: true,
-    isLocalhost: false,
+    isMultiTenant: isMultiTenant,
+    isLocalhost:
+      Astro.url.hostname === 'localhost' || Astro.url.hostname === '127.0.0.1',
   };
 }
 const brandConfig = propBrandConfig || (await getBrandConfig(tenantId));

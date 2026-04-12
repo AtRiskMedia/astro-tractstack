@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### [2.3.2] - 2026-4-11
 
+### Fixed
+
+- tenantId resolution glitch
+
 ### Updated
 
 - small fixes on shopify UI/UX
