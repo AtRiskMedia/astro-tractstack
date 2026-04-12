@@ -78,7 +78,7 @@ export default function StoryKeepDashboard_Shopify({
     { id: 'products', name: 'Products' },
     { id: 'services', name: 'Services' },
     { id: 'schedule', name: 'Schedule' },
-    { id: 'search', name: 'Search' },
+    { id: 'search', name: 'Import Products' },
   ];
 
   useEffect(() => {

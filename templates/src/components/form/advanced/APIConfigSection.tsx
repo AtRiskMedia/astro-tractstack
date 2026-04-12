@@ -212,7 +212,7 @@ export default function APIConfigSection({
 
                   <BooleanToggle
                     label="Webhooks Manually Configured"
-                    description="I have manually created the required webhooks (orders/paid, products/*) in my Shopify Admin."
+                    description="I have manually created the required webhooks in my Shopify Admin."
                     value={state.userSetupWebhooks}
                     onChange={(value) =>
                       updateField('userSetupWebhooks', value)
@@ -300,7 +300,7 @@ export default function APIConfigSection({
                     <ul className="mt-2 list-disc space-y-1 pl-5">
                       <li>
                         <strong>Event:</strong> Select the specific event (e.g.,
-                        Order payment, Product creation).
+                        Order payment, Product update).
                       </li>
                       <li>
                         <strong>Format:</strong> Select JSON (TractStack relies
@@ -360,34 +360,10 @@ export default function APIConfigSection({
                       </li>
                       <li>
                         <span className="font-bold text-gray-900">
-                          Topic Header:
-                        </span>{' '}
-                        orders/paid
-                      </li>
-                      <li>
-                        <span className="font-bold text-gray-900">
                           Purpose:
                         </span>{' '}
                         Transitions the corresponding hold in the bookings
                         database table from PENDING to CONFIRMED.
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded border border-gray-200 bg-gray-50 p-4">
-                    <h5 className="font-bold">2. Product Creation</h5>
-                    <ul className="mt-2 space-y-1 text-xs">
-                      <li>
-                        <span className="font-bold text-gray-900">
-                          Shopify Event Name:
-                        </span>{' '}
-                        Product creation
-                      </li>
-                      <li>
-                        <span className="font-bold text-gray-900">
-                          Topic Header:
-                        </span>{' '}
-                        products/create
                       </li>
                     </ul>
                   </div>
@@ -401,12 +377,6 @@ export default function APIConfigSection({
                         </span>{' '}
                         Product update
                       </li>
-                      <li>
-                        <span className="font-bold text-gray-900">
-                          Topic Header:
-                        </span>{' '}
-                        products/update
-                      </li>
                     </ul>
                   </div>
 
@@ -418,12 +388,6 @@ export default function APIConfigSection({
                           Shopify Event Name:
                         </span>{' '}
                         Product deletion
-                      </li>
-                      <li>
-                        <span className="font-bold text-gray-900">
-                          Topic Header:
-                        </span>{' '}
-                        products/delete
                       </li>
                     </ul>
                   </div>
