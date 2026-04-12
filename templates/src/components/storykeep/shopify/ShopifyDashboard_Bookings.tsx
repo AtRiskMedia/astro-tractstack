@@ -247,10 +247,20 @@ export default function ShopifyDashboard_Bookings({
                         )}
                       </div>
                       <div className="mt-3 space-y-1 text-xs text-gray-500">
-                        <div className="font-medium text-gray-900">
-                          {renderCustomerInfo(booking)}
+                        <div className="flex items-center justify-between text-gray-900">
+                          <span>{renderCustomerInfo(booking)}</span>
+                          {booking.shopifyOrderId && (
+                            <a
+                              href={`https://admin.shopify.com/orders/${booking.shopifyOrderId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-600 hover:text-cyan-800 hover:underline"
+                            >
+                              Order #{booking.shopifyOrderId}
+                            </a>
+                          )}
                         </div>
-                        <div className="font-medium text-gray-700">
+                        <div className="text-gray-700">
                           {booking.resourceIds
                             .map(
                               (id) => resourceMap.get(id) || 'Unknown Service'
@@ -324,7 +334,17 @@ export default function ShopifyDashboard_Bookings({
                           .join(', ')}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">
-                        {renderCustomerInfo(booking)}
+                        <div>{renderCustomerInfo(booking)}</div>
+                        {booking.shopifyOrderId && (
+                          <a
+                            href={`https://admin.shopify.com/orders/${booking.shopifyOrderId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-block text-xs font-bold text-cyan-600 hover:text-cyan-800 hover:underline"
+                          >
+                            Order #{booking.shopifyOrderId}
+                          </a>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                         <div>
