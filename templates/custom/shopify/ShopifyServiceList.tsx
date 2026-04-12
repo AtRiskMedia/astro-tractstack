@@ -1,5 +1,10 @@
 import { useStore } from '@nanostores/react';
-import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
+import {
+  cartStore,
+  addQueue,
+  getCartItemKey,
+  type CartAction,
+} from '@/stores/shopify';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
@@ -84,7 +89,7 @@ export default function ShopifyServiceList({ resources = {}, options }: Props) {
     <div className="space-y-4">
       {displayServices.map((resource) => {
         const variantId = getServiceVariantId(resource);
-        const key = variantId || `${resource.id}_null_null`;
+        const key = getCartItemKey({ resourceId: resource.id, variantId });
 
         const cartItem = cart[key];
         const isSelected = (cartItem?.quantity || 0) > 0;

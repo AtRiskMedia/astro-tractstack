@@ -264,3 +264,19 @@ export function clearCommerceState() {
   transactionTraceId.set('');
   cartState.set(CART_STATES.READY);
 }
+
+export interface CartKeyParams {
+  resourceId: string;
+  variantId?: string;
+  variantIdShipped?: string;
+  variantIdPickup?: string;
+}
+
+export function getCartItemKey(params: CartKeyParams): string {
+  if (params.variantId) {
+    return params.variantId;
+  }
+  return `${params.resourceId}_${params.variantIdShipped || 'null'}_${
+    params.variantIdPickup || 'null'
+  }`;
+}

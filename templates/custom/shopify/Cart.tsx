@@ -348,13 +348,14 @@ export default function Cart({ resources = [] }: CartProps) {
               const sanitizedCart = { ...currentCart };
 
               Object.keys(sanitizedCart).forEach((key) => {
-                const item = sanitizedCart[key];
+                const item = { ...sanitizedCart[key] };
 
                 if (
                   item.variantId &&
                   !item.variantIdShipped &&
                   !item.variantIdPickup
                 ) {
+                  sanitizedCart[key] = item;
                   return;
                 }
 
@@ -363,6 +364,8 @@ export default function Cart({ resources = [] }: CartProps) {
                 } else if (!isPickupMode && item.variantIdShipped) {
                   item.variantId = item.variantIdShipped;
                 }
+
+                sanitizedCart[key] = item;
               });
 
               cartStore.set(sanitizedCart);

@@ -5,6 +5,7 @@ import {
   cartStore,
   modalState,
   transactionTraceId,
+  getCartItemKey,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import { RESTRICTION_MESSAGES } from '@/utils/customHelpers';
@@ -34,12 +35,7 @@ export default function ShopifyCartManager({
         return;
       }
 
-      const key =
-        actionItem.variantId ||
-        `${actionItem.resourceId}_${actionItem.variantIdShipped || 'null'}_${
-          actionItem.variantIdPickup || 'null'
-        }`;
-
+      const key = getCartItemKey(actionItem);
       const currentCart = cartStore.get();
       const currentItem = currentCart[key];
       const currentQty = currentItem?.quantity || 0;
@@ -74,19 +70,19 @@ export default function ShopifyCartManager({
         if (currentItem?.boundResourceId || actionItem.boundResourceId) {
           const boundId =
             currentItem?.boundResourceId || actionItem.boundResourceId;
-          const serviceEntry = Object.entries(nextCart).find(
-            ([_, item]) => item.resourceId === boundId
-          );
-          if (serviceEntry) {
-            const [serviceKey, serviceItem] = serviceEntry;
-            const newServiceQty = Math.max(0, serviceItem.quantity - 1);
-            if (newServiceQty === 0) {
-              delete nextCart[serviceKey];
-            } else {
-              nextCart[serviceKey] = {
-                ...serviceItem,
-                quantity: newServiceQty,
-              };
+          if (boundId) {
+            const serviceKey = getCartItemKey({ resourceId: boundId });
+            const serviceItem = nextCart[serviceKey];
+            if (serviceItem) {
+              const newServiceQty = Math.max(0, serviceItem.quantity - 1);
+              if (newServiceQty === 0) {
+                delete nextCart[serviceKey];
+              } else {
+                nextCart[serviceKey] = {
+                  ...serviceItem,
+                  quantity: newServiceQty,
+                };
+              }
             }
           }
         }
@@ -113,18 +109,18 @@ export default function ShopifyCartManager({
         nextCart[key] = newItem;
 
         if (newItem.boundResourceId) {
-          const serviceEntry = Object.entries(nextCart).find(
-            ([_, item]) => item.resourceId === newItem.boundResourceId
-          );
+          const serviceKey = getCartItemKey({
+            resourceId: newItem.boundResourceId,
+          });
+          const serviceItem = nextCart[serviceKey];
 
-          if (serviceEntry) {
-            const [serviceKey, serviceItem] = serviceEntry;
+          if (serviceItem) {
             nextCart[serviceKey] = {
               ...serviceItem,
               quantity: serviceItem.quantity + 1,
             };
           } else {
-            nextCart[`temp_service_${newItem.boundResourceId}`] = {
+            nextCart[serviceKey] = {
               resourceId: newItem.boundResourceId,
               quantity: 1,
             };

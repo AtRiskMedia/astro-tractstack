@@ -76,7 +76,7 @@ export default function CheckoutModal({
         }
       }
       const variant = (productData?.variants || []).find(
-        (v: any) => v.id === (item.variantId || item.gid)
+        (v: any) => v.id === item.variantId
       );
       return {
         ...item,
@@ -99,7 +99,7 @@ export default function CheckoutModal({
     [enrichedCart]
   );
   const needsPayment = useMemo(
-    () => enrichedCart.some((item) => !!(item.gid || item.variantId)),
+    () => enrichedCart.some((item) => !!item.variantId),
     [enrichedCart]
   );
   const totalDuration = useMemo(() => {
@@ -313,9 +313,9 @@ export default function CheckoutModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lines: enrichedCart
-            .filter((i) => i.gid || i.variantId)
+            .filter((i) => i.variantId)
             .map((i) => ({
-              merchandiseId: i.variantId || i.gid,
+              merchandiseId: i.variantId,
               quantity: i.quantity || 1,
             })),
           email: $customer.email,

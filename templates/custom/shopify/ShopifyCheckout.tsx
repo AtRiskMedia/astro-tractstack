@@ -6,7 +6,6 @@ import {
   CART_STATES,
   isShopifyHandoff,
 } from '@/stores/shopify';
-import { calculateCartDuration } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface ShopifyCheckoutProps {
@@ -45,29 +44,10 @@ export default function ShopifyCheckout({
               return null;
             }
 
-            // Establish the specific ID to use from the explicitly sanitized cart state
-            let merchandiseId =
-              item.variantId || item.variantIdPickup || item.variantIdShipped;
+            // Use the explicitly sanitized variant ID from the cart state
+            const merchandiseId = item.variantId;
 
-            //  FALLBACK LOGIC (Mirrors Cart.tsx)
-            // If no specific variant ID is saved on the cart item,
-            // look up the Default Variant from the Resource data.
-            if (!merchandiseId && resource?.optionsPayload?.shopifyData) {
-              try {
-                const product = JSON.parse(resource.optionsPayload.shopifyData);
-                // If the product has variants, default to the first one
-                if (product.variants && product.variants.length > 0) {
-                  merchandiseId = product.variants[0].id;
-                }
-              } catch (e) {
-                console.warn(
-                  'ShopifyCheckout: Failed to parse shopifyData for fallback',
-                  item.resourceId
-                );
-              }
-            }
-
-            // If we still have no ID, we cannot add this item to the Shopify cart.
+            // If we have no ID, we cannot add this item to the Shopify cart.
             if (!merchandiseId) return null;
 
             return {
