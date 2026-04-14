@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 // Base props interface for all atomic form components
 export interface BaseFormComponentProps<T> {
   value: T;
@@ -71,7 +73,7 @@ export interface NumberInputProps extends BaseFormComponentProps<number> {
 export interface FormSectionProps {
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   collapsible?: boolean;
   defaultExpanded?: boolean;
 }
@@ -216,7 +218,7 @@ export interface NumberInputProps extends BaseFormComponentProps<number> {
 export interface FormSectionProps {
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   collapsible?: boolean;
   defaultExpanded?: boolean;
 }

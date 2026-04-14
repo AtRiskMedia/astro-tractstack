@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### [2.3.2] - 2026-4-12
 
+### Added
+
+- AdminEmail field on BrandConfig
+- Email templates
+
 ### Fixed
 
 - tenantId resolution glitch

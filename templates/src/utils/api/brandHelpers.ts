@@ -44,6 +44,7 @@ export function convertToLocalState(
     showShopifyHelper: brandConfig.SHOW_SHOPIFY_HELPER ?? false,
     hasResend: brandConfig.HAS_RESEND ?? false,
     hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
+    adminEmail: brandConfig.ADMIN_EMAIL ?? '',
     scheduling: brandConfig.SCHEDULING ?? {
       timezone: 'UTC',
       bufferGapsMinutes: 15,
@@ -86,6 +87,7 @@ export function convertToBackendFormat(
     SHOW_SHOPIFY_HELPER: localState.showShopifyHelper,
     HAS_RESEND: localState.hasResend,
     SCHEDULING: localState.scheduling,
+    ADMIN_EMAIL: localState.adminEmail,
 
     // ALWAYS send asset paths (current state)
     LOGO: localState.logo,
@@ -122,6 +124,12 @@ export function validateBrandConfig(state: BrandConfigState): FieldErrors {
   }
   if (!state.footer?.trim()) {
     errors.footer = 'Site footer is required';
+  }
+
+  if (!state.adminEmail?.trim()) {
+    errors.adminEmail = 'Admin Email is required';
+  } else if (!isValidEmail(state.adminEmail)) {
+    errors.adminEmail = 'Please enter a valid email address';
   }
 
   // Validate brand colors (must have exactly 8)
@@ -171,4 +179,12 @@ function isValidUrl(url: string): boolean {
 function isValidHexColor(color: string): boolean {
   const hex = color.startsWith('#') ? color.slice(1) : color;
   return /^([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex);
+}
+
+/**
+ * Helper function to validate email addresses
+ */
+function isValidEmail(email: string): boolean {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
 }

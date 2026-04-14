@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { useStore } from '@nanostores/react';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
@@ -53,7 +53,7 @@ export default function ProductTable({
     };
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
     setIsDebouncing(true);

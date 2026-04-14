@@ -1,4 +1,10 @@
-import { useRef, useState, useId } from 'react';
+import {
+  useRef,
+  useState,
+  useId,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react';
 import { classNames } from '@/utils/helpers';
 import {
   validateFile,
@@ -151,14 +157,14 @@ const FileUpload = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       processFile(file);
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
 
@@ -170,14 +176,14 @@ const FileUpload = ({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!disabled) {
       setDragOver(true);
     }
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
   };

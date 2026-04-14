@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { useStore } from '@nanostores/react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { getCtx } from '@/stores/nodes';
@@ -20,7 +21,7 @@ const AddElementsPanel = ({
     ctx.notifyNode('root');
   };
 
-  const handleMouseDown = (e: React.MouseEvent, mode: ToolAddMode) => {
+  const handleMouseDown = (e: MouseEvent, mode: ToolAddMode) => {
     e.preventDefault();
     startToolDrag('insert', mode, e.clientX, e.clientY);
     initToolDragListeners();

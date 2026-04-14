@@ -85,7 +85,7 @@ export const GhostInsertBlock = memo((props: GhostInsertBlockProps) => {
     setShowInsertOptions(false);
   };
 
-  const handleClose = (e: React.MouseEvent) => {
+  const handleClose = (e: MouseEvent) => {
     e.stopPropagation();
     getCtx(props).setPanelMode('', '', '');
     setShowInsertOptions(false);

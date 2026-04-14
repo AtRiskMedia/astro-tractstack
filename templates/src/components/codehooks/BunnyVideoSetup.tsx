@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FocusEvent } from 'react';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import PlusIcon from '@heroicons/react/24/outline/PlusIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
@@ -162,7 +162,7 @@ const BunnyVideoSetup = ({ nodeId, params }: BunnyVideoSetupProps) => {
   };
 
   const saveChanges = (
-    customChapters?: Chapter[] | React.FocusEvent<HTMLInputElement>
+    customChapters?: Chapter[] | FocusEvent<HTMLInputElement>
   ) => {
     if (!customChapters || 'target' in customChapters) {
       updatePaneNode();

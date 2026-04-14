@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import { getCtx } from '@/stores/nodes';
 import { viewportKeyStore } from '@/stores/storykeep';
 import {
@@ -15,7 +16,7 @@ export const BgPaneWrapper = (props: NodeProps) => {
 
   const viewport = viewportKeyStore.get().value;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: MouseEvent) => {
     getCtx(props).setClickedNodeId(props.nodeId, true);
     e.stopPropagation();
   };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 interface AddPaneNewCustomCopyProps {
   value: string;
@@ -11,7 +11,7 @@ export const AddPaneNewCustomCopy = ({
 }: AddPaneNewCustomCopyProps) => {
   const [localValue, setLocalValue] = useState(initialValue);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setLocalValue(e.target.value);
   };
 

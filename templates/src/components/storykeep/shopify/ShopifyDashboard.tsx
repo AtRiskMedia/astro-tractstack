@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import type { BookingMetricsResponse } from '@/types/tractstack';
-import type { ResourceNode } from '@/types/compositorTypes';
 
-interface ShopifyDashboardProps {
-  existingResources: ResourceNode[];
-}
-
-export default function ShopifyDashboard({
-  existingResources,
-}: ShopifyDashboardProps) {
+export default function ShopifyDashboard({}) {
   const [metrics, setMetrics] = useState<BookingMetricsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

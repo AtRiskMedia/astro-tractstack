@@ -465,9 +465,7 @@ export default function StoryKeepDashboard_Shopify({
           </div>
         )}
 
-        {activeTab === 'dashboards' && (
-          <ShopifyDashboard existingResources={resources} />
-        )}
+        {activeTab === 'dashboards' && <ShopifyDashboard />}
 
         {activeTab === 'bookings' && (
           <ShopifyDashboard_Bookings existingResources={resources} />

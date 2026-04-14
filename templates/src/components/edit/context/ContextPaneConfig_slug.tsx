@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import ExclamationTriangleIcon from '@heroicons/react/24/outline/ExclamationTriangleIcon';
 import CheckIcon from '@heroicons/react/24/outline/CheckIcon';
 import { getCtx } from '@/stores/nodes';
@@ -42,7 +42,7 @@ const PaneSlugPanel = ({ nodeId, setMode }: PaneSlugPanelProps) => {
     //.replace(/^-+|-+$/g, '');
   };
 
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSlugChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newSlug = validateSlug(e.target.value);
     if (newSlug.length <= 75) {
       // Prevent more than 75 chars

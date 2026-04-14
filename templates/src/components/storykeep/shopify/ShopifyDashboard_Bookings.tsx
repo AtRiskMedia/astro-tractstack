@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  type ChangeEvent,
+} from 'react';
 import { Toggle } from '@ark-ui/react/toggle';
 import CalendarIcon from '@heroicons/react/24/outline/CalendarIcon';
 import TableCellsIcon from '@heroicons/react/24/outline/TableCellsIcon';
@@ -68,7 +74,7 @@ export default function ShopifyDashboard_Bookings({
     setCurrentPage(newPage);
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setStatusFilter(e.target.value);
     setCurrentPage(0);
   };

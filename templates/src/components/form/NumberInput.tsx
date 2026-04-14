@@ -1,4 +1,4 @@
-import { forwardRef, useId } from 'react';
+import { forwardRef, useId, type ChangeEvent } from 'react';
 import { classNames } from '@/utils/helpers';
 
 interface NumberInputProps {
@@ -42,7 +42,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     const errorId = `${inputId}-error`;
     const inputName = customName || inputId;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       const newValue = parseFloat(e.target.value);
       if (!isNaN(newValue)) {
         onChange(newValue);

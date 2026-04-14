@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from 'react';
 import type { StoragePane } from './compositorTypes';
 
 export type DesignLibraryEntry = {
@@ -13,7 +14,7 @@ export type DesignLibraryConfig = DesignLibraryEntry[];
 
 export interface BaseComponentProps {
   class?: string;
-  style?: React.CSSProperties | string;
+  style?: CSSProperties | string;
   id?: string;
 }
 
@@ -74,7 +75,7 @@ export interface FragmentProps
   eager?: boolean;
 
   /** Fallback content while loading */
-  fallback?: React.ReactNode;
+  fallback?: ReactNode;
 }
 
 // Utility type for extracting props from Astro components
@@ -203,6 +204,7 @@ export interface BrandConfig {
   HAS_RESEND?: boolean;
   HAS_HYDRATION_TOKEN?: boolean;
   SCHEDULING?: SchedulingConfig;
+  ADMIN_EMAIL?: string;
 }
 
 export interface BrandConfigState {
@@ -241,6 +243,7 @@ export interface BrandConfigState {
   hasResend: boolean;
   hasHydrationToken: boolean;
   scheduling: SchedulingConfig;
+  adminEmail: string;
 }
 
 // Form validation types
