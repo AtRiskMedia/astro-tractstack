@@ -1260,6 +1260,36 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Emails.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Emails.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/email-builder/EmailBuilder.tsx'
+      ),
+      dest: 'src/components/storykeep/email-builder/EmailBuilder.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/email-builder/Blocks.tsx'
+      ),
+      dest: 'src/components/storykeep/email-builder/Blocks.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/email-builder/PropertyPanel.tsx'
+      ),
+      dest: 'src/components/storykeep/email-builder/PropertyPanel.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/email-builder/PreviewModal.tsx'
+      ),
+      dest: 'src/components/storykeep/email-builder/PreviewModal.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/storykeep/shopify/ShopifyDashboard_Search.tsx'
       ),
       dest: 'src/components/storykeep/shopify/ShopifyDashboard_Search.tsx',
@@ -2268,6 +2298,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/setupHelpers.ts',
     },
     {
+      src: resolve('../templates/src/utils/api/emailHelpers.ts'),
+      dest: 'src/utils/api/emailHelpers.ts',
+    },
+    {
       src: resolve(
         '../templates/src/components/storykeep/widgets/HydrateWizard.tsx'
       ),
@@ -2465,7 +2499,6 @@ function createPlaceholder(filePath: string): string {
 
   if (filePath.endsWith('.tsx')) {
     return `// TractStack placeholder component
-import React from 'react';
 export default function Placeholder() {
   return <div>TractStack placeholder: ${filePath}</div>;
 }`;

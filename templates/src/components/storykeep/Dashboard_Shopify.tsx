@@ -26,6 +26,7 @@ import ShopifyDashboard_Services from './shopify/ShopifyDashboard_Services';
 import ShopifyDashboard_Schedule from './shopify/ShopifyDashboard_Schedule';
 import ShopifyDashboard_Search from './shopify/ShopifyDashboard_Search';
 import ShopifyDashboard_Bookings from './shopify/ShopifyDashboard_Bookings';
+import ShopifyDashboard_Emails from './shopify/ShopifyDashboard_Emails';
 
 interface DashboardShopifyProps {
   brandConfig: BrandConfig;
@@ -79,6 +80,7 @@ export default function StoryKeepDashboard_Shopify({
     { id: 'services', name: 'Services' },
     { id: 'schedule', name: 'Schedule' },
     { id: 'search', name: 'Import Products' },
+    { id: 'emails', name: 'Emails' },
   ];
 
   useEffect(() => {
@@ -471,7 +473,6 @@ export default function StoryKeepDashboard_Shopify({
           <ShopifyDashboard_Bookings existingResources={resources} />
         )}
 
-        {/* Local Management Tabs */}
         {activeTab === 'products' && (
           <ShopifyDashboard_Products
             resources={resources}
@@ -490,12 +491,10 @@ export default function StoryKeepDashboard_Shopify({
           />
         )}
 
-        {/* Schedule Tab */}
         {activeTab === 'schedule' && (
           <ShopifyDashboard_Schedule brandConfig={brandConfig} />
         )}
 
-        {/* Catalog Discovery Tab */}
         {activeTab === 'search' && (
           <ShopifyDashboard_Search
             linkedResourceMap={linkedResourceMap}
@@ -505,6 +504,8 @@ export default function StoryKeepDashboard_Shopify({
             onEdit={handleEditFromCatalog}
           />
         )}
+
+        {activeTab === 'emails' && <ShopifyDashboard_Emails />}
       </div>
 
       {/* Shared Modals */}
