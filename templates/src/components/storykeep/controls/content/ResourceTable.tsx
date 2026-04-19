@@ -216,6 +216,7 @@ export default function ResourceTable({
       </div>
       {showBulkIngest && (
         <ResourceBulkIngest
+          exampleCategorySlug={categorySlug}
           fullContentMap={fullContentMap}
           onClose={(saved) => {
             setShowBulkIngest(false);

@@ -7,6 +7,8 @@ interface ResourceBulkIngestProps {
   onClose: (saved: boolean) => void;
   onRefresh: () => void;
   fullContentMap: FullContentMapItem[];
+  /** When set, placeholder shows one example for this category only (validation still accepts all types). */
+  exampleCategorySlug?: string;
 }
 
 interface ParsedResource {
@@ -40,10 +42,63 @@ interface FieldDefinition {
   maxNumber?: number;
 }
 
+function buildExampleObjectForCategory(
+  categorySlug: string,
+  index: number,
+  knownResources: Record<string, Record<string, FieldDefinition>>,
+  categoryKeys: string[]
+): Record<string, unknown> {
+  const schema = knownResources[categorySlug];
+  const example: Record<string, unknown> = {
+    title: `Example ${categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)} ${index + 1}`,
+    slug: `${categorySlug}-example-${index + 1}`,
+    category: categorySlug,
+    oneliner: `A brief description of this ${categorySlug}`,
+  };
+
+  Object.entries(schema).forEach(([key, def]: [string, FieldDefinition]) => {
+    switch (def.type) {
+      case 'string':
+        if (
+          def.belongsToCategory &&
+          categoryKeys.includes(def.belongsToCategory)
+        ) {
+          example[key] = `${def.belongsToCategory}-example-slug`;
+        } else {
+          example[key] = def.defaultValue || `example ${key}`;
+        }
+        break;
+      case 'number':
+        example[key] = def.defaultValue ?? (def.minNumber || 0);
+        break;
+      case 'boolean':
+        example[key] = def.defaultValue ?? true;
+        break;
+      case 'multi':
+        example[key] = def.defaultValue || [
+          `example ${key} 1`,
+          `example ${key} 2`,
+        ];
+        break;
+      case 'date':
+        example[key] = new Date().toISOString();
+        break;
+      case 'image':
+        example[key] = 'file-id-placeholder';
+        break;
+      default:
+        example[key] = def.defaultValue || `example ${key}`;
+    }
+  });
+
+  return example;
+}
+
 export default function ResourceBulkIngest({
   onClose,
   onRefresh,
   fullContentMap,
+  exampleCategorySlug,
 }: ResourceBulkIngestProps) {
   const [brandConfig, setBrandConfig] = useState<BrandConfig | null>(null);
   const [loading, setLoading] = useState(false);
@@ -418,7 +473,7 @@ export default function ResourceBulkIngest({
     };
   }, [jsonInput, knownResources, fullContentMap]);
 
-  // Generate example JSON based on available categories - ENHANCED VERSION
+  // Placeholder JSON: one category when exampleCategorySlug is set, else one object per known category
   const exampleJson = useMemo(() => {
     const categories = Object.keys(knownResources);
     if (categories.length === 0) {
@@ -436,59 +491,32 @@ export default function ResourceBulkIngest({
       );
     }
 
-    // Create examples for ALL categories, not just the first one
-    const examples = categories.map((categorySlug, index) => {
-      const schema = knownResources[categorySlug];
-      const example: any = {
-        title: `Example ${categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)} ${index + 1}`,
-        slug: `${categorySlug}-example-${index + 1}`,
-        category: categorySlug,
-        oneliner: `A brief description of this ${categorySlug}`,
-      };
+    if (
+      exampleCategorySlug &&
+      knownResources[exampleCategorySlug] !== undefined
+    ) {
+      const examples = [
+        buildExampleObjectForCategory(
+          exampleCategorySlug,
+          0,
+          knownResources,
+          categories
+        ),
+      ];
+      return JSON.stringify(examples, null, 2);
+    }
 
-      // Add example values for schema fields
-      Object.entries(schema).forEach(
-        ([key, def]: [string, FieldDefinition]) => {
-          switch (def.type) {
-            case 'string':
-              if (
-                def.belongsToCategory &&
-                categories.includes(def.belongsToCategory)
-              ) {
-                example[key] = `${def.belongsToCategory}-example-slug`;
-              } else {
-                example[key] = def.defaultValue || `example ${key}`;
-              }
-              break;
-            case 'number':
-              example[key] = def.defaultValue ?? (def.minNumber || 0);
-              break;
-            case 'boolean':
-              example[key] = def.defaultValue ?? true;
-              break;
-            case 'multi':
-              example[key] = def.defaultValue || [
-                `example ${key} 1`,
-                `example ${key} 2`,
-              ];
-              break;
-            case 'date':
-              example[key] = new Date().toISOString();
-              break;
-            case 'image':
-              example[key] = 'file-id-placeholder';
-              break;
-            default:
-              example[key] = def.defaultValue || `example ${key}`;
-          }
-        }
-      );
-
-      return example;
-    });
+    const examples = categories.map((categorySlug, index) =>
+      buildExampleObjectForCategory(
+        categorySlug,
+        index,
+        knownResources,
+        categories
+      )
+    );
 
     return JSON.stringify(examples, null, 2);
-  }, [knownResources]);
+  }, [knownResources, exampleCategorySlug]);
 
   const handleSave = useCallback(async () => {
     if (validationResult.validResources.length === 0 || isProcessing) return;

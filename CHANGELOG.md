@@ -16,10 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - tenantId resolution glitch
 - cart nanostore logic
+- cleaned up tailwind misuse
 
 ### Updated
 
 - small fixes on shopify UI/UX
+- bulk resource ingest example scoped to categorySlug type
 
 #### [2.3.1] - 2026-4-11
 
