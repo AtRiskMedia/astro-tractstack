@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
-import { emailHelpers } from '@/utils/api/emailHelpers';
+import {
+  emailHelpers,
+  type EmailTemplateListEntry,
+} from '@/utils/api/emailHelpers';
 import EmailBuilder from '../email-builder/EmailBuilder';
 
 export default function ShopifyDashboard_Emails() {
-  const [templates, setTemplates] = useState<Record<string, string[]>>({});
+  const [templates, setTemplates] = useState<
+    Record<string, EmailTemplateListEntry[]>
+  >({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<{
@@ -56,7 +61,7 @@ export default function ShopifyDashboard_Emails() {
 
   return (
     <div className="space-y-8">
-      {Object.entries(templates).map(([category, names]) => (
+      {Object.entries(templates).map(([category, entries]) => (
         <div
           key={category}
           className="rounded-lg border border-gray-200 bg-white"
@@ -67,19 +72,24 @@ export default function ShopifyDashboard_Emails() {
             </h3>
           </div>
           <ul className="divide-y divide-gray-200">
-            {names.map((name) => (
+            {entries.map((entry) => (
               <li
-                key={name}
+                key={entry.name}
                 className="flex items-center justify-between px-4 py-4 md:px-6"
               >
-                <div className="flex items-center">
+                <div className="flex min-w-0 flex-col">
                   <p className="truncate text-sm font-bold text-gray-900">
-                    {name}.json
+                    {entry.adminTitle}
+                  </p>
+                  <p className="truncate text-xs text-gray-500">
+                    {entry.name}.json
                   </p>
                 </div>
                 <div className="ml-4 flex flex-shrink-0">
                   <button
-                    onClick={() => setEditingTemplate({ category, name })}
+                    onClick={() =>
+                      setEditingTemplate({ category, name: entry.name })
+                    }
                     className="rounded-md bg-white font-bold text-cyan-600 hover:text-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
                   >
                     Edit

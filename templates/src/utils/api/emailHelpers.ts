@@ -33,6 +33,12 @@ export interface PreviewResponse {
   html: string;
 }
 
+/** One row from GET /api/v1/emails/templates (merged manifests). */
+export interface EmailTemplateListEntry {
+  name: string;
+  adminTitle: string;
+}
+
 const getApi = () => {
   return new TractStackAPI(
     typeof window !== 'undefined'
@@ -42,9 +48,11 @@ const getApi = () => {
 };
 
 export const emailHelpers = {
-  getTemplates: async (): Promise<Record<string, string[]>> => {
+  getTemplates: async (): Promise<
+    Record<string, EmailTemplateListEntry[]>
+  > => {
     const api = getApi();
-    const response = await api.get<Record<string, string[]>>(
+    const response = await api.get<Record<string, EmailTemplateListEntry[]>>(
       '/api/v1/emails/templates'
     );
     if (!response.success || !response.data) {

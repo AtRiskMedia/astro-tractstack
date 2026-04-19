@@ -114,16 +114,24 @@ export default function EmailBuilder({
   if (!template) return null;
 
   return (
-    <div className="flex h-screen max-h-screen min-h-0 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <div className="flex min-h-96 max-h-screen flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
           <button
             onClick={onClose}
             className="text-sm font-bold text-gray-500 hover:text-gray-900"
           >
             &larr; Back
           </button>
-          <div className="flex flex-1 flex-col">
+          <div className="hidden shrink-0 flex-col border-r border-gray-200 pr-4 md:flex">
+            <span className="text-xs font-bold uppercase tracking-wide text-gray-400">
+              Template file
+            </span>
+            <span className="max-w-xs truncate text-sm font-bold text-gray-700">
+              {category}/{templateName}.json
+            </span>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col">
             <label className="text-xs font-bold text-gray-500">
               Subject Line
             </label>
@@ -133,7 +141,7 @@ export default function EmailBuilder({
               onChange={(e) =>
                 setTemplate({ ...template, subject: e.target.value })
               }
-              className="w-full border-0 bg-transparent p-0 text-sm font-bold focus:ring-0"
+              className="w-full min-w-0 border-0 bg-transparent p-0 text-sm font-bold focus:ring-0"
               placeholder="Email Subject..."
             />
           </div>
@@ -155,12 +163,9 @@ export default function EmailBuilder({
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-y-auto bg-gray-50 p-8">
-          <div
-            className="mx-auto w-full max-w-2xl bg-white shadow-sm"
-            style={{ minHeight: '400px' }}
-          >
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-gray-50 p-8">
+          <div className="mx-auto min-h-96 w-full max-w-2xl bg-white shadow-sm">
             <Blocks
               blocks={template.blocks}
               selectedIdx={selectedIdx}
@@ -190,7 +195,7 @@ export default function EmailBuilder({
           </div>
         </div>
 
-        <div className="w-80 overflow-y-auto border-l border-gray-200 bg-white p-4">
+        <div className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-white p-4">
           {selectedIdx !== null && template.blocks[selectedIdx] ? (
             <PropertyPanel
               block={template.blocks[selectedIdx]}

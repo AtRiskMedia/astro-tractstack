@@ -17,11 +17,11 @@ export default function PropertyPanel({
 }: PropertyPanelProps) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-        <h3 className="text-sm font-bold capitalize text-gray-900">
+      <div className="flex min-w-0 items-center justify-between border-b border-gray-200 pb-4">
+        <h3 className="min-w-0 flex-1 truncate text-sm font-bold capitalize text-gray-900">
           {block.type} Settings
         </h3>
-        <div className="flex gap-2 text-gray-400">
+        <div className="flex shrink-0 gap-2 text-gray-400">
           <button onClick={onMoveUp} className="hover:text-gray-900">
             &uarr;
           </button>
