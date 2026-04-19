@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
+import { classNames } from '@/utils/helpers';
 import { epinetCustomFilters } from '@/stores/analytics';
 import { Accordion } from '@ark-ui/react';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
@@ -68,6 +69,7 @@ const EpinetTableView = ({
   const [currentDay, setCurrentDay] = useState<string | null>(null);
   const [availableDays, setAvailableDays] = useState<string[]>([]);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
+  const [openAccordionValues, setOpenAccordionValues] = useState<string[]>([]);
 
   const getContentInfo = (
     contentId: string
@@ -214,6 +216,12 @@ const EpinetTableView = ({
     setCurrentDayIndex(newIndex);
     setCurrentDay(availableDays[newIndex]);
   };
+
+  useEffect(() => {
+    setOpenAccordionValues((prev) =>
+      prev.filter((v) => !v.startsWith('empty-'))
+    );
+  }, [currentDay]);
 
   const getCurrentDayData = (): {
     data: HourData[];
@@ -485,129 +493,164 @@ const EpinetTableView = ({
           </div>
         </div>
 
-        <Accordion.Root multiple className="w-full">
-          {dayData.map((item, index) => (
-            <Accordion.Item
-              key={item.type === 'active' ? item.hourKey : `empty-${index}`}
-              value={item.type === 'active' ? item.hourKey : `empty-${index}`}
-              className="border-b border-gray-100 last:border-b-0"
-            >
-              <Accordion.ItemTrigger className="flex w-full cursor-pointer items-center justify-between p-3 text-left transition-colors duration-200 hover:bg-gray-100">
-                {item.type === 'active' ? (
-                  <div className="flex flex-grow items-center justify-between space-x-3">
-                    <div className="flex flex-grow items-center space-x-3">
-                      <span className="text-sm font-bold text-gray-700">
-                        {item.humanReadableTime}
-                      </span>
-                      <span className="text-xs text-gray-600">
-                        {item.hourlyTotal} event
-                        {item.hourlyTotal !== 1 ? 's' : ''} /{' '}
-                        {item.hourlyVisitors} visitor
-                        {item.hourlyVisitors !== 1 ? 's' : ''}
-                      </span>
-                      <div className="relative h-2 w-full max-w-48 rounded bg-gray-200">
-                        <div
-                          className="absolute left-0 top-0 h-2 rounded bg-cyan-600"
-                          style={{
-                            width: `${Math.max(item.relativeToMax * 100, 5)}%`,
-                          }}
-                          title={`${item.hourlyTotal} events (${(
-                            item.relativeToMax * 100
-                          ).toFixed(1)}% of busiest hour)`}
-                        />
+        <Accordion.Root
+          multiple
+          className="w-full"
+          value={openAccordionValues}
+          onValueChange={({ value }) =>
+            setOpenAccordionValues(
+              value.filter((v) => !v.startsWith('empty-'))
+            )
+          }
+        >
+          {dayData.map((item, index) => {
+            const itemValue =
+              item.type === 'active' ? item.hourKey : `empty-${index}`;
+            const isExpandable = item.type === 'active';
+            const isOpen = openAccordionValues.includes(itemValue);
+            return (
+              <Accordion.Item
+                key={item.type === 'active' ? item.hourKey : `empty-${index}`}
+                value={itemValue}
+                disabled={!isExpandable}
+                className="border-b border-gray-100 last:border-b-0"
+              >
+                <Accordion.ItemTrigger
+                  className={classNames(
+                    'flex w-full items-center justify-between p-3 text-left transition-colors duration-200',
+                    isExpandable
+                      ? 'cursor-pointer hover:bg-gray-100'
+                      : 'cursor-default hover:bg-transparent'
+                  )}
+                >
+                  {item.type === 'active' ? (
+                    <div className="flex flex-grow items-center justify-between space-x-3">
+                      <div className="flex flex-grow items-center space-x-3">
+                        <span className="text-sm font-bold text-gray-700">
+                          {item.humanReadableTime}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          {item.hourlyTotal} event
+                          {item.hourlyTotal !== 1 ? 's' : ''} /{' '}
+                          {item.hourlyVisitors} visitor
+                          {item.hourlyVisitors !== 1 ? 's' : ''}
+                        </span>
+                        <div className="relative h-2 w-full max-w-48 rounded bg-gray-200">
+                          <div
+                            className="absolute left-0 top-0 h-2 rounded bg-cyan-600"
+                            style={{
+                              width: `${Math.max(item.relativeToMax * 100, 5)}%`,
+                            }}
+                            title={`${item.hourlyTotal} events (${(
+                              item.relativeToMax * 100
+                            ).toFixed(1)}% of busiest hour)`}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          focusOnThisHour(item.hourKey);
-                        }}
-                        className="flex cursor-pointer items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800 transition-colors duration-200 hover:bg-orange-200"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
+                      <div className="flex items-center space-x-2">
+                        <div
+                          onClick={(e) => {
                             e.stopPropagation();
                             focusOnThisHour(item.hourKey);
-                          }
-                        }}
-                      >
-                        <MagnifyingGlassIcon className="mr-1 h-3 w-3" />
-                        Journeys this Hour
+                          }}
+                          className="flex cursor-pointer items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800 transition-colors duration-200 hover:bg-orange-200"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              focusOnThisHour(item.hourKey);
+                            }
+                          }}
+                        >
+                          <MagnifyingGlassIcon className="mr-1 h-3 w-3" />
+                          Journeys this Hour
+                        </div>
+                        <div className="flex items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800">
+                          <Accordion.ItemIndicator>
+                            <ChevronDownIcon
+                              className={classNames(
+                                'h-3 w-3 transition-transform duration-200',
+                                isOpen && 'rotate-180'
+                              )}
+                            />
+                          </Accordion.ItemIndicator>
+                          <span
+                            className={classNames(
+                              'ml-1',
+                              isOpen ? 'hidden' : 'block'
+                            )}
+                          >
+                            Expand Details
+                          </span>
+                          <span
+                            className={classNames(
+                              'ml-1',
+                              isOpen ? 'block' : 'hidden'
+                            )}
+                          >
+                            Hide Details
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center rounded-md bg-orange-100 px-2 py-1 text-xs font-bold text-orange-800">
-                        <Accordion.ItemIndicator>
-                          <ChevronDownIcon className="h-3 w-3 transition-transform duration-200 data-[state=open]:rotate-180" />
-                        </Accordion.ItemIndicator>
-                        <span className="ml-1 data-[state=closed]:block data-[state=open]:hidden">
-                          Expand Details
+                    </div>
+                  ) : (
+                    <div className="flex flex-grow items-center">
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-700">
+                          {item.humanReadableDisplay}
                         </span>
-                        <span className="ml-1 data-[state=open]:block data-[state=closed]:hidden">
-                          Hide Details
+                        <span className="ml-2 text-xs italic text-gray-500">
+                          {item.isFuture ? 'The future awaits!' : 'No activity'}
                         </span>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-grow items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-sm text-gray-700">
-                        {item.humanReadableDisplay}
-                      </span>
-                      <span className="ml-2 text-xs italic text-gray-500">
-                        {item.isFuture ? 'The future awaits!' : 'No activity'}
-                      </span>
-                    </div>
-                    <Accordion.ItemIndicator>
-                      <ChevronDownIcon className="h-5 w-5 text-gray-500 transition-transform duration-200 data-[state=open]:rotate-180" />
-                    </Accordion.ItemIndicator>
-                  </div>
-                )}
-              </Accordion.ItemTrigger>
+                  )}
+                </Accordion.ItemTrigger>
 
-              <Accordion.ItemContent className="p-4">
-                {item.type === 'active' && (
-                  <div className="space-y-4">
-                    {item.contentItems.map((content) => (
-                      <div
-                        key={`${item.hourKey}-${content.contentId}`}
-                        className="mb-3"
-                      >
-                        <div className="mb-1 flex items-center justify-between text-sm font-bold text-gray-700">
-                          <div className="flex items-center">
-                            {getContentIcon(content.contentType)}
-                            {content.title}
+                {isExpandable && (
+                  <Accordion.ItemContent className="p-4">
+                    <div className="space-y-4">
+                      {item.contentItems.map((content) => (
+                          <div
+                            key={`${item.hourKey}-${content.contentId}`}
+                            className="mb-3"
+                          >
+                            <div className="mb-1 flex items-center justify-between text-sm font-bold text-gray-700">
+                              <div className="flex items-center">
+                                {getContentIcon(content.contentType)}
+                                {content.title}
+                              </div>
+                              {content.visitorIds.length > 0 && (
+                                <div
+                                  className="flex items-center text-xs text-gray-600"
+                                  title={content.visitorIds.join(', ')}
+                                >
+                                  <UserGroupIcon className="mr-1 h-3 w-3" />
+                                  {content.visitorIds.length} unique visitor
+                                  {content.visitorIds.length !== 1 ? 's' : ''}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {content.events.map((event, eventIdx) => (
+                                <div
+                                  key={`${item.hourKey}-${content.contentId}-${event.verb}-${eventIdx}`}
+                                  className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-bold text-cyan-800"
+                                >
+                                  {event.verb} [{event.count}]
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          {content.visitorIds.length > 0 && (
-                            <div
-                              className="flex items-center text-xs text-gray-600"
-                              title={content.visitorIds.join(', ')}
-                            >
-                              <UserGroupIcon className="mr-1 h-3 w-3" />
-                              {content.visitorIds.length} unique visitor
-                              {content.visitorIds.length !== 1 ? 's' : ''}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {content.events.map((event, eventIdx) => (
-                            <div
-                              key={`${item.hourKey}-${content.contentId}-${event.verb}-${eventIdx}`}
-                              className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-bold text-cyan-800"
-                            >
-                              {event.verb} [{event.count}]
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        ))}
+                    </div>
+                  </Accordion.ItemContent>
                 )}
-              </Accordion.ItemContent>
-            </Accordion.Item>
-          ))}
+              </Accordion.Item>
+            );
+          })}
 
           {dayData.length === 0 && (
             <div className="py-6 text-center text-sm text-gray-500">

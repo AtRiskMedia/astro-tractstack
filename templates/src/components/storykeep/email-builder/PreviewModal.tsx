@@ -47,7 +47,10 @@ export default function PreviewModal({ template, onClose }: PreviewModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 p-4 backdrop-blur-sm">
-      <div className="flex h-full max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl md:flex-row">
+      <div
+        className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl md:flex-row"
+        style={{ maxHeight: '90vh' }}
+      >
         <div className="w-full border-r border-gray-200 bg-gray-50 p-6 md:w-80">
           <div className="mb-6 flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">Mock Data</h3>

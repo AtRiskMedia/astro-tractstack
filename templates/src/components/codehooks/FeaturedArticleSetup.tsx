@@ -22,6 +22,13 @@ const comboboxItemStyles = `
   .combo-item[data-state="checked"] .check-indicator {
     display: flex;
   }
+  .combo-item[data-highlighted] {
+    background-color: #0891b2;
+    color: #fff;
+  }
+  .combo-item[data-highlighted] .check-indicator {
+    color: #fff;
+  }
 `;
 
 const FeaturedArticleSetup = ({
@@ -268,7 +275,7 @@ const FeaturedArticleSetup = ({
               <Combobox.Item
                 key={item.slug}
                 item={item}
-                className="combo-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                className="combo-item relative cursor-default select-none py-2 pl-10 pr-4 text-gray-900"
               >
                 <span className="block truncate">{item.title}</span>
                 <span className="check-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">

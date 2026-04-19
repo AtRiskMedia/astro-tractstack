@@ -71,7 +71,12 @@ const IconSelector = ({
     () => createListCollection({ items: filteredIcons }),
     [filteredIcons]
   );
-  const iconSelectorStyles = `.icon-item .icon-indicator { display: none; } .icon-item[data-state="checked"] .icon-indicator { display: flex; }`;
+  const iconSelectorStyles = `
+    .icon-item .icon-indicator { display: none; }
+    .icon-item[data-state="checked"] .icon-indicator { display: flex; }
+    .icon-item[data-highlighted] { background-color: #0891b2; color: #fff; }
+    .icon-item[data-highlighted] .icon-indicator { color: #fff; }
+  `;
   return (
     <div>
       <style>{iconSelectorStyles}</style>
@@ -100,12 +105,12 @@ const IconSelector = ({
                 <Combobox.Item
                   key={icon}
                   item={icon}
-                  className="icon-item relative cursor-pointer select-none py-2 pl-10 pr-4 text-gray-900 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                  className="icon-item relative cursor-pointer select-none py-2 pl-10 pr-4 text-gray-900"
                 >
                   <Combobox.ItemText>
                     <i className={`bi bi-${icon} mr-2 text-lg`}></i> {icon}
                   </Combobox.ItemText>
-                  <Combobox.ItemIndicator className="icon-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600 data-[highlighted]:text-white">
+                  <Combobox.ItemIndicator className="icon-indicator absolute inset-y-0 left-0 flex items-center pl-3 text-cyan-600">
                     <CheckIcon className="h-5 w-5" />
                   </Combobox.ItemIndicator>
                 </Combobox.Item>

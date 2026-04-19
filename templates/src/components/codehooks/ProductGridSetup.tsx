@@ -35,6 +35,13 @@ const modes = [
   },
 ];
 
+const productGridComboItemHighlightStyles = `
+  .product-grid-combo-item[data-highlighted] {
+    background-color: #0891b2;
+    color: #fff;
+  }
+`;
+
 export const ProductGridSetup = (props: ProductGridSetupProps) => {
   const { nodeId, params } = props;
   const ctx = getCtx();
@@ -235,6 +242,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
                 <Combobox.Label className="text-sm font-bold text-gray-700">
                   Find products to include
                 </Combobox.Label>
+                <style>{productGridComboItemHighlightStyles}</style>
                 <Combobox.Control>
                   <Combobox.Input
                     className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
@@ -248,7 +256,7 @@ export const ProductGridSetup = (props: ProductGridSetupProps) => {
                         <Combobox.Item
                           key={item.value}
                           item={item}
-                          className="relative flex cursor-pointer select-none items-center px-4 py-2 text-gray-900 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                          className="product-grid-combo-item relative flex cursor-pointer select-none items-center px-4 py-2 text-gray-900"
                         >
                           <Combobox.ItemText>{item.label}</Combobox.ItemText>
                           <Combobox.ItemIndicator className="ml-auto">

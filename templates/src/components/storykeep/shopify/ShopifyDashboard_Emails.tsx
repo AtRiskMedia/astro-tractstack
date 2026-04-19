@@ -70,7 +70,7 @@ export default function ShopifyDashboard_Emails() {
             {names.map((name) => (
               <li
                 key={name}
-                className="sm:px-6 flex items-center justify-between px-4 py-4"
+                className="flex items-center justify-between px-4 py-4 md:px-6"
               >
                 <div className="flex items-center">
                   <p className="truncate text-sm font-bold text-gray-900">

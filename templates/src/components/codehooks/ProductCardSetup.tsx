@@ -7,6 +7,13 @@ import { fullContentMapStore } from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import type { PaneNode } from '@/types/compositorTypes';
 
+const productCardComboItemHighlightStyles = `
+  .product-card-combo-item[data-highlighted] {
+    background-color: #0891b2;
+    color: #fff;
+  }
+`;
+
 interface ProductCardSetupProps {
   nodeId: string;
   params: Record<string, any> | null;
@@ -118,6 +125,7 @@ export const ProductCardSetup = (props: ProductCardSetupProps) => {
             <Combobox.Label className="text-sm font-bold text-gray-700">
               Find a product
             </Combobox.Label>
+            <style>{productCardComboItemHighlightStyles}</style>
             <Combobox.Control>
               <Combobox.Input
                 className="w-full rounded-md border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 md:text-sm"
@@ -131,7 +139,7 @@ export const ProductCardSetup = (props: ProductCardSetupProps) => {
                     <Combobox.Item
                       key={item.value}
                       item={item}
-                      className="relative cursor-pointer select-none px-4 py-2 text-gray-900 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                      className="product-card-combo-item relative cursor-pointer select-none px-4 py-2 text-gray-900"
                     >
                       <Combobox.ItemText>{item.label}</Combobox.ItemText>
                     </Combobox.Item>

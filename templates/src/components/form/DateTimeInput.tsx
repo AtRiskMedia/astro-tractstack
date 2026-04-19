@@ -40,6 +40,12 @@ const ampmOptions = [
   { value: 'PM', label: 'PM' },
 ];
 
+const datetimeSelectItemHighlightStyles = `
+  .datetime-select-item[data-highlighted] {
+    background-color: #eff6ff;
+  }
+`;
+
 const DateTimeInput = ({
   value,
   onChange,
@@ -450,6 +456,7 @@ const DateTimeInput = ({
       {/* Time Picker Section (only show if withTime is true and not date-only) */}
       {withTime && displayFormat !== 'date' && (
         <div className="space-y-2">
+          <style>{datetimeSelectItemHighlightStyles}</style>
           <div className="text-xs font-bold text-gray-600">
             Time (Local Timezone)
           </div>
@@ -489,7 +496,7 @@ const DateTimeInput = ({
                         <Select.Item
                           key={option.value}
                           item={option}
-                          className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50 data-[highlighted]:bg-blue-50"
+                          className="datetime-select-item flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50"
                         >
                           <Select.ItemText>{option.label}</Select.ItemText>
                           <Select.ItemIndicator>
@@ -540,7 +547,7 @@ const DateTimeInput = ({
                         <Select.Item
                           key={option.value}
                           item={option}
-                          className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50 data-[highlighted]:bg-blue-50"
+                          className="datetime-select-item flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50"
                         >
                           <Select.ItemText>{option.label}</Select.ItemText>
                           <Select.ItemIndicator>
@@ -589,7 +596,7 @@ const DateTimeInput = ({
                         <Select.Item
                           key={option.value}
                           item={option}
-                          className="flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50 data-[highlighted]:bg-blue-50"
+                          className="datetime-select-item flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-blue-50"
                         >
                           <Select.ItemText>{option.label}</Select.ItemText>
                           <Select.ItemIndicator>

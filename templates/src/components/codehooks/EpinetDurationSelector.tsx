@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import { Select } from '@ark-ui/react/select';
-import { RadioGroup } from '@ark-ui/react/radio-group';
+import { RadioGroup, useRadioGroupItemContext } from '@ark-ui/react/radio-group';
 import { Portal } from '@ark-ui/react/portal';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon';
@@ -48,6 +48,17 @@ interface AvailableFilter {
   beliefSlug: string;
   values: string[];
 }
+
+const VisitorTypeCheckIcon = () => {
+  const { checked } = useRadioGroupItemContext();
+  return (
+    <div
+      className={`shrink-0 text-cyan-600 ${checked ? 'block' : 'hidden'}`}
+    >
+      <CheckCircleIcon className="h-5 w-5" />
+    </div>
+  );
+};
 
 interface EpinetDurationSelectorProps {
   fullContentMap?: ContentMapItem[];
@@ -382,6 +393,16 @@ const EpinetDurationSelector = ({
     @media (min-width: 641px) { .radio-item { flex: 1 1 calc(33.333% - 0.5rem); } }
   `;
 
+  const epinetUserSelectItemStyles = `
+    .epinet-user-select-item[data-highlighted] {
+      background-color: #0891b2;
+      color: #fff;
+    }
+    .epinet-user-select-item[data-highlighted] .text-gray-500 {
+      color: rgb(229 231 235);
+    }
+  `;
+
   const getFilterStatusMessage = () => {
     const needsApply = hasLocalChanges;
     const prefix = needsApply ? 'Press Apply Filters to load' : 'Showing';
@@ -546,6 +567,7 @@ const EpinetDurationSelector = ({
               <div className="duration-selector-container flex flex-col space-y-4 md:space-y-0">
                 <div className="space-y-2">
                   <style>{radioGroupStyles}</style>
+                  <style>{epinetUserSelectItemStyles}</style>
                   <RadioGroup.Root
                     value={localFilters.visitorType}
                     onValueChange={({ value }) =>
@@ -579,9 +601,7 @@ const EpinetDurationSelector = ({
                                 </div>
                               </RadioGroup.ItemText>
                             </div>
-                            <div className="hidden shrink-0 text-cyan-600 data-[state=checked]:block">
-                              <CheckCircleIcon className="h-5 w-5" />
-                            </div>
+                            <VisitorTypeCheckIcon />
                           </div>
                           <RadioGroup.ItemHiddenInput />
                         </RadioGroup.Item>
@@ -817,7 +837,7 @@ const EpinetDurationSelector = ({
                                     <Select.Item
                                       key="empty"
                                       item={{ value: '', label: 'Select user' }}
-                                      className="cursor-pointer select-none p-2 text-sm text-gray-500 hover:bg-slate-100 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                                      className="epinet-user-select-item cursor-pointer select-none p-2 text-sm text-gray-500 hover:bg-slate-100"
                                     >
                                       <Select.ItemText>
                                         Select user
@@ -830,7 +850,7 @@ const EpinetDurationSelector = ({
                                           value: user.id,
                                           label: `${user.id} (${user.count} events)`,
                                         }}
-                                        className="cursor-pointer select-none p-2 text-sm text-gray-700 hover:bg-slate-100 data-[highlighted]:bg-cyan-600 data-[highlighted]:text-white"
+                                        className="epinet-user-select-item cursor-pointer select-none p-2 text-sm text-gray-700 hover:bg-slate-100"
                                       >
                                         <Select.ItemText>
                                           {user.id}{' '}

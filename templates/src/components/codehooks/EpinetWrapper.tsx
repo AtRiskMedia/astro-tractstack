@@ -269,7 +269,10 @@ const EpinetWrapper = ({
     return (
       <div className="flex h-96 w-full items-center justify-center rounded bg-gray-100">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-cyan-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <div
+            className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-cyan-600 border-r-transparent motion-reduce:animate-none"
+            style={{ verticalAlign: '-0.125em' }}
+          ></div>
           <p className="mt-4 text-sm text-gray-600">
             Discovering analytics configuration...
           </p>
