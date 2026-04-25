@@ -114,7 +114,7 @@ export default function EmailBuilder({
   if (!template) return null;
 
   return (
-    <div className="flex min-h-96 max-h-screen flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <div className="flex max-h-screen min-h-96 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <button

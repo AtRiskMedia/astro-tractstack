@@ -58,7 +58,7 @@ if (menu?.optionsPayload) {
       return item;
     });
 
-  allLinks = additionalLinks.concat(featuredLinks);
+  allLinks = featuredLinks.concat(additionalLinks);
 }
 
 // Parse socials string
@@ -106,7 +106,7 @@ const createdDate = created ? new Date(created) : new Date();
             {allLinks.map((item: any) => (
               <a
                 href={item.to}
-                class="z-10 whitespace-nowrap rounded bg-brand-7 px-3.5 py-1.5 text-lg text-white shadow-sm transition-colors hover:bg-myblack hover:text-white focus:bg-brand-7 focus:text-white"
+                class="z-10 whitespace-nowrap rounded-md bg-brand-7 px-3.5 py-1.5 text-lg text-white shadow-sm transition-colors hover:bg-myblack hover:text-white focus:bg-brand-7 focus:text-white"
                 title={item.description}
               >
                 <span class="font-bold">{item.name}</span>

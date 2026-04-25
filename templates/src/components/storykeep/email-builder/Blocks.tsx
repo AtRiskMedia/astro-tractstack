@@ -1,8 +1,4 @@
-import {
-  useLayoutEffect,
-  useRef,
-  type ClipboardEvent,
-} from 'react';
+import { useLayoutEffect, useRef, type ClipboardEvent } from 'react';
 import type { EmailBlock } from '@/utils/api/emailHelpers';
 
 interface BlocksProps {

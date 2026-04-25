@@ -48,9 +48,7 @@ const getApi = () => {
 };
 
 export const emailHelpers = {
-  getTemplates: async (): Promise<
-    Record<string, EmailTemplateListEntry[]>
-  > => {
+  getTemplates: async (): Promise<Record<string, EmailTemplateListEntry[]>> => {
     const api = getApi();
     const response = await api.get<Record<string, EmailTemplateListEntry[]>>(
       '/api/v1/emails/templates'

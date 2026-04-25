@@ -11,6 +11,8 @@ const menuStyles = `
     transition-property: opacity, transform;
     transition-duration: 200ms;
     z-index: 10050;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .menu-content[data-state="open"] {
@@ -186,7 +188,7 @@ const MenuComponent = (props: MenuProps) => {
       <style dangerouslySetInnerHTML={{ __html: menuStyles }} />
 
       {/* Desktop Navigation */}
-      <nav className="ml-6 hidden flex-wrap items-center justify-end space-x-3 font-action md:flex md:space-x-6">
+      <nav className="ml-6 hidden min-w-0 max-w-full flex-wrap items-center justify-end space-x-3 font-action md:flex md:space-x-6">
         {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
           <div key={item.name} className="relative py-1.5">
             <InteractiveMenuItem item={item} />
@@ -207,8 +209,8 @@ const MenuComponent = (props: MenuProps) => {
 
           <Portal>
             <Menu.Positioner>
-              <Menu.Content className="menu-content mt-5 flex">
-                <div className="w-screen">
+              <Menu.Content className="menu-content mt-5 flex min-w-0 max-w-full">
+                <div className="w-full min-w-0 max-w-full">
                   <div className="text-md flex-auto overflow-hidden rounded-3xl bg-white p-4 leading-6 shadow-lg ring-1 ring-mydarkgrey/5">
                     {/* Featured Links Section */}
                     <div className="px-8">

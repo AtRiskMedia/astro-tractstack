@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import { Select } from '@ark-ui/react/select';
-import { RadioGroup, useRadioGroupItemContext } from '@ark-ui/react/radio-group';
+import {
+  RadioGroup,
+  useRadioGroupItemContext,
+} from '@ark-ui/react/radio-group';
 import { Portal } from '@ark-ui/react/portal';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon';
@@ -52,9 +55,7 @@ interface AvailableFilter {
 const VisitorTypeCheckIcon = () => {
   const { checked } = useRadioGroupItemContext();
   return (
-    <div
-      className={`shrink-0 text-cyan-600 ${checked ? 'block' : 'hidden'}`}
-    >
+    <div className={`shrink-0 text-cyan-600 ${checked ? 'block' : 'hidden'}`}>
       <CheckCircleIcon className="h-5 w-5" />
     </div>
   );

@@ -498,9 +498,7 @@ const EpinetTableView = ({
           className="w-full"
           value={openAccordionValues}
           onValueChange={({ value }) =>
-            setOpenAccordionValues(
-              value.filter((v) => !v.startsWith('empty-'))
-            )
+            setOpenAccordionValues(value.filter((v) => !v.startsWith('empty-')))
           }
         >
           {dayData.map((item, index) => {
@@ -613,38 +611,38 @@ const EpinetTableView = ({
                   <Accordion.ItemContent className="p-4">
                     <div className="space-y-4">
                       {item.contentItems.map((content) => (
-                          <div
-                            key={`${item.hourKey}-${content.contentId}`}
-                            className="mb-3"
-                          >
-                            <div className="mb-1 flex items-center justify-between text-sm font-bold text-gray-700">
-                              <div className="flex items-center">
-                                {getContentIcon(content.contentType)}
-                                {content.title}
+                        <div
+                          key={`${item.hourKey}-${content.contentId}`}
+                          className="mb-3"
+                        >
+                          <div className="mb-1 flex items-center justify-between text-sm font-bold text-gray-700">
+                            <div className="flex items-center">
+                              {getContentIcon(content.contentType)}
+                              {content.title}
+                            </div>
+                            {content.visitorIds.length > 0 && (
+                              <div
+                                className="flex items-center text-xs text-gray-600"
+                                title={content.visitorIds.join(', ')}
+                              >
+                                <UserGroupIcon className="mr-1 h-3 w-3" />
+                                {content.visitorIds.length} unique visitor
+                                {content.visitorIds.length !== 1 ? 's' : ''}
                               </div>
-                              {content.visitorIds.length > 0 && (
-                                <div
-                                  className="flex items-center text-xs text-gray-600"
-                                  title={content.visitorIds.join(', ')}
-                                >
-                                  <UserGroupIcon className="mr-1 h-3 w-3" />
-                                  {content.visitorIds.length} unique visitor
-                                  {content.visitorIds.length !== 1 ? 's' : ''}
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {content.events.map((event, eventIdx) => (
-                                <div
-                                  key={`${item.hourKey}-${content.contentId}-${event.verb}-${eventIdx}`}
-                                  className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-bold text-cyan-800"
-                                >
-                                  {event.verb} [{event.count}]
-                                </div>
-                              ))}
-                            </div>
+                            )}
                           </div>
-                        ))}
+                          <div className="flex flex-wrap gap-2">
+                            {content.events.map((event, eventIdx) => (
+                              <div
+                                key={`${item.hourKey}-${content.contentId}-${event.verb}-${eventIdx}`}
+                                className="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-bold text-cyan-800"
+                              >
+                                {event.verb} [{event.count}]
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </Accordion.ItemContent>
                 )}

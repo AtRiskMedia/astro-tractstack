@@ -123,13 +123,15 @@ if (hasShopify) {
 
     {
       !!menu ? (
-        <Menu
-          payload={menu}
-          slug={slug}
-          brandConfig={brandConfig}
-          isContext={isContext}
-          client:load
-        />
+        <div class="flex min-w-0 flex-1 justify-end">
+          <Menu
+            payload={menu}
+            slug={slug}
+            brandConfig={brandConfig}
+            isContext={isContext}
+            client:load
+          />
+        </div>
       ) : null
     }
   </div>
