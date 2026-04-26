@@ -454,7 +454,7 @@ export default function SaveModal({
                         Keep Editing
                       </button>
                       <a
-                        href="/storykeep/content"
+                        href="/storykeep"
                         className={`rounded bg-black px-4 py-2 text-white transition-colors hover:bg-white hover:text-black`}
                       >
                         Dashboard

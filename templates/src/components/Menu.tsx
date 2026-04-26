@@ -1,39 +1,11 @@
-import { Menu } from '@ark-ui/react';
+import { useState } from 'react';
+import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import ChevronDownIcon from '@heroicons/react/20/solid/ChevronDownIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import { lispLexer } from '@/utils/actions/lispLexer';
 import { preParseAction } from '@/utils/actions/preParse_Action';
 import type { LispToken } from '@/types/compositorTypes';
-
-// CSS to style the menu items with hover and selection states
-const menuStyles = `
-  .menu-content {
-    transition-property: opacity, transform;
-    transition-duration: 200ms;
-    z-index: 10050;
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  .menu-content[data-state="open"] {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .menu-content[data-state="closed"] {
-    opacity: 0;
-    transform: translateY(1px);
-  }
-
-  .menu-item[data-highlighted] {
-    background-color: #f3f4f6;
-  }
-
-  .menu-item:focus {
-    outline: 2px solid #0891b2;
-    outline-offset: -2px;
-  }
-`;
 
 interface MenuLink {
   name: string;
@@ -65,6 +37,7 @@ interface MenuProps {
 const MenuComponent = (props: MenuProps) => {
   const { payload, slug, isContext, brandConfig } = props;
   const thisPayload = payload.optionsPayload;
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function processMenuLink(e: MenuLink): ProcessedMenuLinkDatum {
     const item = { ...e } as ProcessedMenuLinkDatum;
@@ -183,10 +156,106 @@ const MenuComponent = (props: MenuProps) => {
     );
   };
 
+  const MobileMenuItem = ({ item }: { item: ProcessedMenuLinkDatum }) => {
+    if (item.renderAs === 'button') {
+      return (
+        <button
+          type="button"
+          className="block w-full rounded-xl p-4 text-left hover:bg-mygreen/20 focus:outline-none focus:ring-2 focus:ring-myblue"
+          aria-label={`${item.name} - ${item.description}`}
+          hx-post="/api/v1/state"
+          hx-swap="none"
+          hx-vals={item.htmxVals}
+          onClick={() => setMobileOpen(false)}
+        >
+          <p className="text-xl font-bold leading-7 text-myblack">{item.name}</p>
+          <p className="mt-1 text-base leading-6 text-mydarkgrey">
+            {item.description}
+          </p>
+        </button>
+      );
+    }
+
+    if (item.renderAs === 'a') {
+      return (
+        <a
+          href={item.href}
+          className="block w-full rounded-xl p-4 text-left hover:bg-mygreen/20 focus:outline-none focus:ring-2 focus:ring-myblue"
+          aria-label={`${item.name} - ${item.description}`}
+          onClick={() => setMobileOpen(false)}
+        >
+          <p className="text-xl font-bold leading-7 text-myblack">{item.name}</p>
+          <p className="mt-1 text-base leading-6 text-mydarkgrey">
+            {item.description}
+          </p>
+        </a>
+      );
+    }
+
+    return (
+      <span
+        className="block w-full rounded-xl p-4 text-left opacity-60"
+        aria-label={`${item.name} - ${item.description}`}
+      >
+        <p className="text-xl font-bold leading-7 text-myblack">{item.name}</p>
+        <p className="mt-1 text-base leading-6 text-mydarkgrey">
+          {item.description}
+        </p>
+      </span>
+    );
+  };
+
+  const MobileCompactItem = ({ item }: { item: ProcessedMenuLinkDatum }) => {
+    if (item.renderAs === 'button') {
+      return (
+        <button
+          type="button"
+          className="block w-full rounded-lg p-3 text-left hover:bg-mygreen/20 focus:outline-none focus:ring-2 focus:ring-myblue"
+          title={item.description}
+          aria-label={`${item.name} - ${item.description}`}
+          hx-post="/api/v1/state"
+          hx-swap="none"
+          hx-vals={item.htmxVals}
+          onClick={() => setMobileOpen(false)}
+        >
+          <span className="block text-base font-bold leading-6 text-mydarkgrey">
+            {item.name}
+          </span>
+        </button>
+      );
+    }
+
+    if (item.renderAs === 'a') {
+      return (
+        <a
+          href={item.href}
+          className="block w-full rounded-lg p-3 text-left hover:bg-mygreen/20 focus:outline-none focus:ring-2 focus:ring-myblue"
+          title={item.description}
+          aria-label={`${item.name} - ${item.description}`}
+          onClick={() => setMobileOpen(false)}
+        >
+          <span className="block text-base font-bold leading-6 text-mydarkgrey">
+            {item.name}
+          </span>
+        </a>
+      );
+    }
+
+    return (
+      <span
+        className="block w-full rounded-lg p-3 text-left opacity-60"
+        title={item.description}
+        aria-label={`${item.name} - ${item.description}`}
+      >
+        <span className="block text-base font-bold leading-6 text-mydarkgrey">
+          {item.name}
+        </span>
+      </span>
+    );
+  };
+
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: menuStyles }} />
-
       {/* Desktop Navigation */}
       <nav className="ml-6 hidden min-w-0 max-w-full flex-wrap items-center justify-end space-x-3 font-action md:flex md:space-x-6">
         {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
@@ -198,134 +267,70 @@ const MenuComponent = (props: MenuProps) => {
 
       {/* Mobile Navigation Menu */}
       <div className="font-action md:hidden">
-        <Menu.Root>
-          <Menu.Trigger
+        <Dialog.Root open={mobileOpen} onOpenChange={(details) => setMobileOpen(details.open)}>
+          <Dialog.Trigger
             className="inline-flex rounded-md px-3 py-2 text-xl font-bold text-myblue hover:text-black focus:outline-none focus:ring-2 focus:ring-myblue"
             aria-label="Open navigation menu"
           >
             <span>MENU</span>
             <ChevronDownIcon className="ml-1 h-5 w-5" aria-hidden="true" />
-          </Menu.Trigger>
+          </Dialog.Trigger>
 
           <Portal>
-            <Menu.Positioner>
-              <Menu.Content className="menu-content mt-5 flex min-w-0 max-w-full">
-                <div className="w-full min-w-0 max-w-full">
-                  <div className="text-md flex-auto overflow-hidden rounded-3xl bg-white p-4 leading-6 shadow-lg ring-1 ring-mydarkgrey/5">
-                    {/* Featured Links Section */}
-                    <div className="px-8">
-                      {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
-                        <Menu.Item
-                          key={item.name}
-                          value={item.name}
-                          className="menu-item group relative flex gap-x-6 rounded-lg p-4 hover:bg-mygreen/20"
-                        >
-                          <div>
-                            {item.renderAs === 'button' ? (
-                              <button
-                                type="button"
-                                className="font-action text-xl text-myblack hover:text-black focus:text-black focus:outline-none"
-                                aria-label={`${item.name} - ${item.description}`}
-                                hx-post="/api/v1/state"
-                                hx-swap="none"
-                                hx-vals={item.htmxVals}
-                              >
-                                {item.name}
-                                <span className="absolute inset-0" />
-                              </button>
-                            ) : item.renderAs === 'a' ? (
-                              <a
-                                href={item.href}
-                                className="font-action text-xl text-myblack hover:text-black focus:text-black focus:outline-none"
-                                aria-label={`${item.name} - ${item.description}`}
-                              >
-                                {item.name}
-                                <span className="absolute inset-0" />
-                              </a>
-                            ) : (
-                              <span
-                                className="font-action text-xl text-myblack opacity-50"
-                                aria-label={`${item.name} - ${item.description}`}
-                              >
-                                {item.name}
-                              </span>
-                            )}
-                            <p className="mt-1 text-mydarkgrey">
-                              {item.description}
-                            </p>
-                          </div>
-                        </Menu.Item>
-                      ))}
+            <Dialog.Backdrop className="fixed inset-0 bg-black/40" style={{ zIndex: 10050 }} />
+            <Dialog.Positioner className="fixed inset-0" style={{ zIndex: 10051 }}>
+              <Dialog.Content className="h-full w-full overflow-hidden bg-white">
+                <div className="flex h-full flex-col overflow-hidden">
+                  <div className="border-b border-mylightgrey px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <Dialog.Title className="text-lg font-bold text-myblack">
+                        Navigation Menu
+                      </Dialog.Title>
+                      <Dialog.CloseTrigger
+                        className="rounded-full p-2 text-mydarkgrey hover:bg-mylightgrey focus:outline-none focus:ring-2 focus:ring-myblue"
+                        aria-label="Close navigation menu"
+                      >
+                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      </Dialog.CloseTrigger>
                     </div>
+                  </div>
 
-                    {/* Additional Links Section */}
+                  <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4">
+                    <ul role="list" className="space-y-3">
+                      {featuredLinks.map((item: ProcessedMenuLinkDatum) => (
+                        <li key={item.name} className="min-w-0">
+                          <MobileMenuItem item={item} />
+                        </li>
+                      ))}
+                    </ul>
+
                     {additionalLinks.length > 0 && (
-                      <div className="bg-slate-50 p-8">
-                        <div className="flex justify-between">
-                          <h3
-                            className="mt-4 text-sm leading-6 text-myblue"
-                            id="additional-links-heading"
-                          >
-                            Additional Links
-                          </h3>
-                        </div>
+                      <section className="mt-6 rounded-xl bg-slate-50 p-4">
+                        <h3
+                          className="text-sm font-bold leading-6 text-myblue"
+                          id="additional-links-heading"
+                        >
+                          Additional Links
+                        </h3>
                         <ul
                           role="list"
-                          className="mt-6 space-y-6"
+                          className="mt-3 space-y-2"
                           aria-labelledby="additional-links-heading"
                         >
-                          {additionalLinks.map(
-                            (item: ProcessedMenuLinkDatum) => (
-                              <li key={item.name} className="relative">
-                                <Menu.Item
-                                  value={item.name}
-                                  className="menu-item block w-full text-left"
-                                >
-                                  {item.renderAs === 'button' ? (
-                                    <button
-                                      type="button"
-                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey hover:text-black focus:text-black focus:underline focus:outline-none"
-                                      title={item.description}
-                                      aria-label={`${item.name} - ${item.description}`}
-                                      hx-post="/api/v1/state"
-                                      hx-swap="none"
-                                      hx-vals={item.htmxVals}
-                                    >
-                                      {item.name}
-                                      <span className="absolute inset-0" />
-                                    </button>
-                                  ) : item.renderAs === 'a' ? (
-                                    <a
-                                      href={item.href}
-                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey hover:text-black focus:text-black focus:underline focus:outline-none"
-                                      title={item.description}
-                                      aria-label={`${item.name} - ${item.description}`}
-                                    >
-                                      {item.name}
-                                      <span className="absolute inset-0" />
-                                    </a>
-                                  ) : (
-                                    <span
-                                      className="block truncate rounded p-2 text-sm font-bold leading-6 text-mydarkgrey opacity-50"
-                                      title={item.description}
-                                      aria-label={`${item.name} - ${item.description}`}
-                                    >
-                                      {item.name}
-                                    </span>
-                                  )}
-                                </Menu.Item>
-                              </li>
-                            )
-                          )}
+                          {additionalLinks.map((item: ProcessedMenuLinkDatum) => (
+                            <li key={item.name} className="min-w-0">
+                              <MobileCompactItem item={item} />
+                            </li>
+                          ))}
                         </ul>
-                      </div>
+                      </section>
                     )}
                   </div>
                 </div>
-              </Menu.Content>
-            </Menu.Positioner>
+              </Dialog.Content>
+            </Dialog.Positioner>
           </Portal>
-        </Menu.Root>
+        </Dialog.Root>
       </div>
     </>
   );
