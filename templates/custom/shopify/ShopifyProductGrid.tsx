@@ -215,14 +215,25 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
   );
 }
 
+const HEX_BG_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
 export default function ShopifyProductGrid({ resources = {}, options }: Props) {
   let products = resources['product'] || [];
   const services = resources['service'] || [];
 
   let group = '';
+  let title = '';
+  let bgColor = '#f9f9f9';
   try {
     const parsedOptions = JSON.parse(options?.params?.options || '{}');
-    group = parsedOptions.group || '';
+    group = typeof parsedOptions.group === 'string' ? parsedOptions.group : '';
+    if (typeof parsedOptions.title === 'string') {
+      title = parsedOptions.title.trim();
+    }
+    const rawBg = parsedOptions.bgColor;
+    if (typeof rawBg === 'string' && HEX_BG_RE.test(rawBg)) {
+      bgColor = rawBg;
+    }
   } catch (e) {}
 
   if (group) {
@@ -231,18 +242,34 @@ export default function ShopifyProductGrid({ resources = {}, options }: Props) {
 
   if (products.length === 0) return null;
 
-  // Grid with increased gaps matching the design
   return (
-    <div className="mx-auto max-w-7xl px-4 md:px-8">
-      <div className="grid grid-cols-2 gap-x-8 gap-y-16 md:gap-x-12 xl:grid-cols-3">
-        {products.map((resource) => (
-          <ProductCard
-            key={resource.id}
-            resource={resource}
-            allServices={services}
-          />
-        ))}
+    <section className="w-full">
+      <div
+        className="flex w-full flex-col gap-12 p-12 md:gap-14 md:p-12 xl:gap-16 xl:p-16"
+        style={{ backgroundColor: bgColor }}
+      >
+        {title ? (
+          <header className="max-w-4xl">
+            <h3
+              className="mb-6 text-balance font-action text-2xl font-bold md:text-3xl xl:text-4xl"
+              style={{ color: '#2d2923' }}
+            >
+              {title}
+            </h3>
+          </header>
+        ) : null}
+        <section className="w-full">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-16 md:gap-x-12 xl:grid-cols-3">
+            {products.map((resource) => (
+              <ProductCard
+                key={resource.id}
+                resource={resource}
+                allServices={services}
+              />
+            ))}
+          </div>
+        </section>
       </div>
-    </div>
+    </section>
   );
 }

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Default config on ShopifyServiceList and ShopifyProductGrid
 - AdminEmail field on BrandConfig
 - Email templates
 

@@ -103,6 +103,18 @@ const AddPaneCodeHookPanel = ({
       parentId: '',
       codeHookTarget: selected,
       isContextPane: isContextPane,
+      ...(selected === 'shopify-product-grid' || selected === 'shopify-service-list'
+        ? {
+            codeHookPayload: {
+              options: JSON.stringify({
+                category: 'product|service',
+                group: '',
+                title: '',
+                bgColor: '#f9f9f9',
+              }),
+            },
+          }
+        : {}),
     };
     const targetId =
       isStoryFragment || isContextPane
