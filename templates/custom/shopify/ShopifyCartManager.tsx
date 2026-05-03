@@ -8,7 +8,10 @@ import {
   getCartItemKey,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
-import { RESTRICTION_MESSAGES } from '@/utils/customHelpers';
+import {
+  RESTRICTION_MESSAGES,
+  calculateCartDuration,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
 import type { BrandConfigState } from '@/types/tractstack';
@@ -127,15 +130,7 @@ export default function ShopifyCartManager({
           }
         }
 
-        let rawDuration = 0;
-        Object.values(nextCart).forEach((item) => {
-          const res = resources.find((r) => r.id === item.resourceId);
-          if (res?.optionsPayload?.needsBooking || item.boundResourceId) {
-            rawDuration +=
-              (res?.optionsPayload?.bookingLengthMinutes || 0) *
-              (item.quantity || 1);
-          }
-        });
+        const rawDuration = calculateCartDuration(nextCart, resources);
 
         const interval = 15;
         const snappedDuration = Math.ceil(rawDuration / interval) * interval;
@@ -190,7 +185,7 @@ export default function ShopifyCartManager({
         addQueue.set(remaining);
       }
     }
-  }, [queue, resources]);
+  }, [queue, resources, brandConfig]);
 
   return null;
 }

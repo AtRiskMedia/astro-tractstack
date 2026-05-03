@@ -370,7 +370,11 @@ if (hasShopify) {
 {
   !isStoryKeep && hasShopify && (
     <>
-      <ShopifyCartManager resources={shopifyResources} client:only="react" />
+      <ShopifyCartManager
+        resources={shopifyResources}
+        brandConfig={brandConfig}
+        client:only="react"
+      />
       <CartModal client:only="react" />
     </>
   )

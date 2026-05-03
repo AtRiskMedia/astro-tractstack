@@ -103,7 +103,8 @@ const AddPaneCodeHookPanel = ({
       parentId: '',
       codeHookTarget: selected,
       isContextPane: isContextPane,
-      ...(selected === 'shopify-product-grid' || selected === 'shopify-service-list'
+      ...(selected === 'shopify-product-grid' ||
+      selected === 'shopify-service-list'
         ? {
             codeHookPayload: {
               options: JSON.stringify({

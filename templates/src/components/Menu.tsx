@@ -168,7 +168,9 @@ const MenuComponent = (props: MenuProps) => {
           hx-vals={item.htmxVals}
           onClick={() => setMobileOpen(false)}
         >
-          <p className="text-xl font-bold leading-7 text-myblack">{item.name}</p>
+          <p className="text-xl font-bold leading-7 text-myblack">
+            {item.name}
+          </p>
           <p className="mt-1 text-base leading-6 text-mydarkgrey">
             {item.description}
           </p>
@@ -184,7 +186,9 @@ const MenuComponent = (props: MenuProps) => {
           aria-label={`${item.name} - ${item.description}`}
           onClick={() => setMobileOpen(false)}
         >
-          <p className="text-xl font-bold leading-7 text-myblack">{item.name}</p>
+          <p className="text-xl font-bold leading-7 text-myblack">
+            {item.name}
+          </p>
           <p className="mt-1 text-base leading-6 text-mydarkgrey">
             {item.description}
           </p>
@@ -267,7 +271,10 @@ const MenuComponent = (props: MenuProps) => {
 
       {/* Mobile Navigation Menu */}
       <div className="font-action md:hidden">
-        <Dialog.Root open={mobileOpen} onOpenChange={(details) => setMobileOpen(details.open)}>
+        <Dialog.Root
+          open={mobileOpen}
+          onOpenChange={(details) => setMobileOpen(details.open)}
+        >
           <Dialog.Trigger
             className="inline-flex rounded-md px-3 py-2 text-xl font-bold text-myblue hover:text-black focus:outline-none focus:ring-2 focus:ring-myblue"
             aria-label="Open navigation menu"
@@ -277,8 +284,14 @@ const MenuComponent = (props: MenuProps) => {
           </Dialog.Trigger>
 
           <Portal>
-            <Dialog.Backdrop className="fixed inset-0 bg-black/40" style={{ zIndex: 10050 }} />
-            <Dialog.Positioner className="fixed inset-0" style={{ zIndex: 10051 }}>
+            <Dialog.Backdrop
+              className="fixed inset-0 bg-black/40"
+              style={{ zIndex: 10050 }}
+            />
+            <Dialog.Positioner
+              className="fixed inset-0"
+              style={{ zIndex: 10051 }}
+            >
               <Dialog.Content className="h-full w-full overflow-hidden bg-white">
                 <div className="flex h-full flex-col overflow-hidden">
                   <div className="border-b border-mylightgrey px-4 py-3">
@@ -317,11 +330,13 @@ const MenuComponent = (props: MenuProps) => {
                           className="mt-3 space-y-2"
                           aria-labelledby="additional-links-heading"
                         >
-                          {additionalLinks.map((item: ProcessedMenuLinkDatum) => (
-                            <li key={item.name} className="min-w-0">
-                              <MobileCompactItem item={item} />
-                            </li>
-                          ))}
+                          {additionalLinks.map(
+                            (item: ProcessedMenuLinkDatum) => (
+                              <li key={item.name} className="min-w-0">
+                                <MobileCompactItem item={item} />
+                              </li>
+                            )
+                          )}
                         </ul>
                       </section>
                     )}

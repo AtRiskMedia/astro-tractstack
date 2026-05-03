@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - horizontal scroll on menu
 - mobile menu
 - allow delete of creative pane
+- shopify max booking length enforcement
 
 ### Updated
 
