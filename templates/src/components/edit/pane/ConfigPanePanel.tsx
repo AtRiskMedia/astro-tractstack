@@ -302,7 +302,7 @@ const ConfigPanePanel = ({
           {/* Right Aligned Tools */}
           <div className="ml-auto flex items-center gap-2 px-2">
             {/* Delete & Reorder Tools */}
-            {!isTemplate && !isContextPane && !isHtmlAstPane && (
+            {!isTemplate && !isContextPane && (
               <div className="flex items-center gap-1 border-r border-gray-300 pr-2">
                 <button
                   onClick={handleMoveUp}
