@@ -36,7 +36,8 @@ export const bookingHelpers = {
     traceId: string,
     startTime: string,
     endTime: string,
-    resourceIds: string[]
+    resourceIds: string[],
+    appointmentMode: 'IN_PERSON' | 'REMOTE'
   ) => {
     const details = customerDetails.get();
 
@@ -51,6 +52,7 @@ export const bookingHelpers = {
         resourceIds,
         startTime,
         endTime,
+        appointmentMode,
       }),
     });
     return await response.json();

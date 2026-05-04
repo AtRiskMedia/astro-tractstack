@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  type FormEvent,
+} from 'react';
 import { ulid } from 'ulid';
 import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react/dialog';
@@ -9,6 +16,7 @@ import {
   customerDetails,
   setCustomerDetails,
   CART_STATES,
+  preferredAppointmentMode,
   transactionTraceId,
   isShopifyHandoff,
 } from '@/stores/shopify';
@@ -24,14 +32,19 @@ type CheckoutState =
   | 'SUMMARY'
   | 'PROCESSING'
   | 'SUCCESS';
+type AppointmentMode = 'IN_PERSON' | 'REMOTE';
 
 interface CheckoutModalProps {
   maxLength: number;
+  allowRemote?: boolean;
+  remoteOnly?: boolean;
   resources?: ResourceNode[];
 }
 
 export default function CheckoutModal({
   maxLength,
+  allowRemote = false,
+  remoteOnly = false,
   resources = [],
 }: CheckoutModalProps) {
   const $globalCartState = useStore(cartState);
@@ -57,6 +70,13 @@ export default function CheckoutModal({
     start: Date;
     end: Date;
   } | null>(null);
+  const initialAppointmentMode: AppointmentMode =
+    remoteOnly || preferredAppointmentMode.get() === 'REMOTE'
+      ? 'REMOTE'
+      : 'IN_PERSON';
+  const [appointmentMode, setAppointmentMode] =
+    useState<AppointmentMode>(initialAppointmentMode);
+  const appointmentModeRef = useRef<AppointmentMode>(initialAppointmentMode);
   const [error, setError] = useState<string | null>(null);
 
   const isOpen =
@@ -82,6 +102,7 @@ export default function CheckoutModal({
         ...item,
         title: productData?.title || resource?.title || 'Loading...',
         price: variant?.price?.amount || '0.00',
+        resourceNode: resource,
         resource: {
           id: item.resourceId,
           needsBooking:
@@ -110,6 +131,76 @@ export default function CheckoutModal({
     );
     return Math.min(Math.ceil(rawMinutes / 15) * 15, maxLength);
   }, [enrichedCart]);
+
+  const bookingServiceResources = useMemo(() => {
+    const dedupe = new Map<string, ResourceNode>();
+    for (const item of enrichedCart) {
+      const node = item.resourceNode as ResourceNode | undefined;
+      if (
+        node &&
+        (node.categorySlug === 'service' ||
+          node.optionsPayload?.bookingLengthMinutes)
+      ) {
+        dedupe.set(node.id, node);
+      }
+
+      if (item.boundResourceId) {
+        const bound = resources.find((r) => r.id === item.boundResourceId);
+        if (bound) dedupe.set(bound.id, bound);
+      }
+    }
+    return Array.from(dedupe.values());
+  }, [enrichedCart, resources]);
+
+  const anyServiceRemoteOnly = useMemo(
+    () =>
+      bookingServiceResources.some((r) => Boolean(r.optionsPayload?.remoteOnly)),
+    [bookingServiceResources]
+  );
+
+  const allServicesAllowRemote = useMemo(
+    () =>
+      bookingServiceResources.every((r) => {
+        const remoteOnlyFlag = Boolean(r.optionsPayload?.remoteOnly);
+        return remoteOnlyFlag || Boolean(r.optionsPayload?.allowRemote);
+      }),
+    [bookingServiceResources]
+  );
+
+  const effectiveRemoteOnly = remoteOnly || anyServiceRemoteOnly;
+  const remoteAvailable =
+    effectiveRemoteOnly ||
+    (allowRemote &&
+      bookingServiceResources.length > 0 &&
+      allServicesAllowRemote &&
+      needsBooking);
+
+  const applyAppointmentMode = useCallback((nextMode: AppointmentMode) => {
+    appointmentModeRef.current = nextMode;
+    setAppointmentMode((currentMode) =>
+      currentMode === nextMode ? currentMode : nextMode
+    );
+    preferredAppointmentMode.set(nextMode);
+  }, []);
+
+  useEffect(() => {
+    if (selectedSlot) {
+      return;
+    }
+    if (effectiveRemoteOnly) {
+      applyAppointmentMode('REMOTE');
+      return;
+    }
+    if (!remoteAvailable && appointmentMode === 'REMOTE') {
+      applyAppointmentMode('IN_PERSON');
+    }
+  }, [
+    effectiveRemoteOnly,
+    remoteAvailable,
+    appointmentMode,
+    selectedSlot,
+    applyAppointmentMode,
+  ]);
 
   useEffect(() => {
     const profile = ProfileStorage.getProfileData();
@@ -145,6 +236,39 @@ export default function CheckoutModal({
       }
     }
   }, [$globalCartState, needsBooking, $customer.leadId, internalState]);
+
+  useEffect(() => {
+    if (!isOpen || selectedSlot) {
+      return;
+    }
+
+    if (
+      internalState !== 'IDENTITY_EMAIL' &&
+      internalState !== 'IDENTITY_NEW_USER'
+    ) {
+      return;
+    }
+
+    if (effectiveRemoteOnly) {
+      applyAppointmentMode('REMOTE');
+      return;
+    }
+
+    const preferredMode =
+      preferredAppointmentMode.get() === 'REMOTE' ? 'REMOTE' : 'IN_PERSON';
+    if (preferredMode === 'REMOTE' && !remoteAvailable) {
+      applyAppointmentMode('IN_PERSON');
+      return;
+    }
+    applyAppointmentMode(preferredMode);
+  }, [
+    isOpen,
+    selectedSlot,
+    internalState,
+    effectiveRemoteOnly,
+    remoteAvailable,
+    applyAppointmentMode,
+  ]);
 
   const handleClose = async () => {
     const redirect = internalState === 'SUCCESS';
@@ -249,7 +373,8 @@ export default function CheckoutModal({
         transactionTraceId.get(),
         start.toISOString(),
         end.toISOString(),
-        cartResourceIds
+        cartResourceIds,
+        appointmentModeRef.current
       );
       if (response && (response.success || response.status === 'PENDING')) {
         setInternalState('SUMMARY');
@@ -342,6 +467,13 @@ export default function CheckoutModal({
                               timeZone: shopTimeZone,
                             }
                           ),
+                        },
+                        {
+                          key: 'Appointment Mode',
+                          value:
+                            appointmentMode === 'REMOTE'
+                              ? 'Remote'
+                              : 'In Person',
                         },
                       ]
                     : []),
@@ -462,13 +594,73 @@ export default function CheckoutModal({
                 </form>
               )}
               {internalState === 'BOOKING' && (
-                <NativeBookingCalendar
-                  totalDurationMinutes={totalDuration}
-                  onSlotSelected={handleSlotSelection}
-                />
+                <div className="space-y-6">
+                  {needsBooking && remoteAvailable && (
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Appointment Mode
+                      </p>
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          disabled={effectiveRemoteOnly}
+                          onClick={() => {
+                            applyAppointmentMode('IN_PERSON');
+                          }}
+                          className={`rounded-md px-3 py-2 text-sm font-bold ${
+                            appointmentMode === 'IN_PERSON'
+                              ? 'bg-black text-white'
+                              : 'border border-gray-300 bg-white text-gray-700'
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          In Person
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!remoteAvailable}
+                          onClick={() => {
+                            applyAppointmentMode('REMOTE');
+                          }}
+                          className={`rounded-md px-3 py-2 text-sm font-bold ${
+                            appointmentMode === 'REMOTE'
+                              ? 'bg-black text-white'
+                              : 'border border-gray-300 bg-white text-gray-700'
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
+                        >
+                          Remote
+                        </button>
+                      </div>
+                      {effectiveRemoteOnly && (
+                        <p className="mt-2 text-xs font-bold text-gray-500">
+                          Remote mode is required by shop or service settings.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <NativeBookingCalendar
+                    totalDurationMinutes={totalDuration}
+                    onSlotSelected={handleSlotSelection}
+                  />
+                </div>
               )}
               {internalState === 'SUMMARY' && (
                 <div className="space-y-6">
+                  {needsBooking && (
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                        Appointment Mode
+                      </p>
+                      <p className="mt-3 text-sm font-bold text-gray-900">
+                        {appointmentMode === 'REMOTE' ? 'Remote' : 'In Person'}
+                      </p>
+                      {effectiveRemoteOnly && (
+                        <p className="mt-2 text-xs font-bold text-gray-500">
+                          Remote mode is required by shop or service settings.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
                     <h3 className="mb-4 font-bold text-gray-900">
                       Order Summary
@@ -491,6 +683,11 @@ export default function CheckoutModal({
                       <div className="mt-6 border-t border-gray-200 pt-6">
                         <p className="text-xs font-bold uppercase text-gray-500">
                           Appointment
+                        </p>
+                        <p className="mt-1 text-xs font-bold uppercase tracking-wide text-gray-500">
+                          {appointmentMode === 'REMOTE'
+                            ? 'Remote'
+                            : 'In Person'}
                         </p>
                         <p className="mt-1 text-sm font-bold text-gray-900">
                           {selectedSlot.start.toLocaleDateString('en-US', {

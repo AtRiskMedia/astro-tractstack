@@ -82,7 +82,9 @@ if (hasShopify) {
           <CheckoutModal
             client:only="react"
             resources={shopifyResources}
-            maxLength={brandConfig?.scheduling?.maxLengthMinutes || 180}
+            maxLength={brandConfig?.SCHEDULING?.maxLengthMinutes || 180}
+            allowRemote={brandConfig?.SCHEDULING?.allowRemote || false}
+            remoteOnly={brandConfig?.SCHEDULING?.remoteOnly || false}
           />
         )}
       </>

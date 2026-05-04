@@ -162,6 +162,8 @@ export interface SchedulingConfig {
   timezone: string;
   bufferGapsMinutes: number;
   maxLengthMinutes: number;
+  allowRemote: boolean;
+  remoteOnly: boolean;
   businessHours: Record<string, TimeBlock>;
   unavailableHours: TimeBlock[];
 }
@@ -285,6 +287,13 @@ export interface AdvancedConfigStatus {
   resendApiKeySet: boolean;
   shopifyAdminSlugSet: boolean;
   userSetupWebhooks: boolean;
+  googleOauthClientIdSet: boolean;
+  googleOauthClientSecretSet: boolean;
+  googleCalendarIdSet: boolean;
+  googleAccessTokenSet: boolean;
+  googleRefreshTokenSet: boolean;
+  googleTokenExpirySet: boolean;
+  hasGoogleSync: boolean;
 }
 
 export interface AdvancedConfigState {
@@ -301,6 +310,9 @@ export interface AdvancedConfigState {
   shopifyAdminSlug: string;
   userSetupWebhooks: boolean;
   resendApiKey: string;
+  googleOauthClientId: string;
+  googleOauthClientSecret: string;
+  googleCalendarId: string;
 }
 
 export interface AdvancedConfigUpdateRequest {
@@ -318,6 +330,9 @@ export interface AdvancedConfigUpdateRequest {
   SHOPIFY_ADMIN_SLUG?: string;
   USER_SETUP_WEBHOOKS?: boolean;
   RESEND_API_KEY?: string;
+  GOOGLE_OAUTH_CLIENT_ID?: string;
+  GOOGLE_OAUTH_CLIENT_SECRET?: string;
+  GOOGLE_CALENDAR_ID?: string;
 }
 
 export interface MenuNodeState {
@@ -520,6 +535,14 @@ export interface CategorizedResults {
 }
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+export type AppointmentMode = 'IN_PERSON' | 'REMOTE';
+export type GoogleSyncStatus =
+  | 'NOT_SYNCED'
+  | 'PENDING'
+  | 'SYNCED'
+  | 'DELETE_PENDING'
+  | 'DELETE_SYNCED'
+  | 'FAILED';
 
 export interface BookingEntity {
   id: string; // traceId
@@ -528,7 +551,14 @@ export interface BookingEntity {
   startTime: string; // ISO-8601 UTC string
   endTime: string; // ISO-8601 UTC string
   status: BookingStatus;
+  appointmentMode: AppointmentMode;
   shopifyOrderId?: string;
+  googleEventId?: string;
+  googleMeetURL?: string;
+  googleSyncStatus: GoogleSyncStatus;
+  googleLastError?: string;
+  confirmationEmailSent: boolean;
+  linkAddedEmailSent: boolean;
   createdAt: string; // ISO-8601 UTC string
   leadEmail?: string;
   leadName?: string;

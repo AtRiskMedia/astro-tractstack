@@ -13,13 +13,23 @@ interface APIConfigSectionProps {
   status: AdvancedConfigStatus | null;
 }
 
+const GOOGLE_APP_HOME_URL = 'https://renees.freewebpress.com/';
+const GOOGLE_PRIVACY_URL = 'https://renees.freewebpress.com/privacy';
+const GOOGLE_TERMS_URL = 'https://renees.freewebpress.com/terms';
+const GOOGLE_AUTHORIZED_DOMAIN = 'freewebpress.com';
+const GOOGLE_REDIRECT_URI = 'https://renees.freewebpress.com/api/google/oauth/callback';
+const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+const GOOGLE_VERIFICATION_VIDEO_URL = 'https://www.youtube.com/watch?v=kJI4XdqiiAI';
+
 export default function APIConfigSection({
   formState,
   status,
 }: APIConfigSectionProps) {
-  const { state, updateField, errors } = formState;
+  const { state, updateField, errors, isDirty, saveState } = formState;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGoogleConnecting, setIsGoogleConnecting] = useState(false);
+  const [isGoogleDisconnecting, setIsGoogleDisconnecting] = useState(false);
   const goBackend =
     import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
 
@@ -32,6 +42,18 @@ export default function APIConfigSection({
   const shopifyAdminSlugConfigured = status?.shopifyAdminSlugSet;
   const shopifyWebhooksConfigured = status?.userSetupWebhooks;
   const resendConfigured = status?.resendApiKeySet;
+  const googleHasSync = status?.hasGoogleSync;
+  const googleClientIDConfigured = status?.googleOauthClientIdSet;
+  const googleClientSecretConfigured = status?.googleOauthClientSecretSet;
+  const googleCalendarConfigured = status?.googleCalendarIdSet;
+  const googleCredentialsSaved = Boolean(
+    googleClientIDConfigured &&
+      googleClientSecretConfigured &&
+      googleCalendarConfigured
+  );
+  const googleCredentialsPendingSave = isDirty || saveState === 'saving';
+  const canStartGoogleConnect =
+    googleCredentialsSaved && !googleCredentialsPendingSave && !googleHasSync;
 
   const renderStatusBadge = (isConfigured: boolean | undefined) => {
     if (status === null) {
@@ -50,6 +72,44 @@ export default function APIConfigSection({
         Not Set
       </span>
     );
+  };
+
+  const handleGoogleConnect = async () => {
+    setIsGoogleConnecting(true);
+    try {
+      const response = await fetch('/api/google/oauth/start');
+      const payload = await response.json();
+      if (!response.ok || !payload.authorization) {
+        throw new Error(payload?.error || 'Failed to start Google OAuth');
+      }
+      window.location.href = payload.authorization;
+    } catch (error) {
+      console.error('Failed to start Google OAuth:', error);
+      alert(error instanceof Error ? error.message : 'Google OAuth failed');
+    } finally {
+      setIsGoogleConnecting(false);
+    }
+  };
+
+  const handleGoogleDisconnect = async () => {
+    setIsGoogleDisconnecting(true);
+    try {
+      const response = await fetch('/api/google/oauth/disconnect', {
+        method: 'POST',
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to disconnect Google OAuth');
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to disconnect Google OAuth:', error);
+      alert(
+        error instanceof Error ? error.message : 'Failed to disconnect Google'
+      );
+    } finally {
+      setIsGoogleDisconnecting(false);
+    }
   };
 
   return (
@@ -243,6 +303,162 @@ export default function APIConfigSection({
               Required for sending system emails.
               {resendConfigured && ' Leave blank to keep existing key.'}
             </p>
+          </div>
+
+          {/* Google Calendar / Meet Section */}
+          <div className="border-t border-gray-100 pt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h4 className="text-sm font-bold text-gray-900">
+                Google Calendar + Meet (Remote Sync)
+              </h4>
+              {renderStatusBadge(googleHasSync)}
+            </div>
+            <div className="space-y-4">
+              <StringInput
+                label="Google OAuth Client ID"
+                value={state.googleOauthClientId}
+                onChange={(value) => updateField('googleOauthClientId', value)}
+                placeholder={
+                  googleClientIDConfigured
+                    ? '••••••••••••••••'
+                    : 'Enter Google OAuth client ID'
+                }
+              />
+              <StringInput
+                label="Google OAuth Client Secret"
+                value={state.googleOauthClientSecret}
+                onChange={(value) =>
+                  updateField('googleOauthClientSecret', value)
+                }
+                type="password"
+                placeholder={
+                  googleClientSecretConfigured
+                    ? '••••••••••••••••'
+                    : 'Enter Google OAuth client secret'
+                }
+              />
+              <StringInput
+                label="Google Calendar ID"
+                value={state.googleCalendarId}
+                onChange={(value) => updateField('googleCalendarId', value)}
+                placeholder={
+                  googleCalendarConfigured
+                    ? '••••••••••••••••'
+                    : 'example@gmail.com or calendar ID'
+                }
+              />
+              <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-xs text-gray-700">
+                <p className="font-bold text-gray-900">OAuth setup notes</p>
+                <p className="mt-2">
+                  Ensure Google Calendar API is enabled in APIs &amp; Services
+                  for this same project before running OAuth.
+                </p>
+                <ol className="mt-2 list-decimal space-y-1 pl-4">
+                  <li>
+                    Open Google Auth Platform <strong>Clients</strong>, create a
+                    Web application client, and set Authorized redirect URI to:
+                    <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                      {GOOGLE_REDIRECT_URI}
+                    </code>
+                  </li>
+                  <li>
+                    Open <strong>Audience</strong> and set:
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      <li>App type: External</li>
+                      <li>Publishing status: In production</li>
+                    </ul>
+                  </li>
+                  <li>
+                    Open <strong>Data Access</strong> and add scope:
+                    <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                      {GOOGLE_SCOPE}
+                    </code>
+                  </li>
+                  <li>
+                    Open <strong>Branding</strong> and set:
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      <li>
+                        Application home page:
+                        <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                          {GOOGLE_APP_HOME_URL}
+                        </code>
+                      </li>
+                      <li>
+                        Application privacy policy link:
+                        <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                          {GOOGLE_PRIVACY_URL}
+                        </code>
+                      </li>
+                      <li>
+                        Application terms of service link:
+                        <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                          {GOOGLE_TERMS_URL}
+                        </code>
+                      </li>
+                      <li>
+                        Authorized domain:
+                        <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                          {GOOGLE_AUTHORIZED_DOMAIN}
+                        </code>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Open <strong>Verification Center</strong>, start
+                    verification, and use this default demo video URL:
+                    <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
+                      {GOOGLE_VERIFICATION_VIDEO_URL}
+                    </code>
+                  </li>
+                  <li>
+                    Create client credentials and copy:
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      <li>
+                        web.client_id into Google OAuth Client ID in StoryKeep.
+                      </li>
+                      <li>
+                        web.client_secret into Google OAuth Client Secret in
+                        StoryKeep.
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    Open Google Calendar, select the target calendar, then copy
+                    Calendar ID from Integrate calendar settings.
+                  </li>
+                  <li>
+                    Save credentials in StoryKeep, then click Connect Google to
+                    complete OAuth and store refresh token linkage.
+                  </li>
+                </ol>
+              </div>
+              <div className="flex gap-3">
+                {canStartGoogleConnect ? (
+                  <button
+                    type="button"
+                    onClick={handleGoogleConnect}
+                    disabled={isGoogleConnecting}
+                    className="rounded-md bg-black px-4 py-2 text-xs font-bold text-white hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    {isGoogleConnecting ? 'Connecting...' : 'Connect Google'}
+                  </button>
+                ) : (
+                  <div className="flex items-center rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
+                    {googleHasSync
+                      ? 'Google is already connected'
+                      : 'Save Google credentials before connecting'}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleGoogleDisconnect}
+                  disabled={isGoogleDisconnecting || !googleHasSync}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-xs font-bold text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  {isGoogleDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

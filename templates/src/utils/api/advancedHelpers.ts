@@ -27,6 +27,9 @@ export function convertToLocalState(
       resendApiKey: '',
       shopifyAdminSlug: '',
       userSetupWebhooks: false,
+      googleOauthClientId: '',
+      googleOauthClientSecret: '',
+      googleCalendarId: '',
     };
   }
 
@@ -47,6 +50,9 @@ export function convertToLocalState(
     resendApiKey: '',
     shopifyAdminSlug: '',
     userSetupWebhooks: status.userSetupWebhooks,
+    googleOauthClientId: '',
+    googleOauthClientSecret: '',
+    googleCalendarId: '',
   };
 }
 
@@ -106,6 +112,16 @@ export function convertToBackendFormat(
 
   if (state.resendApiKey?.trim()) {
     request.RESEND_API_KEY = state.resendApiKey.trim();
+  }
+
+  if (state.googleOauthClientId?.trim()) {
+    request.GOOGLE_OAUTH_CLIENT_ID = state.googleOauthClientId.trim();
+  }
+  if (state.googleOauthClientSecret?.trim()) {
+    request.GOOGLE_OAUTH_CLIENT_SECRET = state.googleOauthClientSecret.trim();
+  }
+  if (state.googleCalendarId?.trim()) {
+    request.GOOGLE_CALENDAR_ID = state.googleCalendarId.trim();
   }
 
   return request;

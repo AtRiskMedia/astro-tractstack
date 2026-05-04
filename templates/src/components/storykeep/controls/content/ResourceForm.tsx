@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useFormState } from '@/hooks/useFormState';
 import { convertToLocalState } from '@/utils/api/resourceHelpers';
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
@@ -26,6 +27,7 @@ interface ResourceFormProps {
   fullContentMap: FullContentMapItem[];
   categorySlug: string;
   categorySchema: Record<string, FieldDefinition>;
+  tenantRemoteOnly?: boolean;
   isCreate?: boolean;
   onClose?: (saved: boolean) => void;
 }
@@ -35,6 +37,7 @@ export default function ResourceForm({
   fullContentMap,
   categorySlug,
   categorySchema,
+  tenantRemoteOnly = false,
   isCreate = false,
   onClose,
 }: ResourceFormProps) {
@@ -184,6 +187,31 @@ export default function ResourceForm({
   });
 
   const { state, updateField, errors } = formState;
+  const isServiceCategory = categorySlug === 'service';
+  const serviceRemoteOnly = Boolean(state.optionsPayload?.remoteOnly);
+  const effectiveServiceRemoteOnly = tenantRemoteOnly || serviceRemoteOnly;
+
+  useEffect(() => {
+    if (!isServiceCategory) return;
+    if (!effectiveServiceRemoteOnly) return;
+
+    const nextPayload = {
+      ...state.optionsPayload,
+      allowRemote: true,
+      remoteOnly: true,
+    };
+    const needsUpdate =
+      state.optionsPayload?.allowRemote !== true ||
+      state.optionsPayload?.remoteOnly !== true;
+    if (needsUpdate) {
+      updateField('optionsPayload', nextPayload);
+    }
+  }, [
+    effectiveServiceRemoteOnly,
+    isServiceCategory,
+    state.optionsPayload,
+    updateField,
+  ]);
 
   // Helper to get category reference options for a field
   const getCategoryReferenceOptions = (belongsToCategory: string) => {
@@ -213,6 +241,13 @@ export default function ResourceForm({
   };
 
   const renderDynamicField = (fieldName: string, fieldDef: FieldDefinition) => {
+    if (
+      !isServiceCategory &&
+      (fieldName === 'allowRemote' || fieldName === 'remoteOnly')
+    ) {
+      return null;
+    }
+
     if (
       resourceFormHideFields.includes(fieldName)
       // && initialData.optionsPayload?.[fieldName]
@@ -322,6 +357,51 @@ export default function ResourceForm({
         );
 
       case 'boolean':
+        if (isServiceCategory && fieldName === 'allowRemote') {
+          const locked = effectiveServiceRemoteOnly;
+          return (
+            <BooleanToggle
+              key={fieldName}
+              label="Allow Remote"
+              value={locked ? true : Boolean(fieldValue)}
+              onChange={(value) =>
+                updateOptionsField(fieldName, locked ? true : Boolean(value))
+              }
+              error={fieldError}
+              disabled={locked}
+              description={
+                locked
+                  ? 'Locked to true because remoteOnly is enabled at tenant or service scope.'
+                  : undefined
+              }
+            />
+          );
+        }
+        if (isServiceCategory && fieldName === 'remoteOnly') {
+          const locked = tenantRemoteOnly;
+          return (
+            <BooleanToggle
+              key={fieldName}
+              label="Remote Only"
+              value={locked ? true : Boolean(fieldValue)}
+              onChange={(value) => {
+                const next = Boolean(value);
+                updateOptionsField(fieldName, locked ? true : next);
+                if (next || locked) {
+                  updateOptionsField('allowRemote', true);
+                }
+              }}
+              error={fieldError}
+              disabled={locked}
+              description={
+                locked
+                  ? 'Locked to true because tenant scheduling is set to remoteOnly.'
+                  : 'When enabled, this service can only be booked remotely.'
+              }
+            />
+          );
+        }
+
         return (
           <BooleanToggle
             key={fieldName}

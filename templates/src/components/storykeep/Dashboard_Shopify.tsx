@@ -278,6 +278,12 @@ export default function StoryKeepDashboard_Shopify({
           group: { type: 'string', optional: true },
           shopifyData: { type: 'string', optional: true },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
+          allowRemote: {
+            type: 'boolean',
+            optional: false,
+            defaultValue: false,
+          },
+          remoteOnly: { type: 'boolean', optional: false, defaultValue: false },
           bookingLengthMinutes: {
             type: 'number',
             optional: false,
@@ -651,6 +657,9 @@ export default function StoryKeepDashboard_Shopify({
                     draftResource.categorySlug || ''
                   ] || {}
                 }
+                tenantRemoteOnly={Boolean(
+                  internalBrandConfig?.scheduling?.remoteOnly
+                )}
                 isCreate={isCreateMode}
                 onClose={(saved) => {
                   setShowResourceModal(false);

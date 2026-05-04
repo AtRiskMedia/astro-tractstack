@@ -222,6 +222,50 @@ export default function SchedulingSection({
                 className="mt-2 block w-full rounded-md border-gray-300 px-2 py-3 focus:border-cyan-700 focus:ring-cyan-700 md:text-sm"
               />
             </div>
+            <div className="md:col-span-3 xl:col-span-4">
+              <label className="block text-xs font-black uppercase tracking-widest text-gray-500">
+                Allow Remote Booking
+              </label>
+              <label className="mt-2 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={config.remoteOnly ? true : config.allowRemote}
+                  disabled={config.remoteOnly}
+                  onChange={(e) =>
+                    updateField('scheduling', {
+                      ...config,
+                      allowRemote: e.target.checked,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-cyan-700 focus:ring-cyan-700 disabled:opacity-50"
+                />
+                <span className="text-sm font-bold text-gray-700">
+                  Enable remote option in checkout
+                </span>
+              </label>
+            </div>
+            <div className="md:col-span-3 xl:col-span-4">
+              <label className="block text-xs font-black uppercase tracking-widest text-gray-500">
+                Remote Only
+              </label>
+              <label className="mt-2 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={config.remoteOnly}
+                  onChange={(e) =>
+                    updateField('scheduling', {
+                      ...config,
+                      remoteOnly: e.target.checked,
+                      allowRemote: e.target.checked ? true : config.allowRemote,
+                    })
+                  }
+                  className="h-4 w-4 rounded border-gray-300 text-cyan-700 focus:ring-cyan-700"
+                />
+                <span className="text-sm font-bold text-gray-700">
+                  Force all bookings to remote
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 

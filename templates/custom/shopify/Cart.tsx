@@ -7,6 +7,7 @@ import {
   cartState,
   CART_STATES,
   isShopifyHandoff,
+  preferredAppointmentMode,
   transactionTraceId,
   type CartItemState,
 } from '@/stores/shopify';
@@ -15,6 +16,8 @@ import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
   resources: ResourceNode[];
+  allowRemote?: boolean;
+  remoteOnly?: boolean;
 }
 
 const getCleanVariantTitle = (variant: any) => {
@@ -34,10 +37,17 @@ const getCleanVariantTitle = (variant: any) => {
   return title === 'Default Title' ? '' : title;
 };
 
-export default function Cart({ resources = [] }: CartProps) {
+export default function Cart({
+  resources = [],
+  allowRemote = false,
+  remoteOnly = false,
+}: CartProps) {
   const cart = useStore(cartStore);
   const isHandoff = useStore(isShopifyHandoff);
   const [pickupEnabled, setPickupEnabled] = useState(false);
+  const [remoteEnabled, setRemoteEnabled] = useState(
+    preferredAppointmentMode.get() === 'REMOTE'
+  );
 
   const cartValues = Object.values(cart);
 
@@ -67,12 +77,55 @@ export default function Cart({ resources = [] }: CartProps) {
     return !!resource?.optionsPayload?.bookingLengthMinutes;
   });
 
+  const bookingServiceResources = cartValues.reduce((acc, item) => {
+    const resource = resources.find((r) => r.id === item.resourceId);
+    if (
+      resource &&
+      (resource.categorySlug === 'service' ||
+        resource.optionsPayload?.bookingLengthMinutes)
+    ) {
+      acc.set(resource.id, resource);
+    }
+    if (item.boundResourceId) {
+      const bound = resources.find((r) => r.id === item.boundResourceId);
+      if (bound) {
+        acc.set(bound.id, bound);
+      }
+    }
+    return acc;
+  }, new Map<string, ResourceNode>());
+  const serviceResources = Array.from(bookingServiceResources.values());
+  const anyServiceRemoteOnly = serviceResources.some((resource) =>
+    Boolean(resource.optionsPayload?.remoteOnly)
+  );
+  const allServicesAllowRemote = serviceResources.every((resource) => {
+    const serviceRemoteOnly = Boolean(resource.optionsPayload?.remoteOnly);
+    return serviceRemoteOnly || Boolean(resource.optionsPayload?.allowRemote);
+  });
+  const effectiveRemoteOnly = remoteOnly || anyServiceRemoteOnly;
+  const canRemote =
+    effectiveRemoteOnly ||
+    (allowRemote && serviceResources.length > 0 && allServicesAllowRemote);
+
   const hasPhysicalProductWithPickup = cartValues.some(
     (item) =>
       item.variantIdPickup && item.variantIdPickup !== item.variantIdShipped
   );
 
-  const canPickup = hasService && hasPhysicalProductWithPickup;
+  const canPickup =
+    hasService && hasPhysicalProductWithPickup && !remoteEnabled;
+
+  useEffect(() => {
+    if (effectiveRemoteOnly) {
+      setRemoteEnabled(true);
+      preferredAppointmentMode.set('REMOTE');
+      return;
+    }
+    if (!canRemote && remoteEnabled) {
+      setRemoteEnabled(false);
+      preferredAppointmentMode.set('IN_PERSON');
+    }
+  }, [effectiveRemoteOnly, canRemote, remoteEnabled]);
 
   useEffect(() => {
     if (canPickup) {
@@ -131,17 +184,35 @@ export default function Cart({ resources = [] }: CartProps) {
     <div className="rounded-lg bg-white shadow">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 className="text-xl font-bold text-gray-800">Shopping Cart</h2>
-        {canPickup && (
-          <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
-            <input
-              type="checkbox"
-              checked={pickupEnabled}
-              onChange={(e) => setPickupEnabled(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
-            />
-            <span>Pick up at Store</span>
-          </label>
-        )}
+        <div className="flex items-center gap-4">
+          {hasService && canRemote && (
+            <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
+              <input
+                type="checkbox"
+                checked={remoteEnabled}
+                disabled={effectiveRemoteOnly}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setRemoteEnabled(next);
+                  preferredAppointmentMode.set(next ? 'REMOTE' : 'IN_PERSON');
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black disabled:opacity-50"
+              />
+              <span>Remote Booking</span>
+            </label>
+          )}
+          {canPickup && (
+            <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
+              <input
+                type="checkbox"
+                checked={pickupEnabled}
+                onChange={(e) => setPickupEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+              />
+              <span>Pick up at Store</span>
+            </label>
+          )}
+        </div>
       </div>
 
       <ul className="divide-y divide-gray-200">

@@ -227,6 +227,10 @@ export const transactionTraceId = persistentAtom<string>(
   'tractstack_shopify_trace_id',
   ''
 );
+export const preferredAppointmentMode = persistentAtom<'IN_PERSON' | 'REMOTE'>(
+  'tractstack_shopify_appointment_mode',
+  'IN_PERSON'
+);
 
 export interface CustomerDetails {
   name: string;
@@ -262,6 +266,7 @@ export function clearCommerceState() {
     leadId: '',
   });
   transactionTraceId.set('');
+  preferredAppointmentMode.set('IN_PERSON');
   cartState.set(CART_STATES.READY);
 }
 

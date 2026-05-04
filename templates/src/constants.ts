@@ -7,6 +7,8 @@ export const MAX_ANALYTICS_HOURS = 672;
 
 export const reservedSlugs = [
   `api`,
+  `privacy`,
+  `terms`,
   `collections`,
   `create`,
   `edit`,

@@ -118,6 +118,26 @@ export default function ShopifyDashboard_Bookings({
     }
   };
 
+  const getModeColor = (mode?: string) => {
+    if (mode === 'REMOTE') return 'bg-violet-100 text-violet-800';
+    return 'bg-slate-100 text-slate-700';
+  };
+
+  const getSyncColor = (syncStatus?: string) => {
+    switch (syncStatus) {
+      case 'SYNCED':
+      case 'DELETE_SYNCED':
+        return 'bg-green-100 text-green-800';
+      case 'FAILED':
+        return 'bg-red-100 text-red-800';
+      case 'PENDING':
+      case 'DELETE_PENDING':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
 
   const renderCustomerInfo = (booking: BookingEntity) => {
@@ -213,15 +233,31 @@ export default function ShopifyDashboard_Bookings({
                   dayBookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-cyan-200"
+                      className={`rounded-lg border p-4 shadow-sm transition-colors hover:border-cyan-200 ${
+                        booking.appointmentMode === 'REMOTE'
+                          ? 'border-violet-200 bg-violet-50'
+                          : 'border-gray-200 bg-white'
+                      }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${getStatusColor(booking.status)}`}
-                          >
-                            {booking.status}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${getStatusColor(booking.status)}`}
+                            >
+                              {booking.status}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${getModeColor(booking.appointmentMode)}`}
+                            >
+                              {booking.appointmentMode || 'IN_PERSON'}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${getSyncColor(booking.googleSyncStatus)}`}
+                            >
+                              {booking.googleSyncStatus || 'NOT_SYNCED'}
+                            </span>
+                          </div>
                           <div className="text-sm font-bold text-gray-900">
                             {new Date(booking.startTime).toLocaleTimeString(
                               'en-US',
@@ -273,6 +309,21 @@ export default function ShopifyDashboard_Bookings({
                             )
                             .join(', ')}
                         </div>
+                        {booking.googleMeetURL && (
+                          <a
+                            className="text-cyan-700 underline"
+                            href={booking.googleMeetURL}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open Meet Link
+                          </a>
+                        )}
+                        {booking.googleLastError && (
+                          <div className="text-xs font-bold text-red-700">
+                            Google sync error: {booking.googleLastError}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))
@@ -296,6 +347,9 @@ export default function ShopifyDashboard_Bookings({
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                    Mode / Sync
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
                     Service(s)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -312,13 +366,13 @@ export default function ShopifyDashboard_Bookings({
               <tbody className="divide-y divide-gray-200 bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center">
+                    <td colSpan={6} className="py-12 text-center">
                       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-cyan-600" />
                     </td>
                   </tr>
                 ) : bookings.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                    <td colSpan={6} className="py-12 text-center text-gray-500">
                       No bookings found.
                     </td>
                   </tr>
@@ -333,6 +387,30 @@ export default function ShopifyDashboard_Bookings({
                         >
                           {booking.status}
                         </span>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-xs">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 font-bold ${getModeColor(booking.appointmentMode)}`}
+                          >
+                            {booking.appointmentMode || 'IN_PERSON'}
+                          </span>
+                          <span
+                            className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 font-bold ${getSyncColor(booking.googleSyncStatus)}`}
+                          >
+                            {booking.googleSyncStatus || 'NOT_SYNCED'}
+                          </span>
+                          {booking.googleMeetURL && (
+                            <a
+                              className="text-cyan-700 underline"
+                              href={booking.googleMeetURL}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Meet link
+                            </a>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {booking.resourceIds

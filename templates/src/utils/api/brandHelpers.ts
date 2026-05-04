@@ -49,6 +49,8 @@ export function convertToLocalState(
       timezone: 'UTC',
       bufferGapsMinutes: 15,
       maxLengthMinutes: 0,
+      allowRemote: false,
+      remoteOnly: false,
       businessHours: {},
       unavailableHours: [],
     },
@@ -62,6 +64,11 @@ export function convertToLocalState(
 export function convertToBackendFormat(
   localState: BrandConfigState
 ): BrandConfig {
+  const scheduling = { ...localState.scheduling };
+  if (scheduling.remoteOnly) {
+    scheduling.allowRemote = true;
+  }
+
   return {
     TENANT_ID: localState.tenantId,
     SITE_INIT: localState.siteInit,
@@ -86,7 +93,7 @@ export function convertToBackendFormat(
     HAS_SHOPIFY: localState.hasShopify,
     SHOW_SHOPIFY_HELPER: localState.showShopifyHelper,
     HAS_RESEND: localState.hasResend,
-    SCHEDULING: localState.scheduling,
+    SCHEDULING: scheduling,
     ADMIN_EMAIL: localState.adminEmail,
 
     // ALWAYS send asset paths (current state)

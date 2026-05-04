@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFormState } from '@/hooks/useFormState';
 import {
   convertToLocalState,
@@ -28,6 +28,7 @@ export default function StoryKeepDashboard_Advanced({
   const [status, setStatus] = useState<AdvancedConfigStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const hasHydratedInitialFormState = useRef(false);
 
   // Load status on mount
   useEffect(() => {
@@ -76,6 +77,14 @@ export default function StoryKeepDashboard_Advanced({
       return newState;
     },
   });
+
+  useEffect(() => {
+    if (!status || hasHydratedInitialFormState.current) {
+      return;
+    }
+    formState.resetToState(convertToLocalState(status));
+    hasHydratedInitialFormState.current = true;
+  }, [status, formState]);
 
   if (isLoading) {
     return (

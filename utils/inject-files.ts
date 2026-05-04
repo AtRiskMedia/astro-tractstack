@@ -754,10 +754,6 @@ export async function injectTemplateFiles(
       dest: 'src/utils/actions/preParse_Action.ts',
     },
     {
-      src: resolve('../templates/src/utils/actions/preParse_Clicked.ts'),
-      dest: 'src/utils/actions/preParse_Clicked.ts',
-    },
-    {
       src: resolve('../templates/src/utils/actions/preParse_Impression.ts'),
       dest: 'src/utils/actions/preParse_Impression.ts',
     },
@@ -901,6 +897,14 @@ export async function injectTemplateFiles(
       dest: 'src/pages/cart.astro',
     },
     {
+      src: resolve('../templates/src/pages/privacy.astro'),
+      dest: 'src/pages/privacy.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/terms.astro'),
+      dest: 'src/pages/terms.astro',
+    },
+    {
       src: resolve('../templates/src/pages/404.astro'),
       dest: 'src/pages/404.astro',
     },
@@ -999,6 +1003,22 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/auth/logout.ts'),
       dest: 'src/pages/api/auth/logout.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/google/oauth/start.ts'),
+      dest: 'src/pages/api/google/oauth/start.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/google/oauth/status.ts'),
+      dest: 'src/pages/api/google/oauth/status.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/google/oauth/disconnect.ts'),
+      dest: 'src/pages/api/google/oauth/disconnect.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/google/oauth/callback.ts'),
+      dest: 'src/pages/api/google/oauth/callback.ts',
     },
     {
       src: resolve('../templates/src/pages/api/orphan-analysis.ts'),

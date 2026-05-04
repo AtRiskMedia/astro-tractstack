@@ -278,6 +278,7 @@ const ManageContent = ({
           fullContentMap={currentContentMap}
           categorySlug={activeResourceForm.category}
           categorySchema={knownResources[activeResourceForm.category] || {}}
+          tenantRemoteOnly={Boolean(brandConfig?.SCHEDULING?.remoteOnly)}
           onClose={async (saved: boolean) => {
             setActiveResourceForm(null);
             if (saved) await refreshData();
