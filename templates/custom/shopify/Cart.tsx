@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ulid } from 'ulid';
 import { useStore } from '@nanostores/react';
 import {
@@ -12,6 +12,7 @@ import {
   type CartItemState,
 } from '@/stores/shopify';
 import { getShopifyImage } from '@/utils/helpers';
+import { deriveAppointmentConstraints } from '@/utils/booking/appointmentMode';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
@@ -44,10 +45,8 @@ export default function Cart({
 }: CartProps) {
   const cart = useStore(cartStore);
   const isHandoff = useStore(isShopifyHandoff);
+  const appointmentMode = useStore(preferredAppointmentMode);
   const [pickupEnabled, setPickupEnabled] = useState(false);
-  const [remoteEnabled, setRemoteEnabled] = useState(
-    preferredAppointmentMode.get() === 'REMOTE'
-  );
 
   const cartValues = Object.values(cart);
 
@@ -77,35 +76,16 @@ export default function Cart({
     return !!resource?.optionsPayload?.bookingLengthMinutes;
   });
 
-  const bookingServiceResources = cartValues.reduce((acc, item) => {
-    const resource = resources.find((r) => r.id === item.resourceId);
-    if (
-      resource &&
-      (resource.categorySlug === 'service' ||
-        resource.optionsPayload?.bookingLengthMinutes)
-    ) {
-      acc.set(resource.id, resource);
-    }
-    if (item.boundResourceId) {
-      const bound = resources.find((r) => r.id === item.boundResourceId);
-      if (bound) {
-        acc.set(bound.id, bound);
-      }
-    }
-    return acc;
-  }, new Map<string, ResourceNode>());
-  const serviceResources = Array.from(bookingServiceResources.values());
-  const anyServiceRemoteOnly = serviceResources.some((resource) =>
-    Boolean(resource.optionsPayload?.remoteOnly)
+  const appointmentConstraints = useMemo(
+    () =>
+      deriveAppointmentConstraints(cart, resources, {
+        allowRemote,
+        remoteOnly,
+      }),
+    [cart, resources, allowRemote, remoteOnly]
   );
-  const allServicesAllowRemote = serviceResources.every((resource) => {
-    const serviceRemoteOnly = Boolean(resource.optionsPayload?.remoteOnly);
-    return serviceRemoteOnly || Boolean(resource.optionsPayload?.allowRemote);
-  });
-  const effectiveRemoteOnly = remoteOnly || anyServiceRemoteOnly;
-  const canRemote =
-    effectiveRemoteOnly ||
-    (allowRemote && serviceResources.length > 0 && allServicesAllowRemote);
+  const { effectiveRemoteOnly, remoteAvailable, inPersonAvailable, canRemote } =
+    appointmentConstraints;
 
   const hasPhysicalProductWithPickup = cartValues.some(
     (item) =>
@@ -113,19 +93,17 @@ export default function Cart({
   );
 
   const canPickup =
-    hasService && hasPhysicalProductWithPickup && !remoteEnabled;
+    hasService && hasPhysicalProductWithPickup && appointmentMode !== 'REMOTE';
 
   useEffect(() => {
     if (effectiveRemoteOnly) {
-      setRemoteEnabled(true);
       preferredAppointmentMode.set('REMOTE');
       return;
     }
-    if (!canRemote && remoteEnabled) {
-      setRemoteEnabled(false);
+    if (!canRemote && preferredAppointmentMode.get() === 'REMOTE') {
       preferredAppointmentMode.set('IN_PERSON');
     }
-  }, [effectiveRemoteOnly, canRemote, remoteEnabled]);
+  }, [effectiveRemoteOnly, canRemote]);
 
   useEffect(() => {
     if (canPickup) {
@@ -185,21 +163,41 @@ export default function Cart({
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h2 className="text-xl font-bold text-gray-800">Shopping Cart</h2>
         <div className="flex items-center gap-4">
-          {hasService && canRemote && (
-            <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">
-              <input
-                type="checkbox"
-                checked={remoteEnabled}
-                disabled={effectiveRemoteOnly}
-                onChange={(e) => {
-                  const next = e.target.checked;
-                  setRemoteEnabled(next);
-                  preferredAppointmentMode.set(next ? 'REMOTE' : 'IN_PERSON');
-                }}
-                className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black disabled:opacity-50"
-              />
-              <span>Remote Booking</span>
-            </label>
+          {hasService && remoteAvailable && inPersonAvailable && (
+            <div className="flex flex-col items-end gap-1">
+              <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                Appointment Mode
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => preferredAppointmentMode.set('IN_PERSON')}
+                  className={`rounded-md px-3 py-2 text-sm font-bold ${
+                    appointmentMode === 'IN_PERSON'
+                      ? 'bg-black text-white'
+                      : 'border border-gray-300 bg-white text-gray-700'
+                  }`}
+                >
+                  In Person
+                </button>
+                <button
+                  type="button"
+                  onClick={() => preferredAppointmentMode.set('REMOTE')}
+                  className={`rounded-md px-3 py-2 text-sm font-bold ${
+                    appointmentMode === 'REMOTE'
+                      ? 'bg-black text-white'
+                      : 'border border-gray-300 bg-white text-gray-700'
+                  }`}
+                >
+                  Remote
+                </button>
+              </div>
+            </div>
+          )}
+          {hasService && effectiveRemoteOnly && (
+            <p className="text-sm font-bold text-gray-900">
+              Appointment: Remote
+            </p>
           )}
           {canPickup && (
             <label className="flex items-center space-x-2 text-sm font-bold text-gray-900">

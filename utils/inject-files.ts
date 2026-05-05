@@ -2372,6 +2372,11 @@ export async function injectTemplateFiles(
       protected: true,
     },
     {
+      src: resolve('../templates/src/utils/booking/appointmentMode.ts'),
+      dest: 'src/utils/booking/appointmentMode.ts',
+      protected: true,
+    },
+    {
       src: resolve('../templates/custom/shopify/ShopifyProductGrid.tsx'),
       dest: 'src/custom/shopify/ShopifyProductGrid.tsx',
       protected: true,

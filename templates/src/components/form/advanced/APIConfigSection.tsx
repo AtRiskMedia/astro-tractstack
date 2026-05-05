@@ -17,9 +17,11 @@ const GOOGLE_APP_HOME_URL = 'https://renees.freewebpress.com/';
 const GOOGLE_PRIVACY_URL = 'https://renees.freewebpress.com/privacy';
 const GOOGLE_TERMS_URL = 'https://renees.freewebpress.com/terms';
 const GOOGLE_AUTHORIZED_DOMAIN = 'freewebpress.com';
-const GOOGLE_REDIRECT_URI = 'https://renees.freewebpress.com/api/google/oauth/callback';
+const GOOGLE_REDIRECT_URI =
+  'https://renees.freewebpress.com/api/google/oauth/callback';
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
-const GOOGLE_VERIFICATION_VIDEO_URL = 'https://www.youtube.com/watch?v=kJI4XdqiiAI';
+const GOOGLE_VERIFICATION_VIDEO_URL =
+  'https://www.youtube.com/watch?v=kJI4XdqiiAI';
 
 export default function APIConfigSection({
   formState,
@@ -48,8 +50,8 @@ export default function APIConfigSection({
   const googleCalendarConfigured = status?.googleCalendarIdSet;
   const googleCredentialsSaved = Boolean(
     googleClientIDConfigured &&
-      googleClientSecretConfigured &&
-      googleCalendarConfigured
+    googleClientSecretConfigured &&
+    googleCalendarConfigured
   );
   const googleCredentialsPendingSave = isDirty || saveState === 'saving';
   const canStartGoogleConnect =

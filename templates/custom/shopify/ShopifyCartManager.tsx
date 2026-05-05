@@ -12,6 +12,7 @@ import {
   RESTRICTION_MESSAGES,
   calculateCartDuration,
 } from '@/utils/customHelpers';
+import { wouldCartHaveImpossibleRemoteMix } from '@/utils/booking/appointmentMode';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
 import type { BrandConfigState } from '@/types/tractstack';
@@ -130,54 +131,65 @@ export default function ShopifyCartManager({
           }
         }
 
-        const rawDuration = calculateCartDuration(nextCart, resources);
-
-        const interval = 15;
-        const snappedDuration = Math.ceil(rawDuration / interval) * interval;
-
-        const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 180;
-        if (snappedDuration > dynamicMax) {
+        if (wouldCartHaveImpossibleRemoteMix(nextCart, resources)) {
           modalState.set({
             isOpen: true,
             type: 'restriction',
-            title: 'Appointment Length Limit Reached',
-            message: RESTRICTION_MESSAGES.MAX_DURATION(dynamicMax),
+            title: 'Incompatible Booking Modes',
+            message: RESTRICTION_MESSAGES.INCOMPATIBLE_REMOTE,
           });
         } else {
-          cartStore.set(nextCart);
+          const rawDuration = calculateCartDuration(nextCart, resources);
 
-          if (!actionItem.suppressModal) {
-            let targetResource = resource;
-            if (newItem.boundResourceId) {
-              const bound = resources.find(
-                (r) => r.id === newItem.boundResourceId
-              );
-              if (bound) {
-                targetResource = bound;
+          const interval = 15;
+          const snappedDuration = Math.ceil(rawDuration / interval) * interval;
+
+          const dynamicMax = brandConfig?.scheduling?.maxLengthMinutes || 180;
+          if (snappedDuration > dynamicMax) {
+            modalState.set({
+              isOpen: true,
+              type: 'restriction',
+              title: 'Appointment Length Limit Reached',
+              message: RESTRICTION_MESSAGES.MAX_DURATION(dynamicMax),
+            });
+          } else {
+            cartStore.set(nextCart);
+
+            if (!actionItem.suppressModal) {
+              let targetResource = resource;
+              if (newItem.boundResourceId) {
+                const bound = resources.find(
+                  (r) => r.id === newItem.boundResourceId
+                );
+                if (bound) {
+                  targetResource = bound;
+                }
               }
-            }
 
-            if (
-              targetResource.categorySlug === 'service' ||
-              targetResource.optionsPayload?.needsBooking
-            ) {
-              modalState.set({
-                isOpen: true,
-                type: 'success',
-                title: 'Booking Required',
-                message: RESTRICTION_MESSAGES.BOOKING(
-                  (
-                    targetResource.optionsPayload?.bookingLengthMinutes || 0
-                  ).toString()
-                ),
-              });
-            } else {
-              modalState.set({
-                isOpen: true,
-                type: 'success',
-                title: 'Added to Cart',
-                message: RESTRICTION_MESSAGES.DEFAULT_ADD(targetResource.title),
-              });
+              if (
+                targetResource.categorySlug === 'service' ||
+                targetResource.optionsPayload?.needsBooking
+              ) {
+                modalState.set({
+                  isOpen: true,
+                  type: 'success',
+                  title: 'Booking Required',
+                  message: RESTRICTION_MESSAGES.BOOKING(
+                    (
+                      targetResource.optionsPayload?.bookingLengthMinutes || 0
+                    ).toString()
+                  ),
+                });
+              } else {
+                modalState.set({
+                  isOpen: true,
+                  type: 'success',
+                  title: 'Added to Cart',
+                  message: RESTRICTION_MESSAGES.DEFAULT_ADD(
+                    targetResource.title
+                  ),
+                });
+              }
             }
           }
         }

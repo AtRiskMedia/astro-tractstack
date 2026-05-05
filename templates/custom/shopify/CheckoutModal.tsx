@@ -21,6 +21,10 @@ import {
   isShopifyHandoff,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
+import {
+  deriveAppointmentConstraints,
+  pickInitialAppointmentMode,
+} from '@/utils/booking/appointmentMode';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
 import { ProfileStorage } from '@/utils/profileStorage';
 import type { ResourceNode } from '@/types/compositorTypes';
@@ -70,13 +74,24 @@ export default function CheckoutModal({
     start: Date;
     end: Date;
   } | null>(null);
-  const initialAppointmentMode: AppointmentMode =
-    remoteOnly || preferredAppointmentMode.get() === 'REMOTE'
-      ? 'REMOTE'
-      : 'IN_PERSON';
-  const [appointmentMode, setAppointmentMode] =
-    useState<AppointmentMode>(initialAppointmentMode);
-  const appointmentModeRef = useRef<AppointmentMode>(initialAppointmentMode);
+  const [appointmentMode, setAppointmentMode] = useState<AppointmentMode>(() =>
+    pickInitialAppointmentMode(
+      deriveAppointmentConstraints(cartStore.get(), resources, {
+        allowRemote,
+        remoteOnly,
+      }),
+      preferredAppointmentMode.get()
+    )
+  );
+  const appointmentModeRef = useRef<AppointmentMode>(
+    pickInitialAppointmentMode(
+      deriveAppointmentConstraints(cartStore.get(), resources, {
+        allowRemote,
+        remoteOnly,
+      }),
+      preferredAppointmentMode.get()
+    )
+  );
   const [error, setError] = useState<string | null>(null);
 
   const isOpen =
@@ -132,48 +147,23 @@ export default function CheckoutModal({
     return Math.min(Math.ceil(rawMinutes / 15) * 15, maxLength);
   }, [enrichedCart]);
 
-  const bookingServiceResources = useMemo(() => {
-    const dedupe = new Map<string, ResourceNode>();
-    for (const item of enrichedCart) {
-      const node = item.resourceNode as ResourceNode | undefined;
-      if (
-        node &&
-        (node.categorySlug === 'service' ||
-          node.optionsPayload?.bookingLengthMinutes)
-      ) {
-        dedupe.set(node.id, node);
-      }
-
-      if (item.boundResourceId) {
-        const bound = resources.find((r) => r.id === item.boundResourceId);
-        if (bound) dedupe.set(bound.id, bound);
-      }
-    }
-    return Array.from(dedupe.values());
-  }, [enrichedCart, resources]);
-
-  const anyServiceRemoteOnly = useMemo(
+  const appointmentConstraints = useMemo(
     () =>
-      bookingServiceResources.some((r) => Boolean(r.optionsPayload?.remoteOnly)),
-    [bookingServiceResources]
-  );
-
-  const allServicesAllowRemote = useMemo(
-    () =>
-      bookingServiceResources.every((r) => {
-        const remoteOnlyFlag = Boolean(r.optionsPayload?.remoteOnly);
-        return remoteOnlyFlag || Boolean(r.optionsPayload?.allowRemote);
+      deriveAppointmentConstraints($cartItems, resources, {
+        allowRemote,
+        remoteOnly,
       }),
-    [bookingServiceResources]
+    [$cartItems, resources, allowRemote, remoteOnly]
   );
 
-  const effectiveRemoteOnly = remoteOnly || anyServiceRemoteOnly;
+  const { effectiveRemoteOnly, inPersonAvailable } = appointmentConstraints;
+
   const remoteAvailable =
-    effectiveRemoteOnly ||
-    (allowRemote &&
-      bookingServiceResources.length > 0 &&
-      allServicesAllowRemote &&
-      needsBooking);
+    appointmentConstraints.effectiveRemoteOnly ||
+    (needsBooking &&
+      appointmentConstraints.effectiveAllowRemote &&
+      appointmentConstraints.serviceResources.length > 0 &&
+      appointmentConstraints.allServicesAllowRemote);
 
   const applyAppointmentMode = useCallback((nextMode: AppointmentMode) => {
     appointmentModeRef.current = nextMode;
@@ -254,19 +244,16 @@ export default function CheckoutModal({
       return;
     }
 
-    const preferredMode =
-      preferredAppointmentMode.get() === 'REMOTE' ? 'REMOTE' : 'IN_PERSON';
-    if (preferredMode === 'REMOTE' && !remoteAvailable) {
-      applyAppointmentMode('IN_PERSON');
-      return;
-    }
-    applyAppointmentMode(preferredMode);
+    const next = pickInitialAppointmentMode(
+      appointmentConstraints,
+      preferredAppointmentMode.get()
+    );
+    applyAppointmentMode(next);
   }, [
     isOpen,
     selectedSlot,
     internalState,
-    effectiveRemoteOnly,
-    remoteAvailable,
+    appointmentConstraints,
     applyAppointmentMode,
   ]);
 
@@ -595,40 +582,42 @@ export default function CheckoutModal({
               )}
               {internalState === 'BOOKING' && (
                 <div className="space-y-6">
-                  {needsBooking && remoteAvailable && (
+                  {needsBooking && (inPersonAvailable || remoteAvailable) && (
                     <div className="rounded-xl border border-gray-200 bg-white p-4">
                       <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                         Appointment Mode
                       </p>
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          type="button"
-                          disabled={effectiveRemoteOnly}
-                          onClick={() => {
-                            applyAppointmentMode('IN_PERSON');
-                          }}
-                          className={`rounded-md px-3 py-2 text-sm font-bold ${
-                            appointmentMode === 'IN_PERSON'
-                              ? 'bg-black text-white'
-                              : 'border border-gray-300 bg-white text-gray-700'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          In Person
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!remoteAvailable}
-                          onClick={() => {
-                            applyAppointmentMode('REMOTE');
-                          }}
-                          className={`rounded-md px-3 py-2 text-sm font-bold ${
-                            appointmentMode === 'REMOTE'
-                              ? 'bg-black text-white'
-                              : 'border border-gray-300 bg-white text-gray-700'
-                          } disabled:cursor-not-allowed disabled:opacity-50`}
-                        >
-                          Remote
-                        </button>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {inPersonAvailable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyAppointmentMode('IN_PERSON');
+                            }}
+                            className={`rounded-md px-3 py-2 text-sm font-bold ${
+                              appointmentMode === 'IN_PERSON'
+                                ? 'bg-black text-white'
+                                : 'border border-gray-300 bg-white text-gray-700'
+                            }`}
+                          >
+                            In Person
+                          </button>
+                        )}
+                        {remoteAvailable && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              applyAppointmentMode('REMOTE');
+                            }}
+                            className={`rounded-md px-3 py-2 text-sm font-bold ${
+                              appointmentMode === 'REMOTE'
+                                ? 'bg-black text-white'
+                                : 'border border-gray-300 bg-white text-gray-700'
+                            }`}
+                          >
+                            Remote
+                          </button>
+                        )}
                       </div>
                       {effectiveRemoteOnly && (
                         <p className="mt-2 text-xs font-bold text-gray-500">
