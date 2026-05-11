@@ -13,6 +13,9 @@ import { execSync } from 'child_process';
 import prompts from 'prompts';
 import kleur from 'kleur';
 
+// Keep in sync with package.json pnpm.overrides["@internationalized/date"]
+const INTL_DATE_VERSION = '3.10.1';
+
 // Detect package manager
 function detectPackageManager() {
   if (existsSync('pnpm-lock.yaml')) return 'pnpm';
@@ -348,7 +351,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
 
     // Install UI components
     execSync(
-      `${addCommand} @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0`,
+      `${addCommand} @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@${INTL_DATE_VERSION}`,
       {
         stdio: 'inherit',
       }
@@ -382,7 +385,7 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     console.log('Please run manually:');
     console.log(
       kleur.cyan(
-        `${addCommand} react@^19.0.0 react-dom@^19.0.0 astro@^5.16.6 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@3.10.0 d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
+        `${addCommand} react@^19.0.0 react-dom@^19.0.0 astro@^5.16.6 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@${INTL_DATE_VERSION} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
       )
     );
     console.log(
