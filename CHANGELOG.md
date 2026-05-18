@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - internationalized date dep
+- fixed re-use pane glitch (was not adding to StoryFragment.PaneIds)
 
 #### [2.3.3] - 2026-5-03
 

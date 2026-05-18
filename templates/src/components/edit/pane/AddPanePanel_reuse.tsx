@@ -174,24 +174,13 @@ const AddPaneReUsePanel = ({
 
       templateData.paneNode.parentId = storyfragmentId;
 
-      let specificIdx = -1;
-      let elIdx = -1;
       const location = first ? 'before' : 'after';
-
-      specificIdx = storyFragmentNode.paneIds.indexOf(nodeId);
-      elIdx = specificIdx;
-      if (elIdx === -1) {
-        storyFragmentNode.paneIds.push(templateData.paneNode.id);
-      } else {
+      const elIdx = storyFragmentNode.paneIds.indexOf(nodeId);
+      let specificIdx = elIdx;
+      if (elIdx !== -1) {
         if (location === 'before') {
-          storyFragmentNode.paneIds.splice(elIdx, 0, templateData.paneNode.id);
           specificIdx = Math.max(0, specificIdx - 1);
         } else {
-          storyFragmentNode.paneIds.splice(
-            elIdx + 1,
-            0,
-            templateData.paneNode.id
-          );
           specificIdx = Math.min(
             specificIdx + 1,
             storyFragmentNode.paneIds.length
@@ -206,7 +195,12 @@ const AddPaneReUsePanel = ({
         specificIdx
       );
       ctx.addNodes(templateData.childNodes);
-      ctx.notifyNode(storyfragmentId);
+      ctx.insertPaneId(
+        storyfragmentId,
+        templateData.paneNode.id,
+        nodeId,
+        location
+      );
 
       setMode(PaneAddMode.DEFAULT);
     } catch (error) {
