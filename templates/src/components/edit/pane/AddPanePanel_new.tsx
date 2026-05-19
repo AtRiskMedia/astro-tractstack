@@ -294,13 +294,14 @@ const AddPaneNewPanel = ({
 
         <div className="mx-auto mb-6 max-w-xl text-center">
           <h3 className="text-lg font-bold text-gray-800">
-            Don't publish a page. Stack your story.
+            {isContextPane
+              ? 'One focused page for in-context links.'
+              : "Don't publish a page. Stack your story."}
           </h3>
           <p className="text-sm text-gray-500">
-            A static page is a wall of text. A Smart Tract is a series of beats.
-            Build one Pane at a time and give each one a single job. Every Pane
-            acts as a listening device—telling you exactly when your audience
-            leans in, and when they drift away.
+            {isContextPane
+              ? 'Readers open this URL from links on your Smart Tract—definitions, offers, FAQs, or anything that needs its own address without breaking the flow. Design this single pane for that job; they close the page and return to where they came from.'
+              : 'A static page is a wall of text. A Smart Tract is a series of beats. Build one Pane at a time and give each one a single job. Every Pane acts as a listening device—telling you exactly when your audience leans in, and when they drift away.'}
           </p>
         </div>
 

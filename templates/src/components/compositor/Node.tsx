@@ -133,7 +133,7 @@ export const Node = memo((props: NodeProps) => {
             );
           }
 
-          if (!isPreview && !paneNodes.length) {
+          if (!isPreview && !paneNodes.length && !isHtmlAstPane) {
             return (
               <>
                 <ContextPanePanel nodeId={node.id} />
@@ -176,7 +176,6 @@ export const Node = memo((props: NodeProps) => {
                   {contextContent}
                 </PanelVisibilityWrapper>
               </div>
-              <AddPanePanel nodeId={props.nodeId} first={false} ctx={ctx} />
             </>
           );
           break;

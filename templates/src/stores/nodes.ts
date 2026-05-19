@@ -1876,6 +1876,14 @@ export class NodesContext {
     if (ownerNode && 'slug' in ownerNode && typeof ownerNode.slug === `string`)
       duplicatedPane.slug = ownerNode.slug;
 
+    this.deleteChildren(ownerId);
+
+    if (pane.htmlAst) {
+      duplicatedPane.htmlAst = pane.htmlAst;
+    } else {
+      delete duplicatedPane.htmlAst;
+    }
+
     // Track all nodes that need to be added
     // Call the new helper to process markdown, gridLayout, and bgPane
     const allNodes: BaseNode[] = this._processPaneTemplate(
