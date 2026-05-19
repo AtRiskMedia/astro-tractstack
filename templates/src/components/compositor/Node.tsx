@@ -8,6 +8,7 @@ import {
   isTopLevelBlockNode,
   parseCodeHook,
 } from '@/utils/compositor/nodesHelper';
+import { isStoryFragmentNode } from '@/utils/compositor/typeGuards';
 import { PaneAddMode } from '@/types/compositorTypes';
 import { NodeOverlay } from './tools/NodeOverlay';
 import PanelVisibilityWrapper from '@/components/compositor/PanelVisibilityWrapper';
@@ -108,14 +109,6 @@ export const Node = memo((props: NodeProps) => {
     case 'Pane':
       {
         const paneNode = node as PaneNode;
-        const storyfragmentNodeId = ctx.getClosestNodeTypeFromId(
-          node.id,
-          'StoryFragment'
-        );
-        const storyfragmentNode = ctx.allNodes
-          .get()
-          .get(storyfragmentNodeId) as StoryFragmentNode;
-        const first = paneNode.id === storyfragmentNode.paneIds?.[0];
         const isHtmlAstPane = !!paneNode.htmlAst;
         const paneNodes = ctx.getChildNodeIDs(node.id);
 
@@ -160,7 +153,45 @@ export const Node = memo((props: NodeProps) => {
               </>
             );
           }
+
+          const contextContent = isHtmlAstPane ? (
+            <CreativePane nodeId={props.nodeId} htmlAst={paneNode.htmlAst!} />
+          ) : (
+            <Pane {...props} />
+          );
+
+          element = (
+            <>
+              <div className="py-0.5">
+                <ConfigPanePanel
+                  nodeId={props.nodeId}
+                  isHtmlAstPane={isHtmlAstPane}
+                  isSandboxMode={props.isSandboxMode || false}
+                />
+                <PanelVisibilityWrapper
+                  nodeId={props.nodeId}
+                  panelType="settings"
+                  ctx={ctx}
+                >
+                  {contextContent}
+                </PanelVisibilityWrapper>
+              </div>
+              <AddPanePanel nodeId={props.nodeId} first={false} ctx={ctx} />
+            </>
+          );
+          break;
         }
+
+        const storyfragmentNodeId = ctx.getClosestNodeTypeFromId(
+          node.id,
+          'StoryFragment'
+        );
+        const storyfragmentNode = storyfragmentNodeId
+          ? (ctx.allNodes.get().get(storyfragmentNodeId) ?? null)
+          : null;
+        const first =
+          isStoryFragmentNode(storyfragmentNode) &&
+          paneNode.id === storyfragmentNode.paneIds?.[0];
 
         const content = isHtmlAstPane ? (
           <CreativePane nodeId={props.nodeId} htmlAst={paneNode.htmlAst!} />
