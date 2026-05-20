@@ -1,9 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
-import CodeHook from '@/custom/CodeHook.astro';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { handleFailedResponse } from '@/utils/backend';
-import { getFullContentMap } from '@/stores/analytics';
 import { preHealthCheck } from '@/utils/backend';
 
 const tenantId =
@@ -58,8 +56,6 @@ try {
 
 const paneId = contextPaneData.id;
 const paneTitle = contextPaneData.title || 'Context';
-const codeHookTarget = contextPaneData.codeHookTarget || null;
-const resourcesPayload = storyData.resourcesPayload || {};
 
 // Get rendered fragment for the context pane
 let fragmentData = '';
@@ -93,8 +89,6 @@ try {
   );
 }
 
-// Get supporting data
-const fullContentMap = await getFullContentMap(tenantId);
 const brandConfig = await getBrandConfig(tenantId);
 
 if (!brandConfig.SITE_INIT) {
@@ -122,18 +116,7 @@ if (!brandConfig.SITE_INIT) {
       hx-trigger="refresh"
       hx-swap="innerHTML scroll:none"
     >
-      {
-        codeHookTarget ? (
-          <CodeHook
-            target={codeHookTarget}
-            paneId={paneId}
-            resourcesPayload={resourcesPayload}
-            fullContentMap={fullContentMap}
-          />
-        ) : (
-          <Fragment set:html={fragmentData} />
-        )
-      }
+      <Fragment set:html={fragmentData} />
     </div>
 
     <div class="py-12 text-center text-2xl md:text-3xl">

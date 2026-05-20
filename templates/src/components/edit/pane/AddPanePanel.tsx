@@ -94,7 +94,7 @@ const AddPanePanel = ({
         />
       ) : mode === PaneAddMode.REUSE && !isContextPane ? (
         <AddPaneReUsePanel nodeId={nodeId} first={first} setMode={setMode} />
-      ) : mode === PaneAddMode.CODEHOOK ? (
+      ) : mode === PaneAddMode.CODEHOOK && !isContextPane ? (
         <AddPaneCodeHookPanel
           nodeId={nodeId}
           first={first}
@@ -139,7 +139,7 @@ const AddPanePanel = ({
                   )}
                 </>
               )}
-              {!isTemplate && (
+              {!isTemplate && !isContextPane && (
                 <button
                   onClick={() => setMode(PaneAddMode.CODEHOOK)}
                   className="rounded bg-white px-2 py-1 text-sm text-cyan-700 shadow-sm transition-colors hover:bg-cyan-700 hover:text-white"

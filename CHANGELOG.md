@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed re-use pane glitch (was not adding to StoryFragment.PaneIds)
 - fixed glitch with create new context page
 - fixed glitch with create create pane on context page
+- fixed glitch on /context/[...slug].astro
 
 #### [2.3.3] - 2026-5-03
 

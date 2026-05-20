@@ -260,7 +260,7 @@ const ConfigPanePanel = ({
                     )}
                   </>
                 )}
-                {isCodeHook && (
+                {isCodeHook && !isContextPane && (
                   <button
                     onClick={handleCodeHookConfig}
                     className={buttonClass}
