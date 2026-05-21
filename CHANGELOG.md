@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed glitch with create create pane on context page
 - fixed glitch on /context/[...slug].astro
 - fixed context page close button to show home when no history
+- editable icons on creative pane
 
 #### [2.3.3] - 2026-5-03
 

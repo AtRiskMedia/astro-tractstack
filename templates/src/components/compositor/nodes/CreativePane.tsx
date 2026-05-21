@@ -23,6 +23,132 @@ const viewportMap = {
   desktop: 'xl',
 } as const;
 
+function removeEditProxies(container: HTMLElement) {
+  container.querySelectorAll('[data-proxy-positioned]').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    const prev = htmlEl.getAttribute('data-proxy-prev-position');
+    htmlEl.style.position = prev ?? '';
+    htmlEl.removeAttribute('data-proxy-positioned');
+    htmlEl.removeAttribute('data-proxy-prev-position');
+  });
+
+  container
+    .querySelectorAll('[data-proxy-for]')
+    .forEach((icon) => icon.remove());
+
+  container.querySelectorAll('[data-ast-id]').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    htmlEl.style.outline = '';
+    htmlEl.style.outlineOffset = '';
+    htmlEl.style.cursor = '';
+  });
+}
+
+function ensurePositionedAnchor(anchorEl: HTMLElement) {
+  if (getComputedStyle(anchorEl).position !== 'static') return;
+
+  anchorEl.setAttribute('data-proxy-positioned', 'true');
+  anchorEl.setAttribute('data-proxy-prev-position', anchorEl.style.position);
+  anchorEl.style.position = 'relative';
+}
+
+function createProxyIcon(
+  htmlEl: HTMLElement,
+  astId: string,
+  htmlAst: CreativePanePayload,
+  paneNodeId: string
+) {
+  const icon = document.createElement('div');
+  icon.setAttribute('data-proxy-for', astId);
+  icon.className = 'compositor-chrome';
+  icon.style.position = 'absolute';
+  icon.style.zIndex = '1003';
+  icon.style.width = '24px';
+  icon.style.height = '24px';
+  icon.style.backgroundColor = '#06b6d4';
+  icon.style.borderRadius = '9999px';
+  icon.style.display = 'flex';
+  icon.style.alignItems = 'center';
+  icon.style.justifyContent = 'center';
+  icon.style.color = 'white';
+  icon.style.fontSize = '12px';
+  icon.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
+  icon.style.cursor = 'pointer';
+  icon.style.pointerEvents = 'auto';
+  icon.innerHTML = '✎';
+
+  icon.onmouseenter = () => {
+    htmlEl.style.outline = '3px solid #06b6d4';
+  };
+  icon.onmouseleave = () => {
+    htmlEl.style.outline = '2px dotted #06b6d4';
+  };
+  icon.onclick = (e) => {
+    e.stopPropagation();
+    const meta = htmlAst.editableElements?.[astId];
+    if (!meta) return;
+
+    let action = '';
+    if (meta.isCssBackground) {
+      action = 'style-creative-bg';
+    } else if (meta.tagName === 'img') {
+      action = 'style-creative-img';
+    } else if (meta.tagName === 'a') {
+      action = 'style-creative-link';
+    } else if (meta.tagName === 'button') {
+      action = 'style-creative-btn';
+    }
+
+    if (action) {
+      settingsPanelStore.set({
+        action,
+        nodeId: paneNodeId,
+        childId: astId,
+        expanded: true,
+      });
+    }
+  };
+
+  return icon;
+}
+
+function syncEditProxies(
+  container: HTMLElement,
+  htmlAst: CreativePanePayload,
+  paneNodeId: string
+) {
+  removeEditProxies(container);
+
+  container.querySelectorAll('[data-ast-id]').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    if (htmlEl.isContentEditable) return;
+
+    const astId = htmlEl.getAttribute('data-ast-id');
+    if (!astId) return;
+
+    htmlEl.style.outline = '2px dotted #06b6d4';
+    htmlEl.style.outlineOffset = '2px';
+
+    const icon = createProxyIcon(htmlEl, astId, htmlAst, paneNodeId);
+
+    if (htmlEl.tagName === 'IMG') {
+      const parent = htmlEl.parentElement;
+      if (parent instanceof HTMLElement) {
+        ensurePositionedAnchor(parent);
+        icon.style.top = `${htmlEl.offsetTop - 12}px`;
+        icon.style.left = `${htmlEl.offsetLeft - 12}px`;
+        parent.appendChild(icon);
+        return;
+      }
+    }
+
+    ensurePositionedAnchor(htmlEl);
+    icon.style.top = '-12px';
+    icon.style.left = '-12px';
+    htmlEl.appendChild(icon);
+  });
+}
+
 export const CreativePane = ({
   nodeId,
   htmlAst,
@@ -103,95 +229,49 @@ export const CreativePane = ({
 
   useEffect(() => {
     const ctx = getCtx();
-    const unsubscribe = ctx.toolModeValStore.subscribe((state) => {
-      const container = contentRef.current;
-      if (!container) return;
+    const container = contentRef.current;
+    if (!container || !htmlContent) return;
 
-      const editables = container.querySelectorAll('[data-ast-id]');
+    let rafId = 0;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-      if (state.value === 'text') {
-        editables.forEach((el) => {
-          const htmlEl = el as HTMLElement;
-          if (htmlEl.isContentEditable) return;
-          htmlEl.style.outline = '2px dotted #06b6d4';
-          htmlEl.style.outlineOffset = '2px';
-
-          const astId = htmlEl.getAttribute('data-ast-id');
-          if (!astId) return;
-
-          const existingIcon = container.querySelector(
-            `[data-proxy-for="${astId}"]`
-          );
-          if (existingIcon) return;
-
-          const icon = document.createElement('div');
-          icon.setAttribute('data-proxy-for', astId);
-          icon.style.position = 'absolute';
-          icon.style.zIndex = '1003';
-          icon.style.width = '24px';
-          icon.style.height = '24px';
-          icon.style.backgroundColor = '#06b6d4';
-          icon.style.borderRadius = '9999px';
-          icon.style.display = 'flex';
-          icon.style.alignItems = 'center';
-          icon.style.justifyContent = 'center';
-          icon.style.color = 'white';
-          icon.style.fontSize = '12px';
-          icon.style.boxShadow = '0 10px 15px -3px rgb(0 0 0 / 0.1)';
-          icon.style.cursor = 'pointer';
-          icon.innerHTML = '✎';
-
-          const rect = htmlEl.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          icon.style.top = `${rect.top - containerRect.top - 12}px`;
-          icon.style.left = `${rect.left - containerRect.left - 12}px`;
-
-          icon.onmouseenter = () => {
-            htmlEl.style.outline = '3px solid #06b6d4';
-          };
-          icon.onmouseleave = () => {
-            htmlEl.style.outline = '2px dotted #06b6d4';
-          };
-          icon.onclick = () => {
-            const meta = htmlAst.editableElements?.[astId];
-            if (meta) {
-              let action = '';
-              if (meta.isCssBackground) {
-                action = 'style-creative-bg';
-              } else if (meta.tagName === 'img') {
-                action = 'style-creative-img';
-              } else if (meta.tagName === 'a') {
-                action = 'style-creative-link';
-              } else if (meta.tagName === 'button') {
-                action = 'style-creative-btn';
-              }
-
-              if (action) {
-                settingsPanelStore.set({
-                  action,
-                  nodeId,
-                  childId: astId,
-                  expanded: true,
-                });
-              }
-            }
-          };
-
-          container.appendChild(icon);
-        });
+    const runSync = () => {
+      const mode = ctx.toolModeValStore.get().value;
+      if (mode === 'text') {
+        syncEditProxies(container, htmlAst, nodeId);
       } else {
-        editables.forEach((el) => {
-          (el as HTMLElement).style.outline = '';
-          (el as HTMLElement).style.outlineOffset = '';
-          (el as HTMLElement).style.cursor = '';
-        });
-        const icons = container.querySelectorAll('[data-proxy-for]');
-        icons.forEach((icon) => icon.remove());
+        removeEditProxies(container);
       }
+    };
+
+    const scheduleSync = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(runSync);
+      });
+    };
+
+    const unsubscribe = ctx.toolModeValStore.subscribe(() => {
+      scheduleSync();
     });
 
-    return () => unsubscribe();
-  }, [htmlContent]);
+    scheduleSync();
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (ctx.toolModeValStore.get().value !== 'text') return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(scheduleSync, 100);
+    });
+    resizeObserver.observe(container);
+
+    return () => {
+      unsubscribe();
+      resizeObserver.disconnect();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      cancelAnimationFrame(rafId);
+      removeEditProxies(container);
+    };
+  }, [htmlContent, viewportKey, htmlAst, nodeId]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     const ctx = getCtx();
