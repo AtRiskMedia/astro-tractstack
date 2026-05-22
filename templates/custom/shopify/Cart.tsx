@@ -13,6 +13,13 @@ import {
 } from '@/stores/shopify';
 import { getShopifyImage } from '@/utils/helpers';
 import { deriveAppointmentConstraints } from '@/utils/booking/appointmentMode';
+import {
+  getServiceLinkedProduct,
+  getServiceVariantIdFromCanonicalProduct,
+  getSharedFeeChargeLineSummary,
+  isSharedFeeService,
+  parsePrimaryShopifyProductData,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {
@@ -36,6 +43,12 @@ const getCleanVariantTitle = (variant: any) => {
 
   const title = variant?.title || '';
   return title === 'Default Title' ? '' : title;
+};
+
+const getCategoryPriority = (categorySlug?: string): number => {
+  if (categorySlug === 'product') return 0;
+  if (categorySlug === 'service') return 1;
+  return 2;
 };
 
 export default function Cart({
@@ -70,6 +83,26 @@ export default function Cart({
     },
     {} as Record<string, CartItemState[]>
   );
+  const orderedResourceIds = useMemo(() => {
+    const firstSeenIndex = new Map<string, number>();
+    displayableItems.forEach((item, index) => {
+      if (!firstSeenIndex.has(item.resourceId)) {
+        firstSeenIndex.set(item.resourceId, index);
+      }
+    });
+
+    return Object.keys(groupedItems).sort((a, b) => {
+      const categoryA = resources.find((r) => r.id === a)?.categorySlug;
+      const categoryB = resources.find((r) => r.id === b)?.categorySlug;
+      const priorityA = getCategoryPriority(categoryA);
+      const priorityB = getCategoryPriority(categoryB);
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return (firstSeenIndex.get(a) ?? Number.MAX_SAFE_INTEGER) -
+        (firstSeenIndex.get(b) ?? Number.MAX_SAFE_INTEGER);
+    });
+  }, [displayableItems, groupedItems, resources]);
 
   const hasService = cartValues.some((item) => {
     const resource = resources.find((r) => r.id === item.resourceId);
@@ -114,6 +147,10 @@ export default function Cart({
   }, [canPickup]);
 
   const isPickupMode = canPickup && pickupEnabled;
+  const productResources = resources.filter(
+    (r) => r.categorySlug === 'product'
+  );
+  const sharedFeeChargeLine = getSharedFeeChargeLineSummary(cart, resources);
 
   const dispatchAction = (item: CartItemState, action: 'add' | 'remove') => {
     addQueue.set([
@@ -214,12 +251,16 @@ export default function Cart({
       </div>
 
       <ul className="divide-y divide-gray-200">
-        {Object.keys(groupedItems).map((resourceId) => {
+        {orderedResourceIds.map((resourceId) => {
           const items = groupedItems[resourceId];
           const resource = resources.find((r) => r.id === resourceId);
           if (!resource || items.length === 0) return null;
 
           const isService = !!resource.optionsPayload?.bookingLengthMinutes;
+          const sharedFeeService = isSharedFeeService(
+            resource,
+            productResources
+          );
           const serviceDuration = resource.optionsPayload?.bookingLengthMinutes;
 
           const firstItem = items[0];
@@ -231,10 +272,14 @@ export default function Cart({
           const activeVariantIdFirst = isPickupMode
             ? firstItem.variantIdPickup
             : firstItem.variantIdShipped;
+          const fallbackServiceVariantId = isService
+            ? getServiceVariantIdFromCanonicalProduct(resource, resources)
+            : undefined;
           const displayIdFirst =
             firstItem.variantId ||
             activeVariantIdFirst ||
-            firstItem.variantIdPickup;
+            firstItem.variantIdPickup ||
+            fallbackServiceVariantId;
 
           const { src, srcSet } = getShopifyImage(
             resource,
@@ -242,14 +287,11 @@ export default function Cart({
             displayIdFirst
           );
 
-          let productData: any = {};
-          try {
-            if (resource.optionsPayload?.shopifyData) {
-              productData = JSON.parse(resource.optionsPayload.shopifyData);
-            }
-          } catch (e) {
-            console.error('Failed to parse Shopify data', resource.id);
-          }
+          const priceResource = isService
+            ? getServiceLinkedProduct(resource, resources) || resource
+            : resource;
+
+          const productData = parsePrimaryShopifyProductData(priceResource) || {};
           const variants = productData?.variants || [];
 
           return (
@@ -266,7 +308,7 @@ export default function Cart({
                     />
                   </div>
                 )}
-                <div className="ml-4 flex-1">
+                <div className={`${isService ? '' : 'ml-4'} flex-1`}>
                   <div className="flex justify-between">
                     <div>
                       <div className="flex items-center gap-2">
@@ -300,9 +342,27 @@ export default function Cart({
                         {resource.oneliner}
                       </p>
                     </div>
+                    {isService && sharedFeeService && (
+                      <button
+                        onClick={() =>
+                          addQueue.set([
+                            ...addQueue.get(),
+                            {
+                              resourceId: firstItem.resourceId,
+                              action: 'remove',
+                              variantId: firstItem.variantId,
+                            },
+                          ])
+                        }
+                        className="ml-4 rounded-md border border-gray-300 px-3 py-1 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
 
-                  <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
+                  {!(isService && sharedFeeService) && (
+                    <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
                     {items.map((item, idx) => {
                       const activeVariantId = isPickupMode
                         ? item.variantIdPickup
@@ -311,7 +371,8 @@ export default function Cart({
                       const displayId =
                         item.variantId ||
                         activeVariantId ||
-                        item.variantIdPickup;
+                        item.variantIdPickup ||
+                        fallbackServiceVariantId;
 
                       let price = '0.00';
                       let currency = 'USD';
@@ -355,9 +416,11 @@ export default function Cart({
                           <div className="flex items-center">
                             <div className="mr-6 text-right">
                               <p className="text-sm font-bold text-gray-900">
-                                {price && parseFloat(price) > 0
-                                  ? `${(parseFloat(price) * item.quantity).toFixed(2)} ${currency}`
-                                  : 'No Charge'}
+                                {isService && sharedFeeService
+                                  ? ''
+                                  : price && parseFloat(price) > 0
+                                    ? `${(parseFloat(price) * item.quantity).toFixed(2)} ${currency}`
+                                    : 'No Charge'}
                               </p>
                             </div>
 
@@ -400,13 +463,36 @@ export default function Cart({
                         </div>
                       );
                     })}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </li>
           );
         })}
       </ul>
+
+      {sharedFeeChargeLine && (
+        <div className="border-t border-gray-200 bg-white px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-gray-900">
+                {sharedFeeChargeLine.title}
+              </p>
+              {sharedFeeChargeLine.description && (
+                <p className="text-xs text-gray-500">
+                  {sharedFeeChargeLine.description}
+                </p>
+              )}
+            </div>
+            <p className="text-sm font-bold text-gray-900">
+              {parseFloat(sharedFeeChargeLine.amount) > 0
+                ? `${parseFloat(sharedFeeChargeLine.amount).toFixed(2)} ${sharedFeeChargeLine.currencyCode}`
+                : 'No Charge'}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-6">
         <div className="flex justify-end">

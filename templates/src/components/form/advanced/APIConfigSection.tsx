@@ -19,7 +19,10 @@ const GOOGLE_TERMS_URL = 'https://renees.freewebpress.com/terms';
 const GOOGLE_AUTHORIZED_DOMAIN = 'freewebpress.com';
 const GOOGLE_REDIRECT_URI =
   'https://renees.freewebpress.com/api/google/oauth/callback';
-const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
+const GOOGLE_SCOPES = [
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.readonly',
+] as const;
 const GOOGLE_VERIFICATION_VIDEO_URL =
   'https://www.youtube.com/watch?v=kJI4XdqiiAI';
 
@@ -371,10 +374,16 @@ export default function APIConfigSection({
                     </ul>
                   </li>
                   <li>
-                    Open <strong>Data Access</strong> and add scope:
-                    <code className="ml-1 rounded bg-gray-100 px-1 py-0.5">
-                      {GOOGLE_SCOPE}
-                    </code>
+                    Open <strong>Data Access</strong> and add scopes:
+                    <ul className="mt-1 list-disc space-y-1 pl-4">
+                      {GOOGLE_SCOPES.map((scope) => (
+                        <li key={scope}>
+                          <code className="rounded bg-gray-100 px-1 py-0.5">
+                            {scope}
+                          </code>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                   <li>
                     Open <strong>Branding</strong> and set:

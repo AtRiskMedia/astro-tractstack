@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
+import { collectServiceGids } from '@/utils/customHelpers';
 import { getShopifyImage } from '@/utils/helpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
@@ -239,6 +240,13 @@ export default function ShopifyProductGrid({ resources = {}, options }: Props) {
   if (group) {
     products = products.filter((p) => p.optionsPayload?.group === group);
   }
+
+  const serviceGids = collectServiceGids(services);
+  products = products.filter((p) => {
+    const gid =
+      typeof p.optionsPayload?.gid === 'string' ? p.optionsPayload.gid : '';
+    return gid === '' || !serviceGids.has(gid);
+  });
 
   if (products.length === 0) return null;
 

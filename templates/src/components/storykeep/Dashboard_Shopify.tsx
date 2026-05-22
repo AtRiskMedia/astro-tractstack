@@ -11,6 +11,7 @@ import {
 import ResourceForm from './controls/content/ResourceForm';
 import { saveBrandConfigWithStateUpdate } from '@/utils/api/brandConfig';
 import {
+  createResource,
   deleteResource,
   getResource,
   getResourcesByCategory,
@@ -100,7 +101,7 @@ export default function StoryKeepDashboard_Shopify({
   const linkedResourceMap = useMemo(() => {
     const map = new Map<string, ResourceNode>();
     resources.forEach((r) => {
-      if (r.optionsPayload?.gid) {
+      if (r.categorySlug === 'product' && r.optionsPayload?.gid) {
         map.set(r.optionsPayload.gid, r);
       }
     });
@@ -174,7 +175,7 @@ export default function StoryKeepDashboard_Shopify({
   const executePreFlightCheck = (category: string, product: ShopifyProduct) => {
     const hasMode = product.options.some((opt) => opt.name === 'Mode');
     if (category === 'service' || hasMode) {
-      startCreateFlow(category, product);
+      void startCreateFlow(category, product);
     } else {
       setPendingImport({ category, product });
       setShowSmartCartWarning(true);
@@ -182,12 +183,58 @@ export default function StoryKeepDashboard_Shopify({
     }
   };
 
-  const startCreateFlow = (category: string, product: ShopifyProduct) => {
+  const startCreateFlow = async (category: string, product: ShopifyProduct) => {
+    const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+    const productSchema = internalBrandConfig?.knownResources['product'] || {};
+    if (category === 'service') {
+      const existingCanonical = resources.find(
+        (r) =>
+          r.categorySlug === 'product' && r.optionsPayload?.gid === product.id
+      );
+
+      if (!existingCanonical) {
+        const productOptions: Record<string, any> = {
+          gid: product.id,
+          shopifyData: JSON.stringify(product),
+        };
+
+        Object.entries(productSchema).forEach(([key, def]) => {
+          if (productOptions[key] !== undefined) return;
+          if (def.type === 'number') {
+            productOptions[key] = def.defaultValue ?? def.minNumber ?? 0;
+          } else if (def.type === 'boolean') {
+            productOptions[key] = def.defaultValue ?? false;
+          } else if (def.type === 'string') {
+            productOptions[key] = def.defaultValue ?? '';
+          } else if (def.type === 'multi') {
+            productOptions[key] = def.defaultValue ?? [];
+          }
+        });
+
+        try {
+          await createResource(tenantId, {
+            title: product.title,
+            oneliner: product.description || '',
+            slug: `product-${product.handle}`.toLowerCase(),
+            categorySlug: 'product',
+            optionsPayload: productOptions,
+          } as any);
+          await refreshResources();
+        } catch (error) {
+          console.error('Failed to ensure canonical product', error);
+          alert('Failed to create canonical product for this service.');
+          return;
+        }
+      }
+    }
+
     const schema = internalBrandConfig?.knownResources[category] || {};
     const mergedOptions: Record<string, any> = {
       gid: product.id,
-      shopifyData: JSON.stringify(product),
     };
+    if (category === 'product') {
+      mergedOptions.shopifyData = JSON.stringify(product);
+    }
 
     Object.entries(schema).forEach(([key, def]) => {
       if (mergedOptions[key] === undefined) {
@@ -226,11 +273,53 @@ export default function StoryKeepDashboard_Shopify({
     }
 
     try {
+      const target = resources.find((r) => r.id === resourceId);
+      const targetGid =
+        typeof target?.optionsPayload?.gid === 'string'
+          ? target.optionsPayload.gid
+          : '';
+
+      if (target?.categorySlug === 'product' && targetGid) {
+        const linkedServices = resources.filter(
+          (r) =>
+            r.categorySlug === 'service' && r.optionsPayload?.gid === targetGid
+        );
+        if (linkedServices.length > 0) {
+          alert(
+            'Cannot delete a product linked to services. Delete linked services first.'
+          );
+          return;
+        }
+      }
+
       await deleteResource(
         window.TRACTSTACK_CONFIG?.tenantId || 'default',
         resourceId
       );
-      setResources((prev) => prev.filter((r) => r.id !== resourceId));
+
+      if (target?.categorySlug === 'service' && targetGid) {
+        const remainingLinked = resources.filter(
+          (r) =>
+            r.id !== resourceId &&
+            r.categorySlug === 'service' &&
+            r.optionsPayload?.gid === targetGid
+        );
+        if (remainingLinked.length === 0) {
+          const canonicalProduct = resources.find(
+            (r) =>
+              r.categorySlug === 'product' &&
+              r.optionsPayload?.gid === targetGid
+          );
+          if (canonicalProduct) {
+            await deleteResource(
+              window.TRACTSTACK_CONFIG?.tenantId || 'default',
+              canonicalProduct.id
+            );
+          }
+        }
+      }
+
+      await refreshResources();
     } catch (error) {
       console.error('Unlink failed', error);
       alert('Failed to delete resource');
@@ -258,6 +347,11 @@ export default function StoryKeepDashboard_Shopify({
           gid: { type: 'string', optional: false },
           allowMultiple: { type: 'boolean', optional: false },
           group: { type: 'string', optional: true },
+          sharedServiceFee: {
+            type: 'boolean',
+            optional: false,
+            defaultValue: false,
+          },
           shopifyData: { type: 'string', optional: false },
           shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           ...(wantService
@@ -276,8 +370,6 @@ export default function StoryKeepDashboard_Shopify({
         updatedKnownResources['service'] = {
           gid: { type: 'string', optional: true },
           group: { type: 'string', optional: true },
-          shopifyData: { type: 'string', optional: true },
-          shopifyImage: { type: 'string', optional: true, defaultValue: '{}' },
           allowRemote: {
             type: 'boolean',
             optional: false,
@@ -618,7 +710,7 @@ export default function StoryKeepDashboard_Shopify({
                   <button
                     onClick={() => {
                       setShowSmartCartWarning(false);
-                      startCreateFlow(
+                      void startCreateFlow(
                         pendingImport.category,
                         pendingImport.product
                       );

@@ -5,12 +5,13 @@ import {
   cartStore,
   modalState,
   transactionTraceId,
-  getCartItemKey,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import {
   RESTRICTION_MESSAGES,
   calculateCartDuration,
+  getCartItemKey,
+  isSharedFeeService,
 } from '@/utils/customHelpers';
 import { wouldCartHaveImpossibleRemoteMix } from '@/utils/booking/appointmentMode';
 import type { ResourceNode } from '@/types/compositorTypes';
@@ -27,6 +28,9 @@ export default function ShopifyCartManager({
   brandConfig,
 }: ShopifyCartManagerProps) {
   const queue = useStore(addQueue);
+  const productResources = resources.filter(
+    (r) => r.categorySlug === 'product'
+  );
 
   useEffect(() => {
     if (queue.length > 0) {
@@ -39,19 +43,34 @@ export default function ShopifyCartManager({
         return;
       }
 
-      const key = getCartItemKey(actionItem);
+      const key = getCartItemKey(actionItem, resource, productResources);
       const currentCart = cartStore.get();
       const currentItem = currentCart[key];
-      const currentQty = currentItem?.quantity || 0;
+      const isSharedFeeResource = isSharedFeeService(resource, productResources);
+      const legacySharedKeys = isSharedFeeResource
+        ? Object.keys(currentCart).filter(
+            (cartKey) =>
+              cartKey !== key &&
+              currentCart[cartKey]?.resourceId === actionItem.resourceId
+          )
+        : [];
+      const legacySharedItems = legacySharedKeys
+        .map((cartKey) => currentCart[cartKey])
+        .filter((item): item is CartItemState => !!item);
+      const mergedCurrentItem = currentItem || legacySharedItems[0];
+      const currentQty = isSharedFeeResource
+        ? currentItem?.quantity ||
+          legacySharedItems.reduce((total, item) => total + item.quantity, 0)
+        : currentItem?.quantity || 0;
       const nextCart = { ...currentCart };
 
       if (actionItem.action === 'remove') {
-        const newQty = Math.max(0, currentQty - 1);
+        const newQty = isSharedFeeResource ? 0 : Math.max(0, currentQty - 1);
 
         if (newQty === 0) {
           if (
             resource?.optionsPayload?.needsBooking ||
-            currentItem?.boundResourceId
+            mergedCurrentItem?.boundResourceId
           ) {
             const traceId = transactionTraceId.get();
             if (traceId) {
@@ -59,23 +78,34 @@ export default function ShopifyCartManager({
                 .releaseHold(traceId)
                 .catch((err) =>
                   console.error('Failed to release hold on cart removal:', err)
-                );
+                )
+                .finally(() => {
+                  transactionTraceId.set('');
+                });
             }
           }
           delete nextCart[key];
+          legacySharedKeys.forEach((legacyKey) => {
+            delete nextCart[legacyKey];
+          });
         } else {
           nextCart[key] = {
-            ...currentItem,
+            ...mergedCurrentItem,
             resourceId: actionItem.resourceId,
             quantity: newQty,
           };
         }
 
-        if (currentItem?.boundResourceId || actionItem.boundResourceId) {
+        if (mergedCurrentItem?.boundResourceId || actionItem.boundResourceId) {
           const boundId =
-            currentItem?.boundResourceId || actionItem.boundResourceId;
+            mergedCurrentItem?.boundResourceId || actionItem.boundResourceId;
           if (boundId) {
-            const serviceKey = getCartItemKey({ resourceId: boundId });
+            const boundResource = resources.find((r) => r.id === boundId);
+            const serviceKey = getCartItemKey(
+              { resourceId: boundId },
+              boundResource,
+              productResources
+            );
             const serviceItem = nextCart[serviceKey];
             if (serviceItem) {
               const newServiceQty = Math.max(0, serviceItem.quantity - 1);
@@ -95,27 +125,39 @@ export default function ShopifyCartManager({
         addQueue.set(remaining);
       } else if (actionItem.action === 'add') {
         transactionTraceId.set('');
-        const newQty = currentQty + 1;
+        const newQty = isSharedFeeResource ? 1 : currentQty + 1;
 
         const newItem: CartItemState = {
           resourceId: actionItem.resourceId,
           quantity: newQty,
-          gid: actionItem.gid || currentItem?.gid,
-          variantId: actionItem.variantId || currentItem?.variantId,
+          gid: actionItem.gid || mergedCurrentItem?.gid,
+          variantId: isSharedFeeResource
+            ? undefined
+            : actionItem.variantId || mergedCurrentItem?.variantId,
           variantIdShipped:
-            actionItem.variantIdShipped || currentItem?.variantIdShipped,
+            actionItem.variantIdShipped || mergedCurrentItem?.variantIdShipped,
           variantIdPickup:
-            actionItem.variantIdPickup || currentItem?.variantIdPickup,
+            actionItem.variantIdPickup || mergedCurrentItem?.variantIdPickup,
           boundResourceId:
-            actionItem.boundResourceId || currentItem?.boundResourceId,
+            actionItem.boundResourceId || mergedCurrentItem?.boundResourceId,
         };
 
+        legacySharedKeys.forEach((legacyKey) => {
+          delete nextCart[legacyKey];
+        });
         nextCart[key] = newItem;
 
         if (newItem.boundResourceId) {
-          const serviceKey = getCartItemKey({
-            resourceId: newItem.boundResourceId,
-          });
+          const boundResource = resources.find(
+            (r) => r.id === newItem.boundResourceId
+          );
+          const serviceKey = getCartItemKey(
+            {
+              resourceId: newItem.boundResourceId,
+            },
+            boundResource,
+            productResources
+          );
           const serviceItem = nextCart[serviceKey];
 
           if (serviceItem) {

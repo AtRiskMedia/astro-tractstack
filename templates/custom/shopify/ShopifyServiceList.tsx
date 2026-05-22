@@ -1,10 +1,10 @@
 import { useStore } from '@nanostores/react';
+import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
 import {
-  cartStore,
-  addQueue,
   getCartItemKey,
-  type CartAction,
-} from '@/stores/shopify';
+  getServiceVariantIdFromCanonicalProduct,
+  isSharedFeeService,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
@@ -55,33 +55,17 @@ export default function ShopifyServiceList({ resources = {}, options }: Props) {
     (s) => !boundServiceSlugs.has(s.slug)
   );
 
-  const getServiceVariantId = (resource: ResourceNode): string | undefined => {
-    try {
-      if (resource.optionsPayload?.shopifyData) {
-        const data = JSON.parse(resource.optionsPayload.shopifyData);
-        // Handle both raw product data and simplified product objects
-        const product = data.products?.[0] || data;
-        return product?.variants?.[0]?.id;
-      }
-    } catch (e) {
-      return undefined;
-    }
-    return undefined;
-  };
-
   const handleToggle = (resource: ResourceNode, currentQuantity: number) => {
     const actionType = currentQuantity > 0 ? 'remove' : 'add';
+    const gid =
+      typeof resource.optionsPayload?.gid === 'string'
+        ? resource.optionsPayload.gid
+        : undefined;
 
-    const variantId = getServiceVariantId(resource);
-    let gid: string | undefined;
-
-    try {
-      if (resource.optionsPayload?.shopifyData) {
-        const data = JSON.parse(resource.optionsPayload.shopifyData);
-        const product = data.products?.[0] || data;
-        gid = product?.id;
-      }
-    } catch (e) {}
+    const sharedFee = isSharedFeeService(resource, products);
+    const variantId = sharedFee
+      ? undefined
+      : getServiceVariantIdFromCanonicalProduct(resource, products);
 
     const newAction: CartAction = {
       resourceId: resource.id,
@@ -115,14 +99,20 @@ export default function ShopifyServiceList({ resources = {}, options }: Props) {
         <section className="w-full">
           <div className="space-y-4">
             {displayServices.map((resource) => {
-              const variantId = getServiceVariantId(resource);
-              const key = getCartItemKey({
-                resourceId: resource.id,
-                variantId,
-              });
+              const key = getCartItemKey(
+                { resourceId: resource.id },
+                resource,
+                products
+              );
 
               const cartItem = cart[key];
-              const isSelected = (cartItem?.quantity || 0) > 0;
+              const legacyCartItem = Object.values(cart).find(
+                (item) =>
+                  item.resourceId === resource.id && (item.quantity || 0) > 0
+              );
+              const selectedQuantity =
+                cartItem?.quantity || legacyCartItem?.quantity || 0;
+              const isSelected = selectedQuantity > 0;
               const duration = resource.optionsPayload?.bookingLengthMinutes;
 
               return (
@@ -153,7 +143,7 @@ export default function ShopifyServiceList({ resources = {}, options }: Props) {
                   <div className="ml-4 flex-shrink-0">
                     <button
                       onClick={() =>
-                        handleToggle(resource, cartItem?.quantity || 0)
+                        handleToggle(resource, selectedQuantity)
                       }
                       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                         isSelected ? 'bg-black' : 'bg-gray-200'

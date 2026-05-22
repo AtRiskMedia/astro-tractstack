@@ -52,9 +52,12 @@ export default function ShopifyDashboard_Bookings({
       setBookings(response.data || []);
       setTotalCount(response.totalCount || 0);
 
+      const availabilityStart = new Date();
+      const availabilityEnd = new Date(availabilityStart);
+      availabilityEnd.setDate(availabilityEnd.getDate() + 30);
       const availability = await bookingHelpers.getAvailability(
-        new Date().toISOString(),
-        new Date().toISOString()
+        availabilityStart.toISOString(),
+        availabilityEnd.toISOString()
       );
       if (availability?.scheduling?.timezone) {
         setShopTimezone(availability.scheduling.timezone);

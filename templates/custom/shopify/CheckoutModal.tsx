@@ -27,6 +27,15 @@ import {
 } from '@/utils/booking/appointmentMode';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
 import { ProfileStorage } from '@/utils/profileStorage';
+import {
+  buildShopifyCheckoutLines,
+  getServiceLinkedProduct,
+  getServiceVariantIdFromCanonicalProduct,
+  getSharedFeeChargeLineSummary,
+  hasGidBackedCheckout,
+  isSharedFeeService,
+  parsePrimaryShopifyProductData,
+} from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 type CheckoutState =
@@ -102,21 +111,35 @@ export default function CheckoutModal({
   const enrichedCart = useMemo(() => {
     return Object.values($cartItems).map((item: any) => {
       const resource = resources.find((r) => r.id === item.resourceId);
-      let productData: any = {};
-      if (resource?.optionsPayload?.shopifyData) {
-        try {
-          productData = JSON.parse(resource.optionsPayload.shopifyData);
-        } catch (e) {
-          console.error('Failed to parse Shopify data', item.resourceId);
-        }
-      }
-      const variant = (productData?.variants || []).find(
-        (v: any) => v.id === item.variantId
+      const productResources = resources.filter(
+        (r) => r.categorySlug === 'product'
       );
+      const priceSource =
+        resource?.categorySlug === 'service'
+          ? getServiceLinkedProduct(resource, resources) || resource
+          : resource;
+      const productData = parsePrimaryShopifyProductData(priceSource) || {};
+      const fallbackVariantId =
+        resource?.categorySlug === 'service'
+          ? getServiceVariantIdFromCanonicalProduct(resource, resources)
+          : undefined;
+      const resolvedVariantId = item.variantId || fallbackVariantId;
+      const variant = (productData?.variants || []).find(
+        (v: any) => v.id === resolvedVariantId
+      );
+      const sharedFeeService =
+        resource?.categorySlug === 'service' &&
+        isSharedFeeService(resource, productResources);
+      const resolvedTitle =
+        resource?.categorySlug === 'service'
+          ? resource.title
+          : productData?.title || resource?.title || 'Loading...';
       return {
         ...item,
-        title: productData?.title || resource?.title || 'Loading...',
+        title: resolvedTitle,
         price: variant?.price?.amount || '0.00',
+        currencyCode: variant?.price?.currencyCode || 'USD',
+        sharedFeeService,
         resourceNode: resource,
         resource: {
           id: item.resourceId,
@@ -134,9 +157,18 @@ export default function CheckoutModal({
     () => enrichedCart.some((item) => item.resource?.needsBooking),
     [enrichedCart]
   );
+  const checkoutLines = useMemo(
+    () => buildShopifyCheckoutLines($cartItems, resources),
+    [$cartItems, resources]
+  );
+  const sharedFeeChargeLine = useMemo(
+    () => getSharedFeeChargeLineSummary($cartItems, resources),
+    [$cartItems, resources]
+  );
   const needsPayment = useMemo(
-    () => enrichedCart.some((item) => !!item.variantId),
-    [enrichedCart]
+    () =>
+      hasGidBackedCheckout($cartItems, resources) || checkoutLines.length > 0,
+    [$cartItems, resources, checkoutLines]
   );
   const totalDuration = useMemo(() => {
     const rawMinutes = enrichedCart.reduce(
@@ -200,6 +232,21 @@ export default function CheckoutModal({
       setEmail($customer.email);
     }
   }, [ProfileStorage.isProfileUnlocked(), $customer.email]);
+
+  useEffect(() => {
+    if (needsBooking) {
+      return;
+    }
+    if (selectedSlot) {
+      setSelectedSlot(null);
+    }
+    if (shopTimeZone) {
+      setShopTimeZone(undefined);
+    }
+    if (internalState === 'BOOKING') {
+      setInternalState('SUMMARY');
+    }
+  }, [needsBooking, selectedSlot, shopTimeZone, internalState]);
 
   useEffect(() => {
     if (
@@ -274,6 +321,8 @@ export default function CheckoutModal({
     transactionTraceId.set('');
     cartState.set(CART_STATES.READY);
     setInternalState('IDENTITY_EMAIL');
+    setSelectedSlot(null);
+    setShopTimeZone(undefined);
     setError(null);
     if (redirect) window.location.href = `/`;
   };
@@ -405,6 +454,8 @@ export default function CheckoutModal({
         );
         if (response && response.success) {
           cartStore.set({});
+          setSelectedSlot(null);
+          setShopTimeZone(undefined);
           setInternalState('SUCCESS');
         } else {
           setError(response?.error || 'Failed to confirm booking.');
@@ -420,16 +471,15 @@ export default function CheckoutModal({
     setError(null);
     setInternalState('PROCESSING');
     try {
+      const lines = buildShopifyCheckoutLines(cartStore.get(), resources);
+      if (lines.length === 0) {
+        throw new Error('No checkout lines available.');
+      }
       const response = await fetch('/api/shopify/createCart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          lines: enrichedCart
-            .filter((i) => i.variantId)
-            .map((i) => ({
-              merchandiseId: i.variantId,
-              quantity: i.quantity || 1,
-            })),
+          lines,
           email: $customer.email,
           ...(needsBooking
             ? {
@@ -476,6 +526,8 @@ export default function CheckoutModal({
         isShopifyHandoff.set(true);
         cartStore.set({});
         cartState.set(CART_STATES.READY);
+        setSelectedSlot(null);
+        setShopTimeZone(undefined);
         window.location.href = result.checkoutUrl;
       } else {
         throw new Error('No checkout URL');
@@ -654,21 +706,55 @@ export default function CheckoutModal({
                     <h3 className="mb-4 font-bold text-gray-900">
                       Order Summary
                     </h3>
-                    {enrichedCart.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex justify-between text-sm text-gray-700"
-                      >
-                        <span>{item.title}</span>
+                    {enrichedCart.map((item, idx) => {
+                      if (item.sharedFeeService) {
+                        return (
+                          <div
+                            key={idx}
+                            className="flex justify-between text-sm text-gray-700"
+                          >
+                            <span>
+                              {item.resourceNode?.title || item.title}
+                            </span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={idx}
+                          className="flex justify-between text-sm text-gray-700"
+                        >
+                          <span>{item.title}</span>
+                          <span className="font-bold">
+                            $
+                            {(
+                              parseFloat(item.price) * (item.quantity || 1)
+                            ).toFixed(2)}
+                            {item.currencyCode ? ` ${item.currencyCode}` : ''}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {sharedFeeChargeLine && (
+                      <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 text-sm text-gray-700">
+                        <div>
+                          <span className="font-bold">
+                            {sharedFeeChargeLine.title}
+                          </span>
+                          {sharedFeeChargeLine.description && (
+                            <p className="text-xs text-gray-500">
+                              {sharedFeeChargeLine.description}
+                            </p>
+                          )}
+                        </div>
                         <span className="font-bold">
-                          $
-                          {(
-                            parseFloat(item.price) * (item.quantity || 1)
-                          ).toFixed(2)}
+                          ${parseFloat(sharedFeeChargeLine.amount).toFixed(2)}{' '}
+                          {sharedFeeChargeLine.currencyCode}
                         </span>
                       </div>
-                    ))}
-                    {selectedSlot && (
+                    )}
+                    {needsBooking && selectedSlot && (
                       <div className="mt-6 border-t border-gray-200 pt-6">
                         <p className="text-xs font-bold uppercase text-gray-500">
                           Appointment

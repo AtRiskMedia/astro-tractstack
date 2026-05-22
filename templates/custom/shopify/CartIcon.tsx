@@ -1,15 +1,15 @@
 import { useStore } from '@nanostores/react';
 import { cartStore } from '@/stores/shopify';
+import { getCartIconCount } from '@/utils/customHelpers';
+import type { ResourceNode } from '@/types/compositorTypes';
 
-export default function CartIcon() {
+interface CartIconProps {
+  resources?: ResourceNode[];
+}
+
+export default function CartIcon({ resources = [] }: CartIconProps) {
   const cart = useStore(cartStore);
-  const cartValues = Object.values(cart);
-  const boundServiceIds = new Set(
-    cartValues.map((item) => item.boundResourceId).filter(Boolean)
-  );
-  const totalQuantity = cartValues
-    .filter((item) => !boundServiceIds.has(item.resourceId))
-    .reduce((total, item) => total + item.quantity, 0);
+  const totalQuantity = getCartIconCount(cart, resources);
 
   const handleOpenCart = () => {
     window.location.href = '/cart';

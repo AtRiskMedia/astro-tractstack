@@ -6,6 +6,7 @@ import {
   CART_STATES,
   isShopifyHandoff,
 } from '@/stores/shopify';
+import { buildShopifyCheckoutLines } from '@/utils/customHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface ShopifyCheckoutProps {
@@ -33,32 +34,7 @@ export default function ShopifyCheckout({
       setStatus('PROCESSING');
 
       try {
-        const cartItems = Object.values(cart);
-
-        const lines = cartItems
-          .map((item) => {
-            // Resolve the ResourceNode for this item
-            const resource = resources.find((r) => r.id === item.resourceId);
-
-            if (!resource) {
-              return null;
-            }
-
-            // Use the explicitly sanitized variant ID from the cart state
-            const merchandiseId = item.variantId;
-
-            // If we have no ID, we cannot add this item to the Shopify cart.
-            if (!merchandiseId) return null;
-
-            return {
-              merchandiseId,
-              quantity: item.quantity,
-            };
-          })
-          .filter((line) => line !== null) as Array<{
-          merchandiseId: string;
-          quantity: number;
-        }>;
+        const lines = buildShopifyCheckoutLines(cart, resources);
 
         if (lines.length === 0) {
           throw new Error(
