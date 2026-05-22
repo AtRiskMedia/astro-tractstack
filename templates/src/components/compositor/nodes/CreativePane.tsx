@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useState,
   useRef,
   type FocusEvent,
@@ -154,11 +155,16 @@ export const CreativePane = ({
   htmlAst,
   isProtected = false,
 }: CreativePaneProps) => {
+  const ctx = getCtx();
   const previews = useStore(renderedPreviews);
   const { value: viewportKey } = useStore(viewportKeyStore);
+  const { value: toolModeVal } = useStore(ctx.toolModeValStore);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const htmlAstRef = useRef(htmlAst);
+  htmlAstRef.current = htmlAst;
 
   const activeViewport = viewportMap[viewportKey];
   const htmlContent = previews[nodeId];
@@ -227,54 +233,56 @@ export const CreativePane = ({
     };
   }, [htmlAst?.css, htmlAst?.tree, nodeId]);
 
-  useEffect(() => {
-    const ctx = getCtx();
+  useLayoutEffect(() => {
+    const el = previewRef.current;
+    if (!el || htmlContent == null) return;
+    if (el.innerHTML !== htmlContent) {
+      el.innerHTML = htmlContent;
+    }
+  }, [htmlContent]);
+
+  useLayoutEffect(() => {
     const container = contentRef.current;
     if (!container || !htmlContent) return;
 
-    let rafId = 0;
+    if (toolModeVal === 'text') {
+      syncEditProxies(container, htmlAstRef.current, nodeId);
+    } else {
+      removeEditProxies(container);
+    }
+  });
+
+  useEffect(() => {
+    const container = contentRef.current;
+    if (!container || !htmlContent) return;
+
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const runSync = () => {
-      const mode = ctx.toolModeValStore.get().value;
-      if (mode === 'text') {
-        syncEditProxies(container, htmlAst, nodeId);
-      } else {
-        removeEditProxies(container);
-      }
-    };
-
-    const scheduleSync = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        rafId = requestAnimationFrame(runSync);
-      });
-    };
-
-    const unsubscribe = ctx.toolModeValStore.subscribe(() => {
-      scheduleSync();
-    });
-
-    scheduleSync();
 
     const resizeObserver = new ResizeObserver(() => {
       if (ctx.toolModeValStore.get().value !== 'text') return;
       if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(scheduleSync, 100);
+      debounceTimer = setTimeout(() => {
+        if (ctx.toolModeValStore.get().value === 'text') {
+          syncEditProxies(container, htmlAstRef.current, nodeId);
+        }
+      }, 100);
     });
     resizeObserver.observe(container);
 
     return () => {
-      unsubscribe();
       resizeObserver.disconnect();
       if (debounceTimer) clearTimeout(debounceTimer);
-      cancelAnimationFrame(rafId);
-      removeEditProxies(container);
     };
-  }, [htmlContent, viewportKey, htmlAst, nodeId]);
+  }, [htmlContent, nodeId, toolModeVal, ctx]);
+
+  useEffect(() => {
+    return () => {
+      const container = contentRef.current;
+      if (container) removeEditProxies(container);
+    };
+  }, []);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const ctx = getCtx();
     const mode = ctx.toolModeValStore.get().value;
     if (mode !== 'text' || isProtected) return;
 
@@ -288,7 +296,6 @@ export const CreativePane = ({
   };
 
   const handleBlur = (e: FocusEvent<HTMLDivElement>) => {
-    const ctx = getCtx();
     const mode = ctx.toolModeValStore.get().value;
     if (mode !== 'text' || isProtected) return;
 
@@ -335,7 +342,7 @@ export const CreativePane = ({
         {isProtected && (
           <div className="absolute inset-0 z-50 cursor-crosshair bg-transparent" />
         )}
-        <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        <div ref={previewRef} />
       </div>
     </>
   );
