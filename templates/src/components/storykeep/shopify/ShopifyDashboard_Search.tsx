@@ -7,19 +7,22 @@ import {
 } from '@/stores/shopify';
 import ProductTable from '@/components/storykeep/controls/content/ProductTable';
 import type { ResourceNode } from '@/types/compositorTypes';
+import type { ShopifyLinkedStatus } from '@/components/storykeep/Dashboard_Shopify';
 
 interface ShopifyDashboardSearchProps {
-  linkedResourceMap: Map<string, ResourceNode>;
+  linkedStatusMap: Map<string, ShopifyLinkedStatus>;
   onSelectProduct: (product: ShopifyProduct) => void;
   onLink: (product: ShopifyProduct) => void;
+  onMarkShared: (product: ShopifyProduct) => void;
   onUnlink: (resourceId: string) => void;
   onEdit: (product: ShopifyProduct, resource: ResourceNode) => void;
 }
 
 export default function ShopifyDashboard_Search({
-  linkedResourceMap,
+  linkedStatusMap,
   onSelectProduct,
   onLink,
+  onMarkShared,
   onUnlink,
   onEdit,
 }: ShopifyDashboardSearchProps) {
@@ -42,11 +45,12 @@ export default function ShopifyDashboard_Search({
 
       <ProductTable
         products={data.products}
-        linkedResourceMap={linkedResourceMap}
+        linkedStatusMap={linkedStatusMap}
         onRefresh={handleRefresh}
         isRefreshing={status.isLoading}
         onSelectProduct={onSelectProduct}
         onLink={onLink}
+        onMarkShared={onMarkShared}
         onUnlink={onUnlink}
         onEdit={onEdit}
       />

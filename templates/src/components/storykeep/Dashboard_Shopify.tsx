@@ -35,6 +35,12 @@ interface DashboardShopifyProps {
 }
 
 type MachineState = 'INIT' | 'CONFIG' | 'UPDATE' | 'READY';
+type ImportCategory = 'product' | 'service' | 'shared';
+
+export interface ShopifyLinkedStatus {
+  canonicalProduct: ResourceNode | null;
+  linkedServices: ResourceNode[];
+}
 
 export default function StoryKeepDashboard_Shopify({
   brandConfig,
@@ -61,7 +67,7 @@ export default function StoryKeepDashboard_Shopify({
 
   const [showSmartCartWarning, setShowSmartCartWarning] = useState(false);
   const [pendingImport, setPendingImport] = useState<{
-    category: string;
+    category: ImportCategory;
     product: ShopifyProduct;
   } | null>(null);
 
@@ -98,12 +104,27 @@ export default function StoryKeepDashboard_Shopify({
     }
   }, [brandConfig]);
 
-  const linkedResourceMap = useMemo(() => {
-    const map = new Map<string, ResourceNode>();
-    resources.forEach((r) => {
-      if (r.categorySlug === 'product' && r.optionsPayload?.gid) {
-        map.set(r.optionsPayload.gid, r);
+  const linkedStatusMap = useMemo(() => {
+    const map = new Map<string, ShopifyLinkedStatus>();
+    resources.forEach((resource) => {
+      const gid =
+        typeof resource.optionsPayload?.gid === 'string'
+          ? resource.optionsPayload.gid
+          : '';
+      if (!gid) return;
+
+      const current = map.get(gid) || {
+        canonicalProduct: null,
+        linkedServices: [],
+      };
+
+      if (resource.categorySlug === 'product' && !current.canonicalProduct) {
+        current.canonicalProduct = resource;
       }
+      if (resource.categorySlug === 'service') {
+        current.linkedServices.push(resource);
+      }
+      map.set(gid, current);
     });
     return map;
   }, [resources]);
@@ -140,6 +161,8 @@ export default function StoryKeepDashboard_Shopify({
     if (hasProductSchema && hasServiceSchema) {
       setTargetProduct(product);
       setShowTypeSelector(true);
+    } else if (hasProductSchema) {
+      executePreFlightCheck('product', product);
     } else if (hasServiceSchema) {
       executePreFlightCheck('service', product);
     } else {
@@ -172,9 +195,16 @@ export default function StoryKeepDashboard_Shopify({
     }
   };
 
-  const executePreFlightCheck = (category: string, product: ShopifyProduct) => {
+  const handleMarkShared = (product: ShopifyProduct) => {
+    void startCreateFlow('shared', product);
+  };
+
+  const executePreFlightCheck = (
+    category: ImportCategory,
+    product: ShopifyProduct
+  ) => {
     const hasMode = product.options.some((opt) => opt.name === 'Mode');
-    if (category === 'service' || hasMode) {
+    if (category === 'service' || category === 'shared' || hasMode) {
       void startCreateFlow(category, product);
     } else {
       setPendingImport({ category, product });
@@ -183,15 +213,66 @@ export default function StoryKeepDashboard_Shopify({
     }
   };
 
-  const startCreateFlow = async (category: string, product: ShopifyProduct) => {
+  const startCreateFlow = async (
+    category: ImportCategory,
+    product: ShopifyProduct
+  ) => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
     const productSchema = internalBrandConfig?.knownResources['product'] || {};
-    if (category === 'service') {
-      const existingCanonical = resources.find(
-        (r) =>
-          r.categorySlug === 'product' && r.optionsPayload?.gid === product.id
-      );
+    const existingCanonical = resources.find(
+      (r) =>
+        r.categorySlug === 'product' && r.optionsPayload?.gid === product.id
+    );
 
+    if (category === 'shared') {
+      if (existingCanonical) {
+        setDraftResource({
+          ...existingCanonical,
+          optionsPayload: {
+            ...(existingCanonical.optionsPayload || {}),
+            gid: product.id,
+            shopifyData:
+              existingCanonical.optionsPayload?.shopifyData ||
+              JSON.stringify(product),
+            sharedServiceFee: true,
+          },
+        });
+        setIsCreateMode(false);
+      } else {
+        const mergedOptions: Record<string, any> = {
+          gid: product.id,
+          shopifyData: JSON.stringify(product),
+          sharedServiceFee: true,
+        };
+
+        Object.entries(productSchema).forEach(([key, def]) => {
+          if (mergedOptions[key] !== undefined) return;
+          if (def.type === 'number') {
+            mergedOptions[key] = def.defaultValue ?? def.minNumber ?? 0;
+          } else if (def.type === 'boolean') {
+            mergedOptions[key] = def.defaultValue ?? false;
+          } else if (def.type === 'string') {
+            mergedOptions[key] = def.defaultValue ?? '';
+          } else if (def.type === 'multi') {
+            mergedOptions[key] = def.defaultValue ?? [];
+          }
+        });
+
+        setDraftResource({
+          title: product.title,
+          oneliner: product.description || '',
+          slug: `product-${product.handle}`.toLowerCase(),
+          categorySlug: 'product',
+          optionsPayload: mergedOptions,
+        });
+        setIsCreateMode(true);
+      }
+      setShowTypeSelector(false);
+      setShowResourceModal(true);
+      return;
+    }
+
+    if (category === 'service') {
       if (!existingCanonical) {
         const productOptions: Record<string, any> = {
           gid: product.id,
@@ -228,7 +309,10 @@ export default function StoryKeepDashboard_Shopify({
       }
     }
 
-    const schema = internalBrandConfig?.knownResources[category] || {};
+    const schema =
+      category === 'product'
+        ? internalBrandConfig?.knownResources['product'] || {}
+        : internalBrandConfig?.knownResources['service'] || {};
     const mergedOptions: Record<string, any> = {
       gid: product.id,
     };
@@ -595,9 +679,10 @@ export default function StoryKeepDashboard_Shopify({
 
         {activeTab === 'search' && (
           <ShopifyDashboard_Search
-            linkedResourceMap={linkedResourceMap}
+            linkedStatusMap={linkedStatusMap}
             onSelectProduct={setSelectedProduct}
             onLink={handleLink}
+            onMarkShared={handleMarkShared}
             onUnlink={handleUnlink}
             onEdit={handleEditFromCatalog}
           />
@@ -666,7 +751,7 @@ export default function StoryKeepDashboard_Shopify({
                   Import as...
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Should "{targetProduct.title}" be a Product or Service?
+                  Choose import type for "{targetProduct.title}".
                 </p>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
@@ -676,6 +761,14 @@ export default function StoryKeepDashboard_Shopify({
                     className="flex w-full items-center justify-center rounded-md bg-cyan-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-cyan-500"
                   >
                     Product
+                  </button>
+                  <button
+                    onClick={() =>
+                      executePreFlightCheck('shared', targetProduct)
+                    }
+                    className="flex w-full items-center justify-center rounded-md border border-cyan-300 bg-cyan-50 px-4 py-2 text-sm font-bold text-cyan-700 shadow-sm hover:bg-cyan-100"
+                  >
+                    Shared Canonical Product
                   </button>
                   <button
                     onClick={() =>

@@ -46,7 +46,10 @@ export default function ShopifyCartManager({
       const key = getCartItemKey(actionItem, resource, productResources);
       const currentCart = cartStore.get();
       const currentItem = currentCart[key];
-      const isSharedFeeResource = isSharedFeeService(resource, productResources);
+      const isSharedFeeResource = isSharedFeeService(
+        resource,
+        productResources
+      );
       const legacySharedKeys = isSharedFeeResource
         ? Object.keys(currentCart).filter(
             (cartKey) =>

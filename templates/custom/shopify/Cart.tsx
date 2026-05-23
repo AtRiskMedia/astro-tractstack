@@ -99,8 +99,10 @@ export default function Cart({
       if (priorityA !== priorityB) {
         return priorityA - priorityB;
       }
-      return (firstSeenIndex.get(a) ?? Number.MAX_SAFE_INTEGER) -
-        (firstSeenIndex.get(b) ?? Number.MAX_SAFE_INTEGER);
+      return (
+        (firstSeenIndex.get(a) ?? Number.MAX_SAFE_INTEGER) -
+        (firstSeenIndex.get(b) ?? Number.MAX_SAFE_INTEGER)
+      );
     });
   }, [displayableItems, groupedItems, resources]);
 
@@ -291,7 +293,8 @@ export default function Cart({
             ? getServiceLinkedProduct(resource, resources) || resource
             : resource;
 
-          const productData = parsePrimaryShopifyProductData(priceResource) || {};
+          const productData =
+            parsePrimaryShopifyProductData(priceResource) || {};
           const variants = productData?.variants || [];
 
           return (
@@ -363,106 +366,109 @@ export default function Cart({
 
                   {!(isService && sharedFeeService) && (
                     <div className="mt-4 space-y-4 border-t border-gray-100 pt-4">
-                    {items.map((item, idx) => {
-                      const activeVariantId = isPickupMode
-                        ? item.variantIdPickup
-                        : item.variantIdShipped;
+                      {items.map((item, idx) => {
+                        const activeVariantId = isPickupMode
+                          ? item.variantIdPickup
+                          : item.variantIdShipped;
 
-                      const displayId =
-                        item.variantId ||
-                        activeVariantId ||
-                        item.variantIdPickup ||
-                        fallbackServiceVariantId;
+                        const displayId =
+                          item.variantId ||
+                          activeVariantId ||
+                          item.variantIdPickup ||
+                          fallbackServiceVariantId;
 
-                      let price = '0.00';
-                      let currency = 'USD';
-                      let variantTitle = '';
+                        let price = '0.00';
+                        let currency = 'USD';
+                        let variantTitle = '';
 
-                      const variant = variants.find(
-                        (v: any) => v.id === displayId
-                      );
+                        const variant = variants.find(
+                          (v: any) => v.id === displayId
+                        );
 
-                      if (variant) {
-                        price = variant.price?.amount || '0.00';
-                        currency = variant.price?.currencyCode || 'USD';
-                        variantTitle = getCleanVariantTitle(variant);
-                      }
+                        if (variant) {
+                          price = variant.price?.amount || '0.00';
+                          currency = variant.price?.currencyCode || 'USD';
+                          variantTitle = getCleanVariantTitle(variant);
+                        }
 
-                      return (
-                        <div
-                          key={`${item.resourceId}_${displayId}_${idx}`}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-2">
-                            {variantTitle && (
-                              <div className="text-sm font-bold text-gray-700">
-                                <span>{variantTitle}</span>
-                              </div>
-                            )}
-                            {isPickupMode &&
-                              !isService &&
-                              (item.variantIdPickup &&
-                              item.variantIdPickup !== item.variantIdShipped ? (
-                                <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
-                                  Store Pickup
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center rounded bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
-                                  Not available for pickup
-                                </span>
-                              ))}
-                          </div>
-
-                          <div className="flex items-center">
-                            <div className="mr-6 text-right">
-                              <p className="text-sm font-bold text-gray-900">
-                                {isService && sharedFeeService
-                                  ? ''
-                                  : price && parseFloat(price) > 0
-                                    ? `${(parseFloat(price) * item.quantity).toFixed(2)} ${currency}`
-                                    : 'No Charge'}
-                              </p>
+                        return (
+                          <div
+                            key={`${item.resourceId}_${displayId}_${idx}`}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-2">
+                              {variantTitle && (
+                                <div className="text-sm font-bold text-gray-700">
+                                  <span>{variantTitle}</span>
+                                </div>
+                              )}
+                              {isPickupMode &&
+                                !isService &&
+                                (item.variantIdPickup &&
+                                item.variantIdPickup !==
+                                  item.variantIdShipped ? (
+                                  <span className="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-800">
+                                    Store Pickup
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700">
+                                    Not available for pickup
+                                  </span>
+                                ))}
                             </div>
 
-                            {isService ? (
-                              <button
-                                onClick={() =>
-                                  addQueue.set([
-                                    ...addQueue.get(),
-                                    {
-                                      resourceId: item.resourceId,
-                                      action: 'remove',
-                                      variantId: item.variantId,
-                                    },
-                                  ])
-                                }
-                                className="rounded-md border border-gray-300 px-3 py-1 text-sm font-bold text-gray-600 hover:bg-gray-100"
-                              >
-                                Remove
-                              </button>
-                            ) : (
-                              <div className="flex items-center rounded-md border border-gray-300">
-                                <button
-                                  onClick={() => dispatchAction(item, 'remove')}
-                                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                                >
-                                  -
-                                </button>
-                                <span className="border-l border-r border-gray-300 px-3 py-1 text-gray-900">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() => dispatchAction(item, 'add')}
-                                  className="px-3 py-1 text-gray-600 hover:bg-gray-100"
-                                >
-                                  +
-                                </button>
+                            <div className="flex items-center">
+                              <div className="mr-6 text-right">
+                                <p className="text-sm font-bold text-gray-900">
+                                  {isService && sharedFeeService
+                                    ? ''
+                                    : price && parseFloat(price) > 0
+                                      ? `${(parseFloat(price) * item.quantity).toFixed(2)} ${currency}`
+                                      : 'No Charge'}
+                                </p>
                               </div>
-                            )}
+
+                              {isService ? (
+                                <button
+                                  onClick={() =>
+                                    addQueue.set([
+                                      ...addQueue.get(),
+                                      {
+                                        resourceId: item.resourceId,
+                                        action: 'remove',
+                                        variantId: item.variantId,
+                                      },
+                                    ])
+                                  }
+                                  className="rounded-md border border-gray-300 px-3 py-1 text-sm font-bold text-gray-600 hover:bg-gray-100"
+                                >
+                                  Remove
+                                </button>
+                              ) : (
+                                <div className="flex items-center rounded-md border border-gray-300">
+                                  <button
+                                    onClick={() =>
+                                      dispatchAction(item, 'remove')
+                                    }
+                                    className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="border-l border-r border-gray-300 px-3 py-1 text-gray-900">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    onClick={() => dispatchAction(item, 'add')}
+                                    className="px-3 py-1 text-gray-600 hover:bg-gray-100"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

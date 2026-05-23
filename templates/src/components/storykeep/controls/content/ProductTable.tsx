@@ -15,23 +15,26 @@ import {
   type ShopifyProduct,
 } from '@/stores/shopify';
 import type { ResourceNode } from '@/types/compositorTypes';
+import type { ShopifyLinkedStatus } from '@/components/storykeep/Dashboard_Shopify';
 
 interface ProductTableProps {
   products: ShopifyProduct[];
-  linkedResourceMap: Map<string, ResourceNode>;
+  linkedStatusMap: Map<string, ShopifyLinkedStatus>;
   onRefresh: () => void;
   isRefreshing: boolean;
   onSelectProduct: (product: ShopifyProduct) => void;
   onLink: (product: ShopifyProduct) => void;
+  onMarkShared: (product: ShopifyProduct) => void;
   onUnlink: (resourceId: string) => void;
   onEdit: (product: ShopifyProduct, resource: ResourceNode) => void;
 }
 
 export default function ProductTable({
   products,
-  linkedResourceMap,
+  linkedStatusMap,
   onSelectProduct,
   onLink,
+  onMarkShared,
   onUnlink,
   onEdit,
 }: ProductTableProps) {
@@ -203,8 +206,10 @@ export default function ProductTable({
               </tr>
             ) : (
               products.map((product) => {
-                const linkedResource = linkedResourceMap.get(product.id);
-                const isLinked = !!linkedResource;
+                const linkedStatus = linkedStatusMap.get(product.id);
+                const canonicalProduct = linkedStatus?.canonicalProduct || null;
+                const linkedServiceCount =
+                  linkedStatus?.linkedServices.length || 0;
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50">
@@ -215,22 +220,24 @@ export default function ProductTable({
                       >
                         {product.title}
                       </div>
-                      {isLinked && (
-                        <span
-                          className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ring-1 ring-inset ${
-                            linkedResource.categorySlug === 'service'
-                              ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'
-                              : 'bg-cyan-50 text-cyan-700 ring-cyan-600/20'
-                          }`}
-                        >
-                          Synced:{' '}
-                          <span
-                            className="max-w-xs truncate"
-                            title={linkedResource.title}
-                          >
-                            {linkedResource.title}
+                      {canonicalProduct && (
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          <span className="inline-flex items-center rounded-full bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-700 ring-1 ring-inset ring-cyan-600/20">
+                            Synced canonical:{' '}
+                            <span
+                              className="ml-1 max-w-xs truncate"
+                              title={canonicalProduct.title}
+                            >
+                              {canonicalProduct.title}
+                            </span>
                           </span>
-                        </span>
+                          {linkedServiceCount > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
+                              {linkedServiceCount} service
+                              {linkedServiceCount === 1 ? '' : 's'}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td
@@ -241,12 +248,12 @@ export default function ProductTable({
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-bold">
                       <div className="flex items-center justify-end space-x-2">
-                        {isLinked ? (
+                        {canonicalProduct ? (
                           <>
                             <button
-                              onClick={() => onEdit(product, linkedResource)}
+                              onClick={() => onEdit(product, canonicalProduct)}
                               className="text-cyan-600 hover:text-cyan-900"
-                              title="Edit Resource"
+                              title="Edit Canonical Product"
                             >
                               <PencilIcon
                                 className="h-5 w-5"
@@ -257,9 +264,16 @@ export default function ProductTable({
                               </span>
                             </button>
                             <button
-                              onClick={() => onUnlink(linkedResource.id)}
+                              onClick={() => onMarkShared(product)}
+                              className="rounded border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-700 hover:bg-cyan-100"
+                              title="Tag Canonical Product as Shared"
+                            >
+                              Shared
+                            </button>
+                            <button
+                              onClick={() => onUnlink(canonicalProduct.id)}
                               className="text-red-600 hover:text-red-900"
-                              title="Unlink Resource"
+                              title="Unlink Canonical Product"
                             >
                               <TrashIcon
                                 className="h-5 w-5"
