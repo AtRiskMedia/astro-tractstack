@@ -207,6 +207,7 @@ export interface BrandConfig {
   HAS_HYDRATION_TOKEN?: boolean;
   SCHEDULING?: SchedulingConfig;
   ADMIN_EMAIL?: string;
+  ADMIN_EMAIL_NAME?: string;
 }
 
 export interface BrandConfigState {
@@ -246,6 +247,7 @@ export interface BrandConfigState {
   hasHydrationToken: boolean;
   scheduling: SchedulingConfig;
   adminEmail: string;
+  adminEmailName: string;
 }
 
 // Form validation types
@@ -294,6 +296,7 @@ export interface AdvancedConfigStatus {
   googleRefreshTokenSet: boolean;
   googleTokenExpirySet: boolean;
   hasGoogleSync: boolean;
+  hasResend: boolean;
 }
 
 export interface AdvancedConfigState {
@@ -310,6 +313,8 @@ export interface AdvancedConfigState {
   shopifyAdminSlug: string;
   userSetupWebhooks: boolean;
   resendApiKey: string;
+  adminEmail: string;
+  adminEmailName: string;
   googleOauthClientId: string;
   googleOauthClientSecret: string;
   googleCalendarId: string;

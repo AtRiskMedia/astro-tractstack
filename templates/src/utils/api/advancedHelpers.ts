@@ -30,6 +30,8 @@ export function convertToLocalState(
       googleOauthClientId: '',
       googleOauthClientSecret: '',
       googleCalendarId: '',
+      adminEmail: '',
+      adminEmailName: '',
     };
   }
 
@@ -53,6 +55,8 @@ export function convertToLocalState(
     googleOauthClientId: '',
     googleOauthClientSecret: '',
     googleCalendarId: '',
+    adminEmail: '',
+    adminEmailName: '',
   };
 }
 

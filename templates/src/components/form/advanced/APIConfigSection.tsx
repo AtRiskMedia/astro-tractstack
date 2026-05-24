@@ -46,7 +46,8 @@ export default function APIConfigSection({
   const shopifyVersionConfigured = Boolean(status?.shopifyApiVersion);
   const shopifyAdminSlugConfigured = status?.shopifyAdminSlugSet;
   const shopifyWebhooksConfigured = status?.userSetupWebhooks;
-  const resendConfigured = status?.resendApiKeySet;
+  const resendConfigured = status?.hasResend;
+  const resendKeyConfigured = status?.resendApiKeySet;
   const googleHasSync = status?.hasGoogleSync;
   const googleClientIDConfigured = status?.googleOauthClientIdSet;
   const googleClientSecretConfigured = status?.googleOauthClientSecretSet;
@@ -301,13 +302,30 @@ export default function APIConfigSection({
               value={state.resendApiKey}
               onChange={(value) => updateField('resendApiKey', value)}
               type="password"
-              placeholder={resendConfigured ? '••••••••••••••••' : 're_...'}
+              placeholder={resendKeyConfigured ? '••••••••••••••••' : 're_...'}
               error={errors.resendApiKey}
             />
             <p className="mt-2 text-xs text-gray-500">
               Required for sending system emails.
-              {resendConfigured && ' Leave blank to keep existing key.'}
+              {resendKeyConfigured && ' Leave blank to keep existing key.'}
             </p>
+            <StringInput
+              label="From Email"
+              value={state.adminEmail}
+              onChange={(value) => updateField('adminEmail', value)}
+              type="email"
+              placeholder="admin@example.com"
+              required={true}
+              error={errors.adminEmail}
+            />
+            <StringInput
+              label="From Name"
+              value={state.adminEmailName}
+              onChange={(value) => updateField('adminEmailName', value)}
+              placeholder="Your Site Name"
+              required={true}
+              error={errors.adminEmailName}
+            />
           </div>
 
           {/* Google Calendar / Meet Section */}

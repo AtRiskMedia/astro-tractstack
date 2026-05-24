@@ -67,6 +67,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
           DESIGN_LIBRARY: [],
           HAS_AAI: false,
           ADMIN_EMAIL: '',
+          ADMIN_EMAIL_NAME: '',
         } as BrandConfig;
       }
       throw new Error(response.error || 'Failed to get brand configuration');
@@ -102,6 +103,7 @@ export async function getBrandConfig(tenantId: string): Promise<BrandConfig> {
         DESIGN_LIBRARY: [],
         HAS_AAI: false,
         ADMIN_EMAIL: '',
+        ADMIN_EMAIL_NAME: '',
       } as BrandConfig;
     }
     throw error;

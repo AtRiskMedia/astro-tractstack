@@ -45,6 +45,7 @@ export function convertToLocalState(
     hasResend: brandConfig.HAS_RESEND ?? false,
     hasHydrationToken: brandConfig.HAS_HYDRATION_TOKEN ?? false,
     adminEmail: brandConfig.ADMIN_EMAIL ?? '',
+    adminEmailName: brandConfig.ADMIN_EMAIL_NAME ?? '',
     scheduling: brandConfig.SCHEDULING ?? {
       timezone: 'UTC',
       bufferGapsMinutes: 15,
@@ -95,6 +96,7 @@ export function convertToBackendFormat(
     HAS_RESEND: localState.hasResend,
     SCHEDULING: scheduling,
     ADMIN_EMAIL: localState.adminEmail,
+    ADMIN_EMAIL_NAME: localState.adminEmailName,
 
     // ALWAYS send asset paths (current state)
     LOGO: localState.logo,
@@ -137,6 +139,10 @@ export function validateBrandConfig(state: BrandConfigState): FieldErrors {
     errors.adminEmail = 'Admin Email is required';
   } else if (!isValidEmail(state.adminEmail)) {
     errors.adminEmail = 'Please enter a valid email address';
+  }
+
+  if (!state.adminEmailName?.trim()) {
+    errors.adminEmailName = 'Admin Email Name is required';
   }
 
   // Validate brand colors (must have exactly 8)

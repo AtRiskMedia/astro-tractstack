@@ -59,6 +59,15 @@ export default function SiteConfigSection({
         />
 
         <StringInput
+          value={state.adminEmailName}
+          onChange={(value) => updateField('adminEmailName', value)}
+          label="Admin Email Name"
+          placeholder="Your Site Name"
+          required={true}
+          error={errors.adminEmailName}
+        />
+
+        <StringInput
           value={state.gtag}
           onChange={(value) => updateField('gtag', value)}
           label="Google Analytics Tag"

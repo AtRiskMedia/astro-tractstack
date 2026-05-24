@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed context page close button to show home when no history
 - editable icons on creative pane
 - service-bound shopify products
+- tenant-scoped emails
 
 #### [2.3.3] - 2026-5-03
 

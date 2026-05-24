@@ -1,28 +1,37 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useFormState } from '@/hooks/useFormState';
 import {
-  convertToLocalState,
+  convertToLocalState as convertAdvancedToLocalState,
   convertToBackendFormat,
   validateAdvancedConfig,
   advancedStateIntercept,
 } from '@/utils/api/advancedHelpers';
 import {
+  convertToLocalState as convertBrandToLocalState,
+  convertToBackendFormat as convertBrandToBackendFormat,
+  validateBrandConfig,
+} from '@/utils/api/brandHelpers';
+import {
   getAdvancedConfigStatus,
   saveAdvancedConfig,
 } from '@/utils/api/advancedConfig';
+import { getBrandConfig, saveBrandConfig } from '@/utils/api/brandConfig';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import AuthConfigSection from '@/components/form/advanced/AuthConfigSection';
 import APIConfigSection from '@/components/form/advanced/APIConfigSection';
 import type {
   AdvancedConfigState,
   AdvancedConfigStatus,
+  BrandConfig,
 } from '@/types/tractstack';
 
 interface StoryKeepDashboardAdvancedProps {
+  brandConfig: BrandConfig;
   initialize?: boolean;
 }
 
 export default function StoryKeepDashboard_Advanced({
+  brandConfig,
   initialize = false,
 }: StoryKeepDashboardAdvancedProps) {
   const [status, setStatus] = useState<AdvancedConfigStatus | null>(null);
@@ -30,14 +39,33 @@ export default function StoryKeepDashboard_Advanced({
   const [error, setError] = useState<string>('');
   const hasHydratedInitialFormState = useRef(false);
 
-  // Load status on mount
+  const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
+
+  const validateAdvancedForm = useCallback(
+    (state: AdvancedConfigState) => {
+      const advancedErrors = validateAdvancedConfig(state);
+      const brandLocal = {
+        ...convertBrandToLocalState(brandConfig),
+        adminEmail: state.adminEmail,
+        adminEmailName: state.adminEmailName,
+      };
+      const brandErrors = validateBrandConfig(brandLocal);
+      return {
+        ...advancedErrors,
+        ...(brandErrors.adminEmail && { adminEmail: brandErrors.adminEmail }),
+        ...(brandErrors.adminEmailName && {
+          adminEmailName: brandErrors.adminEmailName,
+        }),
+      };
+    },
+    [brandConfig]
+  );
+
   useEffect(() => {
     async function loadStatus() {
       try {
         setIsLoading(true);
-        const statusData = await getAdvancedConfigStatus(
-          window.TRACTSTACK_CONFIG?.tenantId || 'default'
-        );
+        const statusData = await getAdvancedConfigStatus(tenantId);
         setStatus(statusData);
       } catch (err) {
         setError(
@@ -50,27 +78,31 @@ export default function StoryKeepDashboard_Advanced({
       }
     }
     loadStatus();
-  }, []);
+  }, [tenantId]);
 
   const formState = useFormState<AdvancedConfigState>({
-    initialData: convertToLocalState(status),
-    validator: validateAdvancedConfig,
+    initialData: convertAdvancedToLocalState(status),
+    validator: validateAdvancedForm,
     interceptor: advancedStateIntercept,
     onSave: async (state: AdvancedConfigState) => {
       const backendPayload = convertToBackendFormat(state);
-      await saveAdvancedConfig(
-        window.TRACTSTACK_CONFIG?.tenantId || 'default',
-        backendPayload
-      );
+      await saveAdvancedConfig(tenantId, backendPayload);
 
-      // Reload status after save
-      const newStatus = await getAdvancedConfigStatus(
-        window.TRACTSTACK_CONFIG?.tenantId || 'default'
-      );
+      const brandConfigFresh = await getBrandConfig(tenantId);
+      const brandLocal = convertBrandToLocalState(brandConfigFresh);
+      brandLocal.adminEmail = state.adminEmail.trim();
+      brandLocal.adminEmailName = state.adminEmailName.trim();
+      await saveBrandConfig(tenantId, convertBrandToBackendFormat(brandLocal));
+
+      const newStatus = await getAdvancedConfigStatus(tenantId);
       setStatus(newStatus);
 
-      // Reset form to new state (clears password fields and isDirty)
-      const newState = convertToLocalState(newStatus);
+      const brandLocalHydrate = convertBrandToLocalState(brandConfigFresh);
+      const newState = {
+        ...convertAdvancedToLocalState(newStatus),
+        adminEmail: brandLocalHydrate.adminEmail,
+        adminEmailName: brandLocalHydrate.adminEmailName,
+      };
       formState.resetToState(newState);
 
       window.location.reload();
@@ -82,9 +114,14 @@ export default function StoryKeepDashboard_Advanced({
     if (!status || hasHydratedInitialFormState.current) {
       return;
     }
-    formState.resetToState(convertToLocalState(status));
+    const brandLocal = convertBrandToLocalState(brandConfig);
+    formState.resetToState({
+      ...convertAdvancedToLocalState(status),
+      adminEmail: brandLocal.adminEmail,
+      adminEmailName: brandLocal.adminEmailName,
+    });
     hasHydratedInitialFormState.current = true;
-  }, [status, formState]);
+  }, [status, formState, brandConfig]);
 
   if (isLoading) {
     return (
@@ -102,7 +139,6 @@ export default function StoryKeepDashboard_Advanced({
     );
   }
 
-  // Database status component
   const DatabaseStatusSection = () => {
     const databaseType = status?.tursoEnabled
       ? 'Turso Cloud Database'

@@ -64,7 +64,10 @@ try {
         role={role}
         initializing={initializing}
       />
-      <StoryKeepDashboard_Advanced client:only="react" />
+      <StoryKeepDashboard_Advanced
+        client:only="react"
+        brandConfig={brandConfig}
+      />
     </div>
   </main>
 </Layout>
