@@ -303,6 +303,27 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
     <script is:inline is:persist>
       let navProgressInterval = null;
       let navSafetyTimeout = null;
+      const IN_SITE_FROM_KEY = 'tractstack:inSiteFrom';
+      let isInSiteNavigationTrackingBound = false;
+
+      const navEntry = performance.getEntriesByType('navigation')[0];
+      if (navEntry?.type === 'navigate' && history.length <= 1) {
+        sessionStorage.removeItem(IN_SITE_FROM_KEY);
+      }
+
+      function setupInSiteNavigationTracking() {
+        if (isInSiteNavigationTrackingBound) {
+          return;
+        }
+
+        document.addEventListener('astro:before-preparation', () => {
+          sessionStorage.setItem(
+            IN_SITE_FROM_KEY,
+            location.pathname + location.search + location.hash
+          );
+        });
+        isInSiteNavigationTrackingBound = true;
+      }
 
       function startNavLoadingAnimation() {
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -402,8 +423,13 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupNavigationLoading);
+        document.addEventListener(
+          'DOMContentLoaded',
+          setupInSiteNavigationTracking
+        );
       } else {
         setupNavigationLoading();
+        setupInSiteNavigationTracking();
       }
 
       document.addEventListener('astro:page-load', setupNavigationLoading);

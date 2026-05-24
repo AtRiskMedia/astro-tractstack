@@ -131,35 +131,56 @@ if (!brandConfig.SITE_INIT) {
 </Layout>
 
 <script>
-  function hasInSiteBackTarget() {
-    const ref = document.referrer;
-    if (!ref) return false;
+  const IN_SITE_FROM_KEY = 'tractstack:inSiteFrom';
+
+  function getInSiteFrom() {
+    const rawFromPath = sessionStorage.getItem(IN_SITE_FROM_KEY);
+    if (!rawFromPath) {
+      return null;
+    }
+
     try {
-      const refUrl = new URL(ref);
-      if (refUrl.origin !== window.location.origin) return false;
-      if (refUrl.pathname === window.location.pathname) return false;
-      return true;
+      const fromUrl = new URL(rawFromPath, window.location.origin);
+      if (fromUrl.origin !== window.location.origin) {
+        return null;
+      }
+
+      const fromPath = fromUrl.pathname + fromUrl.search + fromUrl.hash;
+      const currentPath =
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
+
+      if (fromPath === currentPath) {
+        return null;
+      }
+
+      return fromPath;
     } catch {
-      return false;
+      return null;
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function setupContextCloseButton() {
     const closeBtn = document.getElementById('context-close-btn');
 
-    if (closeBtn) {
-      const canGoBack = hasInSiteBackTarget();
-      if (!canGoBack) {
-        closeBtn.textContent = 'Home';
+    if (!closeBtn) {
+      return;
+    }
+
+    const fromPath = getInSiteFrom();
+    closeBtn.textContent = fromPath ? 'Close' : 'Home';
+
+    closeBtn.onclick = function () {
+      if (fromPath) {
+        window.location.assign(fromPath);
+        return;
       }
 
-      closeBtn.addEventListener('click', function () {
-        if (hasInSiteBackTarget()) {
-          window.history.back();
-        } else {
-          window.location.href = '/';
-        }
-      });
-    }
-  });
+      window.location.assign('/');
+    };
+  }
+
+  setupContextCloseButton();
+  document.addEventListener('astro:page-load', setupContextCloseButton);
 </script>
