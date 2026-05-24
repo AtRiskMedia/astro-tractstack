@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormState } from '@/hooks/useFormState';
 import { convertToLocalState } from '@/utils/api/resourceHelpers';
 import { saveResourceWithStateUpdate } from '@/utils/api/resourceConfig';
@@ -30,6 +30,7 @@ interface ResourceFormProps {
   tenantRemoteOnly?: boolean;
   isCreate?: boolean;
   onClose?: (saved: boolean) => void;
+  onOpenLinkedProduct?: (resourceId: string) => void;
 }
 
 export default function ResourceForm({
@@ -40,73 +41,78 @@ export default function ResourceForm({
   tenantRemoteOnly = false,
   isCreate = false,
   onClose,
+  onOpenLinkedProduct,
 }: ResourceFormProps) {
-  const initialData = resourceData
-    ? convertToLocalState(resourceData)
-    : {
-        id: '',
-        title: '',
-        slug: '',
-        categorySlug,
-        oneliner: '',
-        optionsPayload: {},
-        actionLisp: '',
-      };
+  const initialData = useMemo(() => {
+    const nextInitialData = resourceData
+      ? convertToLocalState(resourceData)
+      : {
+          id: '',
+          title: '',
+          slug: '',
+          categorySlug,
+          oneliner: '',
+          optionsPayload: {},
+          actionLisp: '',
+        };
 
-  // 1. Initialize optionsPayload with default values for all schema fields
-  // (Only runs if NO existing data is provided)
-  if (!resourceData) {
-    const defaultOptionsPayload: Record<string, any> = {};
+    // 1. Initialize optionsPayload with default values for all schema fields
+    // (Only runs if NO existing data is provided)
+    if (!resourceData) {
+      const defaultOptionsPayload: Record<string, any> = {};
 
-    Object.entries(categorySchema).forEach(([fieldName, fieldDef]) => {
-      switch (fieldDef.type) {
-        case 'number':
-          defaultOptionsPayload[fieldName] =
-            fieldDef.defaultValue ?? fieldDef.minNumber ?? 0;
-          break;
-        case 'boolean':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? false;
-          break;
-        case 'string':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
-          break;
-        case 'multi':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? [];
-          break;
-        case 'date':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? 0;
-          break;
-        case 'image':
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
-          break;
-        default:
-          defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
-      }
-    });
-
-    initialData.optionsPayload = defaultOptionsPayload;
-  }
-
-  // 2. Pre-process JSON fields for display (Pretty Print)
-  // This runs for both new and existing records to ensure readability
-  if (initialData.optionsPayload) {
-    resourceJsonifyFields.forEach((field) => {
-      const val = initialData.optionsPayload[field];
-      if (val && typeof val === 'string') {
-        try {
-          // Parse and re-stringify with indentation
-          initialData.optionsPayload[field] = JSON.stringify(
-            JSON.parse(val),
-            null,
-            2
-          );
-        } catch (e) {
-          // If it's not valid JSON, leave it as is
-          console.warn(`Failed to pretty-print field ${field}`, e);
+      Object.entries(categorySchema).forEach(([fieldName, fieldDef]) => {
+        switch (fieldDef.type) {
+          case 'number':
+            defaultOptionsPayload[fieldName] =
+              fieldDef.defaultValue ?? fieldDef.minNumber ?? 0;
+            break;
+          case 'boolean':
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? false;
+            break;
+          case 'string':
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
+            break;
+          case 'multi':
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? [];
+            break;
+          case 'date':
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? 0;
+            break;
+          case 'image':
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
+            break;
+          default:
+            defaultOptionsPayload[fieldName] = fieldDef.defaultValue ?? '';
         }
-      }
-    });
-  }
+      });
+
+      nextInitialData.optionsPayload = defaultOptionsPayload;
+    }
+
+    // 2. Pre-process JSON fields for display (Pretty Print)
+    // This runs for both new and existing records to ensure readability
+    if (nextInitialData.optionsPayload) {
+      resourceJsonifyFields.forEach((field) => {
+        const val = nextInitialData.optionsPayload[field];
+        if (val && typeof val === 'string') {
+          try {
+            // Parse and re-stringify with indentation
+            nextInitialData.optionsPayload[field] = JSON.stringify(
+              JSON.parse(val),
+              null,
+              2
+            );
+          } catch (e) {
+            // If it's not valid JSON, leave it as is
+            console.warn(`Failed to pretty-print field ${field}`, e);
+          }
+        }
+      });
+    }
+
+    return nextInitialData;
+  }, [resourceData, categorySlug, categorySchema]);
 
   const validator = (state: ResourceState): FieldErrors => {
     const errors: FieldErrors = {};
@@ -186,10 +192,43 @@ export default function ResourceForm({
     },
   });
 
-  const { state, updateField, errors } = formState;
+  const { state, updateField, errors, resetToState } = formState;
   const isServiceCategory = categorySlug === 'service';
+  const isProductCategory = categorySlug === 'product';
   const serviceRemoteOnly = Boolean(state.optionsPayload?.remoteOnly);
   const effectiveServiceRemoteOnly = tenantRemoteOnly || serviceRemoteOnly;
+  const serviceGid =
+    isServiceCategory && typeof state.optionsPayload?.gid === 'string'
+      ? state.optionsPayload.gid
+      : '';
+  const linkedCanonicalProduct =
+    isServiceCategory && serviceGid
+      ? fullContentMap.find(
+          (item: any) =>
+            item.categorySlug === 'product' &&
+            typeof item.optionsPayload?.gid === 'string' &&
+            item.optionsPayload.gid === serviceGid
+        )
+      : undefined;
+  const productGid =
+    isProductCategory && typeof state.optionsPayload?.gid === 'string'
+      ? state.optionsPayload.gid
+      : '';
+  const linkedServiceCount =
+    isProductCategory && productGid
+      ? fullContentMap.filter(
+          (item: any) =>
+            item.categorySlug === 'service' &&
+            typeof item.optionsPayload?.gid === 'string' &&
+            item.optionsPayload.gid === productGid
+        ).length
+      : 0;
+  const formIdentity = `${categorySlug}:${resourceData?.id || 'create'}`;
+
+  useEffect(() => {
+    // Keep the mounted form in sync when switching edit targets inside the same modal.
+    resetToState(initialData as ResourceState);
+  }, [formIdentity, initialData, resetToState]);
 
   useEffect(() => {
     if (!isServiceCategory) return;
@@ -241,6 +280,39 @@ export default function ResourceForm({
   };
 
   const renderDynamicField = (fieldName: string, fieldDef: FieldDefinition) => {
+    if (fieldName === 'gid' && !isServiceCategory) {
+      return null;
+    }
+
+    if (isServiceCategory && fieldName === 'gid') {
+      return (
+        <div key={fieldName} className="space-y-2">
+          <label
+            htmlFor="field-gid-readonly"
+            className="block text-sm font-bold text-gray-700"
+          >
+            Gid
+          </label>
+          <input
+            id="field-gid-readonly"
+            type="text"
+            value={serviceGid}
+            readOnly
+            className="block w-full cursor-default rounded-md border-0 bg-gray-50 px-3 py-1.5 text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 md:text-sm md:leading-6"
+          />
+          {linkedCanonicalProduct && onOpenLinkedProduct && (
+            <button
+              type="button"
+              onClick={() => onOpenLinkedProduct(linkedCanonicalProduct.id)}
+              className="text-xs font-bold text-cyan-700 underline hover:text-cyan-900"
+            >
+              Open linked product
+            </button>
+          )}
+        </div>
+      );
+    }
+
     if (
       !isServiceCategory &&
       (fieldName === 'allowRemote' || fieldName === 'remoteOnly')
@@ -397,6 +469,29 @@ export default function ResourceForm({
                 locked
                   ? 'Locked to true because tenant scheduling is set to remoteOnly.'
                   : 'When enabled, this service can only be booked remotely.'
+              }
+            />
+          );
+        }
+
+        if (isProductCategory && fieldName === 'sharedServiceFee') {
+          const isLocked = Boolean(fieldValue) && linkedServiceCount > 0;
+          return (
+            <BooleanToggle
+              key={fieldName}
+              label="SharedServiceFee"
+              value={
+                fieldValue !== undefined && fieldValue !== null
+                  ? fieldValue
+                  : (fieldDef.defaultValue ?? false)
+              }
+              onChange={(value) => updateOptionsField(fieldName, value)}
+              error={fieldError}
+              disabled={isLocked}
+              description={
+                isLocked
+                  ? 'Locked because this product gid is linked by one or more services.'
+                  : undefined
               }
             />
           );

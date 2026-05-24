@@ -79,6 +79,51 @@ export default function StoryKeepDashboard_Shopify({
   const [wantService, setWantService] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  useEffect(() => {
+    const hasOpenModal =
+      Boolean(selectedProduct) ||
+      (showTypeSelector && Boolean(targetProduct)) ||
+      (showSmartCartWarning && Boolean(pendingImport)) ||
+      (showResourceModal && Boolean(draftResource));
+    if (!hasOpenModal) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+
+      if (showResourceModal && draftResource) {
+        setShowResourceModal(false);
+        setIsCreateMode(true);
+        return;
+      }
+      if (showSmartCartWarning && pendingImport) {
+        setShowSmartCartWarning(false);
+        setPendingImport(null);
+        return;
+      }
+      if (showTypeSelector && targetProduct) {
+        setShowTypeSelector(false);
+        setTargetProduct(null);
+        return;
+      }
+      if (selectedProduct) {
+        setSelectedProduct(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    selectedProduct,
+    showTypeSelector,
+    targetProduct,
+    showSmartCartWarning,
+    pendingImport,
+    showResourceModal,
+    draftResource,
+  ]);
+
   // Tab definitions
   const tabs = [
     { id: 'dashboards', name: 'Dashboard' },
@@ -846,6 +891,9 @@ export default function StoryKeepDashboard_Shopify({
                   internalBrandConfig?.scheduling?.remoteOnly
                 )}
                 isCreate={isCreateMode}
+                onOpenLinkedProduct={(resourceId) => {
+                  void handleEditResource(resourceId);
+                }}
                 onClose={(saved) => {
                   setShowResourceModal(false);
                   setIsCreateMode(true);
