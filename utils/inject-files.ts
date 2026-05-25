@@ -823,6 +823,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/bookingHelpers.ts',
     },
     {
+      src: resolve('../templates/src/utils/api/salesHelpers.ts'),
+      dest: 'src/utils/api/salesHelpers.ts',
+    },
+    {
       src: resolve('../templates/src/utils/api/menuHelpers.ts'),
       dest: 'src/utils/api/menuHelpers.ts',
     },
@@ -959,6 +963,14 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/booking/list.ts'),
       dest: 'src/pages/api/booking/list.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/sales/list.ts'),
+      dest: 'src/pages/api/sales/list.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/sales/metrics.ts'),
+      dest: 'src/pages/api/sales/metrics.ts',
     },
     {
       src: resolve('../templates/src/pages/api/booking/metrics.ts'),
@@ -1283,6 +1295,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/shopify/ShopifyDashboard_Emails.tsx'
       ),
       dest: 'src/components/storykeep/shopify/ShopifyDashboard_Emails.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/shopify/ShopifyDashboard_Sales.tsx'
+      ),
+      dest: 'src/components/storykeep/shopify/ShopifyDashboard_Sales.tsx',
     },
     {
       src: resolve(

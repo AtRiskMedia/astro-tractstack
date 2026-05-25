@@ -574,6 +574,58 @@ export interface BookingListResponse {
   totalCount: number;
 }
 
+export type SaleStatus = 'PAID';
+export type SaleTag = 'local-pickup' | 'orphan' | 'in-person' | 'remote';
+
+export interface SaleProductLine {
+  resourceId: string;
+  gid: string;
+  variantId: string;
+  quantity: number;
+  title: string;
+  price: string;
+  currencyCode: string;
+  isLocalPickup: boolean;
+}
+
+export interface SaleEntity {
+  id: string; // traceId
+  leadId: string;
+  leadEmail?: string;
+  leadName?: string;
+  bookingId: string | null;
+  shopifyOrderId: string;
+  totalAmount: string;
+  status: SaleStatus;
+  products: SaleProductLine[];
+  appointmentIntent: boolean;
+  tags: SaleTag[];
+  booking: BookingEntity | null;
+  createdAt: string; // ISO-8601 UTC string
+}
+
+export interface SaleListResponse {
+  data: SaleEntity[];
+  totalCount: number;
+}
+
+export interface SaleMetricsResponse {
+  paidOrderTotalMonth: string;
+  paidOrderTotalYear: string;
+  paidOrderTotalAllTime: string;
+  paidOrdersMonth: number;
+  paidOrdersYear: number;
+  paidOrdersAllTime: number;
+  averagePaidOrderMonth: string;
+  uniquePayingCustomers: number;
+  localPickupLineTotalMonth: string;
+  localPickupOrdersMonth: number;
+  appointmentOrdersMonth: number;
+  productOnlyOrdersMonth: number;
+  orphanOrdersMonth: number;
+  currencyCode: string;
+}
+
 export interface BookingMetricsResponse {
   totalMonthlyConfirmed: number;
   totalAnnualConfirmed: number;

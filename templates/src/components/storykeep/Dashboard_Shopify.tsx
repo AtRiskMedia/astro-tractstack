@@ -28,6 +28,7 @@ import ShopifyDashboard_Schedule from './shopify/ShopifyDashboard_Schedule';
 import ShopifyDashboard_Search from './shopify/ShopifyDashboard_Search';
 import ShopifyDashboard_Bookings from './shopify/ShopifyDashboard_Bookings';
 import ShopifyDashboard_Emails from './shopify/ShopifyDashboard_Emails';
+import ShopifyDashboard_Sales from './shopify/ShopifyDashboard_Sales';
 
 interface DashboardShopifyProps {
   brandConfig: BrandConfig;
@@ -128,6 +129,7 @@ export default function StoryKeepDashboard_Shopify({
   const tabs = [
     { id: 'dashboards', name: 'Dashboard' },
     { id: 'bookings', name: 'Bookings' },
+    { id: 'sales', name: 'Sales' },
     { id: 'products', name: 'Products' },
     { id: 'services', name: 'Services' },
     { id: 'schedule', name: 'Schedule' },
@@ -698,6 +700,10 @@ export default function StoryKeepDashboard_Shopify({
 
         {activeTab === 'bookings' && (
           <ShopifyDashboard_Bookings existingResources={resources} />
+        )}
+
+        {activeTab === 'sales' && (
+          <ShopifyDashboard_Sales existingResources={resources} />
         )}
 
         {activeTab === 'products' && (

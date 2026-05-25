@@ -481,42 +481,33 @@ export default function CheckoutModal({
         body: JSON.stringify({
           lines,
           email: $customer.email,
-          ...(needsBooking
-            ? {
-                attributes: [
-                  { key: 'bookingId', value: transactionTraceId.get() },
-                  ...(selectedSlot
-                    ? [
-                        {
-                          key: 'Appointment Date',
-                          value: selectedSlot.start.toLocaleDateString(
-                            'en-US',
-                            { timeZone: shopTimeZone }
-                          ),
-                        },
-                        {
-                          key: 'Appointment Time',
-                          value: selectedSlot.start.toLocaleTimeString(
-                            'en-US',
-                            {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: shopTimeZone,
-                            }
-                          ),
-                        },
-                        {
-                          key: 'Appointment Mode',
-                          value:
-                            appointmentMode === 'REMOTE'
-                              ? 'Remote'
-                              : 'In Person',
-                        },
-                      ]
-                    : []),
-                ],
-              }
-            : {}),
+          attributes: [
+            { key: 'bookingId', value: transactionTraceId.get() },
+            { key: 'leadId', value: $customer.leadId },
+            ...(needsBooking && selectedSlot
+              ? [
+                  {
+                    key: 'Appointment Date',
+                    value: selectedSlot.start.toLocaleDateString('en-US', {
+                      timeZone: shopTimeZone,
+                    }),
+                  },
+                  {
+                    key: 'Appointment Time',
+                    value: selectedSlot.start.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: shopTimeZone,
+                    }),
+                  },
+                  {
+                    key: 'Appointment Mode',
+                    value:
+                      appointmentMode === 'REMOTE' ? 'Remote' : 'In Person',
+                  },
+                ]
+              : []),
+          ],
         }),
       });
       const result = await response.json();
