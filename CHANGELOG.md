@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - editable icons on creative pane
 - service-bound shopify products
 - tenant-scoped emails
+- logout domain cookie on sites using subdomain
 
 ### Added
 
