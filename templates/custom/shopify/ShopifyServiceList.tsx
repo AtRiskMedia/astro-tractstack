@@ -4,7 +4,7 @@ import {
   getCartItemKey,
   getServiceVariantIdFromCanonicalProduct,
   isSharedFeeService,
-} from '@/utils/customHelpers';
+} from '@/custom/shopify/shopifyHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {

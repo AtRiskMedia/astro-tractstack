@@ -7,13 +7,13 @@ import {
   transactionTraceId,
 } from '@/stores/shopify';
 import { bookingHelpers } from '@/utils/api/bookingHelpers';
+import { RESTRICTION_MESSAGES } from '@/custom/shopify/shopifyCustomHelper';
 import {
-  RESTRICTION_MESSAGES,
   calculateCartDuration,
   getCartItemKey,
   isSharedFeeService,
-} from '@/utils/customHelpers';
-import { wouldCartHaveImpossibleRemoteMix } from '@/utils/booking/appointmentMode';
+} from '@/custom/shopify/shopifyHelpers';
+import { wouldCartHaveImpossibleRemoteMix } from '@/custom/shopify/appointmentMode';
 import type { ResourceNode } from '@/types/compositorTypes';
 import type { CartItemState } from '@/stores/shopify';
 import type { BrandConfigState } from '@/types/tractstack';

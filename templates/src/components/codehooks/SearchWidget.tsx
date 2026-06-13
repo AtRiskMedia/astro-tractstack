@@ -16,7 +16,7 @@ import {
   getResourceUrl,
   getResourceImage,
   getResourceDescription,
-} from '@/utils/customHelpers';
+} from '@/custom/customHelpers';
 
 // --- TYPES ---
 interface SearchWidgetProps {

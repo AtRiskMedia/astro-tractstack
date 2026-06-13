@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon';
-import { initSearch } from '@/utils/customHelpers';
+import { initSearch } from '@/custom/customHelpers';
 import SearchModal from './SearchModal';
 import type { FullContentMapItem } from '@/types/tractstack';
 

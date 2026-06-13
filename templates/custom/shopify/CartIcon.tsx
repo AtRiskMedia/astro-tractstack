@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { cartStore } from '@/stores/shopify';
-import { getCartIconCount } from '@/utils/customHelpers';
+import { getCartIconCount } from '@/custom/shopify/shopifyHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartIconProps {

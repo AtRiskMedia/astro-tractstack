@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { cartStore, addQueue, type CartAction } from '@/stores/shopify';
-import { collectServiceGids } from '@/utils/customHelpers';
+import { collectServiceGids } from '@/custom/shopify/shopifyHelpers';
 import { getShopifyImage } from '@/utils/helpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 

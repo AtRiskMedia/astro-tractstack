@@ -8,7 +8,7 @@ import {
   getResourceUrl,
   getResourceImage,
   getResourceDescription,
-} from '@/utils/customHelpers';
+} from '@/custom/customHelpers';
 
 const VERBOSE = false;
 

@@ -8,7 +8,7 @@ import {
   getServiceLinkedProduct,
   isSharedFeeService,
   parsePrimaryShopifyProductData,
-} from '@/utils/customHelpers';
+} from '@/custom/shopify/shopifyHelpers';
 
 interface ShopifyDashboardSalesProps {
   existingResources: ResourceNode[];

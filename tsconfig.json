@@ -17,7 +17,7 @@
       "@/hooks/*": ["templates/src/hooks/*"],
       "@/client/*": ["templates/src/client/*"],
       "@/lib/*": ["templates/src/lib/*"],
-      "@/custom/*": ["templates/src/custom/*"]
+      "@/custom/*": ["templates/custom/*"]
     }
   }
 }

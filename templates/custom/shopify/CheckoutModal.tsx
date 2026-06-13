@@ -24,7 +24,8 @@ import { bookingHelpers } from '@/utils/api/bookingHelpers';
 import {
   deriveAppointmentConstraints,
   pickInitialAppointmentMode,
-} from '@/utils/booking/appointmentMode';
+  type AppointmentMode,
+} from '@/custom/shopify/appointmentMode';
 import { NativeBookingCalendar } from './NativeBookingCalendar';
 import { ProfileStorage } from '@/utils/profileStorage';
 import {
@@ -35,7 +36,7 @@ import {
   hasGidBackedCheckout,
   isSharedFeeService,
   parsePrimaryShopifyProductData,
-} from '@/utils/customHelpers';
+} from '@/custom/shopify/shopifyHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 type CheckoutState =
@@ -45,7 +46,6 @@ type CheckoutState =
   | 'SUMMARY'
   | 'PROCESSING'
   | 'SUCCESS';
-type AppointmentMode = 'IN_PERSON' | 'REMOTE';
 
 interface CheckoutModalProps {
   maxLength: number;

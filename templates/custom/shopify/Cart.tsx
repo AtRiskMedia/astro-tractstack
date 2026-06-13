@@ -12,14 +12,14 @@ import {
   type CartItemState,
 } from '@/stores/shopify';
 import { getShopifyImage } from '@/utils/helpers';
-import { deriveAppointmentConstraints } from '@/utils/booking/appointmentMode';
+import { deriveAppointmentConstraints } from '@/custom/shopify/appointmentMode';
 import {
   getServiceLinkedProduct,
   getServiceVariantIdFromCanonicalProduct,
   getSharedFeeChargeLineSummary,
   isSharedFeeService,
   parsePrimaryShopifyProductData,
-} from '@/utils/customHelpers';
+} from '@/custom/shopify/shopifyHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface CartProps {

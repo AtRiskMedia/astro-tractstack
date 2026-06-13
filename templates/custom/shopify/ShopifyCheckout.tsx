@@ -6,7 +6,7 @@ import {
   CART_STATES,
   isShopifyHandoff,
 } from '@/stores/shopify';
-import { buildShopifyCheckoutLines } from '@/utils/customHelpers';
+import { buildShopifyCheckoutLines } from '@/custom/shopify/shopifyHelpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface ShopifyCheckoutProps {

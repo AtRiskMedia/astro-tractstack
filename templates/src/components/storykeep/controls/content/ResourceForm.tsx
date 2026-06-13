@@ -13,7 +13,7 @@ import EnumSelect from '@/components/form/EnumSelect';
 import {
   resourceFormHideFields,
   resourceJsonifyFields,
-} from '@/utils/customHelpers';
+} from '@/custom/customHelpers';
 import type {
   ResourceConfig,
   ResourceState,

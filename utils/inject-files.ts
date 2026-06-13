@@ -2385,13 +2385,23 @@ export async function injectTemplateFiles(
       protected: true,
     },
     {
-      src: resolve('../templates/src/utils/customHelpers.ts'),
-      dest: 'src/utils/customHelpers.ts',
+      src: resolve('../templates/custom/customHelpers.ts'),
+      dest: 'src/custom/customHelpers.ts',
       protected: true,
     },
     {
-      src: resolve('../templates/src/utils/booking/appointmentMode.ts'),
-      dest: 'src/utils/booking/appointmentMode.ts',
+      src: resolve('../templates/custom/shopify/shopifyCustomHelper.ts'),
+      dest: 'src/custom/shopify/shopifyCustomHelper.ts',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/shopifyHelpers.ts'),
+      dest: 'src/custom/shopify/shopifyHelpers.ts',
+      protected: true,
+    },
+    {
+      src: resolve('../templates/custom/shopify/appointmentMode.ts'),
+      dest: 'src/custom/shopify/appointmentMode.ts',
       protected: true,
     },
     {
