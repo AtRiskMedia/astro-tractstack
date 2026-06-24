@@ -1,0 +1,15 @@
+---
+export const partial = true;
+import EpinetWrapper from '@/components/codehooks/EpinetWrapper';
+import {
+  parseCodeHookBladeContext,
+  resolveCodeHookFullContentMap,
+} from '@/lib/codeHookHelper';
+
+const { tenantId } = parseCodeHookBladeContext(Astro.url.searchParams);
+const fullContentMap = await resolveCodeHookFullContentMap(tenantId);
+---
+
+<div style="min-height: 400px;">
+  <EpinetWrapper fullContentMap={fullContentMap} client:only="react" />
+</div>

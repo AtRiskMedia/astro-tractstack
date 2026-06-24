@@ -1,0 +1,25 @@
+---
+export const partial = true;
+import ShopifyProductGrid from '@/custom/shopify/ShopifyProductGrid';
+import {
+  parseCodeHookBladeContext,
+  resolveCodeHookResources,
+} from '@/lib/codeHookHelper';
+
+const { tenantId, optionsStr, options } = parseCodeHookBladeContext(
+  Astro.url.searchParams
+);
+const resources = await resolveCodeHookResources(
+  tenantId,
+  optionsStr,
+  'shopify-product-grid'
+);
+---
+
+<div style="min-height: 400px;">
+  <ShopifyProductGrid
+    options={options}
+    resources={resources}
+    client:only="react"
+  />
+</div>

@@ -1,0 +1,13 @@
+---
+export const partial = true;
+import SearchWidget from '@/components/codehooks/SearchWidget.tsx';
+import {
+  parseCodeHookBladeContext,
+  resolveCodeHookFullContentMap,
+} from '@/lib/codeHookHelper';
+
+const { tenantId } = parseCodeHookBladeContext(Astro.url.searchParams);
+const fullContentMap = await resolveCodeHookFullContentMap(tenantId);
+---
+
+<SearchWidget fullContentMap={fullContentMap} client:load />

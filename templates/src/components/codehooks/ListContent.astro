@@ -7,10 +7,10 @@ export interface Props {
       options?: string;
     };
   };
-  contentMap: FullContentMapItem[];
+  fullContentMap: FullContentMapItem[];
 }
 
-const { options, contentMap } = Astro.props;
+const { options, fullContentMap } = Astro.props;
 
 // Parse component options
 let parsedOptions;
@@ -36,7 +36,7 @@ const title = parsedOptions.title;
 const bgColor = parsedOptions.bgColor || '';
 
 // Filter for valid stories to display
-const validPages = contentMap.filter(
+const validPages = fullContentMap.filter(
   (item: FullContentMapItem): boolean =>
     item.type === 'StoryFragment' &&
     typeof item.description === 'string' &&

@@ -11,7 +11,10 @@ import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import CheckCircleIcon from '@heroicons/react/24/outline/CheckCircleIcon';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
-import { epinetCustomFilters } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  setEpinetCustomFilters,
+} from '@/stores/analytics';
 import EpinetTableView from './EpinetTableView';
 import { MAX_ANALYTICS_HOURS } from '@/constants';
 import type { AppliedFilter } from '@/stores/analytics';
@@ -220,7 +223,7 @@ const EpinetDurationSelector = ({
     }
     setIsApplying(true);
     try {
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+      setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         visitorType: localFilters.visitorType,
         selectedUserId: localFilters.selectedUserId,
@@ -794,10 +797,16 @@ const EpinetDurationSelector = ({
                           collection={createListCollection({
                             items: [
                               { value: '', label: 'Select user' },
-                              ...paginatedUserCounts.map((user) => ({
-                                value: user.id,
-                                label: `${user.id} (${user.count} events)`,
-                              })),
+                              ...paginatedUserCounts.map(
+                                (user: {
+                                  id: string;
+                                  count: number;
+                                  isKnown: boolean;
+                                }) => ({
+                                  value: user.id,
+                                  label: `${user.id} (${user.count} events)`,
+                                })
+                              ),
                             ],
                           })}
                           value={
@@ -844,23 +853,29 @@ const EpinetDurationSelector = ({
                                         Select user
                                       </Select.ItemText>
                                     </Select.Item>,
-                                    ...paginatedUserCounts.map((user) => (
-                                      <Select.Item
-                                        key={user.id}
-                                        item={{
-                                          value: user.id,
-                                          label: `${user.id} (${user.count} events)`,
-                                        }}
-                                        className="epinet-user-select-item cursor-pointer select-none p-2 text-sm text-gray-700 hover:bg-slate-100"
-                                      >
-                                        <Select.ItemText>
-                                          {user.id}{' '}
-                                          <span className="text-xs text-gray-500">
-                                            ({user.count} events)
-                                          </span>
-                                        </Select.ItemText>
-                                      </Select.Item>
-                                    )),
+                                    ...paginatedUserCounts.map(
+                                      (user: {
+                                        id: string;
+                                        count: number;
+                                        isKnown: boolean;
+                                      }) => (
+                                        <Select.Item
+                                          key={user.id}
+                                          item={{
+                                            value: user.id,
+                                            label: `${user.id} (${user.count} events)`,
+                                          }}
+                                          className="epinet-user-select-item cursor-pointer select-none p-2 text-sm text-gray-700 hover:bg-slate-100"
+                                        >
+                                          <Select.ItemText>
+                                            {user.id}{' '}
+                                            <span className="text-xs text-gray-500">
+                                              ({user.count} events)
+                                            </span>
+                                          </Select.ItemText>
+                                        </Select.Item>
+                                      )
+                                    ),
                                   ]
                                 ) : (
                                   <div className="p-2 text-sm text-gray-500">

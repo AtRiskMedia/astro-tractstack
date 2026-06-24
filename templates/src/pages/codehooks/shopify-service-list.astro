@@ -1,0 +1,25 @@
+---
+export const partial = true;
+import ShopifyServiceList from '@/custom/shopify/ShopifyServiceList';
+import {
+  parseCodeHookBladeContext,
+  resolveCodeHookResources,
+} from '@/lib/codeHookHelper';
+
+const { tenantId, optionsStr, options } = parseCodeHookBladeContext(
+  Astro.url.searchParams
+);
+const resources = await resolveCodeHookResources(
+  tenantId,
+  optionsStr,
+  'shopify-service-list'
+);
+---
+
+<div style="min-height: 300px;">
+  <ShopifyServiceList
+    options={options}
+    resources={resources}
+    client:only="react"
+  />
+</div>

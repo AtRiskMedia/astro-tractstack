@@ -1,7 +1,11 @@
 import { useState, useCallback, useMemo, Component } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  getEpinetCustomFilters,
+  setEpinetCustomFilters,
+} from '@/stores/analytics';
 import { classNames } from '@/utils/helpers';
 import ArrowDownTrayIcon from '@heroicons/react/24/outline/ArrowDownTrayIcon';
 import DashboardActivity from './Dashboard_Activity';
@@ -167,7 +171,7 @@ export default function StoryKeepDashboard_Analytics({
 
   const handleBeliefFilterChange = (beliefSlug: string, value: string) => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
-    const currentFilters = epinetCustomFilters.get();
+    const currentFilters = getEpinetCustomFilters();
     let newFilters = [...(currentFilters.appliedFilters || [])];
 
     if (value === 'All') {
@@ -183,7 +187,7 @@ export default function StoryKeepDashboard_Analytics({
       }
     }
 
-    epinetCustomFilters.set(tenantId, {
+    setEpinetCustomFilters(tenantId, {
       ...currentFilters,
       appliedFilters: newFilters,
     });
@@ -220,7 +224,7 @@ export default function StoryKeepDashboard_Analytics({
         nowUTC.getTime() - hoursBack * 60 * 60 * 1000
       );
 
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+      setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         enabled: true,
         startTimeUTC: startTimeUTC.toISOString(),

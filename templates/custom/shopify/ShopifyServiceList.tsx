@@ -8,7 +8,7 @@ import {
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
-  resources: Record<string, ResourceNode[]>;
+  resources: ResourceNode[];
   options?: {
     params?: {
       options?: string;
@@ -18,11 +18,11 @@ interface Props {
 
 const HEX_BG_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
-export default function ShopifyServiceList({ resources = {}, options }: Props) {
+export default function ShopifyServiceList({ resources = [], options }: Props) {
   const cart = useStore(cartStore);
 
-  const products = resources['product'] || [];
-  let services = resources['service'] || [];
+  const products = resources.filter((r) => r.categorySlug === 'product');
+  let services = resources.filter((r) => r.categorySlug === 'service');
 
   let group = '';
   let title = '';

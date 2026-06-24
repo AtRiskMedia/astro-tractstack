@@ -149,6 +149,7 @@ export const Node = memo((props: NodeProps) => {
                   first={true}
                   ctx={ctx}
                   isContextPane={true}
+                  isSandboxMode={props.isSandboxMode || false}
                 />
               </>
             );
@@ -201,7 +202,12 @@ export const Node = memo((props: NodeProps) => {
         element = (
           <>
             {first && (
-              <AddPanePanel nodeId={props.nodeId} first={true} ctx={ctx} />
+              <AddPanePanel
+                nodeId={props.nodeId}
+                first={true}
+                ctx={ctx}
+                isSandboxMode={props.isSandboxMode || false}
+              />
             )}
             <div className="py-0.5">
               <ConfigPanePanel
@@ -217,7 +223,12 @@ export const Node = memo((props: NodeProps) => {
                 {content}
               </PanelVisibilityWrapper>
             </div>
-            <AddPanePanel nodeId={props.nodeId} first={false} ctx={ctx} />
+            <AddPanePanel
+              nodeId={props.nodeId}
+              first={false}
+              ctx={ctx}
+              isSandboxMode={props.isSandboxMode || false}
+            />
           </>
         );
       }

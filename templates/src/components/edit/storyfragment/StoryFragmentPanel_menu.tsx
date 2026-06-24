@@ -13,7 +13,7 @@ import {
   type MenuNode,
 } from '@/types/compositorTypes';
 import MenuForm from '@/components/storykeep/controls/content/MenuForm';
-import { fullContentMapStore, getFullContentMap } from '@/stores/analytics';
+import { getFullContentMap, setTenantFullContentMap } from '@/stores/analytics';
 import type { FullContentMapItem } from '@/types/tractstack';
 
 interface StoryFragmentMenuPanelProps {
@@ -53,7 +53,7 @@ const StoryFragmentMenuPanel = ({
         if (!contentMap) {
           const currentContentMap = await api.getContentMapWithTimestamp();
           if (currentContentMap.success && currentContentMap.data) {
-            fullContentMapStore.set(tenantId, currentContentMap.data);
+            setTenantFullContentMap(tenantId, currentContentMap.data);
             setContentMap(currentContentMap.data.data);
           }
         }

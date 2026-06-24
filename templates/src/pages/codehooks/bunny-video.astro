@@ -1,0 +1,9 @@
+---
+export const partial = true;
+import BunnyVideoWrapper from '@/components/codehooks/BunnyVideoWrapper.astro';
+import { parseCodeHookBladeContext } from '@/lib/codeHookHelper';
+
+const { options } = parseCodeHookBladeContext(Astro.url.searchParams);
+---
+
+<BunnyVideoWrapper options={options} />

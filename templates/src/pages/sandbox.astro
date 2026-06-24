@@ -5,9 +5,7 @@ import Layout from '@/layouts/Layout.astro';
 import Header from '@/components/Header.astro';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
-import CodeHook, {
-  components as codeHookComponents,
-} from '@/custom/CodeHook.astro';
+import { availableCodeHookIds } from '@/custom/codehooks';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
@@ -64,15 +62,6 @@ const sandboxToken = `${timestamp}.${signature}`;
   isStoryKeep={true}
   isEditor={true}
 >
-  <CodeHook
-    target="get-tractstack"
-    options={{
-      params: {
-        options: JSON.stringify({ isEmbedded: false }),
-      },
-    }}
-  />
-
   <Header
     title={title}
     slug="sandbox"
@@ -115,7 +104,7 @@ const sandboxToken = `${timestamp}.${signature}`;
             fullContentMap={fullContentMap}
             fullCanonicalURL="/sandbox"
             urlParams={urlParams}
-            availableCodeHooks={Object.keys(codeHookComponents)}
+            availableCodeHooks={availableCodeHookIds}
             isSandboxMode={true}
             sandboxToken={sandboxToken}
             client:only="react"
@@ -137,7 +126,7 @@ const sandboxToken = `${timestamp}.${signature}`;
 
     <div class="pointer-events-auto max-h-full">
       <SettingsPanel
-        availableCodeHooks={Object.keys(codeHookComponents)}
+        availableCodeHooks={availableCodeHookIds}
         client:only="react"
       />
     </div>

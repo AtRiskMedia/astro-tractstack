@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '@/utils/helpers';
-import { epinetCustomFilters } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  setEpinetCustomFilters,
+} from '@/stores/analytics';
 import { Accordion } from '@ark-ui/react';
 import ChevronLeftIcon from '@heroicons/react/24/outline/ChevronLeftIcon';
 import ChevronRightIcon from '@heroicons/react/24/outline/ChevronRightIcon';
@@ -176,7 +179,7 @@ const EpinetTableView = ({
       const endTimeUTC = new Date(
         Date.UTC(year, month - 1, day, hour, 59, 59, 999)
       );
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+      setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...$epinetCustomFilters,
         startTimeUTC: startTimeUTC.toISOString(),
         endTimeUTC: endTimeUTC.toISOString(),

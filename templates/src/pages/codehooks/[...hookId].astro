@@ -1,0 +1,18 @@
+---
+export const partial = true;
+const hookId = Astro.params.hookId || '';
+---
+
+<div class="my-4 w-full bg-gray-50 p-6">
+  <div
+    class="mb-4 rounded-lg border-2 border-dashed border-gray-300 bg-slate-50 p-6"
+  >
+    <h3 class="text-lg text-gray-700">
+      Code Hook:{' '}
+      <span class="font-action font-bold">{hookId || 'unknown'}</span>
+    </h3>
+    <p class="mt-2 text-sm text-gray-500">
+      CodeHook not activated for this install.
+    </p>
+  </div>
+</div>

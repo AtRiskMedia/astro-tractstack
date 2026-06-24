@@ -1,0 +1,13 @@
+---
+export const partial = true;
+import ListContent from '@/components/codehooks/ListContent.astro';
+import {
+  parseCodeHookBladeContext,
+  resolveCodeHookFullContentMap,
+} from '@/lib/codeHookHelper';
+
+const { tenantId, options } = parseCodeHookBladeContext(Astro.url.searchParams);
+const fullContentMap = await resolveCodeHookFullContentMap(tenantId);
+---
+
+<ListContent options={options} fullContentMap={fullContentMap} />

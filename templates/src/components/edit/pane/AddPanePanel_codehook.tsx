@@ -5,7 +5,11 @@ import { Combobox } from '@ark-ui/react';
 import { createListCollection } from '@ark-ui/react/collection';
 import ChevronUpDownIcon from '@heroicons/react/20/solid/ChevronUpDownIcon';
 import CheckIcon from '@heroicons/react/20/solid/CheckIcon';
-import { codehookMapStore, fullContentMapStore } from '@/stores/storykeep';
+import {
+  brandConfigStore,
+  codehookMapStore,
+  fullContentMapStore,
+} from '@/stores/storykeep';
 import { getCtx } from '@/stores/nodes';
 import { findUniqueSlug } from '@/utils/helpers';
 import { PaneAddMode, type TemplatePane } from '@/types/compositorTypes';
@@ -16,6 +20,7 @@ interface AddPaneCodeHookPanelProps {
   setMode: (mode: PaneAddMode) => void;
   isStoryFragment?: boolean;
   isContextPane?: boolean;
+  isSandboxMode?: boolean;
 }
 
 const AddPaneCodeHookPanel = ({
@@ -24,10 +29,13 @@ const AddPaneCodeHookPanel = ({
   setMode,
   isStoryFragment = false,
   isContextPane = false,
+  isSandboxMode = false,
 }: AddPaneCodeHookPanelProps) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const $contentMap = useStore(fullContentMapStore);
+  const brandConfig = useStore(brandConfigStore);
+  const hasShopify = brandConfig?.HAS_SHOPIFY === true;
 
   const existingSlugs = $contentMap
     .filter((item) => ['Pane', 'StoryFragment'].includes(item.type))
@@ -39,9 +47,22 @@ const AddPaneCodeHookPanel = ({
 
   const availableCodeHooks = codehookMapStore.get();
 
-  // Filter hooks based on search query
+  const isHookVisibleInPicker = (hookName: string) => {
+    if (
+      (hookName === 'shopify-product-grid' ||
+        hookName === 'shopify-service-list') &&
+      !hasShopify
+    ) {
+      return false;
+    }
+    if (hookName === 'get-crafting' && !isSandboxMode) {
+      return false;
+    }
+    return true;
+  };
+
+  // Filter hooks based on search query and tenant/sandbox gates
   const filteredHooks = useMemo(() => {
-    // Start with available hooks
     const hooks =
       query === ''
         ? [...availableCodeHooks]
@@ -49,9 +70,8 @@ const AddPaneCodeHookPanel = ({
             hook.toLowerCase().includes(query.toLowerCase())
           );
 
-    // Create a new array with unavailable hooks removed (don't just filter - we want to show them as disabled)
-    return hooks;
-  }, [availableCodeHooks, query]);
+    return hooks.filter(isHookVisibleInPicker);
+  }, [availableCodeHooks, query, hasShopify, isSandboxMode]);
 
   // Create collection for Ark UI Combobox
   const collection = useMemo(() => {
@@ -64,21 +84,22 @@ const AddPaneCodeHookPanel = ({
 
   const isHookAvailable = (hookName: string) => {
     if (
-      (hookName === 'featured-content' ||
-        hookName === 'list-content' ||
-        hookName === 'featured-article') &&
+      (hookName === 'list-content' || hookName === 'featured-article') &&
       !hasStoryFragments
     ) {
-      return hasStoryFragments;
+      return false;
+    }
+    if (
+      hookName === 'bunny-video' &&
+      import.meta.env.PUBLIC_ENABLE_BUNNY !== 'true'
+    ) {
+      return false;
     }
     return true;
   };
 
   const getDisplayName = (hookName: string) => {
-    if (
-      (hookName === 'featured-content' || hookName === 'list-content') &&
-      !hasStoryFragments
-    ) {
+    if (hookName === 'list-content' && !hasStoryFragments) {
       return `${hookName} (not yet available; no pages found)`;
     }
     return hookName;

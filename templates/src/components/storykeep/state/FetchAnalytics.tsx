@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  getEpinetCustomFilters,
+  setEpinetCustomFilters,
+} from '@/stores/analytics';
 import { TractStackAPI } from '@/utils/api';
 
 const VERBOSE = false;
@@ -252,7 +256,7 @@ class AnalyticsService {
       this.setCachedResponse(cacheKey, analyticsData);
       onUpdate(analyticsData);
 
-      epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+      setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
         ...filters,
         availableFilters: data.availableFilters || [],
       });
@@ -298,9 +302,9 @@ class AnalyticsService {
     if (VERBOSE) console.log('🏁 Initializing analytics filters');
     const nowUTC = new Date();
     const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const current = epinetCustomFilters.get();
+    const current = getEpinetCustomFilters();
     if (!current.enabled) {
-      epinetCustomFilters.set(tenantId, {
+      setEpinetCustomFilters(tenantId, {
         enabled: true,
         visitorType: 'all',
         selectedUserId: null,

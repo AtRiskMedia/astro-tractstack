@@ -6,7 +6,7 @@ import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { joinUrlPaths } from '@/utils/helpers';
 import { handleFailedResponse } from '@/utils/backend';
-import { components as codeHookComponents } from '@/custom/CodeHook.astro';
+import { availableCodeHookIds } from '@/custom/codehooks';
 import StoryKeepHeader from '@/components/edit/Header';
 import StoryKeepToolBar from '@/components/edit/ToolBar';
 import StoryKeepToolMode from '@/components/edit/ToolMode';
@@ -188,7 +188,7 @@ for (const [key, value] of Astro.url.searchParams) {
             fullContentMap={fullContentMap}
             fullCanonicalURL={fullCanonicalURL}
             urlParams={urlParams}
-            availableCodeHooks={Object.keys(codeHookComponents)}
+            availableCodeHooks={availableCodeHookIds}
             client:only="react"
           />
         </div>
@@ -213,7 +213,7 @@ for (const [key, value] of Astro.url.searchParams) {
     }
     <div class="pointer-events-auto max-h-full">
       <SettingsPanel
-        availableCodeHooks={Object.keys(codeHookComponents)}
+        availableCodeHooks={availableCodeHookIds}
         client:only="react"
       />
     </div>

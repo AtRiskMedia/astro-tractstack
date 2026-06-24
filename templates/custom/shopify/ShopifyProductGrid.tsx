@@ -6,7 +6,7 @@ import { getShopifyImage } from '@/utils/helpers';
 import type { ResourceNode } from '@/types/compositorTypes';
 
 interface Props {
-  resources: Record<string, ResourceNode[]>;
+  resources: ResourceNode[];
   options?: {
     params?: {
       options?: string;
@@ -218,9 +218,9 @@ function ProductCard({ resource, allServices }: ProductCardProps) {
 
 const HEX_BG_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
-export default function ShopifyProductGrid({ resources = {}, options }: Props) {
-  let products = resources['product'] || [];
-  const services = resources['service'] || [];
+export default function ShopifyProductGrid({ resources = [], options }: Props) {
+  let products = resources.filter((r) => r.categorySlug === 'product');
+  const services = resources.filter((r) => r.categorySlug === 'service');
 
   let group = '';
   let title = '';

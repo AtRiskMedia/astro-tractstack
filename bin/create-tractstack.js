@@ -7,14 +7,33 @@ import {
   writeFileSync,
   existsSync,
 } from 'fs';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import { execSync } from 'child_process';
 import prompts from 'prompts';
 import kleur from 'kleur';
 
-// Keep in sync with package.json pnpm.overrides["@internationalized/date"]
-const INTL_DATE_VERSION = '3.10.1';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function loadInstallManifest() {
+  const pkg = JSON.parse(
+    readFileSync(resolve(__dirname, '../package.json'), 'utf-8')
+  );
+  const manifest = pkg.tractstackInstall;
+  if (!manifest?.dependencies) {
+    throw new Error(
+      'astro-tractstack package.json is missing tractstackInstall.dependencies'
+    );
+  }
+  return manifest;
+}
+
+function formatPackageSpecs(deps) {
+  return Object.entries(deps)
+    .map(([name, version]) => (version ? `${name}@${version}` : name))
+    .join(' ');
+}
 
 // Detect package manager
 function detectPackageManager() {
@@ -332,67 +351,27 @@ PUBLIC_ENABLE_BUNNY="${finalResponses.enableBunny ? 'true' : 'false'}"
     packageManager === 'pnpm' ? 'pnpm add' : `${packageManager} add`;
 
   console.log(kleur.cyan('\nInstalling dependencies...'));
+  const installManifest = loadInstallManifest();
+  const dependencySpecs = formatPackageSpecs(installManifest.dependencies);
+  const devDependencySpecs = formatPackageSpecs(
+    installManifest.devDependencies || {}
+  );
+
   try {
-    // Install React and Node adapter
-    execSync(
-      `${addCommand} react@^19.0.0 react-dom@^19.0.0 astro@^5.16.6 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3`,
-      { stdio: 'inherit' }
-    );
-    console.log(kleur.green('✅ React and Node adapter installed'));
+    execSync(`${addCommand} ${dependencySpecs}`, { stdio: 'inherit' });
+    console.log(kleur.green('✅ TractStack dependencies installed'));
 
-    // Install core dependencies
-    execSync(
-      `${addCommand} @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1`,
-      {
-        stdio: 'inherit',
-      }
-    );
-    console.log(kleur.green('✅ State management installed'));
-
-    // Install UI components
-    execSync(
-      `${addCommand} @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@${INTL_DATE_VERSION}`,
-      {
-        stdio: 'inherit',
-      }
-    );
-    console.log(kleur.green('✅ UI components installed'));
-
-    // Install visualization dependencies
-    execSync(
-      `${addCommand} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@^1.6.0 html-to-image@^1.11.13`,
-      {
-        stdio: 'inherit',
-      }
-    );
-    console.log(kleur.green('✅ Visualization dependencies installed'));
-
-    // Install additional dependencies
-    execSync(
-      `${addCommand} path-to-regexp@^8.0.0 postcss postcss-selector-parser`,
-      { stdio: 'inherit' }
-    );
-    console.log(kleur.green('✅ Additional dependencies installed'));
-
-    // Install dev dependencies
-    execSync(
-      `${addCommand} -D @types/node@^22.18.0 @types/react@^19.0.0 @types/react-dom@^19.0.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.7.4 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.7.2 typescript@^5.9.3 @types/tinycolor2@^1.4.6 @mhsdesign/jit-browser-tailwindcss@^0.4.2`,
-      { stdio: 'inherit' }
-    );
-    console.log(kleur.green('✅ Dev dependencies installed'));
+    if (devDependencySpecs) {
+      execSync(`${addCommand} -D ${devDependencySpecs}`, { stdio: 'inherit' });
+      console.log(kleur.green('✅ Dev dependencies installed'));
+    }
   } catch (error) {
     console.log(kleur.red('❌ Failed to install dependencies'));
     console.log('Please run manually:');
-    console.log(
-      kleur.cyan(
-        `${addCommand} react@^19.0.0 react-dom@^19.0.0 astro@^5.16.6 @astrojs/react@^4.4.2 @astrojs/node@^9.4.3 @nanostores/react@^1.0.0 nanostores@^1.0.1 @nanostores/persistent ulid@^3.0.1 @ark-ui/react@^5.30.0 @heroicons/react@^2.1.1 @internationalized/date@${INTL_DATE_VERSION} d3@^7.9.0 d3-sankey@^0.12.3 recharts@^3.1.2 player.js@^0.1.0 tinycolor2@1.6.0 html-to-image@^1.11.13 path-to-regexp@^8.0.0 postcss postcss-selector-parser`
-      )
-    );
-    console.log(
-      kleur.cyan(
-        `${addCommand} -D @types/node@^22.18.0 @types/react@^19.0.0 @types/react-dom@^19.0.0 @types/d3@^7.4.3 @types/d3-sankey@^0.12.3 prettier@^3.7.4 prettier-plugin-astro@^0.14.1 prettier-plugin-tailwindcss@^0.7.2 typescript@^5.9.3 @types/tinycolor2@^1.4.6 @mhsdesign/jit-browser-tailwindcss@^0.4.2`
-      )
-    );
+    console.log(kleur.cyan(`${addCommand} ${dependencySpecs}`));
+    if (devDependencySpecs) {
+      console.log(kleur.cyan(`${addCommand} -D ${devDependencySpecs}`));
+    }
     process.exit(1);
   }
 

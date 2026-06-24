@@ -139,7 +139,7 @@ export default function Wizard({
     const buildWizardData = async () => {
       try {
         const homePage = activeContentMap.find(
-          (item) => item.slug === homeSlug
+          (item: FullContentMapItem) => item.slug === homeSlug
         );
 
         let homeData = null;
@@ -173,7 +173,9 @@ export default function Wizard({
           hasPanes: !!homePage?.panes?.length,
           hasSeo: !!homePage?.description,
           hasMenu: !!homeData?.menuId,
-          hasAnyMenu: activeContentMap.some((item) => item.type === 'Menu'),
+          hasAnyMenu: activeContentMap.some(
+            (item: FullContentMapItem) => item.type === 'Menu'
+          ),
         };
 
         setWizardData(data);

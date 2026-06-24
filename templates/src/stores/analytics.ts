@@ -1,4 +1,4 @@
-import { atom } from 'nanostores';
+import { atom, computed } from 'nanostores';
 import { TractStackAPI } from '@/utils/api';
 
 interface AvailableFilter {
@@ -11,43 +11,38 @@ export interface AppliedFilter {
   value: string;
 }
 
-const tenantEpinetCustomFilters = atom<
-  Record<
+export interface EpinetFiltersState {
+  enabled: boolean;
+  visitorType: 'all' | 'anonymous' | 'known';
+  selectedUserId: string | null;
+  startTimeUTC: string | null;
+  endTimeUTC: string | null;
+  userCounts: Array<{ id: string; count: number; isKnown: boolean }>;
+  hourlyNodeActivity: Record<
     string,
-    {
-      enabled: boolean;
-      visitorType: 'all' | 'anonymous' | 'known';
-      selectedUserId: string | null;
-      startTimeUTC: string | null;
-      endTimeUTC: string | null;
-      userCounts: Array<{ id: string; count: number; isKnown: boolean }>;
-      hourlyNodeActivity: Record<
-        string,
-        Record<
-          string,
-          {
-            events: Record<string, number>;
-            visitorIds: string[];
-          }
-        >
-      >;
-      availableFilters: AvailableFilter[];
-      appliedFilters: AppliedFilter[];
-    }
-  >
->({});
+    Record<
+      string,
+      {
+        events: Record<string, number>;
+        visitorIds: string[];
+      }
+    >
+  >;
+  availableFilters: AvailableFilter[];
+  appliedFilters: AppliedFilter[];
+}
 
-const tenantFullContentMaps = atom<
-  Record<
-    string,
-    {
-      data: any[];
-      lastUpdated: number;
-    }
-  >
->({});
+export interface TenantFullContentMapState {
+  data: any[];
+  lastUpdated: number;
+}
 
-// Helper to get current tenant ID
+const tenantEpinetCustomFilters = atom<Record<string, EpinetFiltersState>>({});
+
+const tenantFullContentMaps = atom<Record<string, TenantFullContentMapState>>(
+  {}
+);
+
 function getCurrentTenantId(): string {
   const resolvedTenantId =
     (typeof window !== 'undefined' && window.TRACTSTACK_CONFIG?.tenantId) ||
@@ -56,9 +51,9 @@ function getCurrentTenantId(): string {
   return resolvedTenantId;
 }
 
-const defaultEpinetFilters = {
+const defaultEpinetFilters: EpinetFiltersState = {
   enabled: false,
-  visitorType: 'all' as 'all' | 'anonymous' | 'known',
+  visitorType: 'all',
   selectedUserId: null,
   startTimeUTC: null,
   endTimeUTC: null,
@@ -68,81 +63,56 @@ const defaultEpinetFilters = {
   appliedFilters: [],
 };
 
-const createEpinetFiltersStore = () => {
-  const store = {
-    get: () => {
-      const tenantId = getCurrentTenantId();
-      return tenantEpinetCustomFilters.get()[tenantId] || defaultEpinetFilters;
-    },
+export const epinetCustomFilters = computed(
+  tenantEpinetCustomFilters,
+  (filters) => {
+    const tenantId = getCurrentTenantId();
+    return filters[tenantId] || defaultEpinetFilters;
+  }
+);
 
-    set: (tenantId: string, updates: any) => {
-      const currentFilters =
-        tenantEpinetCustomFilters.get()[tenantId] || defaultEpinetFilters;
-      tenantEpinetCustomFilters.set({
-        ...tenantEpinetCustomFilters.get(),
-        [tenantId]: {
-          ...currentFilters,
-          ...updates,
-        },
-      });
-    },
+export function getEpinetCustomFilters(): EpinetFiltersState {
+  return epinetCustomFilters.get();
+}
 
-    subscribe: (callback: (value: any) => void) => {
-      const tenantId = getCurrentTenantId();
-      return tenantEpinetCustomFilters.subscribe((filters) => {
-        callback(filters[tenantId] || defaultEpinetFilters);
-      });
+export function setEpinetCustomFilters(
+  tenantId: string,
+  updates: Partial<EpinetFiltersState>
+): void {
+  const currentFilters =
+    tenantEpinetCustomFilters.get()[tenantId] || defaultEpinetFilters;
+  tenantEpinetCustomFilters.set({
+    ...tenantEpinetCustomFilters.get(),
+    [tenantId]: {
+      ...currentFilters,
+      ...updates,
     },
-    lc: 0,
-    listen: function (callback: any) {
-      return this.subscribe(callback);
-    },
-    notify: function () {},
-    off: function () {},
-    get value() {
-      return this.get();
-    },
-  };
+  });
+}
 
-  return store;
-};
+export const fullContentMapStore = computed(tenantFullContentMaps, (maps) => {
+  const tenantId = getCurrentTenantId();
+  return maps[tenantId] || null;
+});
 
-const createFullContentMapStore = () => {
-  const store = {
-    get: () => {
-      const tenantId = getCurrentTenantId();
-      return tenantFullContentMaps.get()[tenantId] || null;
-    },
+export function setTenantFullContentMap(
+  tenantId: string,
+  data: TenantFullContentMapState
+): void {
+  tenantFullContentMaps.set({
+    ...tenantFullContentMaps.get(),
+    [tenantId]: data,
+  });
+}
 
-    set: (tenantId: string, data: { data: any[]; lastUpdated: number }) => {
-      tenantFullContentMaps.set({
-        ...tenantFullContentMaps.get(),
-        [tenantId]: data,
-      });
-    },
-
-    subscribe: (callback: (value: any) => void) => {
-      const tenantId = getCurrentTenantId();
-      return tenantFullContentMaps.subscribe((maps) => {
-        callback(maps[tenantId] || null);
-      });
-    },
-    lc: 0,
-    listen: function (callback: any) {
-      return this.subscribe(callback);
-    },
-    notify: function () {},
-    off: function () {},
-    get value() {
-      return this.get();
-    },
-  };
-
-  return store;
-};
-
-export const epinetCustomFilters = createEpinetFiltersStore();
-export const fullContentMapStore = createFullContentMapStore();
+// Synchronous in-process accessor for the warm content-map atom, keyed on an
+// explicit tenantId (unlike fullContentMapStore.get(), which keys on
+// getCurrentTenantId() and resolves the wrong tenant during SSR sub-requests).
+// Returns [] on a cold miss; codehook blades fall back to the async
+// getFullContentMap(tenantId) when this is empty.
+export function getCachedFullContentMap(tenantId: string): any[] {
+  return tenantFullContentMaps.get()[tenantId]?.data ?? [];
+}
 
 export async function getFullContentMap(tenantId: string): Promise<any[]> {
   const api = new TractStackAPI(tenantId);

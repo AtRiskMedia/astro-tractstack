@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Switch } from '@ark-ui/react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  setEpinetCustomFilters,
+} from '@/stores/analytics';
 import { classNames } from '@/utils/helpers';
 import type { FullContentMapItem } from '@/types/tractstack';
 
@@ -104,7 +107,7 @@ const ContentBrowser = ({
   const setStandardDuration = (hours: number) => {
     const nowUTC = new Date();
     const startTimeUTC = new Date(nowUTC.getTime() - hours * 60 * 60 * 1000);
-    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+    setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       ...$epinetCustomFilters,
       enabled: true,
       startTimeUTC: startTimeUTC.toISOString(),

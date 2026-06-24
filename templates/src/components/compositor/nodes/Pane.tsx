@@ -5,8 +5,6 @@ import { RenderChildren } from './RenderChildren';
 import FeaturedArticleSetup from '@/components/codehooks/FeaturedArticleSetup';
 import ListContentSetup from '@/components/codehooks/ListContentSetup';
 import BunnyVideoSetup from '@/components/codehooks/BunnyVideoSetup';
-import { ProductCardSetup } from '@/components/codehooks/ProductCardSetup';
-import { ProductGridSetup } from '@/components/codehooks/ProductGridSetup';
 import { PaneOverlay } from '@/components/compositor/tools/PaneOverlay';
 import type {
   PaneNode,
@@ -15,13 +13,7 @@ import type {
 } from '@/types/compositorTypes';
 import type { NodeProps } from '@/types/nodeProps';
 
-const TARGETS = [
-  'list-content',
-  'featured-article',
-  'bunny-video',
-  'product-card',
-  'product-grid',
-];
+const TARGETS = ['list-content', 'featured-article', 'bunny-video'];
 
 const CodeHookContainer = ({
   payload,
@@ -171,11 +163,7 @@ const Pane = memo(
           id={getCtx(props).getNodeSlug(props.nodeId)}
           className={useFlexLayout ? '' : wrapperClasses}
         >
-          {codeHookPayload && codeHookTarget === 'product-card' ? (
-            <ProductCardSetup nodeId={props.nodeId} params={codeHookParams} />
-          ) : codeHookPayload && codeHookTarget === 'product-grid' ? (
-            <ProductGridSetup nodeId={props.nodeId} params={codeHookParams} />
-          ) : codeHookPayload && codeHookTarget === 'featured-article' ? (
+          {codeHookPayload && codeHookTarget === 'featured-article' ? (
             <FeaturedArticleSetup
               nodeId={props.nodeId}
               params={codeHookParams}

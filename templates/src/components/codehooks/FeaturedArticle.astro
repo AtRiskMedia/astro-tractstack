@@ -7,10 +7,10 @@ export interface Props {
       options?: string;
     };
   };
-  contentMap: FullContentMapItem[];
+  fullContentMap: FullContentMapItem[];
 }
 
-const { options, contentMap } = Astro.props;
+const { options, fullContentMap } = Astro.props;
 
 let parsedOptions;
 try {
@@ -22,7 +22,7 @@ try {
 
 const slug = parsedOptions.slug || '';
 
-const featuredStory = contentMap.find(
+const featuredStory = fullContentMap.find(
   (item: FullContentMapItem) =>
     item.slug === slug &&
     item.type === 'StoryFragment' &&

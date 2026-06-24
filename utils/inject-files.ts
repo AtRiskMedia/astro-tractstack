@@ -1520,18 +1520,6 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
-        '../templates/src/components/codehooks/ProductCardSetup.tsx'
-      ),
-      dest: 'src/components/codehooks/ProductCardSetup.tsx',
-    },
-    {
-      src: resolve(
-        '../templates/src/components/codehooks/ProductGridSetup.tsx'
-      ),
-      dest: 'src/components/codehooks/ProductGridSetup.tsx',
-    },
-    {
-      src: resolve(
         '../templates/src/components/codehooks/BunnyVideoWrapper.astro'
       ),
       dest: 'src/components/codehooks/BunnyVideoWrapper.astro',
@@ -1539,6 +1527,32 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/components/codehooks/BunnyVideoSetup.tsx'),
       dest: 'src/components/codehooks/BunnyVideoSetup.tsx',
+    },
+
+    // CodeHook Blades (partial routes; core hooks overwritable)
+    {
+      src: resolve('../templates/src/pages/codehooks/featured-article.astro'),
+      dest: 'src/pages/codehooks/featured-article.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/codehooks/list-content.astro'),
+      dest: 'src/pages/codehooks/list-content.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/codehooks/search-widget.astro'),
+      dest: 'src/pages/codehooks/search-widget.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/codehooks/bunny-video.astro'),
+      dest: 'src/pages/codehooks/bunny-video.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/codehooks/epinet.astro'),
+      dest: 'src/pages/codehooks/epinet.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/codehooks/[...hookId].astro'),
+      dest: 'src/pages/codehooks/[...hookId].astro',
     },
 
     // Widget Components
@@ -1567,6 +1581,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/lib/resources.ts'),
       dest: 'src/lib/resources.ts',
+    },
+    {
+      src: resolve('../templates/src/lib/codeHookHelper.ts'),
+      dest: 'src/lib/codeHookHelper.ts',
     },
 
     // Client Scripts
@@ -2360,15 +2378,6 @@ export async function injectTemplateFiles(
     {
       src: resolve(
         config?.includeExamples
-          ? '../templates/custom/with-examples/CodeHook.astro'
-          : '../templates/custom/minimal/CodeHook.astro'
-      ),
-      dest: 'src/custom/CodeHook.astro',
-      protected: true,
-    },
-    {
-      src: resolve(
-        config?.includeExamples
           ? '../templates/custom/with-examples/CustomRoutes.astro'
           : '../templates/custom/minimal/CustomRoutes.astro'
       ),
@@ -2376,11 +2385,7 @@ export async function injectTemplateFiles(
       protected: true,
     },
     {
-      src: resolve(
-        config?.includeExamples
-          ? '../templates/custom/with-examples/HeaderWidget.astro'
-          : '../templates/custom/minimal/HeaderWidget.astro'
-      ),
+      src: resolve('../templates/custom/minimal/HeaderWidget.astro'),
       dest: 'src/custom/HeaderWidget.astro',
       protected: true,
     },
@@ -2450,6 +2455,33 @@ export async function injectTemplateFiles(
       protected: true,
     },
 
+    // CodeHook manifest (frontend capability list; hand-maintained, protected)
+    {
+      src: resolve(
+        config?.includeExamples
+          ? '../templates/custom/with-examples/codehooks.ts'
+          : '../templates/custom/minimal/codehooks.ts'
+      ),
+      dest: 'src/custom/codehooks.ts',
+      protected: true,
+    },
+
+    // CodeHook Blades (userland hooks; protected once installed)
+    {
+      src: resolve(
+        '../templates/src/pages/codehooks/shopify-product-grid.astro'
+      ),
+      dest: 'src/pages/codehooks/shopify-product-grid.astro',
+      protected: true,
+    },
+    {
+      src: resolve(
+        '../templates/src/pages/codehooks/shopify-service-list.astro'
+      ),
+      dest: 'src/pages/codehooks/shopify-service-list.astro',
+      protected: true,
+    },
+
     // Example Components (Conditional)
     ...(config?.includeExamples
       ? [
@@ -2466,20 +2498,13 @@ export async function injectTemplateFiles(
             protected: true,
           },
           {
-            src: resolve('../templates/custom/with-examples/ProductGrid.astro'),
-            dest: 'src/custom/ProductGrid.astro',
+            src: resolve('../templates/src/pages/codehooks/custom-hero.astro'),
+            dest: 'src/pages/codehooks/custom-hero.astro',
             protected: true,
           },
           {
-            src: resolve(
-              '../templates/custom/with-examples/ProductCardWrapper.astro'
-            ),
-            dest: 'src/custom/ProductCardWrapper.astro',
-            protected: true,
-          },
-          {
-            src: resolve('../templates/custom/with-examples/ProductCard.astro'),
-            dest: 'src/custom/ProductCard.astro',
+            src: resolve('../templates/src/pages/codehooks/get-crafting.astro'),
+            dest: 'src/pages/codehooks/get-crafting.astro',
             protected: true,
           },
           {

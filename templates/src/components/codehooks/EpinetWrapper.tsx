@@ -6,7 +6,12 @@ import {
   type ReactNode,
 } from 'react';
 import { useStore } from '@nanostores/react';
-import { epinetCustomFilters, type AppliedFilter } from '@/stores/analytics';
+import {
+  epinetCustomFilters,
+  getEpinetCustomFilters,
+  setEpinetCustomFilters,
+  type AppliedFilter,
+} from '@/stores/analytics';
 import { TractStackAPI } from '@/utils/api';
 import SankeyDiagram from './SankeyDiagram';
 import EpinetDurationSelector from './EpinetDurationSelector';
@@ -97,7 +102,7 @@ const EpinetWrapper = ({
   useEffect(() => {
     const nowUTC = new Date();
     const oneWeekAgoUTC = new Date(nowUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
-    epinetCustomFilters.set(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
+    setEpinetCustomFilters(window.TRACTSTACK_CONFIG?.tenantId || 'default', {
       enabled: true,
       visitorType: 'all',
       selectedUserId: null,
@@ -133,7 +138,7 @@ const EpinetWrapper = ({
 
   const handleBeliefFilterChange = (beliefSlug: string, value: string) => {
     const tenantId = window.TRACTSTACK_CONFIG?.tenantId || 'default';
-    const currentFilters = epinetCustomFilters.get();
+    const currentFilters = getEpinetCustomFilters();
     let newFilters: AppliedFilter[] = [
       ...(currentFilters.appliedFilters || []),
     ];
@@ -151,7 +156,7 @@ const EpinetWrapper = ({
       }
     }
 
-    epinetCustomFilters.set(tenantId, {
+    setEpinetCustomFilters(tenantId, {
       ...currentFilters,
       appliedFilters: newFilters,
     });
@@ -229,7 +234,7 @@ const EpinetWrapper = ({
           error: null,
           isLoading: false,
         });
-        epinetCustomFilters.set(
+        setEpinetCustomFilters(
           window.TRACTSTACK_CONFIG?.tenantId || 'default',
           {
             ...$epinetCustomFilters,
