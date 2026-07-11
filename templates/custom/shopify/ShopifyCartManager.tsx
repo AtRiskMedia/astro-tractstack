@@ -182,6 +182,7 @@ export default function ShopifyCartManager({
             type: 'restriction',
             title: 'Incompatible Booking Modes',
             message: RESTRICTION_MESSAGES.INCOMPATIBLE_REMOTE,
+            restrictionReason: 'incompatibleRemote',
           });
         } else {
           const rawDuration = calculateCartDuration(nextCart, resources);
@@ -196,6 +197,7 @@ export default function ShopifyCartManager({
               type: 'restriction',
               title: 'Appointment Length Limit Reached',
               message: RESTRICTION_MESSAGES.MAX_DURATION(dynamicMax),
+              restrictionReason: 'maxDuration',
             });
           } else {
             cartStore.set(nextCart);

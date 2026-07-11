@@ -2,6 +2,7 @@ import { useStore } from '@nanostores/react';
 import { Dialog } from '@ark-ui/react/dialog';
 import { Portal } from '@ark-ui/react/portal';
 import { modalState } from '@/stores/shopify';
+import { classNames } from '@/utils/helpers';
 
 export default function CartModal() {
   const state = useStore(modalState);
@@ -20,15 +21,24 @@ export default function CartModal() {
   const isCartPage =
     typeof window !== 'undefined' && window.location.pathname === '/cart';
 
+  const isMaxDurationRestriction =
+    state.type === 'restriction' && state.restrictionReason === 'maxDuration';
+
   return (
     <Dialog.Root
       open={state.isOpen}
+      closeOnInteractOutside={false}
       onOpenChange={(e) => !e.open && handleClose()}
     >
       <Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black bg-opacity-75 backdrop-blur-sm" />
         <Dialog.Positioner className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <Dialog.Content className="w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl">
+          <Dialog.Content
+            className={classNames(
+              `w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl`,
+              isMaxDurationRestriction ? 'border-4 border-brand-3' : ''
+            )}
+          >
             <div className="p-6">
               <Dialog.Title className="text-xl font-bold text-gray-900">
                 {state.title}

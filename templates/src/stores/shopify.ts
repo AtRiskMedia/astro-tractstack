@@ -26,6 +26,7 @@ export const modalState = atom<{
   type: 'success' | 'restriction';
   title: string;
   message: string;
+  restrictionReason?: 'maxDuration' | 'incompatibleRemote';
 }>({
   isOpen: false,
   type: 'success',
@@ -258,16 +259,45 @@ export function setCustomerDetails(details: Partial<CustomerDetails>) {
   });
 }
 
-export function clearCommerceState() {
+const SHOPIFY_PERSISTENCE_KEYS = [
+  'tractstack_shopify_queue',
+  'tractstack_shopify_cart',
+  'tractstack_shopify_queue_state',
+  'tractstack_shopify_cart_state',
+  'tractstack_shopify_trace_id',
+  'tractstack_shopify_appointment_mode',
+  'tractstack_shopify_customer',
+] as const;
+
+export function resetShopifyCommerceState() {
+  addQueue.set([]);
   cartStore.set({});
+  cartState.set(CART_STATES.READY);
+  queueState.set(QUEUE_STATES.READY);
+  transactionTraceId.set('');
+  preferredAppointmentMode.set('IN_PERSON');
   customerDetails.set({
     name: '',
     email: '',
     leadId: '',
   });
-  transactionTraceId.set('');
-  preferredAppointmentMode.set('IN_PERSON');
-  cartState.set(CART_STATES.READY);
+  modalState.set({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+    restrictionReason: undefined,
+  });
+
+  if (typeof localStorage !== 'undefined') {
+    SHOPIFY_PERSISTENCE_KEYS.forEach((key) => {
+      localStorage.removeItem(key);
+    });
+  }
+}
+
+export function clearCommerceState() {
+  resetShopifyCommerceState();
 }
 
 export interface CartKeyParams {

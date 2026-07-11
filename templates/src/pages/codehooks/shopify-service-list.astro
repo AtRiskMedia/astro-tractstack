@@ -16,10 +16,8 @@ const resources = await resolveCodeHookResources(
 );
 ---
 
-<div style="min-height: 300px;">
-  <ShopifyServiceList
-    options={options}
-    resources={resources}
-    client:only="react"
-  />
-</div>
+<ShopifyServiceList
+  options={options}
+  resources={resources}
+  client:only="react"
+/>

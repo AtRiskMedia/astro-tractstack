@@ -1,0 +1,19 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import CartReset from '@/custom/shopify/CartReset';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const brandConfig = await getBrandConfig(tenantId);
+if (!brandConfig.HAS_SHOPIFY) {
+  return Astro.redirect('/storykeep');
+}
+---
+
+<Layout title="Reset Cart" slug="cart">
+  <main class="mx-auto max-w-7xl px-4 py-16 md:px-6 xl:px-8">
+    <CartReset client:only="react" />
+  </main>
+</Layout>

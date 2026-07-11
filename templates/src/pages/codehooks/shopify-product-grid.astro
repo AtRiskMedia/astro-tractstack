@@ -16,10 +16,8 @@ const resources = await resolveCodeHookResources(
 );
 ---
 
-<div style="min-height: 400px;">
-  <ShopifyProductGrid
-    options={options}
-    resources={resources}
-    client:only="react"
-  />
-</div>
+<ShopifyProductGrid
+  options={options}
+  resources={resources}
+  client:only="react"
+/>

@@ -901,6 +901,14 @@ export async function injectTemplateFiles(
       dest: 'src/pages/cart.astro',
     },
     {
+      src: resolve('../templates/custom/shopify/cart-reset.astro'),
+      dest: 'src/pages/cart/reset.astro',
+    },
+    {
+      src: resolve('../templates/custom/shopify/CartReset.tsx'),
+      dest: 'src/custom/shopify/CartReset.tsx',
+    },
+    {
       src: resolve('../templates/src/pages/privacy.astro'),
       dest: 'src/pages/privacy.astro',
     },
