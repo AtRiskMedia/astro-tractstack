@@ -3,11 +3,11 @@
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": true,
+    "noEmit": false,
     "jsx": "preserve",
-    "baseUrl": ".",
-    //"skipLibCheck": true,
+    "types": ["node"],
     "paths": {
-      "@/*": ["templates/src/*"]
+      "@/*": ["./templates/src/*"]
     }
   },
   "include": ["index.ts", "config.ts", "utils/**/*.ts"],

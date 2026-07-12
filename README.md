@@ -14,7 +14,7 @@ Traditional CMS software conquered the world by making publishing easy—but it 
 
 ## The "Free Web" Press Restores the Signal
 
-**TractStack v2.2** is not just a CMS; it is a **Signal Continuity Engine**. It takes the concept of the "Press"—broadcasting ideas—and adds the "Handshake."
+**TractStack v2** is not just a CMS; it is a **Signal Continuity Engine**. It takes the concept of the "Press"—broadcasting ideas—and adds the "Handshake."
 
 ### 1. The Mass-Produced Handshake (Smart Triage)
 
@@ -88,4 +88,4 @@ Expanding full-text search to include embedded video transcripts (via BunnyCDN).
 **Documentation:** [tractstack.org](https://tractstack.org)  
 **Support:** [hello@tractstack.com](mailto:hello@tractstack.com)
 
-_TractStack v2.2 Made with ❤️ by At Risk Media_
+_TractStack v2 Made with ❤️ by At Risk Media_

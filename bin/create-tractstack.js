@@ -176,7 +176,7 @@ ${kleur.bold('Examples:')}
     console.log(kleur.red("❌ This doesn't appear to be an Astro project."));
     console.log('Please run this command in the root of your Astro project.\n');
     console.log('To create a new Astro project with TractStack:');
-    console.log(kleur.cyan('pnpm create astro@5 my-tractstack-site'));
+    console.log(kleur.cyan('pnpm create astro@latest my-tractstack-site'));
     console.log(kleur.cyan('cd my-tractstack-site'));
     console.log(kleur.cyan('npx create-tractstack'));
     process.exit(1);
@@ -550,9 +550,8 @@ export default defineConfig({
   const tsConfig = `{
     "extends": "astro/tsconfigs/strict",
     "compilerOptions": {
-      "baseUrl": ".",
-      "paths": { "@/*": ["src/*"] },
-      "types": ["astro/client", "@astrojs/react", "node", "@types/react", "@types/react-dom", "@types/tinycolor2"]
+      "paths": { "@/*": ["./src/*"] },
+      "types": ["astro/client", "node", "@types/react", "@types/react-dom", "@types/tinycolor2"]
     },
     "include": ["src/**/*", "public/**/*", "tailwind.config.cjs"],
     "exclude": ["node_modules", "dist", ".astro"]
