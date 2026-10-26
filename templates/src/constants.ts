@@ -23,6 +23,9 @@ export const reservedSlugs = [
   `sandbox`,
   `robots`,
   `llm`,
+  `custom`,
+  `media`,
+  `codehooks`,
 ];
 
 export const colors = [
