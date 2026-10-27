@@ -1,0 +1,83 @@
+---
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { resolveTenantId } from '@/utils/tenantResolver';
+
+// DO NOT USE IN PRODUCTION !!!
+// this is a stop-gap for dev testing ...
+
+// configure nginx to serve files on /custom !!
+// see the docs
+
+export const prerender = false;
+
+const MIME_TYPES: Record<string, string> = {
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.otf': 'font/otf',
+  '.ico': 'image/x-icon',
+  '.wasm': 'application/wasm',
+  '.data': 'application/octet-stream',
+  '.unityweb': 'application/octet-stream',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
+  '.glb': 'model/gltf-binary',
+  '.html': 'text/html',
+};
+
+const { slug } = Astro.params;
+
+const isMultiTenant = import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
+const tenant = isMultiTenant
+  ? (await resolveTenantId(Astro.request)).id
+  : import.meta.env.PUBLIC_TENANTID || 'default';
+
+const baseServerPath = import.meta.env.PRIVATE_GO_BACKEND_PATH;
+if (!baseServerPath) {
+  console.error(
+    '[ERROR] PRIVATE_GO_BACKEND_PATH environment variable is not set.'
+  );
+  return new Response('Server configuration error', { status: 500 });
+}
+
+if (!slug) throw new Error(`Invalid path for tenant "${tenant}".`);
+
+try {
+  const fullPath = path.join(baseServerPath, 'config', tenant, 'custom', slug);
+
+  const tenantCustomRoot = path.join(
+    baseServerPath,
+    'config',
+    tenant,
+    'custom'
+  );
+  if (!path.resolve(fullPath).startsWith(path.resolve(tenantCustomRoot))) {
+    throw new Error(`Invalid path for tenant "${tenant}".`);
+  }
+
+  const fileBuffer = await fs.readFile(fullPath);
+  const extension = path.extname(slug).toLowerCase();
+  const mimeType = MIME_TYPES[extension] || 'application/octet-stream';
+
+  return new Response(fileBuffer, {
+    status: 200,
+    headers: {
+      'Content-Type': mimeType,
+      'Cache-Control': 'no-cache',
+    },
+  });
+} catch (error) {
+  console.error(`Could not serve custom file: ${slug} for tenant ${tenant}.`);
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+---

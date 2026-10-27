@@ -56,6 +56,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/pages/media/[...slug].astro'),
       dest: 'src/pages/media/[...slug].astro',
     },
+    {
+      src: resolve('../templates/src/pages/custom/[...slug].astro'),
+      dest: 'src/pages/custom/[...slug].astro',
+    },
 
     // Types
     {
