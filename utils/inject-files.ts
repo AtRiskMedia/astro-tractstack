@@ -893,6 +893,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep/advanced.astro',
     },
     {
+      src: resolve('../templates/src/pages/storykeep/extend.astro'),
+      dest: 'src/pages/storykeep/extend.astro',
+    },
+    {
       src: resolve('../templates/src/pages/storykeep/shopify.astro'),
       dest: 'src/pages/storykeep/shopify.astro',
     },
@@ -1265,6 +1269,54 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/Dashboard_Advanced.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/Extend.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/Extend.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendEditorModal.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendEditorModal.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendPublishBar.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendPublishBar.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendTree.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendTree.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/CodeEditor.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/CodeEditor.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/AssetPreview.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/AssetPreview.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/SysopLoginCard.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/SysopLoginCard.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/extendFetch.ts'
+      ),
+      dest: 'src/components/storykeep/extend/extendFetch.ts',
     },
     {
       src: resolve(

@@ -69,6 +69,11 @@ export default function StoryKeepDashboard({
         ...(role === 'admin'
           ? [
               {
+                id: 'extend',
+                name: 'Extend',
+                current: activeTab === 'extend',
+              },
+              {
                 id: 'advanced',
                 name: 'Advanced',
                 current: activeTab === 'advanced',

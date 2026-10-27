@@ -72,7 +72,15 @@
       "html-to-image": "^1.11.13",
       "path-to-regexp": "^8.4.2",
       "postcss": "^8.5.15",
-      "postcss-selector-parser": "^7.1.4"
+      "postcss-selector-parser": "^7.1.4",
+      "@uiw/react-codemirror": "",
+      "@codemirror/view": "",
+      "@codemirror/state": "",
+      "@codemirror/lang-javascript": "",
+      "@codemirror/lang-html": "",
+      "@codemirror/lang-css": "",
+      "@codemirror/lang-json": "",
+      "react-arborist": ""
     },
     "devDependencies": {
       "@types/node": "^22.20.0",

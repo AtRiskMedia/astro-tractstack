@@ -1,0 +1,75 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
+import StoryKeepDashboard from '@/components/storykeep/Dashboard';
+import Extend from '@/components/storykeep/extend/Extend';
+import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) {
+  return authCheck;
+}
+
+const userIsAdmin = isAdmin(Astro);
+if (!userIsAdmin) {
+  return Astro.redirect('/storykeep');
+}
+
+const userIsAuthenticated = isAuthenticated(Astro);
+const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
+
+const brandConfig = await getBrandConfig(tenantId);
+const initializing = !brandConfig.SITE_INIT;
+
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
+
+const title = 'Extend | StoryKeep';
+
+let fullContentMap;
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
+
+try {
+  fullContentMap = await getFullContentMap(tenantId);
+} catch (error) {
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
+}
+
+const isMultiTenant = import.meta.env.PUBLIC_ENABLE_MULTI_TENANT === 'true';
+const isDev = import.meta.env.DEV;
+---
+
+<Layout title={title} slug="storykeep" isStoryKeep={true}>
+  <main id="main-content" class="relative min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
+    <div class="max-w-6xl p-3.5 md:p-8">
+      <StoryKeepDashboard
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+        activeTab="extend"
+        role={role}
+        initializing={initializing}
+      />
+      <Extend
+        client:only="react"
+        isMultiTenant={isMultiTenant}
+        isDev={isDev}
+      />
+    </div>
+  </main>
+</Layout>
