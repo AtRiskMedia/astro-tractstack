@@ -960,6 +960,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/pages/api/sandbox.ts'),
       dest: 'src/pages/api/sandbox.ts',
     },
+    {
+      src: resolve('../templates/src/pages/api/extend/stamp.ts'),
+      dest: 'src/pages/api/extend/stamp.ts',
+    },
 
     // Authentication Pages
     {
@@ -2434,6 +2438,13 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/storykeep/init.astro'),
       dest: 'src/pages/storykeep/init.astro',
+    },
+
+    // Build stamp (concierge-written; create once, never overwrite)
+    {
+      src: resolve('../templates/src/generated/buildStamp.ts'),
+      dest: 'src/generated/buildStamp.ts',
+      protected: true,
     },
 
     // Custom Components (Conditional)
