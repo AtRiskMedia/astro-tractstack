@@ -54,7 +54,13 @@ export type HookUsageRow = {
 
 type Selection =
   | { kind: 'source'; path: string; tooLarge?: boolean }
-  | { kind: 'asset'; path: string; size?: number; mtime?: string; isDir: boolean }
+  | {
+      kind: 'asset';
+      path: string;
+      size?: number;
+      mtime?: string;
+      isDir: boolean;
+    }
   | null;
 
 function buildChildren(nodes: TreeNode[], parentPath: string): TreeNode[] {
@@ -94,8 +100,7 @@ function Folder({
     () => buildChildren(nodes, rootPrefix),
     [nodes, rootPrefix]
   );
-  const isSelectedDir =
-    selectableDirs && selectedDir === rootPrefix;
+  const isSelectedDir = selectableDirs && selectedDir === rootPrefix;
 
   return (
     <div style={{ marginLeft: depth ? 12 : 0 }}>
@@ -181,7 +186,7 @@ function PairOpenButton({
       type="button"
       disabled={disabled}
       title={path || `${label} missing`}
-      className="inline-flex items-center gap-0.5 text-xs hover:underline disabled:cursor-not-allowed disabled:opacity-40 disabled:no-underline"
+      className="inline-flex items-center gap-0.5 text-xs hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
       onClick={() => {
         if (path) onOpen(path);
       }}
@@ -544,8 +549,7 @@ export default function ExtendTree({
               {selectedZip ? (
                 <>
                   {' '}
-                  · zip:{' '}
-                  <span className="font-mono">{selectedZip}</span>
+                  · zip: <span className="font-mono">{selectedZip}</span>
                 </>
               ) : null}
             </p>

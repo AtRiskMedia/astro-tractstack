@@ -65,11 +65,7 @@ const isDev = import.meta.env.DEV;
         role={role}
         initializing={initializing}
       />
-      <Extend
-        client:only="react"
-        isMultiTenant={isMultiTenant}
-        isDev={isDev}
-      />
+      <Extend client:only="react" isMultiTenant={isMultiTenant} isDev={isDev} />
     </div>
   </main>
 </Layout>

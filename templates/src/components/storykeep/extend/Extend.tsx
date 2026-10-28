@@ -63,8 +63,7 @@ export default function Extend({
     return `${dir.replace(/\/+$/, '')}/${clean}`;
   }
 
-  const activeTab =
-    tabs.find((t) => t.key === activeKey) || tabs[0] || null;
+  const activeTab = tabs.find((t) => t.key === activeKey) || tabs[0] || null;
 
   const loadAssets = useCallback(async () => {
     const res = await extendFetch('/api/v1/extend/assets/tree');
@@ -180,9 +179,7 @@ export default function Extend({
     if (!key) return;
     setTabs((prev) =>
       prev.map((t) =>
-        t.key === key
-          ? { ...t, content: t.baseline, dirty: false }
-          : t
+        t.key === key ? { ...t, content: t.baseline, dirty: false } : t
       )
     );
     setSaveState('idle');
@@ -397,7 +394,9 @@ export default function Extend({
     }
     if (!selectedDir) return;
     if (assetDirHasChildren(selectedDir)) {
-      setError(`Folder /custom/${selectedDir} is not empty — delete its contents first`);
+      setError(
+        `Folder /custom/${selectedDir} is not empty — delete its contents first`
+      );
       return;
     }
     const label = `/custom/${selectedDir}`;
@@ -435,9 +434,7 @@ export default function Extend({
   }
 
   async function createSourceFile() {
-    const name = window.prompt(
-      'New file name (e.g. components/MyThing.astro)'
-    );
+    const name = window.prompt('New file name (e.g. components/MyThing.astro)');
     if (!name || !name.trim()) return;
     const trimmed = name.trim().replace(/^\/+/, '');
     if (trimmed.includes('..')) {
@@ -560,7 +557,14 @@ export default function Extend({
     const data = await res.json().catch(() => ({}));
     if (res.status === 409 && Array.isArray(data.usages)) {
       setError(
-        `Route in use:\n${(data.usages as { kind?: string; title?: string; slug?: string; paneTitle?: string }[])
+        `Route in use:\n${(
+          data.usages as {
+            kind?: string;
+            title?: string;
+            slug?: string;
+            paneTitle?: string;
+          }[]
+        )
           .map(
             (u) =>
               `${u.kind || 'hit'}: ${u.title || u.paneTitle || u.slug || ''}`

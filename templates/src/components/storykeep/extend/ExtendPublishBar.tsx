@@ -15,7 +15,7 @@ export default function ExtendPublishBar({
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 transform pr-12 transition-all duration-300 ease-in-out translate-y-0 opacity-100">
+    <div className="fixed bottom-0 left-0 right-0 z-50 translate-y-0 transform pr-12 opacity-100 transition-all duration-300 ease-in-out">
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
       <div className="relative mx-auto max-w-7xl px-4 py-4 md:px-6 xl:px-8">
         <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 shadow-lg">

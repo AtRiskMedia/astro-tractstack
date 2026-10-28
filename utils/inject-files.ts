@@ -1271,9 +1271,7 @@ export async function injectTemplateFiles(
       dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
     },
     {
-      src: resolve(
-        '../templates/src/components/storykeep/extend/Extend.tsx'
-      ),
+      src: resolve('../templates/src/components/storykeep/extend/Extend.tsx'),
       dest: 'src/components/storykeep/extend/Extend.tsx',
     },
     {

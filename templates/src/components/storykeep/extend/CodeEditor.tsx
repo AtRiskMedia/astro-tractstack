@@ -18,7 +18,11 @@ export type EditorTab = {
 
 function extensionsFor(path: string) {
   const lower = path.toLowerCase();
-  if (lower.endsWith('.astro') || lower.endsWith('.html') || lower.endsWith('.svg')) {
+  if (
+    lower.endsWith('.astro') ||
+    lower.endsWith('.html') ||
+    lower.endsWith('.svg')
+  ) {
     return [html(), EditorView.lineWrapping];
   }
   if (lower.endsWith('.css')) {

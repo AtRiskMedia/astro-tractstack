@@ -287,8 +287,7 @@ ${kleur.bold('Examples:')}
   promptQuestions.push({
     type: 'confirm',
     name: 'includeExamples',
-    message:
-      'Include CodeHook examples? (custom components)',
+    message: 'Include CodeHook examples? (custom components)',
     initial: includeExamples,
   });
 
@@ -553,7 +552,7 @@ export default defineConfig({
       "paths": { "@/*": ["./src/*"] },
       "types": ["astro/client", "node", "@types/react", "@types/react-dom", "@types/tinycolor2"]
     },
-    "include": ["src/**/*", "public/**/*", "tailwind.config.cjs"],
+    "include": ["src/**/*", "public/**/*", "tailwind.config.cjs", "astro.d.ts"],
     "exclude": ["node_modules", "dist", ".astro"]
   }`;
   writeFileSync('tsconfig.json', tsConfig);
