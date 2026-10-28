@@ -2440,15 +2440,6 @@ export async function injectTemplateFiles(
 
     // Custom Components (Conditional)
     {
-      src: resolve(
-        config?.includeExamples
-          ? '../templates/custom/with-examples/CustomRoutes.astro'
-          : '../templates/custom/minimal/CustomRoutes.astro'
-      ),
-      dest: 'src/custom/CustomRoutes.astro',
-      protected: true,
-    },
-    {
       src: resolve('../templates/custom/minimal/HeaderWidget.astro'),
       dest: 'src/custom/HeaderWidget.astro',
       protected: true,
@@ -2569,18 +2560,6 @@ export async function injectTemplateFiles(
           {
             src: resolve('../templates/src/pages/codehooks/get-crafting.astro'),
             dest: 'src/pages/codehooks/get-crafting.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              '../templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('../templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
             protected: true,
           },
         ]

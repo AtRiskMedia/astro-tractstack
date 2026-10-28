@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { extendFetch, getTenantId } from './extendFetch';
 import SysopLoginCard from './SysopLoginCard';
 import ExtendTree, {
+  type HookUsageRow,
   type Registry,
   type TreeNode,
 } from './ExtendTree';
@@ -48,11 +49,19 @@ export default function Extend({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pendingPublish, setPendingPublish] = useState(false);
   const [probeWarn, setProbeWarn] = useState<string | null>(null);
+  const [registryNotice, setRegistryNotice] = useState<string | null>(null);
+  const [selectedDir, setSelectedDir] = useState('');
+  const [selectedZip, setSelectedZip] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedSourceDir, setSelectedSourceDir] = useState('src/custom');
 
   const sourceReady = !isMultiTenant || !!sysopToken;
-  const sourceBadge = isDev
-    ? 'live (dev)'
-    : 'saved · publish via sysop build until Phase 4';
+
+  function joinAssetPath(dir: string, rel: string): string {
+    const clean = rel.replace(/^\/+/, '');
+    if (!dir) return clean;
+    return `${dir.replace(/\/+$/, '')}/${clean}`;
+  }
 
   const activeTab =
     tabs.find((t) => t.key === activeKey) || tabs[0] || null;
@@ -298,7 +307,7 @@ export default function Extend({
         (f as File & { webkitRelativePath?: string }).webkitRelativePath
           ? (f as File & { webkitRelativePath: string }).webkitRelativePath
           : f.name;
-      fd.append('file', f, rel);
+      fd.append('file', f, joinAssetPath(selectedDir, rel));
     });
     setError(null);
     const res = await extendFetch('/api/v1/extend/assets/upload', {
@@ -310,6 +319,103 @@ export default function Extend({
       setError(data.error || `Upload failed (${res.status})`);
       return;
     }
+    await loadAssets();
+  }
+
+  function selectAssetDir(path: string) {
+    setSelectedDir(path);
+    setSelectedZip(null);
+    setSelectedFile(null);
+  }
+
+  async function mkdirUnderSelection() {
+    const name = window.prompt('New folder name');
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim().replace(/^\/+|\/+$/g, '');
+    if (!trimmed || trimmed.includes('/')) {
+      setError('Folder name must be a single path segment');
+      return;
+    }
+    const path = joinAssetPath(selectedDir, trimmed);
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/assets/mkdir', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `New folder failed (${res.status})`);
+      return;
+    }
+    await loadAssets();
+  }
+
+  async function expandZip() {
+    if (!selectedZip) return;
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/assets/unzip', {
+      method: 'POST',
+      body: JSON.stringify({
+        path: selectedZip,
+        target: selectedDir || '.',
+        keep: 0,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Expand zip failed (${res.status})`);
+      return;
+    }
+    setSelectedZip(null);
+    setSelectedFile(null);
+    await loadAssets();
+  }
+
+  function assetDirHasChildren(dir: string): boolean {
+    const prefix = dir + '/';
+    return assetNodes.some((n) => n.path.startsWith(prefix));
+  }
+
+  async function deleteAsset() {
+    if (selectedFile) {
+      const label = `/custom/${selectedFile}`;
+      if (!window.confirm(`Delete ${label}?`)) return;
+      setError(null);
+      const res = await extendFetch(
+        `/api/v1/extend/assets/file?path=${encodeURIComponent(selectedFile)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Delete failed (${res.status})`);
+        return;
+      }
+      setSelectedFile(null);
+      setSelectedZip(null);
+      await loadAssets();
+      return;
+    }
+    if (!selectedDir) return;
+    if (assetDirHasChildren(selectedDir)) {
+      setError(`Folder /custom/${selectedDir} is not empty — delete its contents first`);
+      return;
+    }
+    const label = `/custom/${selectedDir}`;
+    if (!window.confirm(`Delete empty folder ${label}?`)) return;
+    setError(null);
+    const res = await extendFetch(
+      `/api/v1/extend/assets/file?path=${encodeURIComponent(selectedDir)}`,
+      { method: 'DELETE' }
+    );
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Delete failed (${res.status})`);
+      return;
+    }
+    const parent = selectedDir.includes('/')
+      ? selectedDir.slice(0, selectedDir.lastIndexOf('/'))
+      : '';
+    setSelectedDir(parent);
     await loadAssets();
   }
 
@@ -328,6 +434,152 @@ export default function Extend({
     }
   }
 
+  async function createSourceFile() {
+    const name = window.prompt(
+      'New file name (e.g. components/MyThing.astro)'
+    );
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim().replace(/^\/+/, '');
+    if (trimmed.includes('..')) {
+      setError('Invalid path');
+      return;
+    }
+    const base =
+      selectedSourceDir && selectedSourceDir !== 'src'
+        ? selectedSourceDir
+        : 'src/custom';
+    const path = joinAssetPath(base, trimmed);
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/source/file', {
+      method: 'PUT',
+      body: JSON.stringify({ path, content: '' }),
+      sysopToken,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Create file failed (${res.status})`);
+      return;
+    }
+    setPendingPublish(true);
+    await loadSource();
+    await openSource(path);
+  }
+
+  async function addHook(id: string, kind: 'astro' | 'astro+jsx') {
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch('/api/v1/extend/source/hooks', {
+      method: 'POST',
+      body: JSON.stringify({ id, kind }),
+      sysopToken,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || `Create hook failed (${res.status})`);
+      return;
+    }
+    if (data.manifestManual) {
+      setRegistryNotice(
+        `Hook ${id} created; manifest is manual — add the id to codehooks.ts by hand.`
+      );
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function removeHook(id: string) {
+    if (!window.confirm(`Remove hook:${id}? This deletes the blade.`)) {
+      return;
+    }
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch(
+      `/api/v1/extend/source/hooks/${encodeURIComponent(id)}`,
+      { method: 'DELETE', sysopToken }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && Array.isArray(data.usages)) {
+      const lines = (data.usages as HookUsageRow[]).map((u) => {
+        const slug = u.storyFragmentSlug;
+        const href = slug
+          ? u.isContextPane
+            ? `/context/${slug}/edit`
+            : `/${slug}/edit`
+          : null;
+        return href
+          ? `pane ${u.paneTitle} → ${href}`
+          : `pane ${u.paneTitle} (${u.paneId})`;
+      });
+      setError(`Hook in use:\n${lines.join('\n')}`);
+      return;
+    }
+    if (!res.ok) {
+      setError(data.error || `Remove hook failed (${res.status})`);
+      return;
+    }
+    if (data.manifestManual) {
+      setRegistryNotice(
+        `Hook ${id} removed; manifest is manual — remove the id from codehooks.ts by hand.`
+      );
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function addRoute(name: string) {
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch('/api/v1/extend/source/routes', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+      sysopToken,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || `Create route failed (${res.status})`);
+      return;
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function removeRoute(name: string) {
+    if (
+      !window.confirm(
+        `Remove route:${name}? This deletes the blade and the page.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch(
+      `/api/v1/extend/source/routes/${encodeURIComponent(name)}`,
+      { method: 'DELETE', sysopToken }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && Array.isArray(data.usages)) {
+      setError(
+        `Route in use:\n${(data.usages as { kind?: string; title?: string; slug?: string; paneTitle?: string }[])
+          .map(
+            (u) =>
+              `${u.kind || 'hit'}: ${u.title || u.paneTitle || u.slug || ''}`
+          )
+          .join('\n')}`
+      );
+      return;
+    }
+    if (!res.ok) {
+      setError(data.error || `Remove route failed (${res.status})`);
+      return;
+    }
+    if (Array.isArray(data.leftovers) && data.leftovers.length) {
+      setRegistryNotice(`Leftovers: ${data.leftovers.join(', ')}`);
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
   return (
     <div className="mt-4 pb-24">
       {isMultiTenant && !sysopToken && (
@@ -339,9 +591,9 @@ export default function Extend({
         </p>
       )}
       {error && (
-        <p className="mb-3 border border-red-700 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <pre className="mb-3 whitespace-pre-wrap border border-red-700 bg-red-50 px-3 py-2 text-sm text-red-900">
           {error}
-        </p>
+        </pre>
       )}
       <div className="max-w-xl">
         <ExtendTree
@@ -351,12 +603,18 @@ export default function Extend({
           sourceNodes={sourceNodes}
           assetNodes={assetNodes}
           registry={registry}
-          sourceBadge={sourceBadge}
+          registryNotice={registryNotice}
           onSelect={(sel) => {
             if (!sel) return;
             if (sel.kind === 'source') {
               void openSource(sel.path, sel.tooLarge);
             } else if (!sel.isDir) {
+              setSelectedFile(sel.path);
+              if (/\.zip$/i.test(sel.path)) {
+                setSelectedZip(sel.path);
+              } else {
+                setSelectedZip(null);
+              }
               void openAsset(sel.path, {
                 size: sel.size,
                 mtime: sel.mtime,
@@ -364,6 +622,24 @@ export default function Extend({
             }
           }}
           onUploadFiles={(files, asDir) => void uploadFiles(files, asDir)}
+          onAddHook={(id, kind) => void addHook(id, kind)}
+          onRemoveHook={(id) => void removeHook(id)}
+          onAddRoute={(name) => void addRoute(name)}
+          onRemoveRoute={(name) => void removeRoute(name)}
+          selectedDir={selectedDir}
+          selectedZip={selectedZip}
+          selectedFile={selectedFile}
+          canDeleteAsset={
+            !!selectedFile ||
+            (!!selectedDir && !assetDirHasChildren(selectedDir))
+          }
+          onSelectAssetDir={selectAssetDir}
+          onMkdir={() => void mkdirUnderSelection()}
+          onExpandZip={() => void expandZip()}
+          onDeleteAsset={() => void deleteAsset()}
+          selectedSourceDir={selectedSourceDir}
+          onSelectSourceDir={setSelectedSourceDir}
+          onCreateSourceFile={() => void createSourceFile()}
         />
       </div>
 
