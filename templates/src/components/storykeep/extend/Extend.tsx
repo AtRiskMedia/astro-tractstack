@@ -3,13 +3,17 @@ import { extendFetch, getTenantId } from './extendFetch';
 import SysopLoginCard from './SysopLoginCard';
 import ExtendTree, {
   type HookUsageRow,
+  type LatestRebuildJob,
   type Registry,
   type TreeNode,
 } from './ExtendTree';
 import ExtendEditorModal from './ExtendEditorModal';
 import ExtendPublishBar from './ExtendPublishBar';
+import RebuildModal from './RebuildModal';
 import type { EditorTab } from './CodeEditor';
 import type { FormStateReturn, SaveState } from '@/hooks/useFormState';
+
+type BuildStamp = { jobId: string; builtAt: string };
 
 const TEXT_ASSET = /\.(js|css|json|txt|md|html|svg|csv)$/i;
 
@@ -54,8 +58,118 @@ export default function Extend({
   const [selectedZip, setSelectedZip] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedSourceDir, setSelectedSourceDir] = useState('src/custom');
+  const [stamp, setStamp] = useState<BuildStamp | null>(null);
+  const [publishAvailable, setPublishAvailable] = useState(false);
+  const [latestJob, setLatestJob] = useState<LatestRebuildJob>(null);
+  const [rebuildOpen, setRebuildOpen] = useState(false);
+  const [rebuildJobId, setRebuildJobId] = useState<string | null>(null);
 
   const sourceReady = !isMultiTenant || !!sysopToken;
+
+  const sourceBadgeForMtime = useCallback(
+    (mtime: string | undefined): string | null => {
+      if (isDev) return 'live (dev)';
+      if (!mtime) return null;
+      const builtAt = stamp?.builtAt;
+      if (!builtAt) return 'saved';
+      return Date.parse(mtime) > Date.parse(builtAt) ? 'saved' : 'live (built)';
+    },
+    [isDev, stamp]
+  );
+
+  const sourceBadge = useCallback(
+    (n: TreeNode) => (n.isDir ? null : sourceBadgeForMtime(n.mtime)),
+    [sourceBadgeForMtime]
+  );
+
+  const registryBadge = useCallback(
+    (path: string | null | undefined) => {
+      if (!path) return null;
+      const node = sourceNodes.find((n) => n.path === path && !n.isDir);
+      return sourceBadgeForMtime(node?.mtime);
+    },
+    [sourceNodes, sourceBadgeForMtime]
+  );
+
+  const hasSavedSource = useMemo(() => {
+    if (isDev) return false;
+    return sourceNodes.some(
+      (n) => !n.isDir && sourceBadgeForMtime(n.mtime) === 'saved'
+    );
+  }, [isDev, sourceNodes, sourceBadgeForMtime]);
+
+  const loadStamp = useCallback(async () => {
+    try {
+      const res = await fetch(`${window.location.origin}/api/extend/stamp`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      setStamp(await res.json());
+    } catch {
+      /* stamp optional on first paint */
+    }
+  }, []);
+
+  const loadLatestJob = useCallback(async () => {
+    if (isDev || !sourceReady) {
+      setPublishAvailable(false);
+      setLatestJob(null);
+      return;
+    }
+    try {
+      const res = await extendFetch('/api/v1/extend/rebuild/latest', {
+        sysopToken,
+      });
+      if (res.status === 404) {
+        setPublishAvailable(false);
+        setLatestJob(null);
+        return;
+      }
+      if (res.status === 401 || res.status === 403) {
+        setPublishAvailable(false);
+        setLatestJob(null);
+        return;
+      }
+      if (!res.ok) {
+        setPublishAvailable(false);
+        return;
+      }
+      setPublishAvailable(true);
+      const body = await res.json();
+      setLatestJob(body && typeof body === 'object' ? body : null);
+    } catch {
+      setPublishAvailable(false);
+      setLatestJob(null);
+    }
+  }, [isDev, sourceReady, sysopToken]);
+
+  const startRebuild = useCallback(async () => {
+    try {
+      const res = await extendFetch('/api/v1/extend/rebuild', {
+        method: 'POST',
+        sysopToken,
+      });
+      if (res.status === 409) {
+        const data = await res.json().catch(() => ({}));
+        const existing = data.jobId as string | undefined;
+        if (existing) {
+          setRebuildJobId(existing);
+          setRebuildOpen(true);
+          return;
+        }
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `rebuild ${res.status}`);
+        return;
+      }
+      const data = await res.json();
+      setRebuildJobId(data.jobId);
+      setRebuildOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'rebuild failed');
+    }
+  }, [sysopToken]);
 
   function joinAssetPath(dir: string, rel: string): string {
     const clean = rel.replace(/^\/+/, '');
@@ -99,8 +213,12 @@ export default function Extend({
     (async () => {
       setError(null);
       try {
+        await loadStamp();
         await loadAssets();
-        if (sourceReady) await loadSource();
+        if (sourceReady) {
+          await loadSource();
+          await loadLatestJob();
+        }
       } catch (e) {
         if (!cancelled)
           setError(e instanceof Error ? e.message : 'Failed to load');
@@ -109,7 +227,7 @@ export default function Extend({
     return () => {
       cancelled = true;
     };
-  }, [loadAssets, loadSource, sourceReady]);
+  }, [loadAssets, loadSource, loadStamp, loadLatestJob, sourceReady]);
 
   useEffect(() => {
     if (!isMultiTenant) return;
@@ -170,9 +288,10 @@ export default function Extend({
     setSaveState('success');
     if (tab.kind === 'source') {
       setPendingPublish(true);
+      void loadSource();
     }
     window.setTimeout(() => setSaveState('idle'), 2000);
-  }, [tabs, activeKey, sysopToken, isDev]);
+  }, [tabs, activeKey, sysopToken, isDev, loadSource]);
 
   const discardActiveTab = useCallback(() => {
     const key = activeKey || tabs[0]?.key;
@@ -603,7 +722,12 @@ export default function Extend({
         <ExtendTree
           showSource={sourceReady}
           showBuild={sourceReady}
-          pendingPublish={pendingPublish}
+          sourceBadge={sourceBadge}
+          registryBadge={registryBadge}
+          publishAvailable={publishAvailable}
+          hasSavedSource={hasSavedSource}
+          latestJob={latestJob}
+          onRebuild={() => void startRebuild()}
           sourceNodes={sourceNodes}
           assetNodes={assetNodes}
           registry={registry}
@@ -682,9 +806,26 @@ export default function Extend({
       />
 
       <ExtendPublishBar
-        show={pendingPublish && !modalOpen}
+        show={pendingPublish && !modalOpen && !rebuildOpen}
         isDev={isDev}
         onDismiss={() => setPendingPublish(false)}
+      />
+
+      <RebuildModal
+        open={rebuildOpen}
+        jobId={rebuildJobId}
+        sysopToken={sysopToken}
+        onClose={() => {
+          setRebuildOpen(false);
+          void loadStamp();
+          void loadLatestJob();
+          void loadSource();
+          setPendingPublish(false);
+        }}
+        onRebuild={() => {
+          setRebuildOpen(false);
+          void startRebuild();
+        }}
       />
     </div>
   );

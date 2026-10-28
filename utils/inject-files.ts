@@ -1286,6 +1286,12 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/storykeep/extend/RebuildModal.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/RebuildModal.tsx',
+    },
+    {
+      src: resolve(
         '../templates/src/components/storykeep/extend/ExtendPublishBar.tsx'
       ),
       dest: 'src/components/storykeep/extend/ExtendPublishBar.tsx',

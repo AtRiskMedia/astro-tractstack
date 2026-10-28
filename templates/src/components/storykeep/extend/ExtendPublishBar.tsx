@@ -1,7 +1,6 @@
 /**
  * Bottom alert patterned on UnsavedChangesBar (Dashboard_Advanced / Branding):
  * fixed amber bar after source files are saved this session.
- * Phase 2: no Rebuild action — message only + dismiss.
  */
 export default function ExtendPublishBar({
   show,
@@ -31,8 +30,8 @@ export default function ExtendPublishBar({
             </div>
             <p className="text-sm font-bold text-amber-800">
               {isDev
-                ? 'Source changes saved this session (live via HMR on astro dev). On production, publish via the sysop build until Phase 4.'
-                : 'Source changes are saved on disk but not in the running site yet. Publish via the sysop build until Phase 4.'}
+                ? 'Source changes saved this session (live via HMR on astro dev).'
+                : 'Source changes are saved but not in the running bundle yet. Use Rebuild site under Build when ready.'}
             </p>
           </div>
           <button

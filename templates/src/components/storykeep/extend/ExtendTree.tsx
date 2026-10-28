@@ -197,10 +197,23 @@ function PairOpenButton({
   );
 }
 
+export type LatestRebuildJob = {
+  status?: string;
+  jobId?: string;
+  builtAt?: string;
+  reloadedAt?: string;
+  message?: string;
+} | null;
+
 export default function ExtendTree({
   showSource,
   showBuild,
-  pendingPublish,
+  sourceBadge,
+  registryBadge,
+  publishAvailable,
+  hasSavedSource,
+  latestJob,
+  onRebuild,
   sourceNodes,
   assetNodes,
   registry,
@@ -225,7 +238,12 @@ export default function ExtendTree({
 }: {
   showSource: boolean;
   showBuild: boolean;
-  pendingPublish: boolean;
+  sourceBadge: (n: TreeNode) => string | null;
+  registryBadge: (mtimePath: string | null | undefined) => string | null;
+  publishAvailable: boolean;
+  hasSavedSource: boolean;
+  latestJob: LatestRebuildJob;
+  onRebuild: () => void;
   sourceNodes: TreeNode[];
   assetNodes: TreeNode[];
   registry: Registry | null;
@@ -370,6 +388,11 @@ export default function ExtendTree({
                         >
                           hook:{h.id}
                         </span>
+                        {registryBadge(h.blade) ? (
+                          <span className="shrink-0 text-xs text-amber-800">
+                            {registryBadge(h.blade)}
+                          </span>
+                        ) : null}
                         <PairOpenButton
                           label="blade"
                           path={h.blade}
@@ -448,6 +471,11 @@ export default function ExtendTree({
                         <span className="min-w-0 flex-1 truncate font-medium">
                           route:{r.name}
                         </span>
+                        {registryBadge(r.shell) ? (
+                          <span className="shrink-0 text-xs text-amber-800">
+                            {registryBadge(r.shell)}
+                          </span>
+                        ) : null}
                         <PairOpenButton
                           label="blade"
                           path={r.shell}
@@ -509,6 +537,7 @@ export default function ExtendTree({
                       label="src"
                       nodes={sourceNodes}
                       rootPrefix="src"
+                      badge={sourceBadge}
                       selectableDirs
                       selectedDir={selectedSourceDir}
                       onSelectDir={onSelectSourceDir}
@@ -651,25 +680,42 @@ export default function ExtendTree({
               <ChevronRightIcon className="h-4 w-4" />
             )}{' '}
             Build
-            {pendingPublish ? (
+            {hasSavedSource ? (
               <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-900">
-                pending
+                saved
               </span>
             ) : null}
           </button>
           {buildOpen && (
-            <div className="pl-4 text-xs text-black/60">
-              {pendingPublish ? (
-                <p className="border border-amber-200 bg-amber-50 p-2 font-bold text-amber-900">
-                  Source files were saved this session. They are not in the
-                  running bundle until you publish via the sysop build.
+            <div className="space-y-2 pl-4 text-xs text-black/70">
+              {latestJob?.status ? (
+                <p>
+                  Last job:{' '}
+                  <span className="font-bold">{latestJob.status}</span>
+                  {latestJob.jobId ? (
+                    <span className="ml-1 font-mono text-black/50">
+                      {latestJob.jobId}
+                    </span>
+                  ) : null}
+                  {latestJob.builtAt || latestJob.reloadedAt ? (
+                    <span className="ml-1 text-black/50">
+                      · {latestJob.builtAt || latestJob.reloadedAt}
+                    </span>
+                  ) : null}
                 </p>
               ) : (
-                <p>
-                  Publishing arrives with a later platform update; until then
-                  publish via the sysop build
-                </p>
+                <p>No rebuild job yet.</p>
               )}
+              {publishAvailable ? (
+                <button
+                  type="button"
+                  disabled={!hasSavedSource}
+                  className="bg-black px-2 py-1 text-xs font-bold text-white disabled:opacity-40"
+                  onClick={onRebuild}
+                >
+                  Rebuild site
+                </button>
+              ) : null}
             </div>
           )}
         </div>
