@@ -502,6 +502,16 @@ if (!window.tractstackViewLifecycleListenersAttached) {
   });
   document.addEventListener('astro:before-swap', closeModal);
 
+  document.addEventListener('astro:after-swap', () => {
+    document.querySelectorAll('video').forEach((video) => {
+      if (video.closest('[data-astro-transition-persist]')) return;
+      video.load();
+      if (video.autoplay) {
+        video.play().catch(() => {});
+      }
+    });
+  });
+
   window.tractstackViewLifecycleListenersAttached = true;
 }
 
