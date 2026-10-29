@@ -239,6 +239,7 @@ export default function MenuForm({
                   }
                   contentMap={contentMap}
                   error={formState.errors[`menuLinks.${index}.actionLisp`]}
+                  excludeModal
                 />
 
                 <div className="flex items-center">

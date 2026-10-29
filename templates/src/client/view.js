@@ -427,6 +427,81 @@ if (!window.tractstackViewLifecycleListenersAttached) {
 
   window.addEventListener('beforeunload', flushPendingPaneEvents);
 
+  function closeModal() {
+    const el = document.getElementById('t8k-modal');
+    if (el) el.remove();
+    document.documentElement.style.overflow = '';
+  }
+
+  document.addEventListener('open-modal', (e) => {
+    const detail = e.detail || {};
+    let src = '';
+    if (detail.url) {
+      let parsed;
+      try {
+        parsed = new URL(detail.url);
+      } catch {
+        return;
+      }
+      if (parsed.protocol !== 'https:') return;
+      src = parsed.href;
+    } else if (detail.hookId && /^[A-Za-z0-9_-]+$/.test(detail.hookId)) {
+      const cfg = window.TractStackApp ? window.TractStackApp.getConfig() : {};
+      const q = new URLSearchParams({
+        paneId: '',
+        tenantId: cfg.tenantId || 'default',
+        modal: '1',
+      });
+      src = `/codehooks/${detail.hookId}?${q}`;
+    } else {
+      return;
+    }
+
+    closeModal();
+
+    const shell = document.createElement('div');
+    shell.id = 't8k-modal';
+    shell.setAttribute('role', 'dialog');
+    shell.className = 'fixed inset-0 bg-black bg-opacity-75';
+    shell.style.zIndex = '9005';
+
+    const relative = document.createElement('div');
+    relative.className = 'relative h-full w-full';
+
+    const closeWrap = document.createElement('div');
+    closeWrap.className = 'absolute right-4 top-4 z-10';
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Close');
+    close.title = 'Close';
+    close.className =
+      'flex h-10 w-10 items-center justify-center rounded-full bg-white bg-opacity-90 shadow-lg transition-all duration-200 hover:bg-opacity-100';
+    close.innerHTML =
+      '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>';
+    close.addEventListener('click', closeModal);
+    closeWrap.appendChild(close);
+
+    const frame = document.createElement('iframe');
+    frame.src = src;
+    frame.className = 'h-full w-full border-0';
+    frame.allow = 'fullscreen; pointer-lock; gamepad; autoplay; xr-spatial-tracking';
+    frame.setAttribute('allowfullscreen', '');
+    frame.tabIndex = 0;
+    frame.addEventListener('load', () => frame.focus());
+
+    relative.append(closeWrap, frame);
+    shell.appendChild(relative);
+    document.body.appendChild(shell);
+    document.documentElement.style.overflow = 'hidden';
+    frame.focus();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+  document.addEventListener('astro:before-swap', closeModal);
+
   window.tractstackViewLifecycleListenersAttached = true;
 }
 

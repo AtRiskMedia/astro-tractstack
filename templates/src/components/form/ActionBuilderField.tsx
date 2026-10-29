@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, type JSX } from 'react';
+import { useStore } from '@nanostores/react';
 import { TractStackAPI } from '@/utils/api';
 import { GOTO_TARGETS, ACTION_COMMANDS, type ActionCommand } from '@/constants';
+import { codehookMapStore } from '@/stores/storykeep';
 import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
 import ActionBuilderSlugSelector from './ActionBuilderSlugSelector';
 import ActionBuilderBeliefSelector from './ActionBuilderBeliefSelector';
@@ -16,6 +18,8 @@ interface ActionBuilderFieldProps {
   error?: string;
   slug?: string;
   restriction?: 'navigation' | 'action';
+  /** When true (MenuForm host), omit modal — menus cannot open the shell. */
+  excludeModal?: boolean;
 }
 
 const parseActionLisp = (
@@ -44,6 +48,7 @@ export default function ActionBuilderField({
   error,
   slug,
   restriction,
+  excludeModal = false,
 }: ActionBuilderFieldProps) {
   const [command, setCommand] = useState<ActionCommand>('goto');
   const [params, setParams] = useState('');
@@ -113,6 +118,7 @@ export default function ActionBuilderField({
   const handleCommandChange = (newCommand: ActionCommand) => {
     if (restriction === 'navigation' && newCommand !== 'goto') return;
     if (restriction === 'action' && newCommand === 'goto') return;
+    if (excludeModal && newCommand === 'modal') return;
     setCommand(newCommand);
     setParams('');
   };
@@ -147,6 +153,8 @@ export default function ActionBuilderField({
         return (
           <BunnyMomentSelector value={params} onChange={handleParamChange} />
         );
+      case 'modal':
+        return <ModalBuilder value={params} onChange={handleParamChange} />;
       case 'goto':
       default:
         return (
@@ -189,6 +197,7 @@ export default function ActionBuilderField({
         >
           {Object.entries(ACTION_COMMANDS)
             .filter(([key]) => {
+              if (excludeModal && key === 'modal') return false;
               if (restriction === 'navigation') return key === 'goto';
               if (restriction === 'action') return key !== 'goto';
               return true;
@@ -209,6 +218,114 @@ export default function ActionBuilderField({
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function ModalBuilder({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const availableCodeHooks = useStore(codehookMapStore);
+  const codehookMatch = value.match(/^\(codehook\s+([A-Za-z0-9_-]+)\)\s*$/);
+  const urlMatch = value.match(/^\(url\s+"([^"]*)"\)\s*$/);
+  const hookId = codehookMatch?.[1] || '';
+  const url = urlMatch?.[1] || '';
+
+  // Sub-form must be local: emitting '' on empty URL used to re-derive as codehook.
+  const [subForm, setSubForm] = useState<'codehook' | 'url'>(() =>
+    urlMatch || /^\(url\b/.test(value) ? 'url' : 'codehook'
+  );
+
+  useEffect(() => {
+    if (urlMatch) setSubForm('url');
+    else if (codehookMatch) setSubForm('codehook');
+  }, [value]);
+
+  const commonSelectClass =
+    'w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-cyan-700 focus:ring-cyan-700';
+
+  const emitCodehook = (id: string) => {
+    const trimmed = id.trim();
+    if (!trimmed) {
+      onChange('');
+      return;
+    }
+    onChange(`(codehook ${trimmed})`);
+  };
+
+  const emitUrl = (raw: string) => {
+    // Keep the url sub-form shape even when empty so selection does not snap back.
+    onChange(`(url "${raw.trim()}")`);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label className="block text-sm text-gray-700">Modal Content</label>
+        <select
+          value={subForm}
+          onChange={(e) => {
+            const next = e.target.value as 'codehook' | 'url';
+            setSubForm(next);
+            if (next === 'codehook') {
+              onChange(hookId ? `(codehook ${hookId})` : '');
+            } else {
+              onChange(`(url "${url}")`);
+            }
+          }}
+          className={commonSelectClass}
+        >
+          <option value="codehook">Codehook</option>
+          <option value="url">URL</option>
+        </select>
+      </div>
+
+      {subForm === 'codehook' ? (
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-700">
+            Codehook ID
+          </label>
+          {availableCodeHooks.length > 0 ? (
+            <select
+              value={hookId}
+              onChange={(e) => emitCodehook(e.target.value)}
+              className={commonSelectClass}
+            >
+              <option value="">Select a codehook...</option>
+              {availableCodeHooks.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={hookId}
+              onChange={(e) => emitCodehook(e.target.value)}
+              placeholder="codehook-id"
+              className={commonSelectClass}
+            />
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-700">
+            External URL
+          </label>
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => emitUrl(e.target.value)}
+            placeholder="https://..."
+            className={commonSelectClass}
+          />
+        </div>
+      )}
     </div>
   );
 }

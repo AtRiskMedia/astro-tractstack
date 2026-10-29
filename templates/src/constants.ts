@@ -45,7 +45,12 @@ export const colors = [
 
 export const collections = ['kCz'];
 
-export type ActionCommand = 'goto' | 'bunnyMoment' | 'declare' | 'identifyAs';
+export type ActionCommand =
+  | 'goto'
+  | 'bunnyMoment'
+  | 'declare'
+  | 'identifyAs'
+  | 'modal';
 
 export const ACTION_COMMANDS: Record<
   ActionCommand,
@@ -63,6 +68,10 @@ export const ACTION_COMMANDS: Record<
   identifyAs: {
     name: 'Identify As',
     description: 'Set an identity value for a belief.',
+  },
+  modal: {
+    name: 'Open fullscreen modal',
+    description: 'Open a codehook or a URL in a fullscreen iframe.',
   },
 };
 
