@@ -75,7 +75,10 @@ export const PaneSnapshotGenerator = ({
         }
 
         const cssBasePath = '/media/css';
-        const customCssUrl = `${cssBasePath}/custom.css`;
+        const stylesVer = brandConfigStore.get()?.STYLES_VER;
+        const customCssUrl = stylesVer
+          ? `${cssBasePath}/custom.css?v=${stylesVer}`
+          : `${cssBasePath}/custom.css`;
         const storykeepCssUrl = `${cssBasePath}/storykeep.css`;
 
         const brandColors =

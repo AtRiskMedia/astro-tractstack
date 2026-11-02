@@ -13,7 +13,7 @@ export type EditorTab = {
   /** Content last loaded or successfully saved — dirty iff content !== baseline. */
   baseline: string;
   dirty: boolean;
-  kind: 'source' | 'asset';
+  kind: 'source' | 'asset' | 'custom-css';
 };
 
 function extensionsFor(path: string) {

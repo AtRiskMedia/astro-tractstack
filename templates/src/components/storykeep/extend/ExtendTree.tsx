@@ -9,6 +9,7 @@ import DocumentPlusIcon from '@heroicons/react/24/outline/DocumentPlusIcon';
 import DocumentTextIcon from '@heroicons/react/24/outline/DocumentTextIcon';
 import FolderIcon from '@heroicons/react/24/outline/FolderIcon';
 import FolderPlusIcon from '@heroicons/react/24/outline/FolderPlusIcon';
+import PaintBrushIcon from '@heroicons/react/24/outline/PaintBrushIcon';
 import RectangleGroupIcon from '@heroicons/react/24/outline/RectangleGroupIcon';
 import TrashIcon from '@heroicons/react/24/outline/TrashIcon';
 
@@ -235,6 +236,7 @@ export default function ExtendTree({
   selectedSourceDir,
   onSelectSourceDir,
   onCreateSourceFile,
+  onEditCustomCss,
 }: {
   showSource: boolean;
   showBuild: boolean;
@@ -265,6 +267,7 @@ export default function ExtendTree({
   selectedSourceDir: string;
   onSelectSourceDir: (path: string) => void;
   onCreateSourceFile: () => void;
+  onEditCustomCss: () => void;
 }) {
   const [sourceOpen, setSourceOpen] = useState(false);
   const [hooksOpen, setHooksOpen] = useState(false);
@@ -298,6 +301,9 @@ export default function ExtendTree({
             )}{' '}
             Source
           </button>
+          <p className="mb-1 text-xs text-black/60">
+            Code for codehooks, routes, the custom header and state.
+          </p>
           {sourceOpen && (
             <div className="pl-2">
               {registryNotice && (
@@ -319,6 +325,9 @@ export default function ExtendTree({
                   )}{' '}
                   Hooks
                 </button>
+                <p className="mb-1 text-xs text-black/60">
+                  Codehook blades (pane) and HeaderWidget.astro (custom header).
+                </p>
                 {hooksOpen && (
                   <div className="pl-2">
                     <div className="mb-2 space-y-1 border border-black/10 p-2 text-xs">
@@ -441,6 +450,9 @@ export default function ExtendTree({
                   )}{' '}
                   Routes
                 </button>
+                <p className="mb-1 text-xs text-black/60">
+                  Collection routes: pages at /route/slug.
+                </p>
                 {routesOpen && (
                   <div className="pl-2">
                     <div className="mb-2 space-y-1 border border-black/10 p-2 text-xs">
@@ -515,6 +527,10 @@ export default function ExtendTree({
                   )}{' '}
                   Files
                 </button>
+                <p className="mb-1 text-xs text-black/60">
+                  src/custom: components and state used by hooks, routes and the
+                  header.
+                </p>
                 {filesOpen && (
                   <div className="pl-2">
                     <p className="mb-1 text-xs text-black/60">
@@ -571,6 +587,9 @@ export default function ExtendTree({
           Assets
           <span className="ml-1 text-xs font-normal text-green-800">live</span>
         </button>
+        <p className="mb-1 text-xs text-black/60">
+          Custom files at /custom/, live on upload.
+        </p>
         {assetsOpen && (
           <div className="pl-2">
             <p className="mb-1 text-xs text-black/60">
@@ -667,6 +686,20 @@ export default function ExtendTree({
         )}
       </div>
 
+      <div className="mb-2">
+        <button
+          type="button"
+          className="mb-1 flex w-full items-center gap-1 font-action text-base"
+          onClick={() => onEditCustomCss()}
+        >
+          <PaintBrushIcon className="h-4 w-4" /> Edit custom.css
+          <span className="ml-1 text-xs font-normal text-green-800">live</span>
+        </button>
+        <p className="mb-1 text-xs text-black/60">
+          Custom CSS when Tailwind is not enough. Live on save.
+        </p>
+      </div>
+
       {showBuild && (
         <div>
           <button
@@ -686,6 +719,7 @@ export default function ExtendTree({
               </span>
             ) : null}
           </button>
+          <p className="mb-1 text-xs text-black/60">Publish source changes.</p>
           {buildOpen && (
             <div className="space-y-2 pl-4 text-xs text-black/70">
               {latestJob?.status ? (

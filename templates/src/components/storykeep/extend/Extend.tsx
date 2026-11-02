@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { extendFetch, getTenantId } from './extendFetch';
 import SysopLoginCard from './SysopLoginCard';
+import ExtendGuide from './ExtendGuide';
 import ExtendTree, {
   type HookUsageRow,
   type LatestRebuildJob,
@@ -16,6 +17,10 @@ import type { FormStateReturn, SaveState } from '@/hooks/useFormState';
 type BuildStamp = { jobId: string; builtAt: string };
 
 const TEXT_ASSET = /\.(js|css|json|txt|md|html|svg|csv)$/i;
+
+const CUSTOM_CSS_ENDPOINT = '/api/v1/extend/custom-css';
+const CUSTOM_CSS_PATH = '/media/css/custom.css';
+const CUSTOM_CSS_KEY = 'custom-css';
 
 /** Invariant 3 — mirror Go CoreBladeIDs; never list as registry rows. */
 const CORE_HOOK_IDS = new Set([
@@ -265,12 +270,18 @@ export default function Extend({
     setSaveError(null);
     setError(null);
     const endpoint =
-      tab.kind === 'source'
-        ? '/api/v1/extend/source/file'
-        : '/api/v1/extend/assets/file';
+      tab.kind === 'custom-css'
+        ? CUSTOM_CSS_ENDPOINT
+        : tab.kind === 'source'
+          ? '/api/v1/extend/source/file'
+          : '/api/v1/extend/assets/file';
     const res = await extendFetch(endpoint, {
       method: 'PUT',
-      body: JSON.stringify({ path: tab.path, content: tab.content }),
+      body: JSON.stringify(
+        tab.kind === 'custom-css'
+          ? { content: tab.content }
+          : { path: tab.path, content: tab.content }
+      ),
       sysopToken: tab.kind === 'source' ? sysopToken : null,
     });
     if (!res.ok) {
@@ -362,6 +373,43 @@ export default function Extend({
       },
     ]);
     setActiveKey(key);
+    setSaveState('idle');
+    setSaveError(null);
+    setModalOpen(true);
+  }
+
+  async function openCustomCss() {
+    const existing = tabs.find((t) => t.key === CUSTOM_CSS_KEY);
+    if (existing) {
+      setPreview(null);
+      setActiveKey(existing.key);
+      setSaveState('idle');
+      setSaveError(null);
+      setModalOpen(true);
+      return;
+    }
+    setError(null);
+    const res = await extendFetch(CUSTOM_CSS_ENDPOINT);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Failed to open custom.css (${res.status})`);
+      return;
+    }
+    const data = await res.json();
+    const content = data.content ?? '';
+    setPreview(null);
+    setTabs((prev) => [
+      ...prev,
+      {
+        key: CUSTOM_CSS_KEY,
+        path: data.path || CUSTOM_CSS_PATH,
+        content,
+        baseline: content,
+        dirty: false,
+        kind: 'custom-css',
+      },
+    ]);
+    setActiveKey(CUSTOM_CSS_KEY);
     setSaveState('idle');
     setSaveError(null);
     setModalOpen(true);
@@ -705,6 +753,7 @@ export default function Extend({
 
   return (
     <div className="mt-4 pb-24">
+      <ExtendGuide />
       {isMultiTenant && !sysopToken && (
         <SysopLoginCard onToken={setSysopToken} />
       )}
@@ -768,6 +817,7 @@ export default function Extend({
           selectedSourceDir={selectedSourceDir}
           onSelectSourceDir={setSelectedSourceDir}
           onCreateSourceFile={() => void createSourceFile()}
+          onEditCustomCss={() => void openCustomCss()}
         />
       </div>
 

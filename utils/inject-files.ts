@@ -1328,6 +1328,18 @@ export async function injectTemplateFiles(
     },
     {
       src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendGuide.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendGuide.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/extendGuideContent.ts'
+      ),
+      dest: 'src/components/storykeep/extend/extendGuideContent.ts',
+    },
+    {
+      src: resolve(
         '../templates/src/components/storykeep/Dashboard_Shopify.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Shopify.tsx',

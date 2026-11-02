@@ -39,6 +39,10 @@ const wordmark = getAssetPath(
 const mainStylesUrl = isDev
   ? `${cssBasePath}/storykeep.css`
   : `${cssBasePath}/frontend.css`;
+const customStylesUrl =
+  isInitialized && brandConfig?.STYLES_VER
+    ? `${cssBasePath}/custom.css?v=${brandConfig.STYLES_VER}`
+    : `${cssBasePath}/custom.css`;
 ---
 
 <!doctype html>
@@ -47,7 +51,7 @@ const mainStylesUrl = isDev
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | TractStack</title>
-    <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
+    <link rel="stylesheet" href={customStylesUrl} />
     <link rel="stylesheet" href={mainStylesUrl} />
   </head>
   <body class="h-full">

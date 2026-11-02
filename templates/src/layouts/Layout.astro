@@ -76,6 +76,10 @@ const mainStylesUrl = (() => {
   }
   return baseUrl;
 })();
+const customStylesUrl =
+  isInitialized && brandConfig?.STYLES_VER
+    ? `${cssBasePath}/custom.css?v=${brandConfig.STYLES_VER}`
+    : `${cssBasePath}/custom.css`;
 
 const defaultFavIcon = brandConfig.FAVICON || `/brand/favicon.ico`;
 const defaultSocialImageURL = ogImage || brandConfig.OG || `/brand/og.png`;
@@ -121,7 +125,7 @@ const enableBunny = import.meta.env.PUBLIC_ENABLE_BUNNY === 'true';
     <link rel="icon" type="image/svg+xml" href={defaultFavIcon} />
     <link rel="canonical" href={fullCanonicalUrl} />
     <title>{defaultSocialTitle}</title>
-    <link rel="stylesheet" href={`${cssBasePath}/custom.css`} />
+    <link rel="stylesheet" href={customStylesUrl} />
     <link rel="stylesheet" href={mainStylesUrl} />
     <link rel="sitemap" href="/sitemap.xml" />
 
