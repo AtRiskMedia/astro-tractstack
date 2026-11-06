@@ -22,9 +22,6 @@ if (authCheck) {
 }
 
 const userIsAdmin = isAdmin(Astro);
-if (!userIsAdmin) {
-  return Astro.redirect('/storykeep');
-}
 
 const userIsAuthenticated = isAuthenticated(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
