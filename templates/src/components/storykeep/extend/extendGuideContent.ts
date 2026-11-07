@@ -191,6 +191,9 @@ const publish = `# Publish and verify
 - custom.css → save in Extend; the stylesheet URL version changes on save. Reload any editor tab that was open before the save.
 - Assets → upload; nothing else.
 
+## History
+Extend keeps a short design history keyed by the frontend build stamp: a few prior versions per file, and a few sealed full-site points created when you queue Rebuild. Per-file restore writes historical bytes live (source stays "saved" until rebuild). Site restore replaces the design tree, regenerates the registry, clears tenant cache, and immediately starts a rebuild — confirm carefully.
+
 ## Symptoms
 - Code change not visible → badge still "saved"; rebuild.
 - Element unstyled → Tailwind class new to the site; rebuild, then save a page in Storykeep. Or a class built from a template string; use literals.

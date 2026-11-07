@@ -6,9 +6,12 @@ import ExtendTree, {
   type HookUsageRow,
   type LatestRebuildJob,
   type Registry,
+  type SiteHistoryPoint,
   type TreeNode,
 } from './ExtendTree';
-import ExtendEditorModal from './ExtendEditorModal';
+import ExtendEditorModal, {
+  type FileHistorySlot,
+} from './ExtendEditorModal';
 import ExtendPublishBar from './ExtendPublishBar';
 import RebuildModal from './RebuildModal';
 import type { EditorTab } from './CodeEditor';
@@ -68,6 +71,14 @@ export default function Extend({
   const [latestJob, setLatestJob] = useState<LatestRebuildJob>(null);
   const [rebuildOpen, setRebuildOpen] = useState(false);
   const [rebuildJobId, setRebuildJobId] = useState<string | null>(null);
+  const [siteHistoryPoints, setSiteHistoryPoints] = useState<
+    SiteHistoryPoint[]
+  >([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [fileHistorySlots, setFileHistorySlots] = useState<FileHistorySlot[]>(
+    []
+  );
+  const [fileHistoryLoading, setFileHistoryLoading] = useState(false);
 
   const sourceReady = !isMultiTenant || !!sysopToken;
 
@@ -148,6 +159,28 @@ export default function Extend({
     }
   }, [isDev, sourceReady, sysopToken]);
 
+  const loadSiteHistory = useCallback(async () => {
+    if (isDev || !sourceReady) {
+      setSiteHistoryPoints([]);
+      return;
+    }
+    try {
+      const res = await extendFetch('/api/v1/extend/history/site', {
+        sysopToken,
+      });
+      if (!res.ok) {
+        setSiteHistoryPoints([]);
+        return;
+      }
+      const data = await res.json();
+      setSiteHistoryPoints(
+        Array.isArray(data.points) ? (data.points as SiteHistoryPoint[]) : []
+      );
+    } catch {
+      setSiteHistoryPoints([]);
+    }
+  }, [isDev, sourceReady, sysopToken]);
+
   const startRebuild = useCallback(async () => {
     try {
       const res = await extendFetch('/api/v1/extend/rebuild', {
@@ -223,6 +256,7 @@ export default function Extend({
         if (sourceReady) {
           await loadSource();
           await loadLatestJob();
+          await loadSiteHistory();
         }
       } catch (e) {
         if (!cancelled)
@@ -232,7 +266,176 @@ export default function Extend({
     return () => {
       cancelled = true;
     };
-  }, [loadAssets, loadSource, loadStamp, loadLatestJob, sourceReady]);
+  }, [
+    loadAssets,
+    loadSource,
+    loadStamp,
+    loadLatestJob,
+    loadSiteHistory,
+    sourceReady,
+  ]);
+
+  const loadFileHistory = useCallback(
+    async (tab: EditorTab) => {
+      setFileHistoryLoading(true);
+      try {
+        let url = '';
+        let token: string | null = null;
+        if (tab.kind === 'source') {
+          url = `/api/v1/extend/history/source?path=${encodeURIComponent(tab.path)}`;
+          token = sysopToken;
+        } else if (tab.kind === 'asset') {
+          url = `/api/v1/extend/history/assets?path=${encodeURIComponent(tab.path)}`;
+        } else {
+          url = '/api/v1/extend/history/custom-css';
+        }
+        const res = await extendFetch(url, { sysopToken: token });
+        if (!res.ok) {
+          setFileHistorySlots([]);
+          return;
+        }
+        const data = await res.json();
+        setFileHistorySlots(
+          Array.isArray(data.slots) ? (data.slots as FileHistorySlot[]) : []
+        );
+      } catch {
+        setFileHistorySlots([]);
+      } finally {
+        setFileHistoryLoading(false);
+      }
+    },
+    [sysopToken]
+  );
+
+  const restoreSite = useCallback(
+    async (jobId: string) => {
+      const ok = window.confirm(
+        `Restore the entire Extend design surface to sealed point ${jobId}?\n\n` +
+          'This replaces allowlisted source, Extend assets, and custom.css. ' +
+          'Open unsaved editor tabs will be discarded. A rebuild starts immediately after restore.'
+      );
+      if (!ok) return;
+      setError(null);
+      try {
+        const res = await extendFetch(
+          `/api/v1/extend/history/site/${encodeURIComponent(jobId)}/restore`,
+          { method: 'POST', sysopToken }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || `site restore ${res.status}`);
+          return;
+        }
+        requestCloseModal();
+        setPendingPublish(true);
+        await loadAssets();
+        if (sourceReady) {
+          await loadSource();
+          await loadSiteHistory();
+        }
+        await startRebuild();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'site restore failed');
+      }
+    },
+    [sysopToken, sourceReady, loadAssets, loadSource, loadSiteHistory, startRebuild]
+  );
+
+  const restoreFileSlot = useCallback(
+    async (jobId: string) => {
+      const tab = tabs.find((t) => t.key === (activeKey || tabs[0]?.key));
+      if (!tab) return;
+      if (
+        !window.confirm(
+          `Restore ${tab.path} to the version from build ${jobId}?`
+        )
+      ) {
+        return;
+      }
+      setError(null);
+      try {
+        let url = '';
+        let body: Record<string, string> = { jobId };
+        let token: string | null = null;
+        if (tab.kind === 'source') {
+          url = '/api/v1/extend/history/source/restore';
+          body = { path: tab.path, jobId };
+          token = sysopToken;
+        } else if (tab.kind === 'asset') {
+          url = '/api/v1/extend/history/assets/restore';
+          body = { path: tab.path, jobId };
+        } else {
+          url = '/api/v1/extend/history/custom-css/restore';
+        }
+        const res = await extendFetch(url, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          sysopToken: token,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || `restore ${res.status}`);
+          return;
+        }
+        // Re-fetch live content into the tab
+        if (tab.kind === 'custom-css') {
+          const get = await extendFetch(CUSTOM_CSS_ENDPOINT);
+          if (get.ok) {
+            const data = await get.json();
+            const content = data.content ?? '';
+            setTabs((prev) =>
+              prev.map((t) =>
+                t.key === tab.key
+                  ? { ...t, content, baseline: content, dirty: false }
+                  : t
+              )
+            );
+          }
+        } else {
+          const endpoint =
+            tab.kind === 'source'
+              ? `/api/v1/extend/source/file?path=${encodeURIComponent(tab.path)}`
+              : `/api/v1/extend/assets/file?path=${encodeURIComponent(tab.path)}`;
+          const get = await extendFetch(endpoint, {
+            sysopToken: tab.kind === 'source' ? sysopToken : null,
+          });
+          if (get.ok) {
+            const data = await get.json();
+            const content = data.content ?? '';
+            setTabs((prev) =>
+              prev.map((t) =>
+                t.key === tab.key
+                  ? { ...t, content, baseline: content, dirty: false }
+                  : t
+              )
+            );
+          } else if (get.status === 404) {
+            // tombstone restore deleted the file
+            setTabs((prev) => prev.filter((t) => t.key !== tab.key));
+            setActiveKey(null);
+            setModalOpen(false);
+          }
+        }
+        if (tab.kind === 'source') {
+          setPendingPublish(true);
+          await loadSource();
+        } else if (tab.kind === 'asset') {
+          await loadAssets();
+        }
+        await loadFileHistory(tab);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'restore failed');
+      }
+    },
+    [
+      tabs,
+      activeKey,
+      sysopToken,
+      loadSource,
+      loadAssets,
+      loadFileHistory,
+    ]
+  );
 
   useEffect(() => {
     if (!isMultiTenant) return;
@@ -261,6 +464,8 @@ export default function Extend({
     setModalOpen(false);
     setSaveState('idle');
     setSaveError(null);
+    setHistoryOpen(false);
+    setFileHistorySlots([]);
   }
 
   const saveActiveTab = useCallback(async () => {
@@ -777,6 +982,9 @@ export default function Extend({
           hasSavedSource={hasSavedSource}
           latestJob={latestJob}
           onRebuild={() => void startRebuild()}
+          stampJobId={stamp?.jobId ?? null}
+          siteHistoryPoints={siteHistoryPoints}
+          onRestoreSite={(jobId) => void restoreSite(jobId)}
           sourceNodes={sourceNodes}
           assetNodes={assetNodes}
           registry={registry}
@@ -832,6 +1040,8 @@ export default function Extend({
           setActiveKey(key);
           setSaveState('idle');
           setSaveError(null);
+          setHistoryOpen(false);
+          setFileHistorySlots([]);
         }}
         onChangeTab={(key, content) => {
           if (saveState !== 'idle') {
@@ -853,6 +1063,18 @@ export default function Extend({
           void loadAssets();
         }}
         onPreviewReplaced={() => void loadAssets()}
+        historyOpen={historyOpen}
+        fileHistorySlots={fileHistorySlots}
+        fileHistoryLoading={fileHistoryLoading}
+        onToggleHistory={() => {
+          const next = !historyOpen;
+          setHistoryOpen(next);
+          if (next) {
+            const tab = tabs.find((t) => t.key === (activeKey || tabs[0]?.key));
+            if (tab) void loadFileHistory(tab);
+          }
+        }}
+        onRestoreFileSlot={(jobId) => void restoreFileSlot(jobId)}
       />
 
       <ExtendPublishBar
@@ -870,6 +1092,7 @@ export default function Extend({
           void loadStamp();
           void loadLatestJob();
           void loadSource();
+          void loadSiteHistory();
           setPendingPublish(false);
         }}
         onRebuild={() => {

@@ -206,6 +206,15 @@ export type LatestRebuildJob = {
   message?: string;
 } | null;
 
+export type SiteHistoryPoint = {
+  jobId: string;
+  sealedAt: string;
+  fileCount: number;
+  totalBytes: number;
+  builtAt?: string;
+  status?: string;
+};
+
 export default function ExtendTree({
   showSource,
   showBuild,
@@ -215,6 +224,9 @@ export default function ExtendTree({
   hasSavedSource,
   latestJob,
   onRebuild,
+  stampJobId,
+  siteHistoryPoints,
+  onRestoreSite,
   sourceNodes,
   assetNodes,
   registry,
@@ -246,6 +258,9 @@ export default function ExtendTree({
   hasSavedSource: boolean;
   latestJob: LatestRebuildJob;
   onRebuild: () => void;
+  stampJobId: string | null;
+  siteHistoryPoints: SiteHistoryPoint[];
+  onRestoreSite: (jobId: string) => void;
   sourceNodes: TreeNode[];
   assetNodes: TreeNode[];
   registry: Registry | null;
@@ -750,6 +765,49 @@ export default function ExtendTree({
                   Rebuild site
                 </button>
               ) : null}
+              <div className="mt-3 border-t border-black/10 pt-2">
+                <p className="mb-1 font-bold text-black/80">History</p>
+                {siteHistoryPoints.length === 0 ? (
+                  <p className="text-black/50">No sealed site points yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {siteHistoryPoints.map((p) => {
+                      const isCurrent = !!stampJobId && p.jobId === stampJobId;
+                      return (
+                        <li
+                          key={p.jobId}
+                          className="rounded border border-black/10 bg-black/[0.02] p-2"
+                        >
+                          <div className="flex flex-wrap items-center gap-1 font-mono text-[11px]">
+                            <span>{p.jobId}</span>
+                            {isCurrent ? (
+                              <span className="rounded bg-green-100 px-1 font-bold text-green-900">
+                                current
+                              </span>
+                            ) : null}
+                            {p.status ? (
+                              <span className="text-black/50">{p.status}</span>
+                            ) : null}
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-black/60">
+                            sealed {p.sealedAt}
+                            {p.builtAt ? ` · built ${p.builtAt}` : ''}
+                            {` · ${p.fileCount} files`}
+                          </p>
+                          <button
+                            type="button"
+                            className="mt-1 border border-black/20 bg-white px-2 py-0.5 text-[11px] font-bold disabled:opacity-40"
+                            disabled={isCurrent}
+                            onClick={() => onRestoreSite(p.jobId)}
+                          >
+                            Restore site to this point
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
           )}
         </div>
