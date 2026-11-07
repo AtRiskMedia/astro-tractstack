@@ -15,6 +15,7 @@
 // --- UNCOMMENT BELOW TO ACTIVATE ---
 
 // import { getHeaderResources } from '@/lib/resources';
+// import { RESOURCE_TTL_MS } from '@/custom/customHelpers';
 // import type { ResourceNode } from '@/types/compositorTypes';
 
 // export interface Props {
@@ -25,10 +26,10 @@
 // // Add the slugs of the resource categories you want to fetch here.
 // const resourceCategories = []; // e.g., ['promotions', 'site-alerts']
 
-// // This function automatically fetches and caches the resources.
+// // Tenant+query keyed cache; pass RESOURCE_TTL_MS to set this site's freshness window.
 // const resources: ResourceNode[] =
 //   resourceCategories.length > 0
-//     ? await getHeaderResources(tenantId, resourceCategories)
+//     ? await getHeaderResources(tenantId, resourceCategories, RESOURCE_TTL_MS)
 //     : [];
 
 */

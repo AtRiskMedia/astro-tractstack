@@ -135,9 +135,10 @@ State lives in the custom header, on the server or in the client.
 
 ## Server state — same for every visitor
   import { getHeaderResources } from '@/lib/resources';
-  const resources = await getHeaderResources(tenantId, ['promotions']);
+  import { RESOURCE_TTL_MS } from '@/custom/customHelpers';
+  const resources = await getHeaderResources(tenantId, ['promotions'], RESOURCE_TTL_MS);
 - Fetches resources by category from the backend.
-- Cached in process for 5 minutes. The cache holds one category set at a time; reuse the same category list everywhere you call it.
+- Cached in-process, keyed by tenant + categories + slugs. Default TTL is 5 minutes; pass RESOURCE_TTL_MS (or getCodeHookResources(..., { ttlMs })) to override per site. Empty results are cached. After TTL, revalidates with the backend resources version (304 when unchanged).
 - Use for content every visitor sees (banners, announcements, menus).
 
 ## Client state — per visitor

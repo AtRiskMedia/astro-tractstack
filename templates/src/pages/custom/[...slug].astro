@@ -65,6 +65,28 @@ try {
     throw new Error(`Invalid path for tenant "${tenant}".`);
   }
 
+  const stat = await fs.stat(fullPath);
+  const mtimeMs = Math.floor(stat.mtimeMs);
+  const etag = `W/"${mtimeMs}-${stat.size}"`;
+  const lastModified = new Date(mtimeMs).toUTCString();
+
+  const ifNoneMatch = Astro.request.headers.get('if-none-match');
+  const ifModifiedSince = Astro.request.headers.get('if-modified-since');
+  if (
+    (ifNoneMatch && ifNoneMatch === etag) ||
+    (ifModifiedSince &&
+      Math.floor(new Date(ifModifiedSince).getTime()) >= mtimeMs)
+  ) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        'Last-Modified': lastModified,
+        'Cache-Control': 'no-cache',
+      },
+    });
+  }
+
   const fileBuffer = await fs.readFile(fullPath);
   const extension = path.extname(slug).toLowerCase();
   const mimeType = MIME_TYPES[extension] || 'application/octet-stream';
@@ -74,6 +96,8 @@ try {
     headers: {
       'Content-Type': mimeType,
       'Cache-Control': 'no-cache',
+      ETag: etag,
+      'Last-Modified': lastModified,
     },
   });
 } catch (error) {

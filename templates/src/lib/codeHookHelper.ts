@@ -63,13 +63,14 @@ export function parseCodeHookResourceFilters(
 export async function resolveCodeHookResources(
   tenantId: string,
   optionsStr: string,
-  logLabel?: string
+  logLabel?: string,
+  opts?: { ttlMs?: number }
 ): Promise<ResourceNode[]> {
   const { categories, slugs } = parseCodeHookResourceFilters(
     optionsStr,
     logLabel
   );
-  return getCodeHookResources(tenantId, categories, slugs);
+  return getCodeHookResources(tenantId, categories, slugs, opts);
 }
 
 export function buildCodeHookBladePath(
