@@ -220,24 +220,35 @@ export default function RebuildModal({
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="border border-black/20 bg-white px-3 py-1.5 text-sm font-bold"
-            onClick={onClose}
-          >
-            Dismiss
-          </button>
-          {(phase === 'failed' ||
-            phase === 'unsupported' ||
-            phase === 'reload_error' ||
-            phase === 'succeeded') && (
+          {phase === 'succeeded' ? (
             <button
               type="button"
               className="bg-black px-3 py-1.5 text-sm font-bold text-white"
-              onClick={onRebuild}
+              onClick={onClose}
             >
-              Rebuild
+              Continue
             </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="border border-black/20 bg-white px-3 py-1.5 text-sm font-bold"
+                onClick={onClose}
+              >
+                Dismiss
+              </button>
+              {(phase === 'failed' ||
+                phase === 'unsupported' ||
+                phase === 'reload_error') && (
+                <button
+                  type="button"
+                  className="bg-black px-3 py-1.5 text-sm font-bold text-white"
+                  onClick={onRebuild}
+                >
+                  Rebuild
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
