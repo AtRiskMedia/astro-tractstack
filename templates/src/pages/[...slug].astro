@@ -20,7 +20,12 @@ if (healthCheckRedirect !== undefined) {
 
 const { slug } = Astro.params || {};
 
-if (slug && (slug.startsWith('images/') || slug.startsWith('media/'))) {
+if (
+  slug &&
+  (slug.startsWith('images/') ||
+    slug.startsWith('media/') ||
+    slug.startsWith('custom/'))
+) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 

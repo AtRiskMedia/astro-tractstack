@@ -56,6 +56,10 @@ export async function injectTemplateFiles(
       src: resolve('../templates/src/pages/media/[...slug].astro'),
       dest: 'src/pages/media/[...slug].astro',
     },
+    {
+      src: resolve('../templates/src/pages/custom/[...slug].astro'),
+      dest: 'src/pages/custom/[...slug].astro',
+    },
 
     // Types
     {
@@ -889,6 +893,10 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep/advanced.astro',
     },
     {
+      src: resolve('../templates/src/pages/storykeep/extend.astro'),
+      dest: 'src/pages/storykeep/extend.astro',
+    },
+    {
       src: resolve('../templates/src/pages/storykeep/shopify.astro'),
       dest: 'src/pages/storykeep/shopify.astro',
     },
@@ -951,6 +959,10 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/api/sandbox.ts'),
       dest: 'src/pages/api/sandbox.ts',
+    },
+    {
+      src: resolve('../templates/src/pages/api/extend/stamp.ts'),
+      dest: 'src/pages/api/extend/stamp.ts',
     },
 
     // Authentication Pages
@@ -1261,6 +1273,70 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/Dashboard_Advanced.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
+    },
+    {
+      src: resolve('../templates/src/components/storykeep/extend/Extend.tsx'),
+      dest: 'src/components/storykeep/extend/Extend.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendEditorModal.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendEditorModal.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/RebuildModal.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/RebuildModal.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendPublishBar.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendPublishBar.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendTree.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendTree.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/CodeEditor.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/CodeEditor.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/AssetPreview.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/AssetPreview.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/SysopLoginCard.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/SysopLoginCard.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/extendFetch.ts'
+      ),
+      dest: 'src/components/storykeep/extend/extendFetch.ts',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/ExtendGuide.tsx'
+      ),
+      dest: 'src/components/storykeep/extend/ExtendGuide.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/extend/extendGuideContent.ts'
+      ),
+      dest: 'src/components/storykeep/extend/extendGuideContent.ts',
     },
     {
       src: resolve(
@@ -2382,16 +2458,14 @@ export async function injectTemplateFiles(
       dest: 'src/pages/storykeep/init.astro',
     },
 
-    // Custom Components (Conditional)
+    // Build stamp (concierge-written; create once, never overwrite)
     {
-      src: resolve(
-        config?.includeExamples
-          ? '../templates/custom/with-examples/CustomRoutes.astro'
-          : '../templates/custom/minimal/CustomRoutes.astro'
-      ),
-      dest: 'src/custom/CustomRoutes.astro',
+      src: resolve('../templates/src/generated/buildStamp.ts'),
+      dest: 'src/generated/buildStamp.ts',
       protected: true,
     },
+
+    // Custom Components (Conditional)
     {
       src: resolve('../templates/custom/minimal/HeaderWidget.astro'),
       dest: 'src/custom/HeaderWidget.astro',
@@ -2513,18 +2587,6 @@ export async function injectTemplateFiles(
           {
             src: resolve('../templates/src/pages/codehooks/get-crafting.astro'),
             dest: 'src/pages/codehooks/get-crafting.astro',
-            protected: true,
-          },
-          {
-            src: resolve(
-              '../templates/custom/with-examples/pages/Collections.astro'
-            ),
-            dest: 'src/custom/pages/Collections.astro',
-            protected: true,
-          },
-          {
-            src: resolve('../templates/src/pages/collections/[param1].astro'),
-            dest: 'src/pages/collections/[param1].astro',
             protected: true,
           },
         ]

@@ -1,0 +1,1105 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { extendFetch, getTenantId } from './extendFetch';
+import SysopLoginCard from './SysopLoginCard';
+import ExtendGuide from './ExtendGuide';
+import ExtendTree, {
+  type HookUsageRow,
+  type LatestRebuildJob,
+  type Registry,
+  type SiteHistoryPoint,
+  type TreeNode,
+} from './ExtendTree';
+import ExtendEditorModal, {
+  type FileHistorySlot,
+} from './ExtendEditorModal';
+import ExtendPublishBar from './ExtendPublishBar';
+import RebuildModal from './RebuildModal';
+import type { EditorTab } from './CodeEditor';
+import type { FormStateReturn, SaveState } from '@/hooks/useFormState';
+
+type BuildStamp = { jobId: string; builtAt: string };
+
+const TEXT_ASSET = /\.(js|css|json|txt|md|html|svg|csv)$/i;
+
+const CUSTOM_CSS_ENDPOINT = '/api/v1/extend/custom-css';
+const CUSTOM_CSS_PATH = '/media/css/custom.css';
+const CUSTOM_CSS_KEY = 'custom-css';
+
+/** Invariant 3 — mirror Go CoreBladeIDs; never list as registry rows. */
+const CORE_HOOK_IDS = new Set([
+  'featured-article',
+  'list-content',
+  'search-widget',
+  'bunny-video',
+  'epinet',
+  '[...hookId]',
+]);
+
+type EditorForm = { content: string };
+
+export default function Extend({
+  isMultiTenant,
+  isDev,
+}: {
+  isMultiTenant: boolean;
+  isDev: boolean;
+}) {
+  const [sysopToken, setSysopToken] = useState<string | null>(null);
+  const [registry, setRegistry] = useState<Registry | null>(null);
+  const [sourceNodes, setSourceNodes] = useState<TreeNode[]>([]);
+  const [assetNodes, setAssetNodes] = useState<TreeNode[]>([]);
+  const [tabs, setTabs] = useState<EditorTab[]>([]);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{
+    path: string;
+    size?: number;
+    mtime?: string;
+  } | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [pendingPublish, setPendingPublish] = useState(false);
+  const [probeWarn, setProbeWarn] = useState<string | null>(null);
+  const [registryNotice, setRegistryNotice] = useState<string | null>(null);
+  const [selectedDir, setSelectedDir] = useState('');
+  const [selectedZip, setSelectedZip] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedSourceDir, setSelectedSourceDir] = useState('src/custom');
+  const [stamp, setStamp] = useState<BuildStamp | null>(null);
+  const [publishAvailable, setPublishAvailable] = useState(false);
+  const [latestJob, setLatestJob] = useState<LatestRebuildJob>(null);
+  const [rebuildOpen, setRebuildOpen] = useState(false);
+  const [rebuildJobId, setRebuildJobId] = useState<string | null>(null);
+  const [siteHistoryPoints, setSiteHistoryPoints] = useState<
+    SiteHistoryPoint[]
+  >([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [fileHistorySlots, setFileHistorySlots] = useState<FileHistorySlot[]>(
+    []
+  );
+  const [fileHistoryLoading, setFileHistoryLoading] = useState(false);
+
+  const sourceReady = !isMultiTenant || !!sysopToken;
+
+  const sourceBadgeForMtime = useCallback(
+    (mtime: string | undefined): string | null => {
+      if (isDev) return 'live (dev)';
+      if (!mtime) return null;
+      const builtAt = stamp?.builtAt;
+      if (!builtAt) return 'saved';
+      return Date.parse(mtime) > Date.parse(builtAt) ? 'saved' : 'live (built)';
+    },
+    [isDev, stamp]
+  );
+
+  const sourceBadge = useCallback(
+    (n: TreeNode) => (n.isDir ? null : sourceBadgeForMtime(n.mtime)),
+    [sourceBadgeForMtime]
+  );
+
+  const registryBadge = useCallback(
+    (path: string | null | undefined) => {
+      if (!path) return null;
+      const node = sourceNodes.find((n) => n.path === path && !n.isDir);
+      return sourceBadgeForMtime(node?.mtime);
+    },
+    [sourceNodes, sourceBadgeForMtime]
+  );
+
+  const hasSavedSource = useMemo(() => {
+    if (isDev) return false;
+    return sourceNodes.some(
+      (n) => !n.isDir && sourceBadgeForMtime(n.mtime) === 'saved'
+    );
+  }, [isDev, sourceNodes, sourceBadgeForMtime]);
+
+  const loadStamp = useCallback(async () => {
+    try {
+      const res = await fetch(`${window.location.origin}/api/extend/stamp`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) return;
+      setStamp(await res.json());
+    } catch {
+      /* stamp optional on first paint */
+    }
+  }, []);
+
+  const loadLatestJob = useCallback(async () => {
+    if (isDev || !sourceReady) {
+      setPublishAvailable(false);
+      setLatestJob(null);
+      return;
+    }
+    try {
+      const res = await extendFetch('/api/v1/extend/rebuild/latest', {
+        sysopToken,
+      });
+      if (res.status === 404) {
+        setPublishAvailable(false);
+        setLatestJob(null);
+        return;
+      }
+      if (res.status === 401 || res.status === 403) {
+        setPublishAvailable(false);
+        setLatestJob(null);
+        return;
+      }
+      if (!res.ok) {
+        setPublishAvailable(false);
+        return;
+      }
+      setPublishAvailable(true);
+      const body = await res.json();
+      setLatestJob(body && typeof body === 'object' ? body : null);
+    } catch {
+      setPublishAvailable(false);
+      setLatestJob(null);
+    }
+  }, [isDev, sourceReady, sysopToken]);
+
+  const loadSiteHistory = useCallback(async () => {
+    if (isDev || !sourceReady) {
+      setSiteHistoryPoints([]);
+      return;
+    }
+    try {
+      const res = await extendFetch('/api/v1/extend/history/site', {
+        sysopToken,
+      });
+      if (!res.ok) {
+        setSiteHistoryPoints([]);
+        return;
+      }
+      const data = await res.json();
+      setSiteHistoryPoints(
+        Array.isArray(data.points) ? (data.points as SiteHistoryPoint[]) : []
+      );
+    } catch {
+      setSiteHistoryPoints([]);
+    }
+  }, [isDev, sourceReady, sysopToken]);
+
+  const startRebuild = useCallback(async () => {
+    try {
+      const res = await extendFetch('/api/v1/extend/rebuild', {
+        method: 'POST',
+        sysopToken,
+      });
+      if (res.status === 409) {
+        const data = await res.json().catch(() => ({}));
+        const existing = data.jobId as string | undefined;
+        if (existing) {
+          setRebuildJobId(existing);
+          setRebuildOpen(true);
+          return;
+        }
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `rebuild ${res.status}`);
+        return;
+      }
+      const data = await res.json();
+      setRebuildJobId(data.jobId);
+      setRebuildOpen(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'rebuild failed');
+    }
+  }, [sysopToken]);
+
+  function joinAssetPath(dir: string, rel: string): string {
+    const clean = rel.replace(/^\/+/, '');
+    if (!dir) return clean;
+    return `${dir.replace(/\/+$/, '')}/${clean}`;
+  }
+
+  const activeTab = tabs.find((t) => t.key === activeKey) || tabs[0] || null;
+
+  const loadAssets = useCallback(async () => {
+    const res = await extendFetch('/api/v1/extend/assets/tree');
+    if (!res.ok) throw new Error(`assets/tree ${res.status}`);
+    const data = await res.json();
+    setAssetNodes(data.tree || []);
+  }, []);
+
+  const loadSource = useCallback(async () => {
+    if (!sourceReady) return;
+    const regRes = await extendFetch('/api/v1/extend/source/registry', {
+      sysopToken,
+    });
+    if (!regRes.ok) throw new Error(`source/registry ${regRes.status}`);
+    const reg = await regRes.json();
+    setRegistry({
+      ...reg,
+      hooks: (reg.hooks || []).filter(
+        (h: { id: string }) => !CORE_HOOK_IDS.has(h.id)
+      ),
+    });
+
+    const treeRes = await extendFetch('/api/v1/extend/source/tree', {
+      sysopToken,
+    });
+    if (!treeRes.ok) throw new Error(`source/tree ${treeRes.status}`);
+    const treeData = await treeRes.json();
+    setSourceNodes(treeData.tree || []);
+  }, [sourceReady, sysopToken]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setError(null);
+      try {
+        await loadStamp();
+        await loadAssets();
+        if (sourceReady) {
+          await loadSource();
+          await loadLatestJob();
+          await loadSiteHistory();
+        }
+      } catch (e) {
+        if (!cancelled)
+          setError(e instanceof Error ? e.message : 'Failed to load');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    loadAssets,
+    loadSource,
+    loadStamp,
+    loadLatestJob,
+    loadSiteHistory,
+    sourceReady,
+  ]);
+
+  const loadFileHistory = useCallback(
+    async (tab: EditorTab) => {
+      setFileHistoryLoading(true);
+      try {
+        let url = '';
+        let token: string | null = null;
+        if (tab.kind === 'source') {
+          url = `/api/v1/extend/history/source?path=${encodeURIComponent(tab.path)}`;
+          token = sysopToken;
+        } else if (tab.kind === 'asset') {
+          url = `/api/v1/extend/history/assets?path=${encodeURIComponent(tab.path)}`;
+        } else {
+          url = '/api/v1/extend/history/custom-css';
+        }
+        const res = await extendFetch(url, { sysopToken: token });
+        if (!res.ok) {
+          setFileHistorySlots([]);
+          return;
+        }
+        const data = await res.json();
+        setFileHistorySlots(
+          Array.isArray(data.slots) ? (data.slots as FileHistorySlot[]) : []
+        );
+      } catch {
+        setFileHistorySlots([]);
+      } finally {
+        setFileHistoryLoading(false);
+      }
+    },
+    [sysopToken]
+  );
+
+  const restoreSite = useCallback(
+    async (jobId: string) => {
+      const ok = window.confirm(
+        `Restore the entire Extend design surface to sealed point ${jobId}?\n\n` +
+          'This replaces allowlisted source, Extend assets, and custom.css. ' +
+          'Open unsaved editor tabs will be discarded. A rebuild starts immediately after restore.'
+      );
+      if (!ok) return;
+      setError(null);
+      try {
+        const res = await extendFetch(
+          `/api/v1/extend/history/site/${encodeURIComponent(jobId)}/restore`,
+          { method: 'POST', sysopToken }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || `site restore ${res.status}`);
+          return;
+        }
+        requestCloseModal();
+        setPendingPublish(true);
+        await loadAssets();
+        if (sourceReady) {
+          await loadSource();
+          await loadSiteHistory();
+        }
+        await startRebuild();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'site restore failed');
+      }
+    },
+    [sysopToken, sourceReady, loadAssets, loadSource, loadSiteHistory, startRebuild]
+  );
+
+  const restoreFileSlot = useCallback(
+    async (jobId: string) => {
+      const tab = tabs.find((t) => t.key === (activeKey || tabs[0]?.key));
+      if (!tab) return;
+      if (
+        !window.confirm(
+          `Restore ${tab.path} to the version from build ${jobId}?`
+        )
+      ) {
+        return;
+      }
+      setError(null);
+      try {
+        let url = '';
+        let body: Record<string, string> = { jobId };
+        let token: string | null = null;
+        if (tab.kind === 'source') {
+          url = '/api/v1/extend/history/source/restore';
+          body = { path: tab.path, jobId };
+          token = sysopToken;
+        } else if (tab.kind === 'asset') {
+          url = '/api/v1/extend/history/assets/restore';
+          body = { path: tab.path, jobId };
+        } else {
+          url = '/api/v1/extend/history/custom-css/restore';
+        }
+        const res = await extendFetch(url, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          sysopToken: token,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || `restore ${res.status}`);
+          return;
+        }
+        // Re-fetch live content into the tab
+        if (tab.kind === 'custom-css') {
+          const get = await extendFetch(CUSTOM_CSS_ENDPOINT);
+          if (get.ok) {
+            const data = await get.json();
+            const content = data.content ?? '';
+            setTabs((prev) =>
+              prev.map((t) =>
+                t.key === tab.key
+                  ? { ...t, content, baseline: content, dirty: false }
+                  : t
+              )
+            );
+          }
+        } else {
+          const endpoint =
+            tab.kind === 'source'
+              ? `/api/v1/extend/source/file?path=${encodeURIComponent(tab.path)}`
+              : `/api/v1/extend/assets/file?path=${encodeURIComponent(tab.path)}`;
+          const get = await extendFetch(endpoint, {
+            sysopToken: tab.kind === 'source' ? sysopToken : null,
+          });
+          if (get.ok) {
+            const data = await get.json();
+            const content = data.content ?? '';
+            setTabs((prev) =>
+              prev.map((t) =>
+                t.key === tab.key
+                  ? { ...t, content, baseline: content, dirty: false }
+                  : t
+              )
+            );
+          } else if (get.status === 404) {
+            // tombstone restore deleted the file
+            setTabs((prev) => prev.filter((t) => t.key !== tab.key));
+            setActiveKey(null);
+            setModalOpen(false);
+          }
+        }
+        if (tab.kind === 'source') {
+          setPendingPublish(true);
+          await loadSource();
+        } else if (tab.kind === 'asset') {
+          await loadAssets();
+        }
+        await loadFileHistory(tab);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'restore failed');
+      }
+    },
+    [
+      tabs,
+      activeKey,
+      sysopToken,
+      loadSource,
+      loadAssets,
+      loadFileHistory,
+    ]
+  );
+
+  useEffect(() => {
+    if (!isMultiTenant) return;
+    const tid = getTenantId();
+    if (!tid) return;
+    const marker = `t8k-probe-${tid}`;
+    fetch(`/custom/${marker}`, { method: 'HEAD' })
+      .then((r) => {
+        if (r.status === 404) {
+          setProbeWarn(
+            `nginx /custom/ on this host does not serve this tenant’s directory (Go writes config/${tid}/custom).`
+          );
+        } else {
+          setProbeWarn(null);
+        }
+      })
+      .catch(() => {
+        /* ignore */
+      });
+  }, [isMultiTenant]);
+
+  function requestCloseModal() {
+    setTabs([]);
+    setActiveKey(null);
+    setPreview(null);
+    setModalOpen(false);
+    setSaveState('idle');
+    setSaveError(null);
+    setHistoryOpen(false);
+    setFileHistorySlots([]);
+  }
+
+  const saveActiveTab = useCallback(async () => {
+    const tab = tabs.find((t) => t.key === (activeKey || tabs[0]?.key));
+    if (!tab || !tab.dirty) return;
+    setSaveState('saving');
+    setSaveError(null);
+    setError(null);
+    const endpoint =
+      tab.kind === 'custom-css'
+        ? CUSTOM_CSS_ENDPOINT
+        : tab.kind === 'source'
+          ? '/api/v1/extend/source/file'
+          : '/api/v1/extend/assets/file';
+    const res = await extendFetch(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(
+        tab.kind === 'custom-css'
+          ? { content: tab.content }
+          : { path: tab.path, content: tab.content }
+      ),
+      sysopToken: tab.kind === 'source' ? sysopToken : null,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const msg = data.error || `Save failed (${res.status})`;
+      setSaveError(msg);
+      setSaveState('error');
+      throw new Error(msg);
+    }
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.key === tab.key ? { ...t, baseline: t.content, dirty: false } : t
+      )
+    );
+    setSaveState('success');
+    if (tab.kind === 'source') {
+      setPendingPublish(true);
+      void loadSource();
+    }
+    window.setTimeout(() => setSaveState('idle'), 2000);
+  }, [tabs, activeKey, sysopToken, isDev, loadSource]);
+
+  const discardActiveTab = useCallback(() => {
+    const key = activeKey || tabs[0]?.key;
+    if (!key) return;
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.key === key ? { ...t, content: t.baseline, dirty: false } : t
+      )
+    );
+    setSaveState('idle');
+    setSaveError(null);
+  }, [activeKey, tabs]);
+
+  const editorFormState: FormStateReturn<EditorForm> | null = useMemo(() => {
+    if (!activeTab) return null;
+    return {
+      state: { content: activeTab.content },
+      originalState: { content: activeTab.baseline },
+      updateField: () => {},
+      save: saveActiveTab,
+      cancel: discardActiveTab,
+      resetToState: () => {},
+      isDirty: activeTab.dirty,
+      isValid: true,
+      errors: {},
+      saveState,
+      errorMessage: saveError,
+    };
+  }, [activeTab, saveActiveTab, discardActiveTab, saveState, saveError]);
+
+  async function openSource(path: string, tooLarge?: boolean) {
+    if (tooLarge) {
+      setError(`${path} exceeds 2 MiB`);
+      return;
+    }
+    const existing = tabs.find((t) => t.key === `source:${path}`);
+    if (existing) {
+      setPreview(null);
+      setActiveKey(existing.key);
+      setSaveState('idle');
+      setSaveError(null);
+      setModalOpen(true);
+      return;
+    }
+    setError(null);
+    const res = await extendFetch(
+      `/api/v1/extend/source/file?path=${encodeURIComponent(path)}`,
+      { sysopToken }
+    );
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Failed to open ${path}`);
+      return;
+    }
+    const data = await res.json();
+    const content = data.content ?? '';
+    const key = `source:${path}`;
+    setPreview(null);
+    setTabs((prev) => [
+      ...prev,
+      {
+        key,
+        path,
+        content,
+        baseline: content,
+        dirty: false,
+        kind: 'source',
+      },
+    ]);
+    setActiveKey(key);
+    setSaveState('idle');
+    setSaveError(null);
+    setModalOpen(true);
+  }
+
+  async function openCustomCss() {
+    const existing = tabs.find((t) => t.key === CUSTOM_CSS_KEY);
+    if (existing) {
+      setPreview(null);
+      setActiveKey(existing.key);
+      setSaveState('idle');
+      setSaveError(null);
+      setModalOpen(true);
+      return;
+    }
+    setError(null);
+    const res = await extendFetch(CUSTOM_CSS_ENDPOINT);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Failed to open custom.css (${res.status})`);
+      return;
+    }
+    const data = await res.json();
+    const content = data.content ?? '';
+    setPreview(null);
+    setTabs((prev) => [
+      ...prev,
+      {
+        key: CUSTOM_CSS_KEY,
+        path: data.path || CUSTOM_CSS_PATH,
+        content,
+        baseline: content,
+        dirty: false,
+        kind: 'custom-css',
+      },
+    ]);
+    setActiveKey(CUSTOM_CSS_KEY);
+    setSaveState('idle');
+    setSaveError(null);
+    setModalOpen(true);
+  }
+
+  async function openAsset(
+    path: string,
+    meta?: { size?: number; mtime?: string }
+  ) {
+    if (TEXT_ASSET.test(path)) {
+      setPreview(null);
+      const existing = tabs.find((t) => t.key === `asset:${path}`);
+      if (existing) {
+        setActiveKey(existing.key);
+        setSaveState('idle');
+        setSaveError(null);
+        setModalOpen(true);
+        return;
+      }
+      const res = await extendFetch(
+        `/api/v1/extend/assets/file?path=${encodeURIComponent(path)}`
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Failed to open asset ${path}`);
+        return;
+      }
+      const data = await res.json();
+      const content = data.content ?? '';
+      const key = `asset:${path}`;
+      setTabs((prev) => [
+        ...prev,
+        {
+          key,
+          path,
+          content,
+          baseline: content,
+          dirty: false,
+          kind: 'asset',
+        },
+      ]);
+      setActiveKey(key);
+      setSaveState('idle');
+      setSaveError(null);
+      setModalOpen(true);
+      return;
+    }
+    setTabs([]);
+    setActiveKey(null);
+    setPreview({ path, size: meta?.size, mtime: meta?.mtime });
+    setModalOpen(true);
+  }
+
+  async function uploadFiles(files: FileList, asDirectory: boolean) {
+    const fd = new FormData();
+    Array.from(files).forEach((f) => {
+      const rel =
+        asDirectory &&
+        (f as File & { webkitRelativePath?: string }).webkitRelativePath
+          ? (f as File & { webkitRelativePath: string }).webkitRelativePath
+          : f.name;
+      fd.append('file', f, joinAssetPath(selectedDir, rel));
+    });
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/assets/upload', {
+      method: 'POST',
+      body: fd,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Upload failed (${res.status})`);
+      return;
+    }
+    await loadAssets();
+  }
+
+  function selectAssetDir(path: string) {
+    setSelectedDir(path);
+    setSelectedZip(null);
+    setSelectedFile(null);
+  }
+
+  async function mkdirUnderSelection() {
+    const name = window.prompt('New folder name');
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim().replace(/^\/+|\/+$/g, '');
+    if (!trimmed || trimmed.includes('/')) {
+      setError('Folder name must be a single path segment');
+      return;
+    }
+    const path = joinAssetPath(selectedDir, trimmed);
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/assets/mkdir', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `New folder failed (${res.status})`);
+      return;
+    }
+    await loadAssets();
+  }
+
+  async function expandZip() {
+    if (!selectedZip) return;
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/assets/unzip', {
+      method: 'POST',
+      body: JSON.stringify({
+        path: selectedZip,
+        target: selectedDir || '.',
+        keep: 0,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Expand zip failed (${res.status})`);
+      return;
+    }
+    setSelectedZip(null);
+    setSelectedFile(null);
+    await loadAssets();
+  }
+
+  function assetDirHasChildren(dir: string): boolean {
+    const prefix = dir + '/';
+    return assetNodes.some((n) => n.path.startsWith(prefix));
+  }
+
+  async function deleteAsset() {
+    if (selectedFile) {
+      const label = `/custom/${selectedFile}`;
+      if (!window.confirm(`Delete ${label}?`)) return;
+      setError(null);
+      const res = await extendFetch(
+        `/api/v1/extend/assets/file?path=${encodeURIComponent(selectedFile)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || `Delete failed (${res.status})`);
+        return;
+      }
+      setSelectedFile(null);
+      setSelectedZip(null);
+      await loadAssets();
+      return;
+    }
+    if (!selectedDir) return;
+    if (assetDirHasChildren(selectedDir)) {
+      setError(
+        `Folder /custom/${selectedDir} is not empty — delete its contents first`
+      );
+      return;
+    }
+    const label = `/custom/${selectedDir}`;
+    if (!window.confirm(`Delete empty folder ${label}?`)) return;
+    setError(null);
+    const res = await extendFetch(
+      `/api/v1/extend/assets/file?path=${encodeURIComponent(selectedDir)}`,
+      { method: 'DELETE' }
+    );
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Delete failed (${res.status})`);
+      return;
+    }
+    const parent = selectedDir.includes('/')
+      ? selectedDir.slice(0, selectedDir.lastIndexOf('/'))
+      : '';
+    setSelectedDir(parent);
+    await loadAssets();
+  }
+
+  function closeTab(key: string) {
+    const next = tabs.filter((t) => t.key !== key);
+    setTabs(next);
+    if (next.length === 0 && !preview) {
+      setActiveKey(null);
+      setModalOpen(false);
+      setSaveState('idle');
+      setSaveError(null);
+      return;
+    }
+    if (activeKey === key) {
+      setActiveKey(next[0]?.key ?? null);
+    }
+  }
+
+  async function createSourceFile() {
+    const name = window.prompt('New file name (e.g. components/MyThing.astro)');
+    if (!name || !name.trim()) return;
+    const trimmed = name.trim().replace(/^\/+/, '');
+    if (trimmed.includes('..')) {
+      setError('Invalid path');
+      return;
+    }
+    const base =
+      selectedSourceDir && selectedSourceDir !== 'src'
+        ? selectedSourceDir
+        : 'src/custom';
+    const path = joinAssetPath(base, trimmed);
+    setError(null);
+    const res = await extendFetch('/api/v1/extend/source/file', {
+      method: 'PUT',
+      body: JSON.stringify({ path, content: '' }),
+      sysopToken,
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error || `Create file failed (${res.status})`);
+      return;
+    }
+    setPendingPublish(true);
+    await loadSource();
+    await openSource(path);
+  }
+
+  async function addHook(id: string, kind: 'astro' | 'astro+jsx') {
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch('/api/v1/extend/source/hooks', {
+      method: 'POST',
+      body: JSON.stringify({ id, kind }),
+      sysopToken,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || `Create hook failed (${res.status})`);
+      return;
+    }
+    if (data.manifestManual) {
+      setRegistryNotice(
+        `Hook ${id} created; manifest is manual — add the id to codehooks.ts by hand.`
+      );
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function removeHook(id: string) {
+    if (!window.confirm(`Remove hook:${id}? This deletes the blade.`)) {
+      return;
+    }
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch(
+      `/api/v1/extend/source/hooks/${encodeURIComponent(id)}`,
+      { method: 'DELETE', sysopToken }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && Array.isArray(data.usages)) {
+      const lines = (data.usages as HookUsageRow[]).map((u) => {
+        const slug = u.storyFragmentSlug;
+        const href = slug
+          ? u.isContextPane
+            ? `/context/${slug}/edit`
+            : `/${slug}/edit`
+          : null;
+        return href
+          ? `pane ${u.paneTitle} → ${href}`
+          : `pane ${u.paneTitle} (${u.paneId})`;
+      });
+      setError(`Hook in use:\n${lines.join('\n')}`);
+      return;
+    }
+    if (!res.ok) {
+      setError(data.error || `Remove hook failed (${res.status})`);
+      return;
+    }
+    if (data.manifestManual) {
+      setRegistryNotice(
+        `Hook ${id} removed; manifest is manual — remove the id from codehooks.ts by hand.`
+      );
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function addRoute(name: string) {
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch('/api/v1/extend/source/routes', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+      sysopToken,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || `Create route failed (${res.status})`);
+      return;
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  async function removeRoute(name: string) {
+    if (
+      !window.confirm(
+        `Remove route:${name}? This deletes the blade and the page.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setRegistryNotice(null);
+    const res = await extendFetch(
+      `/api/v1/extend/source/routes/${encodeURIComponent(name)}`,
+      { method: 'DELETE', sysopToken }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409 && Array.isArray(data.usages)) {
+      setError(
+        `Route in use:\n${(
+          data.usages as {
+            kind?: string;
+            title?: string;
+            slug?: string;
+            paneTitle?: string;
+          }[]
+        )
+          .map(
+            (u) =>
+              `${u.kind || 'hit'}: ${u.title || u.paneTitle || u.slug || ''}`
+          )
+          .join('\n')}`
+      );
+      return;
+    }
+    if (!res.ok) {
+      setError(data.error || `Remove route failed (${res.status})`);
+      return;
+    }
+    if (Array.isArray(data.leftovers) && data.leftovers.length) {
+      setRegistryNotice(`Leftovers: ${data.leftovers.join(', ')}`);
+    }
+    setPendingPublish(true);
+    await loadSource();
+  }
+
+  return (
+    <div className="mt-4 pb-24">
+      <ExtendGuide />
+      {isMultiTenant && !sysopToken && (
+        <SysopLoginCard onToken={setSysopToken} />
+      )}
+      {probeWarn && (
+        <p className="mb-3 border border-amber-600 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          {probeWarn}
+        </p>
+      )}
+      {error && (
+        <pre className="mb-3 whitespace-pre-wrap border border-red-700 bg-red-50 px-3 py-2 text-sm text-red-900">
+          {error}
+        </pre>
+      )}
+      <div className="max-w-xl">
+        <ExtendTree
+          showSource={sourceReady}
+          showBuild={sourceReady}
+          sourceBadge={sourceBadge}
+          registryBadge={registryBadge}
+          publishAvailable={publishAvailable}
+          hasSavedSource={hasSavedSource}
+          latestJob={latestJob}
+          onRebuild={() => void startRebuild()}
+          stampJobId={stamp?.jobId ?? null}
+          siteHistoryPoints={siteHistoryPoints}
+          onRestoreSite={(jobId) => void restoreSite(jobId)}
+          sourceNodes={sourceNodes}
+          assetNodes={assetNodes}
+          registry={registry}
+          registryNotice={registryNotice}
+          onSelect={(sel) => {
+            if (!sel) return;
+            if (sel.kind === 'source') {
+              void openSource(sel.path, sel.tooLarge);
+            } else if (!sel.isDir) {
+              setSelectedFile(sel.path);
+              if (/\.zip$/i.test(sel.path)) {
+                setSelectedZip(sel.path);
+              } else {
+                setSelectedZip(null);
+              }
+              void openAsset(sel.path, {
+                size: sel.size,
+                mtime: sel.mtime,
+              });
+            }
+          }}
+          onUploadFiles={(files, asDir) => void uploadFiles(files, asDir)}
+          onAddHook={(id, kind) => void addHook(id, kind)}
+          onRemoveHook={(id) => void removeHook(id)}
+          onAddRoute={(name) => void addRoute(name)}
+          onRemoveRoute={(name) => void removeRoute(name)}
+          selectedDir={selectedDir}
+          selectedZip={selectedZip}
+          selectedFile={selectedFile}
+          canDeleteAsset={
+            !!selectedFile ||
+            (!!selectedDir && !assetDirHasChildren(selectedDir))
+          }
+          onSelectAssetDir={selectAssetDir}
+          onMkdir={() => void mkdirUnderSelection()}
+          onExpandZip={() => void expandZip()}
+          onDeleteAsset={() => void deleteAsset()}
+          selectedSourceDir={selectedSourceDir}
+          onSelectSourceDir={setSelectedSourceDir}
+          onCreateSourceFile={() => void createSourceFile()}
+          onEditCustomCss={() => void openCustomCss()}
+        />
+      </div>
+
+      <ExtendEditorModal
+        open={modalOpen}
+        onClose={requestCloseModal}
+        tabs={tabs}
+        activeKey={activeKey}
+        preview={preview}
+        editorFormState={editorFormState}
+        onSelectTab={(key) => {
+          setActiveKey(key);
+          setSaveState('idle');
+          setSaveError(null);
+          setHistoryOpen(false);
+          setFileHistorySlots([]);
+        }}
+        onChangeTab={(key, content) => {
+          if (saveState !== 'idle') {
+            setSaveState('idle');
+            setSaveError(null);
+          }
+          setTabs((prev) =>
+            prev.map((t) => {
+              if (t.key !== key) return t;
+              const dirty = content !== t.baseline;
+              return { ...t, content, dirty };
+            })
+          );
+        }}
+        onCloseTab={closeTab}
+        onPreviewDeleted={() => {
+          setPreview(null);
+          setModalOpen(false);
+          void loadAssets();
+        }}
+        onPreviewReplaced={() => void loadAssets()}
+        historyOpen={historyOpen}
+        fileHistorySlots={fileHistorySlots}
+        fileHistoryLoading={fileHistoryLoading}
+        onToggleHistory={() => {
+          const next = !historyOpen;
+          setHistoryOpen(next);
+          if (next) {
+            const tab = tabs.find((t) => t.key === (activeKey || tabs[0]?.key));
+            if (tab) void loadFileHistory(tab);
+          }
+        }}
+        onRestoreFileSlot={(jobId) => void restoreFileSlot(jobId)}
+      />
+
+      <ExtendPublishBar
+        show={pendingPublish && !modalOpen && !rebuildOpen}
+        isDev={isDev}
+        onDismiss={() => setPendingPublish(false)}
+      />
+
+      <RebuildModal
+        open={rebuildOpen}
+        jobId={rebuildJobId}
+        sysopToken={sysopToken}
+        onClose={() => {
+          setRebuildOpen(false);
+          void loadStamp();
+          void loadLatestJob();
+          void loadSource();
+          void loadSiteHistory();
+          setPendingPublish(false);
+        }}
+        onRebuild={() => {
+          setRebuildOpen(false);
+          void startRebuild();
+        }}
+      />
+    </div>
+  );
+}

@@ -31,6 +31,13 @@ export function getResourceDescription(
   return null;
 }
 
+/**
+ * Site-owned SSR resource TTL. Pass to getHeaderResources(tenantId, cats, RESOURCE_TTL_MS)
+ * or resolveCodeHookResources(tenantId, opts, label, { ttlMs: RESOURCE_TTL_MS }).
+ * Core never imports this — override the value in your site's customHelpers.ts.
+ */
+export const RESOURCE_TTL_MS = 5 * 60 * 1000;
+
 // Initialize search data - override in custom implementation
 export function initSearch(): void {
   // Default implementation does nothing

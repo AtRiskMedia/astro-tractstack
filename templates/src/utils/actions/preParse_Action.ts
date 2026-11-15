@@ -19,6 +19,7 @@ export const preParseAction = (
   switch (command) {
     case `declare`:
     case `identifyAs`:
+    case `modal`:
       return ``;
     case `goto`:
       switch (parameterOne) {

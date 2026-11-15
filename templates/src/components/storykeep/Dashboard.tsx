@@ -66,6 +66,15 @@ export default function StoryKeepDashboard({
           name: 'Branding',
           current: activeTab === 'branding',
         },
+        ...(role === 'admin' || role === 'editor'
+          ? [
+              {
+                id: 'extend',
+                name: 'Extend',
+                current: activeTab === 'extend',
+              },
+            ]
+          : []),
         ...(role === 'admin'
           ? [
               {

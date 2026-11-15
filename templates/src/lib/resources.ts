@@ -1,45 +1,105 @@
-import { headerResourcesStore, HEADER_RESOURCES_TTL } from '@/stores/resources';
+import {
+  HEADER_RESOURCES_TTL,
+  RESOURCES_TTL,
+  buildResourceCacheKey,
+  getResourceCacheEntry,
+  resourceInflight,
+  setResourceCacheEntry,
+} from '@/stores/resources';
 import type { ResourceNode } from '@/types/compositorTypes';
 
-// Stateless resource fetch for codehook blades. POSTs categories/slugs to the
-// nodes/resources endpoint, unwraps the { resources, count } envelope, and
-// returns the FLAT ResourceNode[] (the API shape) unchanged - no grouping.
-// Components that need a keyed view reshape internally. No cache.
-export async function getCodeHookResources(
+export interface GetResourcesOptions {
+  categories?: string[];
+  slugs?: string[];
+  ttlMs?: number;
+}
+
+/**
+ * Tenant+query keyed resource fetch with TTL, in-flight dedup, and
+ * If-None-Match revalidation against the Go resources version ETag.
+ * Empty results are cached. Freshness is judged against the caller's ttlMs.
+ */
+export async function getResources(
   tenantId: string,
-  categories: string[] = [],
-  slugs: string[] = []
+  options: GetResourcesOptions = {}
 ): Promise<ResourceNode[]> {
+  const categories = options.categories ?? [];
+  const slugs = options.slugs ?? [];
+  const ttlMs = options.ttlMs ?? RESOURCES_TTL;
+
   if (categories.length === 0 && slugs.length === 0) {
     return [];
   }
 
-  const goBackend =
-    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+  const cacheKey = buildResourceCacheKey(tenantId, categories, slugs);
+  const now = Date.now();
+  const cached = getResourceCacheEntry(cacheKey);
 
-  try {
-    const response = await fetch(`${goBackend}/api/v1/nodes/resources`, {
-      method: 'POST',
-      headers: {
+  if (cached && now - cached.fetchedAt < ttlMs) {
+    return cached.data;
+  }
+
+  const inflight = resourceInflight.get(cacheKey);
+  if (inflight) {
+    return inflight;
+  }
+
+  const promise = (async (): Promise<ResourceNode[]> => {
+    const goBackend =
+      import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+    try {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'X-Tenant-ID': tenantId,
-      },
-      body: JSON.stringify({ categories, slugs }),
-    });
+      };
+      if (cached?.etag) {
+        headers['If-None-Match'] = cached.etag;
+      }
 
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch codehook resources. Status: ${response.status}`
-      );
-      return [];
+      const response = await fetch(`${goBackend}/api/v1/nodes/resources`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ categories, slugs }),
+      });
+
+      if (response.status === 304 && cached) {
+        setResourceCacheEntry(cacheKey, {
+          data: cached.data,
+          fetchedAt: Date.now(),
+          etag: cached.etag,
+        });
+        return cached.data;
+      }
+
+      if (!response.ok) {
+        console.error(
+          `Failed to fetch resources for [${cacheKey}]. Status: ${response.status}`
+        );
+        return cached?.data ?? [];
+      }
+
+      const payload = await response.json();
+      const resources: ResourceNode[] = payload.resources || [];
+      const etag = response.headers.get('ETag') || undefined;
+
+      setResourceCacheEntry(cacheKey, {
+        data: resources,
+        fetchedAt: Date.now(),
+        etag,
+      });
+
+      return resources;
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      return cached?.data ?? [];
+    } finally {
+      resourceInflight.delete(cacheKey);
     }
+  })();
 
-    const payload = await response.json();
-    return (payload.resources as ResourceNode[]) || [];
-  } catch (error) {
-    console.error('Error fetching codehook resources:', error);
-    return [];
-  }
+  resourceInflight.set(cacheKey, promise);
+  return promise;
 }
 
 export async function getHeaderResources(
@@ -47,54 +107,24 @@ export async function getHeaderResources(
   categories: string[],
   ttl: number = HEADER_RESOURCES_TTL
 ): Promise<ResourceNode[]> {
-  const cache = headerResourcesStore.get();
-  const now = Date.now();
-  const cacheKey = [...categories].sort().join(',');
+  return getResources(tenantId, { categories, ttlMs: ttl });
+}
 
-  if (
-    cache.key === cacheKey &&
-    cache.data.length > 0 &&
-    now - cache.lastFetched < ttl
-  ) {
-    return cache.data;
-  }
-
-  if (!categories || categories.length === 0) {
-    return [];
-  }
-
-  const goBackend =
-    import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
-
-  try {
-    const response = await fetch(`${goBackend}/api/v1/nodes/resources`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-ID': tenantId,
-      },
-      body: JSON.stringify({ categories }),
-    });
-
-    if (!response.ok) {
-      console.error(
-        `Failed to fetch resources for [${cacheKey}]. Status: ${response.status}`
-      );
-      return cache.key === cacheKey ? cache.data : [];
-    }
-
-    const responsePayload = await response.json();
-    const resources: ResourceNode[] = responsePayload.resources || [];
-
-    headerResourcesStore.set({
-      data: resources,
-      lastFetched: now,
-      key: cacheKey,
-    });
-
-    return resources;
-  } catch (error) {
-    console.error('Error fetching resources:', error);
-    return cache.key === cacheKey ? cache.data : [];
-  }
+/**
+ * Cached resource fetch for codehook blades. POSTs categories/slugs to the
+ * nodes/resources endpoint, unwraps the { resources, count } envelope, and
+ * returns the FLAT ResourceNode[] (the API shape) unchanged - no grouping.
+ * Components that need a keyed view reshape internally.
+ */
+export async function getCodeHookResources(
+  tenantId: string,
+  categories: string[] = [],
+  slugs: string[] = [],
+  opts?: { ttlMs?: number }
+): Promise<ResourceNode[]> {
+  return getResources(tenantId, {
+    categories,
+    slugs,
+    ttlMs: opts?.ttlMs ?? RESOURCES_TTL,
+  });
 }

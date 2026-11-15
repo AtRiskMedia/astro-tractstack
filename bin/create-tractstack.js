@@ -159,7 +159,7 @@ ${kleur.bold('Usage:')}
   create-tractstack [options]
 
 ${kleur.bold('Options:')}
-  --examples      Include example components and collections route
+  --examples      Include example components and CodeHooks
   --multi-tenant  Enable multi-tenant functionality for sandbox hosting
   --help, -h     Show this help message
 
@@ -287,8 +287,7 @@ ${kleur.bold('Examples:')}
   promptQuestions.push({
     type: 'confirm',
     name: 'includeExamples',
-    message:
-      'Include CodeHook examples? (custom components, collections route)',
+    message: 'Include CodeHook examples? (custom components)',
     initial: includeExamples,
   });
 
@@ -553,7 +552,7 @@ export default defineConfig({
       "paths": { "@/*": ["./src/*"] },
       "types": ["astro/client", "node", "@types/react", "@types/react-dom", "@types/tinycolor2"]
     },
-    "include": ["src/**/*", "public/**/*", "tailwind.config.cjs"],
+    "include": ["src/**/*", "public/**/*", "tailwind.config.cjs", "astro.d.ts"],
     "exclude": ["node_modules", "dist", ".astro"]
   }`;
   writeFileSync('tsconfig.json', tsConfig);
@@ -611,9 +610,6 @@ export default defineConfig({
 
   if (finalResponses.includeExamples) {
     console.log(`\n${kleur.bold('Example components included:')}`);
-    console.log(
-      `  • Collections route: ${kleur.cyan('/collections/[param1]')}`
-    );
     console.log(`  • Custom components and CodeHooks`);
   }
 
