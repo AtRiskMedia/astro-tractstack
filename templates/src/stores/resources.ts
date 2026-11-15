@@ -28,8 +28,10 @@ export const resourceQueryCache: Map<string, ResourceCacheEntry> =
   g.__t8kResourceQueryCache;
 
 /** In-flight dedup: concurrent callers with the same key share one Promise. Pinned on globalThis with resourceQueryCache. */
-export const resourceInflight: Map<string, Promise<ResourceNode[]>> =
-  g.__t8kResourceInflight;
+export const resourceInflight: Map<
+  string,
+  Promise<ResourceNode[]>
+> = g.__t8kResourceInflight;
 
 export function buildResourceCacheKey(
   tenantId: string,

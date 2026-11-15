@@ -9,9 +9,7 @@ import ExtendTree, {
   type SiteHistoryPoint,
   type TreeNode,
 } from './ExtendTree';
-import ExtendEditorModal, {
-  type FileHistorySlot,
-} from './ExtendEditorModal';
+import ExtendEditorModal, { type FileHistorySlot } from './ExtendEditorModal';
 import ExtendPublishBar from './ExtendPublishBar';
 import RebuildModal from './RebuildModal';
 import type { EditorTab } from './CodeEditor';
@@ -338,7 +336,14 @@ export default function Extend({
         setError(e instanceof Error ? e.message : 'site restore failed');
       }
     },
-    [sysopToken, sourceReady, loadAssets, loadSource, loadSiteHistory, startRebuild]
+    [
+      sysopToken,
+      sourceReady,
+      loadAssets,
+      loadSource,
+      loadSiteHistory,
+      startRebuild,
+    ]
   );
 
   const restoreFileSlot = useCallback(
@@ -427,14 +432,7 @@ export default function Extend({
         setError(e instanceof Error ? e.message : 'restore failed');
       }
     },
-    [
-      tabs,
-      activeKey,
-      sysopToken,
-      loadSource,
-      loadAssets,
-      loadFileHistory,
-    ]
+    [tabs, activeKey, sysopToken, loadSource, loadAssets, loadFileHistory]
   );
 
   useEffect(() => {

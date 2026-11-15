@@ -485,7 +485,8 @@ if (!window.tractstackViewLifecycleListenersAttached) {
     const frame = document.createElement('iframe');
     frame.src = src;
     frame.className = 'h-full w-full border-0';
-    frame.allow = 'fullscreen; pointer-lock; gamepad; autoplay; xr-spatial-tracking';
+    frame.allow =
+      'fullscreen; pointer-lock; gamepad; autoplay; xr-spatial-tracking';
     frame.setAttribute('allowfullscreen', '');
     frame.tabIndex = 0;
     frame.addEventListener('load', () => frame.focus());
