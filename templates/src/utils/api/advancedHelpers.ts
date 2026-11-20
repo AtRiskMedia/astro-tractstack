@@ -17,7 +17,6 @@ export function convertToLocalState(
       tursoUrl: '',
       tursoToken: '',
       adminPassword: '',
-      editorPassword: '',
       aaiApiKey: '',
       shopifyStorefrontToken: '',
       shopifyAdminApiKey: '',
@@ -42,7 +41,6 @@ export function convertToLocalState(
     tursoUrl: '',
     tursoToken: '',
     adminPassword: '',
-    editorPassword: '',
     aaiApiKey: '',
     shopifyStorefrontToken: '',
     shopifyAdminApiKey: '',
@@ -80,10 +78,6 @@ export function convertToBackendFormat(
 
   if (state.adminPassword?.trim()) {
     request.ADMIN_PASSWORD = state.adminPassword.trim();
-  }
-
-  if (state.editorPassword?.trim()) {
-    request.EDITOR_PASSWORD = state.editorPassword.trim();
   }
 
   if (state.aaiApiKey?.trim()) {
@@ -203,11 +197,6 @@ export function validateAdvancedConfig(
     errors.adminPassword =
       'Admin password should be at least 8 characters long';
   }
-  if (state.editorPassword && state.editorPassword.length < 8) {
-    errors.editorPassword =
-      'Editor password should be at least 8 characters long';
-  }
-
   return errors;
 }
 

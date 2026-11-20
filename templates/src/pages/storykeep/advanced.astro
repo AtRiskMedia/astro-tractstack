@@ -3,7 +3,12 @@ import Layout from '@/layouts/Layout.astro';
 import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
 import StoryKeepDashboard from '@/components/storykeep/Dashboard';
 import StoryKeepDashboard_Advanced from '@/components/storykeep/Dashboard_Advanced';
-import { requireAdminOrEditor, isAuthenticated, isAdmin } from '@/utils/auth';
+import {
+  requireAdminOrEditor,
+  isAuthenticated,
+  isAdmin,
+  getCurrentUser,
+} from '@/utils/auth';
 import { getFullContentMap } from '@/stores/analytics';
 import { getBrandConfig } from '@/utils/api/brandConfig';
 import { preHealthCheck } from '@/utils/backend';
@@ -26,6 +31,10 @@ const userIsAdmin = isAdmin(Astro);
 if (!userIsAdmin) {
   return Astro.redirect('/storykeep');
 }
+
+const currentUser = getCurrentUser(Astro);
+const isMain = currentUser?.isMain === true;
+const currentSub = currentUser?.sub || '';
 
 const userIsAuthenticated = isAuthenticated(Astro);
 const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
@@ -67,6 +76,8 @@ try {
       <StoryKeepDashboard_Advanced
         client:only="react"
         brandConfig={brandConfig}
+        isMain={isMain}
+        currentSub={currentSub}
       />
     </div>
   </main>

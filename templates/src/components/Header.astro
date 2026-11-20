@@ -259,7 +259,7 @@ if (hasShopify) {
 
       {/* Admin Terminal Icon - Only for admins */}
       {
-        authStatus.isAdmin ? (
+        authStatus.isAdmin || authStatus.userRole === 'editor' ? (
           <button
             id="admin-heart-btn"
             class="text-myblue/80 hover:rotate-6 hover:text-green-500"
@@ -322,7 +322,7 @@ if (hasShopify) {
 </header>
 
 {
-  authStatus.isAdmin && (
+  (authStatus.isAdmin || authStatus.userRole === 'editor') && (
     <div
       id="admin-modal"
       class="fixed inset-0 hidden bg-black bg-opacity-75"

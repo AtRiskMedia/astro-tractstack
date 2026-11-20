@@ -7,7 +7,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Parse request body
     const body = await request.json();
-    const { password, redirect } = body;
+    const { username, password, redirect } = body;
 
     if (!password) {
       return new Response(
@@ -25,6 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Prepare request to Go backend
     const backendRequest = {
+      username,
       password,
       tenantId,
     };
@@ -50,16 +51,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const result = await response.json();
 
       if (response.ok && result.status === 'ok') {
-        // Get Set-Cookie header from backend response
-        const setCookieHeader = response.headers.get('Set-Cookie');
-
-        // Build response headers
-        const responseHeaders: Record<string, string> = {
+        // Build response headers and forward every Set-Cookie from backend
+        const responseHeaders = new Headers({
           'Content-Type': 'application/json',
-        };
+        });
 
-        if (setCookieHeader) {
-          responseHeaders['Set-Cookie'] = setCookieHeader;
+        for (const setCookie of response.headers.getSetCookie()) {
+          responseHeaders.append('Set-Cookie', setCookie);
         }
 
         // Success response

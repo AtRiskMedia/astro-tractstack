@@ -1,0 +1,83 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import StoryKeepBackdrop from '@/components/storykeep/StoryKeepBackdrop.astro';
+import StoryKeepDashboard from '@/components/storykeep/Dashboard';
+import StoryKeepDashboard_Account from '@/components/storykeep/Dashboard_Account';
+import {
+  requireAdminOrEditor,
+  isAdmin,
+  isAuthenticated,
+  getCurrentUser,
+  mustChangePassword,
+} from '@/utils/auth';
+import { getFullContentMap } from '@/stores/analytics';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { preHealthCheck } from '@/utils/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const authCheck = requireAdminOrEditor(Astro);
+if (authCheck) {
+  return authCheck;
+}
+
+const currentUser = getCurrentUser(Astro);
+if (!currentUser) {
+  return Astro.redirect('/storykeep/login?redirect=/storykeep/account');
+}
+
+const forceChange = mustChangePassword(Astro);
+
+const userIsAdmin = isAdmin(Astro);
+const userIsAuthenticated = isAuthenticated(Astro);
+const role = userIsAdmin ? `admin` : userIsAuthenticated ? `editor` : null;
+
+const brandConfig = await getBrandConfig(tenantId);
+const initializing = !brandConfig.SITE_INIT;
+
+if (initializing) {
+  return Astro.redirect('/storykeep/branding');
+}
+
+const title = 'Account | StoryKeep';
+
+let fullContentMap;
+const homeSlug = brandConfig.HOME_SLUG || 'hello';
+
+try {
+  fullContentMap = await getFullContentMap(tenantId);
+} catch (error) {
+  return Astro.redirect(
+    `/maint?from=${encodeURIComponent(Astro.url.pathname)}`
+  );
+}
+---
+
+<Layout title={title} slug="storykeep" isStoryKeep={true}>
+  <main id="main-content" class="relative min-h-screen w-full">
+    <StoryKeepBackdrop brandConfig={brandConfig} />
+    <div class="max-w-5xl p-3.5 md:p-8">
+      <StoryKeepDashboard
+        client:only="react"
+        fullContentMap={fullContentMap}
+        homeSlug={homeSlug}
+        activeTab="account"
+        role={role}
+        initializing={initializing}
+      />
+      <StoryKeepDashboard_Account
+        client:only="react"
+        isMain={currentUser.isMain}
+        forceChange={forceChange}
+        username={currentUser.username}
+        role={currentUser.role}
+      />
+    </div>
+  </main>
+</Layout>

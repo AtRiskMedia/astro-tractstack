@@ -8,16 +8,17 @@ import type {
 interface AuthConfigSectionProps {
   formState: FormStateReturn<AdvancedConfigState>;
   status: AdvancedConfigStatus | null;
+  isMain?: boolean;
 }
 
 export default function AuthConfigSection({
   formState,
   status,
+  isMain = true,
 }: AuthConfigSectionProps) {
   const { state, updateField, errors } = formState;
 
   const adminConfigured = status?.adminPasswordSet;
-  const editorConfigured = status?.editorPasswordSet;
 
   return (
     <div className="bg-white shadow md:rounded-lg">
@@ -27,15 +28,16 @@ export default function AuthConfigSection({
         </h3>
         <div className="mt-2 max-w-xl text-sm text-gray-500">
           <p>
-            Set passwords for admin and editor access to the StoryKeep
-            dashboard.
+            Set the main admin password for access to the StoryKeep dashboard.
+            Additional admins and editors are managed under Site User
+            Management.
           </p>
         </div>
         <div className="mt-5 space-y-4">
           <div>
             <div className="mb-1 flex items-center justify-between">
               <label className="block text-sm font-bold text-gray-700">
-                Admin Password
+                Main Admin Password
               </label>
               {adminConfigured ? (
                 <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
@@ -51,44 +53,26 @@ export default function AuthConfigSection({
               value={state.adminPassword}
               onChange={(value) => updateField('adminPassword', value)}
               type="password"
+              disabled={!isMain}
               placeholder={
-                adminConfigured ? '••••••••••••••••' : 'Enter admin password'
+                adminConfigured
+                  ? '••••••••••••••••'
+                  : 'Enter main admin password'
               }
               error={errors.adminPassword}
             />
-          </div>
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="block text-sm font-bold text-gray-700">
-                Editor Password
-              </label>
-              {editorConfigured ? (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800">
-                  ✓ Set
-                </span>
-              ) : status !== null ? (
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">
-                  ! Not Set
-                </span>
-              ) : null}
-            </div>
-            <StringInput
-              value={state.editorPassword}
-              onChange={(value) => updateField('editorPassword', value)}
-              type="password"
-              placeholder={
-                editorConfigured ? '••••••••••••••••' : 'Enter editor password'
-              }
-              error={errors.editorPassword}
-            />
+            {!isMain && (
+              <p className="mt-1 text-sm text-gray-500">
+                Only the main site admin can change this
+              </p>
+            )}
           </div>
         </div>
         <div className="mt-3 text-xs text-gray-500">
           <p>
-            Admin has full access. Editor has limited access to content
+            Admin has full access. Editors have limited access to content
             management only.
-            {(adminConfigured || editorConfigured) &&
-              ' Leave blank to keep existing passwords.'}
+            {adminConfigured && ' Leave blank to keep the existing password.'}
           </p>
         </div>
       </div>
