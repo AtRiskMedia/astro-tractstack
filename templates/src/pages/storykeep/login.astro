@@ -15,6 +15,7 @@ if (healthCheckRedirect !== undefined) {
 const url = new URL(Astro.request.url);
 const redirectPath = url.searchParams.get('redirect') || '/storykeep';
 const forceLogin = url.searchParams.get('force') === 'true';
+const resetSuccess = url.searchParams.get('reset') === '1';
 
 if (isAuthenticated(Astro) && !forceLogin) {
   return Astro.redirect(redirectPath);
@@ -91,6 +92,34 @@ const customStylesUrl =
 
       <div class="mx-auto max-w-sm">
         <div class="rounded-lg bg-white px-6 py-12 shadow-inner">
+          {
+            resetSuccess && (
+              <div class="mb-6 rounded-md bg-green-50 p-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg
+                      class="h-5 w-5 text-green-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.25a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-bold text-green-800">
+                      Password updated, please sign in.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+
           <!-- Error message -->
           <div
             id="loginError"
@@ -116,7 +145,7 @@ const customStylesUrl =
                   Invalid credentials
                 </h3>
                 <div class="text-myred/90 mt-2 text-sm">
-                  <p>Please check your password and try again.</p>
+                  <p>Please check your username and password.</p>
                 </div>
               </div>
             </div>
@@ -124,6 +153,25 @@ const customStylesUrl =
 
           <!-- Login form -->
           <div id="loginForm" class="space-y-6">
+            <div>
+              <label
+                for="username"
+                class="block text-sm font-bold leading-6 text-mydarkgrey"
+              >
+                Username
+              </label>
+              <div class="mt-2">
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autocomplete="username"
+                  required
+                  class="block w-full rounded-md border-0 px-3 py-1.5 text-mydarkgrey shadow-sm ring-1 ring-inset ring-mylightgrey placeholder:text-mylightgrey focus:ring-2 focus:ring-inset focus:ring-myorange md:text-sm md:leading-6"
+                />
+              </div>
+            </div>
+
             <div>
               <label
                 for="password"
@@ -158,6 +206,19 @@ const customStylesUrl =
                 Sign in
               </button>
             </div>
+
+            {
+              brandConfig?.HAS_RESEND && (
+                <div class="text-center text-sm">
+                  <a
+                    href="/storykeep/forgot"
+                    class="font-bold text-myblue hover:text-myorange"
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+              )
+            }
           </div>
 
           <!-- Success message -->
@@ -196,6 +257,7 @@ const customStylesUrl =
     <script is:inline>
       document.addEventListener('DOMContentLoaded', function () {
         const submitButton = document.getElementById('submitButton');
+        const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
         const redirectInput = document.getElementById('redirectPath');
         const loginErrorDiv = document.getElementById('loginError');
@@ -203,7 +265,7 @@ const customStylesUrl =
         const loginSuccessDiv = document.getElementById('loginSuccess');
         const userRoleSpan = document.getElementById('userRole');
 
-        if (submitButton && passwordInput && redirectInput) {
+        if (submitButton && usernameInput && passwordInput && redirectInput) {
           const buttonText = submitButton.textContent.trim();
 
           submitButton.addEventListener('click', async function () {
@@ -212,10 +274,11 @@ const customStylesUrl =
             submitButton.disabled = true;
             submitButton.textContent = 'Signing in...';
 
+            const username = usernameInput.value.trim();
             const password = passwordInput.value;
             const redirectPath = redirectInput.value;
 
-            if (!password) {
+            if (!username || !password) {
               if (loginErrorDiv) loginErrorDiv.style.display = 'block';
               submitButton.disabled = false;
               submitButton.textContent = buttonText;
@@ -230,6 +293,7 @@ const customStylesUrl =
                   Accept: 'application/json',
                 },
                 body: JSON.stringify({
+                  username,
                   password,
                   redirect: redirectPath,
                 }),
@@ -259,11 +323,13 @@ const customStylesUrl =
             }
           });
 
-          passwordInput.addEventListener('keypress', function (event) {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              submitButton.click();
-            }
+          [usernameInput, passwordInput].forEach(function (input) {
+            input.addEventListener('keypress', function (event) {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                submitButton.click();
+              }
+            });
           });
         }
       });

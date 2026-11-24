@@ -93,6 +93,15 @@ export default function StoryKeepDashboard({
               },
             ]
           : []),
+        ...(role === 'admin' || role === 'editor'
+          ? [
+              {
+                id: 'account',
+                name: 'Account',
+                current: activeTab === 'account',
+              },
+            ]
+          : []),
       ];
 
   useEffect(() => {

@@ -27,7 +27,6 @@ export async function getAdvancedConfigStatus(
       typeof data.tursoConfigured !== 'boolean' ||
       typeof data.tursoTokenSet !== 'boolean' ||
       typeof data.adminPasswordSet !== 'boolean' ||
-      typeof data.editorPasswordSet !== 'boolean' ||
       typeof data.aaiAPIKeySet !== 'boolean' ||
       typeof data.shopifyStorefrontTokenSet !== 'boolean' ||
       typeof data.shopifyApiSecretSet !== 'boolean' ||

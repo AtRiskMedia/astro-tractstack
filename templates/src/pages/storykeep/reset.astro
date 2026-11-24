@@ -1,0 +1,338 @@
+---
+import { preHealthCheck } from '@/utils/backend';
+import { getBrandConfig } from '@/utils/api/brandConfig';
+import { freshInstallStore } from '@/stores/backend';
+
+const tenantId =
+  Astro.locals.tenant?.id || import.meta.env.PUBLIC_TENANTID || 'default';
+
+const healthCheckRedirect = await preHealthCheck(tenantId);
+if (healthCheckRedirect !== undefined) {
+  return healthCheckRedirect;
+}
+
+const goBackend = import.meta.env.PUBLIC_GO_BACKEND || 'http://localhost:8080';
+
+const url = new URL(Astro.request.url);
+const token = url.searchParams.get('token') || '';
+const isInvite = url.searchParams.get('invite') === '1';
+
+let tokenValid = false;
+if (token) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(
+      `${goBackend}/api/v1/auth/password/token?token=${encodeURIComponent(token)}`,
+      {
+        method: 'GET',
+        headers: { 'X-Tenant-ID': tenantId },
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      const result = await response.json();
+      tokenValid = result?.valid === true;
+    }
+  } catch (error) {
+    console.error('Password token check failed:', error);
+  }
+}
+
+const heading = isInvite ? 'Set your password' : 'Choose a new password';
+
+const isDev = import.meta.env.DEV;
+const isInitialized = !freshInstallStore.get().needsSetup;
+const brandConfig = await getBrandConfig(tenantId);
+const cssBasePath = isInitialized ? '/media/css' : '/styles';
+const getAssetPath = (configPath: string, fallback: string) => {
+  if (configPath && configPath !== '') {
+    return configPath;
+  }
+  return fallback;
+};
+const logo = getAssetPath(brandConfig?.LOGO || ``, '/brand/logo.svg');
+const wordmark = getAssetPath(
+  brandConfig?.WORDMARK || ``,
+  '/brand/wordmark.svg'
+);
+const mainStylesUrl = isDev
+  ? `${cssBasePath}/storykeep.css`
+  : `${cssBasePath}/frontend.css`;
+const customStylesUrl =
+  isInitialized && brandConfig?.STYLES_VER
+    ? `${cssBasePath}/custom.css?v=${brandConfig.STYLES_VER}`
+    : `${cssBasePath}/custom.css`;
+---
+
+<!doctype html>
+<html lang="en" class="h-full bg-mywhite">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset Password | TractStack</title>
+    <link rel="stylesheet" href={customStylesUrl} />
+    <link rel="stylesheet" href={mainStylesUrl} />
+  </head>
+  <body class="h-full">
+    <div class="flex min-h-full flex-col justify-center py-12 md:px-6 xl:px-8">
+      <div class="mx-auto pb-6">
+        <!-- Logo and Wordmark -->
+        <div class="flex flex-col items-center justify-center gap-4">
+          {
+            brandConfig?.WORDMARK_MODE !== 'wordmark' && (
+              <img
+                id="t8k-logo"
+                src={logo}
+                class="pointer-events-none h-16 w-auto"
+                alt="Logo"
+              />
+            )
+          }
+
+          {
+            brandConfig?.WORDMARK_MODE !== 'logo' && (
+              <img
+                id="t8k-wordmark"
+                src={wordmark}
+                class="pointer-events-none h-16 w-auto max-w-48 md:max-w-72"
+                alt="Wordmark"
+              />
+            )
+          }
+        </div>
+
+        <h2
+          class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-mydarkgrey"
+        >
+          {heading}
+        </h2>
+      </div>
+
+      <div class="mx-auto max-w-sm">
+        <div class="rounded-lg bg-white px-6 py-12 shadow-inner">
+          {
+            !tokenValid ? (
+              <div class="bg-myred/10 mb-6 rounded-md p-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg
+                      class="text-myred h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <h3 class="text-myred text-sm font-bold">
+                      Invalid or expired link
+                    </h3>
+                    <div class="text-myred/90 mt-2 text-sm">
+                      <p>
+                        This link is invalid or has expired.{' '}
+                        <a href="/storykeep/forgot" class="font-bold underline">
+                          Request a new one
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div
+                  id="resetError"
+                  class="bg-myred/10 mb-6 rounded-md p-4"
+                  style="display: none;"
+                >
+                  <div class="flex">
+                    <div class="flex-shrink-0">
+                      <svg
+                        class="text-myred h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div class="ml-3">
+                      <h3 class="text-myred text-sm font-bold">
+                        Unable to update password
+                      </h3>
+                      <div class="text-myred/90 mt-2 text-sm">
+                        <p id="resetErrorMessage" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  id="resetForm"
+                  class="space-y-6"
+                  data-go-backend={goBackend}
+                  data-tenant-id={tenantId}
+                  data-token={token}
+                >
+                  <div>
+                    <label
+                      for="newPassword"
+                      class="block text-sm font-bold leading-6 text-mydarkgrey"
+                    >
+                      New password
+                    </label>
+                    <div class="mt-2">
+                      <input
+                        id="newPassword"
+                        name="newPassword"
+                        type="password"
+                        autocomplete="new-password"
+                        required
+                        class="block w-full rounded-md border-0 px-3 py-1.5 text-mydarkgrey shadow-sm ring-1 ring-inset ring-mylightgrey placeholder:text-mylightgrey focus:ring-2 focus:ring-inset focus:ring-myorange md:text-sm md:leading-6"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      for="confirmPassword"
+                      class="block text-sm font-bold leading-6 text-mydarkgrey"
+                    >
+                      Confirm password
+                    </label>
+                    <div class="mt-2">
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        autocomplete="new-password"
+                        required
+                        class="block w-full rounded-md border-0 px-3 py-1.5 text-mydarkgrey shadow-sm ring-1 ring-inset ring-mylightgrey placeholder:text-mylightgrey focus:ring-2 focus:ring-inset focus:ring-myorange md:text-sm md:leading-6"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      type="button"
+                      id="submitButton"
+                      class="flex w-full justify-center rounded-md bg-myblue px-3 py-1.5 text-sm font-bold leading-6 text-white shadow-sm hover:bg-myorange focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-myorange"
+                    >
+                      Update password
+                    </button>
+                  </div>
+                </div>
+              </>
+            )
+          }
+
+          <div class="mt-6 text-center text-sm">
+            <a
+              href="/storykeep/login"
+              class="font-bold text-myblue hover:text-myorange"
+            >
+              Back to sign in
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('resetForm');
+        const submitButton = document.getElementById('submitButton');
+        const newInput = document.getElementById('newPassword');
+        const confirmInput = document.getElementById('confirmPassword');
+        const errorDiv = document.getElementById('resetError');
+        const errorMessage = document.getElementById('resetErrorMessage');
+
+        if (!form || !submitButton || !newInput || !confirmInput) return;
+
+        const goBackend = form.dataset.goBackend;
+        const tenantId = form.dataset.tenantId;
+        const token = form.dataset.token;
+        const buttonText = submitButton.textContent.trim();
+
+        function showError(message) {
+          if (errorMessage) errorMessage.textContent = message;
+          if (errorDiv) errorDiv.style.display = 'block';
+          submitButton.disabled = false;
+          submitButton.textContent = buttonText;
+        }
+
+        async function submit() {
+          if (errorDiv) errorDiv.style.display = 'none';
+
+          const newPassword = newInput.value;
+          const confirmPassword = confirmInput.value;
+
+          if (newPassword.length < 8) {
+            showError('Password must be at least 8 characters long.');
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            showError('Passwords do not match.');
+            return;
+          }
+
+          submitButton.disabled = true;
+          submitButton.textContent = 'Updating...';
+
+          try {
+            const response = await fetch(
+              goBackend + '/api/v1/auth/password/reset',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Tenant-ID': tenantId,
+                },
+                body: JSON.stringify({ token, newPassword }),
+              }
+            );
+
+            if (response.ok) {
+              window.location.href = '/storykeep/login?reset=1';
+              return;
+            }
+
+            let message = 'Please request a new link and try again.';
+            try {
+              const result = await response.json();
+              if (result && result.error) message = result.error;
+            } catch (parseError) {
+              // keep default message
+            }
+            showError(message);
+          } catch (error) {
+            console.error('Password reset error:', error);
+            showError('Network error. Please try again.');
+          }
+        }
+
+        submitButton.addEventListener('click', submit);
+        [newInput, confirmInput].forEach(function (input) {
+          input.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              submit();
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

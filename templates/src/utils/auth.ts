@@ -9,6 +9,23 @@ export interface AdminAuthClaims {
   type: 'admin_auth';
   iat: number;
   exp: number;
+  sub?: string;
+  email?: string;
+  name?: string;
+  username?: string;
+  tv?: string;
+  main?: boolean;
+  mcp?: boolean;
+}
+
+export interface CurrentUser {
+  sub: string;
+  email: string;
+  name: string;
+  username: string;
+  role: 'admin' | 'editor';
+  isMain: boolean;
+  mustChangePassword: boolean;
 }
 
 /**
@@ -20,36 +37,33 @@ function getExpectedTenantId(astro: any): string {
   );
 }
 
+function getClaims(astro: any): AdminAuthClaims | null {
+  const expectedTenantId = getExpectedTenantId(astro);
+  const adminCookie = astro.cookies.get('admin_auth');
+  if (adminCookie?.value) {
+    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
+    if (claims && claims.role === 'admin') return claims;
+  }
+  const editorCookie = astro.cookies.get('editor_auth');
+  if (editorCookie?.value) {
+    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
+    if (claims && claims.role === 'editor') return claims;
+  }
+  return null;
+}
+
 /**
  * Check if user is authenticated (either admin or editor)
  */
 export function isAuthenticated(astro: any): boolean {
-  const expectedTenantId = getExpectedTenantId(astro);
-  const adminCookie = astro.cookies.get('admin_auth');
-  const editorCookie = astro.cookies.get('editor_auth');
-
-  if (adminCookie?.value) {
-    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
-    if (claims && claims.role === 'admin') return true;
-  }
-
-  if (editorCookie?.value) {
-    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
-    if (claims && claims.role === 'editor') return true;
-  }
-
-  return false;
+  return getClaims(astro) !== null;
 }
 
 /**
  * Check if user has admin role
  */
 export function isAdmin(astro: any): boolean {
-  const expectedTenantId = getExpectedTenantId(astro);
-  const adminCookie = astro.cookies.get('admin_auth');
-  if (!adminCookie?.value) return false;
-
-  const claims = validateAdminToken(adminCookie.value, expectedTenantId);
+  const claims = getClaims(astro);
   return claims?.role === 'admin';
 }
 
@@ -57,11 +71,7 @@ export function isAdmin(astro: any): boolean {
  * Check if user has editor role
  */
 export function isEditor(astro: any): boolean {
-  const expectedTenantId = getExpectedTenantId(astro);
-  const editorCookie = astro.cookies.get('editor_auth');
-  if (!editorCookie?.value) return false;
-
-  const claims = validateAdminToken(editorCookie.value, expectedTenantId);
+  const claims = getClaims(astro);
   return claims?.role === 'editor';
 }
 
@@ -69,58 +79,79 @@ export function isEditor(astro: any): boolean {
  * Get user role (admin, editor, or null)
  */
 export function getUserRole(astro: any): 'admin' | 'editor' | null {
-  const expectedTenantId = getExpectedTenantId(astro);
-  const adminCookie = astro.cookies.get('admin_auth');
-  if (adminCookie?.value) {
-    const claims = validateAdminToken(adminCookie.value, expectedTenantId);
-    if (claims?.role === 'admin') return 'admin';
-  }
+  return getClaims(astro)?.role ?? null;
+}
 
-  const editorCookie = astro.cookies.get('editor_auth');
-  if (editorCookie?.value) {
-    const claims = validateAdminToken(editorCookie.value, expectedTenantId);
-    if (claims?.role === 'editor') return 'editor';
-  }
+export function getCurrentUser(astro: any): CurrentUser | null {
+  const claims = getClaims(astro);
+  if (!claims) return null;
+  return {
+    sub: claims.sub || '',
+    email: claims.email || '',
+    name: claims.name || '',
+    username: claims.username || '',
+    role: claims.role,
+    isMain: claims.main === true || (!claims.sub && claims.role === 'admin'),
+    mustChangePassword: claims.mcp === true,
+  };
+}
 
-  return null;
+export function isMainAdmin(astro: any): boolean {
+  return getCurrentUser(astro)?.isMain === true;
+}
+
+export function mustChangePassword(astro: any): boolean {
+  return getCurrentUser(astro)?.mustChangePassword === true;
 }
 
 /**
  * Page-level protection: Require admin role
- * Returns redirect response if unauthorized, undefined if authorized
  */
 export function requireAdmin(astro: any): Response | undefined {
   if (!isAdmin(astro)) {
     const target = encodeURIComponent(astro.url.pathname + astro.url.search);
     return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
+  return requireMustChangeGate(astro);
 }
 
 /**
  * Page-level protection: Require editor role
- * Returns redirect response if unauthorized, undefined if authorized
  */
 export function requireEditor(astro: any): Response | undefined {
   if (!isEditor(astro)) {
     const target = encodeURIComponent(astro.url.pathname + astro.url.search);
     return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
+  return requireMustChangeGate(astro);
 }
 
 /**
  * Page-level protection: Require admin OR editor role
- * Returns redirect response if unauthorized, undefined if authorized
  */
 export function requireAdminOrEditor(astro: any): Response | undefined {
   if (!isAuthenticated(astro)) {
     const target = encodeURIComponent(astro.url.pathname + astro.url.search);
     return astro.redirect(`/storykeep/login?redirect=${target}`);
   }
+  return requireMustChangeGate(astro);
+}
+
+function requireMustChangeGate(astro: any): Response | undefined {
+  const path = astro.url.pathname;
+  const allowed =
+    path === '/storykeep/account' ||
+    path === '/storykeep/logout' ||
+    path === '/storykeep/login' ||
+    path.startsWith('/storykeep/forgot') ||
+    path.startsWith('/storykeep/reset');
+  if (mustChangePassword(astro) && !allowed) {
+    return astro.redirect('/storykeep/account');
+  }
 }
 
 /**
  * Get admin token for API requests
- * Returns the JWT token from the appropriate cookie
  */
 export function getAdminToken(astro: any): string | null {
   const expectedTenantId = getExpectedTenantId(astro);
@@ -149,22 +180,21 @@ function validateAdminToken(
   expectedTenantId: string
 ): AdminAuthClaims | null {
   try {
-    // Split JWT token
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
-    // Decode payload (base64url)
     const payload = parts[1];
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     const claims = JSON.parse(decoded) as AdminAuthClaims;
 
-    // Basic validation
     if (claims.type !== 'admin_auth') return null;
     if (!claims.role || !['admin', 'editor'].includes(claims.role)) return null;
-    if (Date.now() / 1000 > claims.exp) return null; // Token expired
+    if (Date.now() / 1000 > claims.exp) return null;
 
-    // Tenant validation
-    if (claims.tenantId !== expectedTenantId) return null; // Must match current environment
+    if (claims.tenantId !== expectedTenantId) return null;
+
+    // Pre-cutover editor cookies without sub are rejected (backend also rejects)
+    if (claims.role === 'editor' && !claims.sub) return null;
 
     return claims;
   } catch {

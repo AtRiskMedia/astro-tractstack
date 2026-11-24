@@ -815,6 +815,10 @@ export async function injectTemplateFiles(
       dest: 'src/utils/api/advancedHelpers.ts',
     },
     {
+      src: resolve('../templates/src/utils/api/adminsConfig.ts'),
+      dest: 'src/utils/api/adminsConfig.ts',
+    },
+    {
       src: resolve('../templates/src/utils/api/resourceConfig.ts'),
       dest: 'src/utils/api/resourceConfig.ts',
     },
@@ -973,6 +977,18 @@ export async function injectTemplateFiles(
     {
       src: resolve('../templates/src/pages/storykeep/logout.astro'),
       dest: 'src/pages/storykeep/logout.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/forgot.astro'),
+      dest: 'src/pages/storykeep/forgot.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/reset.astro'),
+      dest: 'src/pages/storykeep/reset.astro',
+    },
+    {
+      src: resolve('../templates/src/pages/storykeep/account.astro'),
+      dest: 'src/pages/storykeep/account.astro',
     },
     {
       src: resolve('../templates/src/pages/storykeep/profile.astro'),
@@ -1240,6 +1256,12 @@ export async function injectTemplateFiles(
       ),
       dest: 'src/components/form/advanced/APIConfigSection.tsx',
     },
+    {
+      src: resolve(
+        '../templates/src/components/form/advanced/SiteUserManagementSection.tsx'
+      ),
+      dest: 'src/components/form/advanced/SiteUserManagementSection.tsx',
+    },
 
     // StoryKeep Dashboard Components
     {
@@ -1273,6 +1295,12 @@ export async function injectTemplateFiles(
         '../templates/src/components/storykeep/Dashboard_Advanced.tsx'
       ),
       dest: 'src/components/storykeep/Dashboard_Advanced.tsx',
+    },
+    {
+      src: resolve(
+        '../templates/src/components/storykeep/Dashboard_Account.tsx'
+      ),
+      dest: 'src/components/storykeep/Dashboard_Account.tsx',
     },
     {
       src: resolve('../templates/src/components/storykeep/extend/Extend.tsx'),

@@ -18,6 +18,7 @@ import {
 import { getBrandConfig, saveBrandConfig } from '@/utils/api/brandConfig';
 import UnsavedChangesBar from '@/components/form/UnsavedChangesBar';
 import AuthConfigSection from '@/components/form/advanced/AuthConfigSection';
+import SiteUserManagementSection from '@/components/form/advanced/SiteUserManagementSection';
 import APIConfigSection from '@/components/form/advanced/APIConfigSection';
 import type {
   AdvancedConfigState,
@@ -28,11 +29,15 @@ import type {
 interface StoryKeepDashboardAdvancedProps {
   brandConfig: BrandConfig;
   initialize?: boolean;
+  isMain?: boolean;
+  currentSub?: string;
 }
 
 export default function StoryKeepDashboard_Advanced({
   brandConfig,
   initialize = false,
+  isMain = false,
+  currentSub = '',
 }: StoryKeepDashboardAdvancedProps) {
   const [status, setStatus] = useState<AdvancedConfigStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,7 +208,16 @@ export default function StoryKeepDashboard_Advanced({
 
       <div className="space-y-8">
         <DatabaseStatusSection />
-        <AuthConfigSection formState={formState} status={status} />
+        <AuthConfigSection
+          formState={formState}
+          status={status}
+          isMain={isMain}
+        />
+        <SiteUserManagementSection
+          isMain={isMain}
+          currentSub={currentSub}
+          hasResend={status?.hasResend === true}
+        />
         <APIConfigSection formState={formState} status={status} />
       </div>
     </div>
